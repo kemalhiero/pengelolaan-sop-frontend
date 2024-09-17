@@ -32,6 +32,11 @@ const router = createRouter({
       name: 'sop',
       component: () => import('@/views/SopSearch.vue')
     },
+    {
+      path: '/app',
+      name: 'AuthenticatedApp',
+      component: () => import('@/views/authenticated/Index.vue')
+    },
   ]
 })
 

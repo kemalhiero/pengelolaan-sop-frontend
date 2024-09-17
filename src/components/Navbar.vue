@@ -1,5 +1,11 @@
 <script setup>
+  import { initDrawers } from 'flowbite';
+  import { onMounted } from 'vue';
   import { RouterLink, useRoute } from 'vue-router';
+
+  onMounted(() => {
+    initDrawers();
+  })
 
   const route = useRoute()
 

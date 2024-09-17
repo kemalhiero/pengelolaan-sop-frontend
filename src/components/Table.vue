@@ -1,6 +1,6 @@
 <template>
     
-    <div class="container mx-auto p-8">    
+    <div class="container mx-auto p-8 lg:px-32">    
         
         <!-- <h2 class="text-4xl text-center my-6 font-bold dark:text-white">SOP Terpopuler</h2> -->
 
@@ -41,7 +41,7 @@
                         <button title="Lihat dokumen">
                             <IconEye class="w-6 mx-4"/>
                         </button>
-                        <button title="Unduh dokumen SOP">
+                        <button title="Unduh dokumen">
                             <IconDownload class="w-6 mx-4"  />
                         </button>
                     </td>
@@ -68,12 +68,13 @@
         { nama: 'React', tanggal: '2024/02/09', organisasi: 'Labor' },
         { nama: 'Vite', tanggal: '2024/01/09', organisasi: 'Departemen' },
         { nama: 'Angular', tanggal: '2024/03/09', organisasi: 'Departemen' },
+        { nama: 'Svelte', tanggal: '2024/03/09', organisasi: 'Departemen' },
     ]
 
     onMounted(() => {
         if (document.getElementById("default-table") && typeof DataTable !== 'undefined') {
             new DataTable(document.getElementById("default-table"), {
-                searchable: false, 
+                searchable: true, 
                 sortable: true,
             });
         }

@@ -3,7 +3,7 @@
     import {initAccordions} from 'flowbite';
 
     import IconAngle from '@/components/icons/IconAngle.vue';
-    // initAccordions()
+
     onMounted(() => {
         initAccordions();
     });
@@ -11,12 +11,12 @@
 
 <template>
 
-    <div class="text-center mt-16 mb-8">
+    <div class="text-center mt-16 mb-8 mx-12 lg:mx-40">
         <h1 class="mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-4xl lg:text-5xl dark:text-white">Frequently Asked Question</h1>
-        <p class="mb-6 text-lg font-normal text-gray-500 lg:text-xl sm:px-16 xl:px-48 dark:text-gray-400">Berikut merupakan berbagai pertanyaan yang sering diajukan dalam proses pembuatan SOP di Departemen Sistem Informasi Universitas Andalas.</p>
+        <p class="text-lg font-normal text-gray-500 lg:text-xl sm:px-16 xl:px-48 dark:text-gray-400">Berikut merupakan berbagai pertanyaan yang sering diajukan dalam proses pembuatan SOP di Departemen Sistem Informasi Universitas Andalas.</p>
     </div>
     
-    <div id="accordion-faq" class="container mx-auto px-4" data-accordion="collapse" data-active-classes="bg-white dark:bg-gray-900 text-gray-900 dark:text-white" data-inactive-classes="text-gray-500 dark:text-gray-400">
+    <div id="accordion-faq" class="container mx-auto px-8 lg:px-36" data-accordion="collapse" data-active-classes="bg-white dark:bg-gray-900 text-gray-900 dark:text-white" data-inactive-classes="text-gray-500 dark:text-gray-400">
         <h2 id="accordion-faq-heading-1">
             <button type="button" class="flex items-center justify-between w-full py-5 font-medium rtl:text-right text-gray-500 border-b border-gray-200 dark:border-gray-700 dark:text-gray-400 gap-3" data-accordion-target="#accordion-faq-body-1" aria-expanded="true" aria-controls="accordion-faq-body-1">
                 <span class="text-xl">Apa itu SIPP?</span>
