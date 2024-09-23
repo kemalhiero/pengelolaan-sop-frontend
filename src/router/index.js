@@ -30,12 +30,25 @@ const router = createRouter({
     {
       path: '/sop',
       name: 'sop',
-      component: () => import('@/views/SopSearch.vue')
+      component: () => import('@/views/sop/SopSearch.vue')
+    },
+    {
+      path: '/sop/detail',
+      name: 'DetailSop',
+      component: () => import('@/views/sop/SopDetail.vue')
     },
     {
       path: '/app',
       name: 'AuthenticatedApp',
       component: () => import('@/views/authenticated/Index.vue')
+    },
+    {
+      path: '/test1',
+      component: () => import('@/views/test/Test1.vue')
+    },
+    {
+      path: '/test2',
+      component: () => import('@/views/test/Test2.vue')
     },
   ]
 })

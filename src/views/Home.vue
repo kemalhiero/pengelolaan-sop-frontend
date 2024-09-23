@@ -6,15 +6,15 @@
         <div class="py-8 mx-auto max-w-screen-xl lg:py-16">
             <div class="grid md:grid-cols-2 gap-8">
                 
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 md:p-10 max-w-2xl mx-auto">
+                <div class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 md:p-10 max-w-2xl mx-auto">
                     <h2 class="text-gray-900 dark:text-white text-3xl font-extrabold mb-2 text-center">Jumlah SOP pada tiap unit kerja</h2>
                     <Chart/>
                 </div>
 
-                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 md:p-10 max-w-2xl mx-auto">
+                <div class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 md:p-10 max-w-2xl mx-auto">
                     <h2 class="text-gray-900 dark:text-white text-3xl font-extrabold mb-2 text-center">Best react libraries around the web</h2>
                     <!-- <p class="text-lg font-normal text-gray-500 dark:text-gray-400 mb-4">Static websites are now used to bootstrap lots of websites and are becoming the basis for a variety of tools that even influence both web designers and developers.</p> -->
-                    <SOPTable/>
+                    <!-- <SOPTable/> -->
                     
                     <RouterLink to="/sop">
                         <p class="text-blue-600 dark:text-blue-500 hover:underline font-medium text-lg inline-flex items-center mt-10">
