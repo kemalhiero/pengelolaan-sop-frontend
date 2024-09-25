@@ -11,6 +11,7 @@
   "dependencies": {
     "apexcharts": "^3.53.0",
     "flowbite": "^2.5.1",
+    "mermaid": "^11.2.1",
     "pinia": "^2.1.7",
     "simple-datatables": "^9.1.0",
     "vue": "^3.4.29",
