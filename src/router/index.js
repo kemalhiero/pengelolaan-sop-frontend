@@ -37,11 +37,45 @@ const router = createRouter({
       name: 'DetailSop',
       component: () => import('@/views/sop/SopDetail.vue')
     },
+
+    // Authenticated
     {
       path: '/app',
-      name: 'AuthenticatedApp',
-      component: () => import('@/views/authenticated/Index.vue')
+      name: 'AuthenticatedDashboard',
+      component: () => import('@/views/authenticated/Dashboard.vue')
     },
+    {
+      path: '/app/docs',
+      name: 'SopDocs',
+      component: () => import('@/views/authenticated/SopDocs.vue')
+    },
+    {
+      path: '/app/propose',
+      name: 'SopPropose',
+      component: () => import('@/views/authenticated/SopPropose.vue')
+    },
+    {
+      path: '/app/review',
+      name: 'SopReview',
+      component: () => import('@/views/authenticated/SopReview.vue')
+    },
+    {
+      path: '/app/agreement',
+      name: 'SopAgreement',
+      component: () => import('@/views/authenticated/SopAgreement.vue')
+    },
+    {
+      path: '/app/feedback',
+      name: 'SopFeedback',
+      component: () => import('@/views/authenticated/SopFeedback.vue')
+    },
+    {
+      path: '/app/guide',
+      name: 'AppGuide',
+      component: () => import('@/views/authenticated/Guide.vue')
+    },
+
+    // Test
     {
       path: '/test1',
       component: () => import('@/views/test/Test1.vue')
