@@ -15,7 +15,8 @@ import AngleDownIcon from '@/assets/icons/AngleDownIcon.vue';
 import DashboardIcon from '@/assets/icons/DashboardIcon.vue';
 import SidebarNominalIndicator from '../indicator/SidebarNominalIndicator.vue';
 import StackDocumentIcon from '@/assets/icons/StackDocumentIcon.vue';
-import GuideIcon from '@/assets/icons/GuideIcon.vue';
+import TaskIcon from '@/assets/icons/TaskIcon.vue';
+import HelpIcon from '@/assets/icons/HelpIcon.vue';
 
 onMounted(() => {
     initCollapses();
@@ -77,21 +78,23 @@ onMounted(() => {
             <ul class="space-y-2">
                 <li>
                     <RouterLink :to="{ name: 'AuthenticatedDashboard' }" title="Ringkasan data SOP yang dikelola oleh penanggung jawab"
-                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 group"
+                        active-class="bg-gray-200 dark:bg-gray-700">
                         <DashboardIcon/>
                         <span class="ml-3">Dashboard</span>
                     </RouterLink>
                 </li>
                 <li>
                     <RouterLink :to="{ name: 'SopDocs' }" title="List Dokumen SOP yang dikelola oleh penanggung jawab"
-                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 group"
+                        active-class="bg-gray-200 dark:bg-gray-700">
                         <PageIcon/>
                         <span class="flex-1 ml-3 whitespace-nowrap">Dokumen</span>
                     </RouterLink>
                 </li>
                 <li>
                     <button type="button" title="Pengelolaan dokumen SOP, dimulai dari pengusulan hingga publikasi"
-                    class="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+                    class="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
                     aria-controls="dropdown-pages" data-collapse-toggle="dropdown-pages">
                         <StackDocumentIcon/> 
                         <span class="flex-1 ml-3 text-left whitespace-nowrap">Pengelolaan</span>
@@ -100,7 +103,8 @@ onMounted(() => {
                     <ul id="dropdown-pages" class="py-2 space-y-2">
                         <li>
                             <RouterLink :to="{ name: 'SopPropose' }" title="Usulkan SOP baru atau revisi yang sudah ada"
-                                class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                                class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
+                                active-class="bg-gray-200 dark:bg-gray-700">
                                 <span class="flex-1">Pengusulan</span>
                                 <SidebarNominalIndicator :message-count="2" />
                             </RouterLink>
@@ -108,14 +112,16 @@ onMounted(() => {
                         </li>
                         <li>
                             <RouterLink :to="{ name: 'SopReview' }" title="Tinjau progres pembuatan SOP"
-                                class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                                class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
+                                active-class="bg-gray-200 dark:bg-gray-700">
                                 <span class="flex-1">Peninjauan</span>
                                 <SidebarNominalIndicator :message-count="3" />
                             </RouterLink>
                         </li>
                         <li>
                             <RouterLink :to="{ name: 'SopAgreement' }" title="Persetujuan dan publikasi SOP"
-                                class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700">
+                                class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
+                                active-class="bg-gray-200 dark:bg-gray-700">
                                 <span class="flex-1">Persetujuan</span>
                                 <SidebarNominalIndicator :message-count="1" />
                             </RouterLink>
@@ -124,7 +130,8 @@ onMounted(() => {
                 </li>
                 <li>
                     <RouterLink :to="{ name: 'SopFeedback' }" title="Komentar dan saran dari pengunjung terkait SOP"
-                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 group"
+                        active-class="bg-gray-200 dark:bg-gray-700">
                         <svg aria-hidden="true"
                             class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
                             fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
@@ -143,8 +150,9 @@ onMounted(() => {
             <ul class="pt-5 mt-5 space-y-2 border-t border-gray-200 dark:border-gray-700">
                 <li>
                     <RouterLink :to="{ name: 'AppGuide' }"
-                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg transition duration-75 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white group">
-                        <GuideIcon/>
+                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg transition duration-75 hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-white group"
+                        active-class="bg-gray-200 dark:bg-gray-700">
+                        <HelpIcon/>
                         <span class="ml-3">Panduan</span>
                     </RouterLink>
                 </li>

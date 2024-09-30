@@ -1,5 +1,5 @@
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
-        <h2 class="text-4xl font-bold dark:text-white">Heading 2</h2>
+        
     </main>
 </template>

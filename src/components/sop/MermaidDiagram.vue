@@ -18,7 +18,7 @@
   const mermaidContainer = ref(null);
   const diagramHtml = ref(props.diagram);
   
-  const renderMermaid = async () => {
+  const renderMermaid = () => {
     mermaid.initialize({ startOnLoad: true });
     mermaid.contentLoaded();
     mermaid.init(undefined, mermaidContainer.value);

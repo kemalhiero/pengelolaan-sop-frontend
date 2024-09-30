@@ -1,6 +1,6 @@
 <script setup>
     import { ref } from 'vue';
-    import MermaidDiagram from '@/components/MermaidDiagram.vue';
+    import MermaidDiagram from '@/components/sop/MermaidDiagram.vue';
 
     // Define the Mermaid diagram string
     const mermaidChart = ref(`

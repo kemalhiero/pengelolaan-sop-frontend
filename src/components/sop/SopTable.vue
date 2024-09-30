@@ -61,9 +61,9 @@
     import { onMounted } from "vue";
     import { DataTable } from "simple-datatables";
 
-    import IconDownload from "./icons/IconDownload.vue";
-    import IconSort from "./icons/IconSort.vue";
-    import IconEye from "./icons/IconEye.vue";
+    import IconDownload from "@/components/icons/IconDownload.vue";
+    import IconSort from "@/components/icons/IconSort.vue";
+    import IconEye from "@/components/icons/IconEye.vue";
 
 
     const data = [

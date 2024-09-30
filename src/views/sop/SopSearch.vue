@@ -13,10 +13,10 @@
         </div>
     </form>
 
-    <Table/>
+    <SopTable/>
 
 </template>
 
 <script setup>
-    import Table from '@/components/Table.vue';
+    import SopTable from '@/components/sop/SopTable.vue';
 </script>

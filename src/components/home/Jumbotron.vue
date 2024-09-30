@@ -4,7 +4,7 @@
             <h1 class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-white md:text-5xl lg:text-6xl">Sistem Informasi Pengelolaan SOP</h1>
             <p class="mb-8 text-lg font-normal text-gray-300 lg:text-xl sm:px-16 lg:px-48">Selamat Datang di Website Sistem Pengelolaan SOP Departemen Sistem Informasi Unand. Temukan SOP dengan mengetikkan nama pada kolom pencarian dibawah!</p>
           
-            <form class="max-w-md mx-auto">   
+            <form class="max-w-md mx-auto" action="/sop" method="get">   
                 <label for="default-search" class="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
