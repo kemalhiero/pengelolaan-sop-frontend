@@ -3,7 +3,6 @@ import { initCollapses, initDropdowns, initTooltips } from 'flowbite';
 import { onMounted } from 'vue';
 
 import NavbarNotification from './NavbarNotification.vue';
-import NavbarApp from './NavbarApp.vue';
 import NavbarUser from './NavbarUser.vue';
 import SidebarSetting from './SidebarSetting.vue';
 
@@ -60,8 +59,6 @@ onMounted(() => {
 
                 <!-- Notifications -->
                 <NavbarNotification />
-                <!-- Apps -->
-                <NavbarApp />
                 <!-- User -->
                 <NavbarUser />
 
