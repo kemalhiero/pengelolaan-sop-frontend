@@ -16,6 +16,7 @@ import SidebarNominalIndicator from '../indicator/SidebarNominalIndicator.vue';
 import StackDocumentIcon from '@/assets/icons/StackDocumentIcon.vue';
 import TaskIcon from '@/assets/icons/TaskIcon.vue';
 import HelpIcon from '@/assets/icons/HelpIcon.vue';
+import BuildingIcon from '../icons/BuildingIcon.vue';
 
 onMounted(() => {
     initCollapses();
@@ -86,44 +87,16 @@ onMounted(() => {
                         class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 group"
                         active-class="bg-gray-200 dark:bg-gray-700">
                         <PageIcon/>
-                        <span class="flex-1 ml-3 whitespace-nowrap">Dokumen</span>
+                        <span class="flex-1 ml-3 whitespace-nowrap">Dokumen SOP</span>
                     </RouterLink>
                 </li>
                 <li>
-                    <button type="button" title="Pengelolaan dokumen SOP, dimulai dari pengusulan hingga publikasi"
-                    class="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
-                    aria-controls="dropdown-pages" data-collapse-toggle="dropdown-pages">
-                        <StackDocumentIcon/> 
-                        <span class="flex-1 ml-3 text-left whitespace-nowrap">Pengelolaan</span>
-                        <AngleDownIcon/>
-                    </button>
-                    <ul id="dropdown-pages" class="py-2 space-y-2">
-                        <li>
-                            <RouterLink :to="{ name: 'SopPropose' }" title="Usulkan SOP baru atau revisi yang sudah ada"
-                                class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
-                                active-class="bg-gray-200 dark:bg-gray-700">
-                                <span class="flex-1">Pengusulan</span>
-                                <SidebarNominalIndicator :message-count="2" />
-                            </RouterLink>
-                            
-                        </li>
-                        <li>
-                            <RouterLink :to="{ name: 'SopReview' }" title="Tinjau progres pembuatan SOP"
-                                class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
-                                active-class="bg-gray-200 dark:bg-gray-700">
-                                <span class="flex-1">Peninjauan</span>
-                                <SidebarNominalIndicator :message-count="3" />
-                            </RouterLink>
-                        </li>
-                        <li>
-                            <RouterLink :to="{ name: 'SopAgreement' }" title="Persetujuan dan publikasi SOP"
-                                class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
-                                active-class="bg-gray-200 dark:bg-gray-700">
-                                <span class="flex-1">Persetujuan</span>
-                                <SidebarNominalIndicator :message-count="1" />
-                            </RouterLink>
-                        </li>
-                    </ul>
+                    <RouterLink :to="{ name: 'SopOrg' }" title="List Organisasi"
+                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 group"
+                        active-class="bg-gray-200 dark:bg-gray-700">
+                        <BuildingIcon/>
+                        <span class="flex-1 ml-3 whitespace-nowrap">Organisasi</span>
+                    </RouterLink>
                 </li>
                 <li>
                     <RouterLink :to="{ name: 'SopFeedback' }" title="Komentar dan saran dari pengunjung terkait SOP"

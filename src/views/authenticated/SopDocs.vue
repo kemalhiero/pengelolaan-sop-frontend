@@ -2,11 +2,11 @@
 import { onMounted } from "vue";
 import { DataTable } from "simple-datatables";
 
-import IconDownload from "@/components/icons/IconDownload.vue";
 import IconSort from "@/components/icons/IconSort.vue";
 import IconEye from "@/components/icons/IconEye.vue";
 import GreenBadgeIndicator from "@/components/indicator/GreenBadgeIndicator.vue";
 import RedBadgeIndicator from "@/components/indicator/RedBadgeIndicator.vue";
+import CirclePlusIcon from "@/components/icons/CirclePlusIcon.vue";
 
 
 const data = [
@@ -39,6 +39,17 @@ onMounted(() => {
 
         <div class="container mx-auto p-8 lg:px-32">
 
+            <div class="flex justify-end mb-4">
+                <router-link :to="{ name: 'SopPropose' }">
+                    <button
+                        class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center dark:focus:ring-[#2557D6]/50 me-2 mb-2 ml-auto"
+                        title="Lihat detail dokumen">
+                        <CirclePlusIcon class="w-5 mr-3 fill-current" />
+                        Tambah SOP Baru
+                    </button>
+                </router-link>
+            </div>
+
             <table id="default-table" class="mx-auto">
                 <thead>
                     <tr>
@@ -48,7 +59,7 @@ onMounted(() => {
                                 <IconSort />
                             </span>
                         </th>
-                        <th data-type="date" data-format="YYYY/DD/MM">
+                        <th data-type="date" data-format="YYYY/DD/MM" title="Tanggal Pembuatan">
                             <span class="flex items-center">
                                 Tanggal
                                 <IconSort />
@@ -67,6 +78,12 @@ onMounted(() => {
                             </span>
                         </th>
                         <th>
+                            <span class="flex items-center" title="Progres Pembuatan SOP">
+                                Progres
+                                <IconSort />
+                            </span>
+                        </th>
+                        <th>
                             <span class="flex items-center">
                                 Aksi
                             </span>
@@ -81,6 +98,10 @@ onMounted(() => {
                         <td>
                             <GreenBadgeIndicator teks="Berlaku" v-if="item.applicable == true" />
                             <RedBadgeIndicator teks="Tidak Berlaku" v-else />
+                        </td>
+                        <td>
+                            <GreenBadgeIndicator teks="Sudah Siap" v-if="item.applicable == true" />
+                            <RedBadgeIndicator teks="Batal" v-else />
                         </td>
                         <td>
                             <router-link :to="{ name: 'DetailSop' }">
