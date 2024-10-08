@@ -100,7 +100,67 @@
             </div>
         </div>
 
-        <MermaidDiagram :diagram="mermaidChart" />
+         <!-- Sekarang kita buat 4 kotak besar dengan konten di kanan dan judul di kiri -->
+        <div class="detail-cards">
+            <div class="detail-card">
+                <h4>Deskripsi</h4>
+                <p class="">
+                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero rem eligendi dolore necessitatibus molestiae deleniti. Quidem ducimus dolorum eius possimus, est suscipit natus cumque, ea consequuntur aspernatur officia. Praesentium illo libero dicta minus ipsum cum, nisi aliquam illum officiis deserunt sint eum nobis fugit temporibus in ad obcaecati! Quam sed nemo, praesentium voluptatibus, distinctio itaque optio, ex deleniti consequuntur debitis corrupti corporis quibusdam beatae maiores ducimus possimus. Labore excepturi eum natus nisi dolorem, explicabo, a nostrum nulla pariatur repudiandae fugiat. Maiores praesentium excepturi minima iste? Quas, nisi in. Officia aliquid quibusdam voluptas quasi nihil commodi labore vel ipsam earum quae?
+                </p>
+            </div>
+
+            <div class="detail-card">
+                <h4>Dasar Hukum</h4>
+                <ul class="list-decimal list-inside">
+                    <li>Peraturan Pemerintah Nomor 95 Tahun 2021 tentang PTN-BH</li>
+                    <li>Peraturan Rektor Universitas Andalas Nomor 8 Tahun 2022</li>
+                </ul>
+            </div>
+            
+            <div class="detail-card">
+                <h4>Kualifikasi Pelaksanaan</h4>
+                <ul class="list-decimal list-inside">
+                    <li>Memiliki Kemampuan pengolahan data sederhana</li>
+                    <li>Mengetahui tugas dan fungsi POS AP</li>
+                    <li>Menguasai operasional komputer</li>
+                </ul>
+            </div>
+            
+            <div class="detail-card">
+                <h4>Peringatan</h4>
+                <p>Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses kerja praktik mahasiswa.</p>
+            </div>
+
+            <div class="detail-card">
+                <h4>Keterkaitan dengan POS AP Lain</h4>
+                <ul class="list-decimal list-inside">
+                    <li>POS AP Pelaksanaan KP</li>
+                    <li>POS AP Pembatalan KP</li>
+                </ul>
+            </div>
+
+            <div class="detail-card">
+                <h4>Peralatan atau Perlengkapan</h4>
+                <ul class="list-decimal list-inside">
+                    <li>Komputer</li>
+                    <li>Printer</li>
+                    <li>Hardisk Eksternal / Flashdisk</li>
+                    <li>Dokumen OTK</li>
+                </ul>
+            </div>
+
+            <div class="detail-card">
+                <h4>Pencatatan dan Pendataan</h4>
+                <ul class="list-decimal list-inside">
+                    <li>Dokumen Surat/Disposisi</li>
+                    <li>Pengarsipan</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2 class="text-2xl text-center mt-10 mb-6 font-bold dark:text-white">Alur Proses</h2>
+
+        <MermaidDiagram :diagram="mermaidChart" class="my-5"/>
 
     </div>
 
@@ -119,13 +179,42 @@
         padding: 20px;
         border-radius: 12px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        transition: transform 0.1s ease;
-    }
-    .step-card:hover {
-        transform: translateY(-5px);
     }
     .step-card h4 {
         margin-bottom: 10px;
         font-size: 18px;
+    }
+
+    /* Untuk kotak besar yang berisi detail */
+    .detail-cards {
+        display: grid;
+        grid-template-columns: 1fr; /* Satu kolom penuh untuk tiap kotak */
+        gap: 20px;
+    }
+
+    .detail-card {
+        display: grid;
+        grid-template-columns: 1fr 3fr; /* 1 bagian judul, 3 bagian konten */
+        gap: 20px;
+        background-color: #dfe4ea;
+        padding: 20px;
+        border-radius: 12px;
+    }
+
+    .detail-card h4 {
+        font-size: 18px;
+        margin: 0;
+    }
+
+    .detail-card p,
+    .detail-card ul {
+        margin: 0;
+    }
+
+    /* Responsive untuk tampilan mobile */
+    @media (max-width: 768px) {
+        .detail-card {
+        grid-template-columns: 1fr; /* Judul di atas, konten di bawah */
+        }
     }
 </style>

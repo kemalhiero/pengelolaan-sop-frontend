@@ -12,7 +12,7 @@
   const routes = [
     { path: '/', name: 'Beranda' },
     { path: '/sop', name: 'SOP' },
-    { path: '/about', name: 'Tentang' },
+    // { path: '/about', name: 'Tentang' },
     { path: '/faq', name: 'FAQ' }
   ]
 

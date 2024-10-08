@@ -104,7 +104,7 @@ onMounted(() => {
                             <RedBadgeIndicator teks="Batal" v-else />
                         </td>
                         <td>
-                            <router-link :to="{ name: 'DetailSop' }">
+                            <router-link :to="{ name: 'SopDocDetail' }">
                                 <button
                                     class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center dark:focus:ring-[#2557D6]/50 me-2 mb-2"
                                     title="Lihat detail dokumen">

@@ -50,6 +50,11 @@ const router = createRouter({
       component: () => import('@/views/authenticated/SopDocs.vue')
     },
     {
+      path: '/app/docs/detail',
+      name: 'SopDocDetail',
+      component: () => import('@/views/authenticated/SopDocsDetail.vue')
+    },
+    {
       path: '/app/org',
       name: 'SopOrg',
       component: () => import('@/views/authenticated/SopOrg.vue')
