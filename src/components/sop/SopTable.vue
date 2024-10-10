@@ -1,8 +1,6 @@
 <template>
     
-    <div class="container mx-auto p-8 lg:px-32">    
-        
-        <!-- <h2 class="text-4xl text-center my-6 font-bold dark:text-white">SOP Terpopuler</h2> -->
+    <div class="container mx-auto p-8 lg:px-32">
 
         <table id="default-table" class="mx-auto">
             <thead>

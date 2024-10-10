@@ -35,7 +35,7 @@ onMounted(() => {
             class="mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-4xl lg:text-5xl dark:text-white">
             Frequently Asked Question</h1>
         <p class="text-lg font-normal lg:text-xl sm:px-16 xl:px-48">
-            Berikut merupakan daftar pertanyaan yang sering diajukan dalam proses pembuatan SOP di Departemen Sistem Informasi Universitas Andalas.
+            Berikut merupakan daftar pertanyaan yang sering diajukan dalam proses pengelolaan SOP di Departemen Sistem Informasi Universitas Andalas.
         </p>
     </div>
 
