@@ -1,22 +1,21 @@
 <script setup>
-
-import { ref } from 'vue';
 import { RouterView } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
+
 import Navbar from '@/components/Navbar.vue';
 import Footer from '@/components/Footer.vue';
 
 // authenticated
 import AppShell from '@/components/authenticated/AppShell.vue';
 
-// Status login (bisa diambil dari Pinia atau API)
-const isLoggedOut = ref(true); // ganti false dengan status login aktual, misalnya dari Vuex atau API
+const authStore = useAuthStore();
 
 </script>
 
 <template>
 
-  <Navbar v-if="isLoggedOut" />
-  <AppShell v-else />
+  <AppShell v-if="authStore.role == 'admin'" />
+  <Navbar v-else-if="authStore.role == 'guest'" />
   <RouterView />
   <!-- <Footer/> -->
 
