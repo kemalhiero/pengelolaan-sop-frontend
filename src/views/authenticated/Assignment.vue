@@ -6,8 +6,8 @@
 
 
     const data = [
-        { nama: 'SOP Keuangan LEA', tanggal: '2024/25/09', organisasi: 'Labor', penugas: 'Adi Arga Arifnur' },
-        { nama: 'SOP Pendaftaran Kerja Praktik', tanggal: '2024/03/09', organisasi: 'Departemen', penugas: 'Husnil Kamil' },
+        { nama: 'SOP Keuangan LEA', tanggal: '2024/25/09', organisasi: 'Labor', penugas: 'Adi Arga Arifnur', status: 'Selesai' },
+        { nama: 'SOP Pendaftaran Kerja Praktik', tanggal: '2024/03/09', organisasi: 'Departemen', penugas: 'Husnil Kamil', status: 'Belum Selesai' },
     ]
 
     onMounted(() => {
@@ -62,6 +62,12 @@
                     </th>
                     <th>
                         <span class="flex items-center">
+                            Status
+                            <IconSort/>
+                        </span>
+                    </th>
+                    <th>
+                        <span class="flex items-center">
                             Aksi
                         </span>
                     </th>
@@ -73,6 +79,7 @@
                     <td>{{ item.tanggal }}</td>
                     <td>{{ item.organisasi }}</td>
                     <td>{{ item.penugas }}</td>
+                    <td>{{ item.status }}</td>
                     <td>
                         <router-link to="/assignment/detail">
                             <button class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center dark:focus:ring-[#2557D6]/50 me-2 mb-2" title="Lihat detail tugas">

@@ -61,29 +61,29 @@ onMounted(() => {
           class="flex flex-col font-medium p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:space-x-8 md:flex-row md:mt-0 md:border-0 md:bg-white">
 
           <li>
-            <RouterLink to="/" activeClass="text-blue-500 bg-gray-200"
-              class="block py-2 px-3 md:p-0 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent hover:text-blue-500">
+            <RouterLink to="/" activeClass="text-blue-500"
+              class="block py-2 px-3 md:p-0 rounded hover:bg-gray-100 md:hover:bg-transparent hover:text-blue-500">
               Beranda
             </RouterLink>
           </li>
 
           <li>
-            <RouterLink to="/sop" activeClass="text-blue-500 bg-gray-200"
-              class="block py-2 px-3 md:p-0 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent hover:text-blue-500">
+            <RouterLink to="/sop" activeClass="text-blue-500"
+              class="block py-2 px-3 md:p-0 rounded hover:bg-gray-100 md:hover:bg-transparent hover:text-blue-500">
               SOP
             </RouterLink>
           </li>
 
           <li>
-            <RouterLink to="/faq" activeClass="text-blue-500 bg-gray-200"
-              class="block py-2 px-3 md:p-0 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent hover:text-blue-500">
+            <RouterLink to="/faq" activeClass="text-blue-500"
+              class="block py-2 px-3 md:p-0 rounded hover:bg-gray-100 md:hover:bg-transparent hover:text-blue-500">
               FAQ
             </RouterLink>
           </li>
 
           <li class="relative">
-            <RouterLink to="/assignment" activeClass="text-blue-500 bg-gray-200" v-if="authStore.isLoggedIn"
-              class="block py-2 px-3 md:p-0 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent hover:text-blue-500">
+            <RouterLink to="/assignment" activeClass="text-blue-500" v-if="authStore.isLoggedIn"
+              class="block py-2 px-3 md:p-0 rounded hover:bg-gray-100 md:hover:bg-transparent hover:text-blue-500">
               Penugasan
             </RouterLink>
 
