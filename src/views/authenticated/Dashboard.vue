@@ -1,6 +1,6 @@
 <script setup>
-import DashboardColumnChart from './DashboardColumnChart.vue';
-import DashboardPieChart from './DashboardPieChart.vue';
+import DashboardColumnChart from '@/components/authenticated/dashboard/DashboardColumnChart.vue';
+import DashboardPieChart from '@/components/authenticated/dashboard/DashboardPieChart.vue';
 </script>
 
 <template>

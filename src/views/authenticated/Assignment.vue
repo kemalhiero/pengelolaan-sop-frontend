@@ -1,8 +1,8 @@
 <script setup>
     import { onMounted } from "vue";
     import { DataTable } from "simple-datatables";
-    import IconSort from "@/components/icons/IconSort.vue";
-    import IconEye from "@/components/icons/IconEye.vue";
+    import IconSort from "@/assets/icons/IconSort.vue";
+    import IconEye from "@/assets/icons/IconEye.vue";
 
 
     const data = [

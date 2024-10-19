@@ -16,7 +16,9 @@ import SidebarNominalIndicator from '../indicator/SidebarNominalIndicator.vue';
 import StackDocumentIcon from '@/assets/icons/StackDocumentIcon.vue';
 import TaskIcon from '@/assets/icons/TaskIcon.vue';
 import HelpIcon from '@/assets/icons/HelpIcon.vue';
-import BuildingIcon from '../icons/BuildingIcon.vue';
+import BuildingIcon from '../../assets/icons/BuildingIcon.vue';
+import ScaleBalanced from '@/assets/icons/ScaleBalanced.vue';
+import FeedbackIcon from '@/assets/icons/FeedbackIcon.vue';
 
 onMounted(() => {
     initCollapses();
@@ -29,13 +31,12 @@ onMounted(() => {
 <template>
 
     <!-- Navbar -->
-    <nav
-        class="bg-white border-b border-gray-200 px-4 py-2.5 dark:bg-gray-800 dark:border-gray-700 fixed left-0 right-0 top-0 z-50">
+    <nav class="bg-white border-b border-gray-200 px-4 py-2.5 fixed left-0 right-0 top-0 z-50">
         <div class="flex flex-wrap justify-between items-center">
             <div class="flex justify-start items-center">
                 <button data-drawer-target="drawer-navigation" data-drawer-toggle="drawer-navigation"
                     aria-controls="drawer-navigation"
-                    class="p-2 mr-2 text-gray-600 rounded-lg cursor-pointer md:hidden hover:text-gray-900 hover:bg-gray-100 focus:bg-gray-100 dark:focus:bg-gray-700 focus:ring-2 focus:ring-gray-100 dark:focus:ring-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white">
+                    class="p-2 mr-2 text-gray-600 rounded-lg cursor-pointer md:hidden hover:text-gray-900 hover:bg-gray-100 focus:bg-gray-100 focus:ring-2 focus:ring-gray-100">
                     <svg aria-hidden="true" class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
                         xmlns="http://www.w3.org/2000/svg">
                         <path fill-rule="evenodd"
@@ -52,7 +53,7 @@ onMounted(() => {
                 </button>
                 <RouterLink to="/app" class="flex items-center justify-between mr-4">
                     <img src="https://flowbite.s3.amazonaws.com/logo.svg" class="mr-3 h-8" alt="Flowbite Logo" />
-                    <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">SIPP DSI</span>
+                    <span class="self-center text-2xl font-semibold whitespace-nowrap">SIPP DSI</span>
                 </RouterLink>
 
             </div>
@@ -69,60 +70,81 @@ onMounted(() => {
 
     <!-- Sidebar -->
     <aside
-        class="fixed top-0 left-0 z-40 w-64 h-screen pt-14 transition-transform -translate-x-full bg-white border-r border-gray-200 md:translate-x-0 dark:bg-gray-800 dark:border-gray-700"
+        class="fixed top-0 left-0 z-40 w-64 h-screen pt-14 transition-transform -translate-x-full bg-white border-r border-gray-200 md:translate-x-0"
         aria-label="Sidenav" id="drawer-navigation">
-        <div class="overflow-y-auto py-5 px-3 h-full bg-white dark:bg-gray-800">
+        <div class="overflow-y-auto py-5 px-3 h-full bg-white">
 
             <ul class="space-y-2">
                 <li>
-                    <RouterLink :to="{ name: 'AuthenticatedDashboard' }" title="Ringkasan data SOP yang dikelola oleh penanggung jawab"
-                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 group"
-                        active-class="bg-gray-200 dark:bg-gray-700">
-                        <DashboardIcon/>
+                    <RouterLink :to="{ name: 'AuthenticatedDashboard' }"
+                        title="Ringkasan data SOP yang dikelola oleh penanggung jawab"
+                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg hover:bg-gray-200 group"
+                        active-class="bg-gray-200">
+                        <DashboardIcon
+                            class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 fill-current" />
                         <span class="ml-3">Dashboard</span>
                     </RouterLink>
                 </li>
                 <li>
                     <RouterLink :to="{ name: 'SopDocs' }" title="List Dokumen SOP yang dikelola oleh penanggung jawab"
-                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 group"
-                        active-class="bg-gray-200 dark:bg-gray-700">
-                        <PageIcon/>
+                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg hover:bg-gray-200 group"
+                        active-class="bg-gray-200">
+                        <PageIcon
+                            class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 fill-current" />
                         <span class="flex-1 ml-3 whitespace-nowrap">Dokumen SOP</span>
                     </RouterLink>
                 </li>
                 <li>
                     <RouterLink :to="{ name: 'SopOrg' }" title="List Organisasi"
-                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 group"
-                        active-class="bg-gray-200 dark:bg-gray-700">
-                        <BuildingIcon/>
+                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg hover:bg-gray-200 group"
+                        active-class="bg-gray-200">
+                        <BuildingIcon
+                            class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 fill-current" />
                         <span class="flex-1 ml-3 whitespace-nowrap">Organisasi</span>
                     </RouterLink>
                 </li>
                 <li>
+                    <button type="button"
+                        class="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200"
+                        aria-controls="dropdown-pages" data-collapse-toggle="dropdown-pages">
+                        <ScaleBalanced
+                            class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 fill-current" />
+                        <span class="flex-1 ml-3 text-left whitespace-nowrap">Hukum</span>
+                        <AngleDownIcon/>
+                    </button>
+                    <ul id="dropdown-pages" class="py-2 space-y-2">
+                        <li>
+                            <RouterLink :to="{ name: 'SopLawBasis' }" active-class="bg-gray-200"
+                                class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200">
+                                Dasar Hukum
+                            </RouterLink>
+                        </li>
+                        <li>
+                            <RouterLink :to="{ name: 'SopLawType' }" active-class="bg-gray-200"
+                                class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200">
+                                Jenis Peraturan
+                            </RouterLink>
+                        </li>
+                    </ul>
+                </li>
+                <li>
                     <RouterLink :to="{ name: 'SopFeedback' }" title="Komentar dan saran dari pengunjung terkait SOP"
-                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700 group"
-                        active-class="bg-gray-200 dark:bg-gray-700">
-                        <svg aria-hidden="true"
-                            class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
-                            fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M8.707 7.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l2-2a1 1 0 00-1.414-1.414L11 7.586V3a1 1 0 10-2 0v4.586l-.293-.293z">
-                            </path>
-                            <path
-                                d="M3 5a2 2 0 012-2h1a1 1 0 010 2H5v7h2l1 2h4l1-2h2V5h-1a1 1 0 110-2h1a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V5z">
-                            </path>
-                        </svg>
+                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg hover:bg-gray-200 group"
+                        active-class="bg-gray-200">
+                        <FeedbackIcon
+                            class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 fill-current" />
                         <span class="flex-1 ml-3 whitespace-nowrap">Umpan Balik</span>
                         <!-- <SidebarNominalIndicator :message-count="5" /> -->
                     </RouterLink>
                 </li>
             </ul>
-            <ul class="pt-5 mt-5 space-y-2 border-t border-gray-200 dark:border-gray-700">
+            <ul class="pt-5 mt-5 space-y-2 border-t border-gray-200">
                 <li>
                     <RouterLink :to="{ name: 'AppGuide' }"
-                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg transition duration-75 hover:bg-gray-200 dark:hover:bg-gray-700 dark:text-white group"
-                        active-class="bg-gray-200 dark:bg-gray-700">
-                        <HelpIcon/>
+                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg transition duration-75 hover:bg-gray-200 group"
+                        active-class="bg-gray-200">
+                        <HelpIcon
+                            class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 fill-current" />
                         <span class="ml-3">Panduan</span>
                     </RouterLink>
                 </li>

@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import dateNow from '@/utils/dateNow';
-import XMarkIcon from '@/components/icons/XMarkIcon.vue';
+import XMarkIcon from '@/assets/icons/XMarkIcon.vue';
 
 const items = ref(['Pelaksana 1', 'Pelaksana 2', 'Pelaksana 3']); // Daftar awal item
 const selectedItems = ref([]); // Menyimpan item yang dipilih

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "apexcharts": "^3.53.0",
+    "choices.js": "^11.0.2",
     "flowbite": "^2.5.1",
     "mermaid": "^11.2.1",
     "pinia": "^2.1.7",

@@ -2,8 +2,8 @@
 import { onMounted } from "vue";
 import { DataTable } from "simple-datatables";
 
-import IconSort from "@/components/icons/IconSort.vue";
-import IconEye from "@/components/icons/IconEye.vue";
+import IconSort from "@/assets/icons/IconSort.vue";
+import IconEye from "@/assets/icons/IconEye.vue";
 import GreenBadgeIndicator from "@/components/indicator/GreenBadgeIndicator.vue";
 import YellowBadgeIndicator from "@/components/indicator/YellowBadgeIndicator.vue";
 import RedBadgeIndicator from "@/components/indicator/RedBadgeIndicator.vue";

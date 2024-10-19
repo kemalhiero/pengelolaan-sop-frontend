@@ -2,11 +2,11 @@
 import { onMounted } from "vue";
 import { DataTable } from "simple-datatables";
 
-import IconSort from "@/components/icons/IconSort.vue";
-import IconEye from "@/components/icons/IconEye.vue";
+import IconSort from "@/assets/icons/IconSort.vue";
+import IconEye from "@/assets/icons/IconEye.vue";
 import GreenBadgeIndicator from "@/components/indicator/GreenBadgeIndicator.vue";
 import RedBadgeIndicator from "@/components/indicator/RedBadgeIndicator.vue";
-import CirclePlusIcon from "@/components/icons/CirclePlusIcon.vue";
+import CirclePlusIcon from "@/assets/icons/CirclePlusIcon.vue";
 
 
 const data = [
@@ -43,7 +43,7 @@ onMounted(() => {
                 <router-link :to="{ name: 'SopPropose' }">
                     <button
                         class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center dark:focus:ring-[#2557D6]/50 me-2 mb-2 ml-auto"
-                        title="Lihat detail dokumen">
+                        title="">
                         <CirclePlusIcon class="w-5 mr-3 fill-current" />
                         Tambah SOP Baru
                     </button>
