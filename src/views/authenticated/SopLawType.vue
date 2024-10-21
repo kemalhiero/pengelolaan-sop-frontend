@@ -2,12 +2,14 @@
 import { onMounted } from 'vue';
 import { initModals } from 'flowbite';
 import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
+import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
+import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 
 const data = [
-    { tipe: 'UUD 1945' },
-    { tipe: 'Undang-Undang' },
-    { tipe: 'Permenristekdikti' },
-    { tipe: 'Peraturan Rektor' },
+    { tipe: 'UUD 1945', jumlah: 0 },
+    { tipe: 'Undang-Undang', jumlah: 3 },
+    { tipe: 'Permenristekdikti', jumlah: 4 },
+    { tipe: 'Peraturan Rektor', jumlah: 2 },
 ]
 
 onMounted(() =>{
@@ -85,6 +87,9 @@ onMounted(() =>{
                                 Jenis Peraturan
                             </th>
                             <th scope="col" class="px-6 py-3">
+                                Jumlah terdaftar
+                            </th>
+                            <th scope="col" class="px-6 py-3">
                                 <span class="sr-only">Edit</span>
                             </th>
                         </tr>
@@ -99,9 +104,19 @@ onMounted(() =>{
                             <td class="px-6 py-4 text-black">
                                 {{ item.tipe }}
                             </td>
-                            <td class="px-6 py-4 text-right">
-                                <a href="#"
-                                    class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
+                            <td class="px-6 py-4 text-black">
+                                {{ item.jumlah }}
+                            </td>
+                            <td class="px-6 py-4 flex">
+                                <button :title="`Edit peraturan ${index + 1}`"
+                                    class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
+                                    <PenToSquareIcon class="fill-current w-4" />
+                                    <!-- Edit -->
+                                </button>
+                                <button :title="`Hapus peraturan ${index + 1}`" v-if="!item.jumlah"
+                                    class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
+                                    <TrashCanIcon class="fill-current w-4" />
+                                </button>
                             </td>
                         </tr>
                     </tbody>

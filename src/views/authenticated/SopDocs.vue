@@ -19,8 +19,8 @@ const data = [
 ]
 
 onMounted(() => {
-    if (document.getElementById("default-table") && typeof DataTable !== 'undefined') {
-        new DataTable(document.getElementById("default-table"), {
+    if (document.getElementById("sop-docs-table") && typeof DataTable !== 'undefined') {
+        new DataTable(document.getElementById("sop-docs-table"), {
             searchable: true,
             sortable: true,
         });
@@ -50,7 +50,7 @@ onMounted(() => {
                 </router-link>
             </div>
 
-            <table id="default-table" class="mx-auto">
+            <table id="sop-docs-table" class="mx-auto">
                 <thead>
                     <tr>
                         <th>
@@ -84,9 +84,9 @@ onMounted(() => {
                             </span>
                         </th>
                         <th>
-                            <span class="flex items-center">
+                            <!-- <span class="flex items-center">
                                 Aksi
-                            </span>
+                            </span> -->
                         </th>
                     </tr>
                 </thead>

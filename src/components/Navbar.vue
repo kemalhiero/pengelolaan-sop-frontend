@@ -85,13 +85,13 @@ onMounted(() => {
             <RouterLink to="/assignment" activeClass="text-blue-500" v-if="authStore.isLoggedIn"
               class="block py-2 px-3 md:p-0 rounded hover:bg-gray-100 md:hover:bg-transparent hover:text-blue-500">
               Penugasan
+              <!-- Notifikasi -->
+              <span
+                class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full transform translate-x-1/2 -translate-y-2">
+                9
+              </span>
             </RouterLink>
 
-            <!-- Notifikasi -->
-            <span
-              class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full transform translate-x-1/2 -translate-y-2">
-              9
-            </span>
 
           </li>
 

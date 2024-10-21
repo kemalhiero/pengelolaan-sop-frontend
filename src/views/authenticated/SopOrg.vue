@@ -1,4 +1,6 @@
 <script setup>
+import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
+
 const data = [
     { nama: 'Departemen Sistem Informasi', pj: 'Husnil Kamil', lvl: 'Departemen', ket: 'demi apa? demikian~' },
     { nama: 'Labor Dasar Komputasi', pj: 'Jefril Rahmadoni', lvl: 'Labor', ket: '-' },
@@ -56,8 +58,11 @@ const data = [
                                 {{ item.ket }}
                             </td>
                             <td class="px-6 py-4 text-right">
-                                <a href="#"
-                                    class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Edit</a>
+                                <button :title="`Edit organisasi ${index + 1}`"
+                                    class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
+                                    <PenToSquareIcon class="fill-current w-4" />
+                                    <!-- Edit -->
+                                </button>
                             </td>
                         </tr>
                     </tbody>

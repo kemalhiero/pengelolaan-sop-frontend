@@ -76,20 +76,24 @@
   import "choices.js/public/assets/styles/choices.css";
   
   // State untuk daftar dasar hukum dan form input
-  const dasarHukumList = ref([]);
   const newDasarHukum = ref('');
   const isModalOpen = ref(false);
   const choicesSelect = ref(null);
   let choices = null;
+  const dasarHukumList = ref([
+    { id: 1, name: 'Peraturan Pemerintah Nomor 95 Tahun 2021' },
+    { id: 2, name: 'Peraturan Rektor Nomor 8 Tahun 2022' },
+  ]);
   
   // Fetch data dasar hukum dari API
-  const fetchDasarHukum = () => {
-    // Simulasi API call
-    dasarHukumList.value = [
-      { id: 1, name: 'Peraturan Pemerintah Nomor 95 Tahun 2021' },
-      { id: 2, name: 'Peraturan Rektor Nomor 8 Tahun 2022' },
-    ];
-  };
+  // const fetchDasarHukum = () => {
+  //   // Simulasi API call
+  //   dasarHukumList.value = [
+  //     { id: 1, name: 'Peraturan Pemerintah Nomor 95 Tahun 2021' },
+  //     { id: 2, name: 'Peraturan Rektor Nomor 8 Tahun 2022' },
+  //   ];
+  //   console.log(dasarHukumList.value)
+  // };
   
   // Tambah dasar hukum baru ke dalam list dan Choices.js
   const addNewDasarHukum = () => {
@@ -147,7 +151,7 @@
   // Ketika komponen di-mount, inisialisasi Choices.js dan fetch data
   onMounted(() => {
     initChoices();
-    fetchDasarHukum();
+    // fetchDasarHukum();
   });
   </script>
   

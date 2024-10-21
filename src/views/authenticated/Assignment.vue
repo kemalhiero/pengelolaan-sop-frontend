@@ -3,11 +3,15 @@
     import { DataTable } from "simple-datatables";
     import IconSort from "@/assets/icons/IconSort.vue";
     import IconEye from "@/assets/icons/IconEye.vue";
+    import GreenBadgeIndicator from "@/components/indicator/GreenBadgeIndicator.vue";
+    import RedBadgeIndicator from "@/components/indicator/RedBadgeIndicator.vue";
+import YellowBadgeIndicator from "@/components/indicator/YellowBadgeIndicator.vue";
 
 
     const data = [
-        { nama: 'SOP Keuangan LEA', tanggal: '2024/25/09', organisasi: 'Labor', penugas: 'Adi Arga Arifnur', status: 'Selesai' },
-        { nama: 'SOP Pendaftaran Kerja Praktik', tanggal: '2024/03/09', organisasi: 'Departemen', penugas: 'Husnil Kamil', status: 'Belum Selesai' },
+        { nama: 'SOP Keuangan LEA', tanggal: '2024/25/09', organisasi: 'Labor', penugas: 'Adi Arga Arifnur', status: 'selesai' },
+        { nama: 'SOP Pendaftaran Kerja Praktik', tanggal: '2024/03/09', organisasi: 'Departemen', penugas: 'Husnil Kamil', status: 'blm-selesai' },
+        { nama: 'SOP Pendaftaran Seminar Kerja Praktik', tanggal: '2024/03/12', organisasi: 'Departemen', penugas: 'Husnil Kamil', status: 'batal' },
     ]
 
     onMounted(() => {
@@ -79,14 +83,19 @@
                     <td>{{ item.tanggal }}</td>
                     <td>{{ item.organisasi }}</td>
                     <td>{{ item.penugas }}</td>
-                    <td>{{ item.status }}</td>
                     <td>
-                        <router-link to="/assignment/detail">
+                        <GreenBadgeIndicator teks="Selesai" v-if="item.status == 'selesai' " />
+                        <YellowBadgeIndicator teks="Belum Selesai" v-else-if="item.status == 'blm-selesai'" />
+                        <RedBadgeIndicator teks="Batal" v-else-if="item.status == 'batal'" />
+                    </td>
+                    <td>
+                        <router-link to="/assignment/detail" v-if="item.status != 'selesai'">
                             <button class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center dark:focus:ring-[#2557D6]/50 me-2 mb-2" title="Lihat detail tugas">
                                 <IconEye class="w-5 mr-3 fill-current"/>
                                 Lihat
                             </button>
                         </router-link>
+                        <p v-else>-</p>
                     </td>
                 </tr>
             </tbody>
