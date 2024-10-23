@@ -7,8 +7,8 @@ import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 const steps = ref([
     {
         kegiatan: '',
+        tipeKegiatan: '',
         pelaksana: '',
-        tipePelaksana: '',
         perusahaan: '',
         kelengkapan: '',
         mutuBakuWaktu: '',
@@ -21,8 +21,8 @@ const steps = ref([
 const addStep = () => {
     steps.value.push({
         kegiatan: '',
+        tipeKegiatan: '',
         pelaksana: '',
-        tipePelaksana: '',
         perusahaan: '',
         kelengkapan: '',
         mutuBakuWaktu: '',
@@ -65,10 +65,15 @@ const removeStep = (index) => {
                             <input v-model="step.kegiatan" class="w-full p-2 border border-gray-300 rounded-md" />
                         </td>
                         <td class="px-2 py-3">
-                            <select v-model="step.tipePelaksana" class="w-full p-2 border border-gray-300 rounded-md">
-                                <option value="">Start/End</option>
-                                <option value="">Task</option>
-                                <option value="">Decision</option>
+                            <select v-model="step.tipeKegiatan" class="w-full p-2 border border-gray-300 rounded-md">
+                                <template v-if="index == 0">
+                                    <option value="" selected>Start</option>
+                                </template>
+                                <template v-else>
+                                    <option value="">Task</option>
+                                    <option value="">Decision</option>                                    
+                                    <option value="">End</option>
+                                </template>
                             </select>
                         </td>
                         <td class="px-2 py-3">
@@ -82,7 +87,20 @@ const removeStep = (index) => {
                             <input v-model="step.kelengkapan" class="w-full p-2 border border-gray-300 rounded-md" />
                         </td>
                         <td class="px-2 py-3">
-                            <input v-model="step.mutuBakuWaktu" class="w-full p-2 border border-gray-300 rounded-md" />
+                            <!-- <input v-model="step.mutuBakuWaktu" class="w-full p-2 border border-gray-300 rounded-md" /> -->
+                            <div class="flex items-center">
+                                <input type="number" v-model="step.mutuBakuWaktu" min="0"
+                                    class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 rounded-l-md w-16"
+                                    placeholder="">
+                                <select class="p-2 border border-gray-300 rounded-r-md w-20">
+                                    <option value="h">Jam</option>
+                                    <option value="m">Menit</option>
+                                    <option value="d">Hari</option>
+                                    <option value="w">Minggu</option>
+                                    <option value="mo">Bulan</option>
+                                    <option value="y">Tahun</option>
+                                </select>
+                            </div>
                         </td>
                         <td class="px-2 py-3">
                             <input v-model="step.output" class="w-full p-2 border border-gray-300 rounded-md" />

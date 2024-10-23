@@ -9,6 +9,7 @@ import GreenBadgeIndicator from "@/components/indicator/GreenBadgeIndicator.vue"
 import RedBadgeIndicator from "@/components/indicator/RedBadgeIndicator.vue";
 import CirclePlusIcon from "@/assets/icons/CirclePlusIcon.vue";
 import PenToSquareIcon from "@/assets/icons/PenToSquareIcon.vue";
+import TrashCanIcon from "@/assets/icons/TrashCanIcon.vue";
 
 const tipePeraturan = [
     { id: 'uu', tipe: 'Undang-Undang' },
@@ -44,7 +45,7 @@ onMounted(() => {
             </h1>
         </div>
 
-        <div class="container mx-auto p-8 lg:px-32">
+        <div class="container mx-auto p-8 lg:px-24">
 
             <!-- modal tambah aturan -->
             <div class="flex justify-end mb-4">
@@ -103,12 +104,16 @@ onMounted(() => {
                         </div>
                     </div>
                 </div>
-
             </div>
 
             <table id="default-table" class="mx-auto">
                 <thead>
                     <tr>
+                        <!-- <th class="text-black">
+                            <span class="flex items-center">
+                                No
+                            </span>
+                        </th> -->
                         <th class="text-black">
                             <span class="flex items-center">
                                 Jenis
@@ -133,12 +138,12 @@ onMounted(() => {
                                 <IconSort />
                             </span>
                         </th>
-                        <th class="text-black" title="Jumlah SOP yang menggunakan peraturan terkait">
+                        <!-- <th class="text-black" title="Jumlah SOP yang menggunakan peraturan terkait">
                             <span class="flex items-center">
                                 Jumlah
                                 <IconSort />
                             </span>
-                        </th>
+                        </th> -->
                         <th>
                             <!-- <span class="flex items-center">
                                 Aksi
@@ -148,12 +153,16 @@ onMounted(() => {
                 </thead>
                 <tbody>
                     <tr v-for="(item, index) in data" :key="index">
+                        <!-- <th scope="row">
+                            {{ index+1 }}
+                        </th> -->
                         <td class="text-black">{{ item.tipe }}</td>
                         <td class="text-black">{{ item.nomor }}</td>
                         <td class="text-black">{{ item.tahun }}</td>
                         <td class="text-black">{{ item.pembahasan }}</td>
-                        <td class="text-black">{{ item.jumlah }}</td>
-                        <td>
+                        <!-- <td class="text-black">{{ item.jumlah }}</td> -->
+                        <td class="inline-flex">
+                            <!-- Suntiang -->
                             <button :title="`Edit peraturan ${index + 1}`"
                                 :data-modal-target="`modal-law-edit-${index}`" :data-modal-toggle="`modal-law-edit-${index}`"
                                 class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
@@ -203,6 +212,34 @@ onMounted(() => {
                                                 Edit
                                             </button>
                                         </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Apuih -->
+                            <button title="Dapat dihapus karena belum ada sop yang menggunakan" :data-modal-target="`delete-modal-${index}`" :data-modal-toggle="`delete-modal-${index}`" v-if="!item.jumlah"
+                                class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
+                                <TrashCanIcon class="fill-current w-4" />
+                            </button>
+                            <div :id="`delete-modal-${index}`" tabindex="-1" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+                                <div class="relative p-4 w-full max-w-md max-h-full">
+                                    <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                                        <button type="button" class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" :data-modal-hide="`delete-modal-${index}`">
+                                            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                                            </svg>
+                                            <span class="sr-only">Close modal</span>
+                                        </button>
+                                        <div class="p-4 md:p-5 text-center">
+                                            <svg class="mx-auto mb-4 text-gray-400 w-12 h-12 dark:text-gray-200" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                            </svg>
+                                            <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">Anda yakin ingin menghapus data ini?</h3>
+                                            <button data-modal-hide="popup-modal" type="button" class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
+                                                Ya
+                                            </button>
+                                            <button :data-modal-hide="`delete-modal-${index}`" type="button" class="py-2.5 px-5 ms-3 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-red-500 focus:z-10 focus:ring-4 focus:ring-gray-100">Batal</button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

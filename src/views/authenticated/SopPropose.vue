@@ -68,47 +68,46 @@ const removeUser = (user) => {
     <main class="p-4 md:ml-64 h-auto pt-20">
 
         <div class="text-center mt-3 mb-7">
-            <h1 class="text-3xl font-extrabold leading-none tracking-tight text-gray-900 lg:text-4xl dark:text-white">
+            <h1 class="text-3xl font-extrabold leading-none tracking-tight text-gray-900 lg:text-4xl">
                 Usulkan POS baru
             </h1>
         </div>
 
-        <section class="bg-white dark:bg-gray-900">
+        <section class="bg-white">
             <div class="py-8 px-4 mx-auto max-w-3xl">
                 <form action="#">
                     <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
                         <div class="sm:col-span-2">
-                            <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                            <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
                                 Nama POS
                             </label>
                             <input type="text" name="name" id="name"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Contoh : Pengusulan Kerja Praktik (langsung judul, tanpa perlu 'SOP' atau 'POS' di awal)"
-                                required>
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
+                                placeholder="Contoh : Pengusulan Kerja Praktik (langsung judul, tanpa perlu 'SOP' atau 'POS' di awal)">
                         </div>
                         <div class="sm:col-span-2">
-                            <label for="name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                            <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
                                 Nomor POS
                             </label>
                             <div class="flex items-center">
                                 <span
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg p-2.5">
                                     T/
                                 </span>
                                 <input type="text" v-model="editablePart"
-                                    class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5"
                                     placeholder="Masukkan no urut sop">
                                 <span
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5">
                                     /UN16.17.02/OT.01.00/{{ new Date().getFullYear() }}
                                 </span>
                             </div>
                         </div>
                         <div>
                             <label for="org"
-                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Organisasi</label>
+                                class="block mb-2 text-sm font-medium text-gray-900">Organisasi</label>
                             <select id="org"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500">
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
                                 <option selected>Pilih organisasi</option>
                                 <option value="dsi">DSI</option>
                                 <option value="lea">LEA</option>
@@ -118,49 +117,49 @@ const removeUser = (user) => {
                             </select>
                         </div>
                         <div class="w-full">
-                            <label for="number" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                            <label for="sop-date-make" class="block mb-2 text-sm font-medium text-gray-900">
                                 Tanggal Pembuatan
                             </label>
-                            <input type="date" name="number" id="number"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
-                                placeholder="Masukkan tanggal" required>
+                            <input type="date" name="sop-date-make" id="sop-date-make"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
+                                placeholder="Masukkan tanggal">
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                            <label class="block mb-2 text-sm font-medium text-gray-900">
                                 Pelaksana
                             </label>
 
                             <div v-for="(item, index) in items" :key="index" class="flex items-center mb-2">
                                 <input type="checkbox" :id="`pelaksana-${index}`" :value="item" v-model="selectedItems"
-                                    class="bg-gray-50 border border-gray-300 text-primary-600 rounded focus:ring-primary-600 dark:bg-gray-700 dark:border-gray-600 dark:ring-offset-gray-800">
+                                    class="bg-gray-50 border border-gray-300 text-primary-600 rounded focus:ring-primary-600">
                                 <label :for="`pelaksana-${index}`"
-                                    class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                                    class="ml-2 text-sm font-medium text-gray-900">
                                     {{ item }}
                                 </label>
                             </div>
 
                             <div class="flex items-center">
-                                <input v-model="newItem" type="text" placeholder="Tambah pelaksana baru"
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
-                                <button @click="addItem"
+                                <input v-model="newItem" type="text" placeholder="Tambah pelaksana baru" @keyup.enter.prevent="addItem"
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5">
+                                <button @click="addItem" type="button"
                                     class="ml-2 text-sm text-white bg-primary-600 hover:bg-primary-700 p-2 rounded">
                                     Tambah
                                 </button>
                             </div>
 
-                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Pelaksana yang dipilih: {{
+                            <p class="mt-2 text-sm text-gray-500">Pelaksana yang dipilih: {{
                                 selectedItems.join(', ') }}</p>
                         </div>
 
                         <div class="sm:col-span-2">
                             <label for="description"
-                                class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Deskripsi</label>
+                                class="block mb-2 text-sm font-medium text-gray-900">Deskripsi</label>
                             <textarea id="description" rows="8"
-                                class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                                class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500"
                                 placeholder="Ketikkan deskripsi SOP disini..."></textarea>
                         </div>
                         <div class="sm:col-span-2">
-                            <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="search">
+                            <label class="block mb-2 text-sm font-medium text-gray-900" for="search">
                                 Penugasan
                             </label>
                             <input type="text" id="search" v-model="searchQuery" @input="searchUser"
@@ -194,8 +193,8 @@ const removeUser = (user) => {
 
                         </div>
                     </div>
-                    <button type="submit"
-                        class="inline-flex items-center px-5 py-2.5 mt-4 sm:mt-6 text-sm font-medium text-center text-white bg-primary-700 rounded-lg focus:ring-4 focus:ring-primary-200 dark:focus:ring-primary-900 hover:bg-primary-800">
+                    <button type="button"
+                        class="inline-flex items-center px-5 py-2.5 mt-4 sm:mt-6 text-sm font-medium text-center text-white bg-primary-700 rounded-lg focus:ring-4 focus:ring-primary-200 hover:bg-primary-800">
                         Mulai buat SOP baru
                     </button>
                 </form>

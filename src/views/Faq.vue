@@ -32,7 +32,7 @@ onMounted(() => {
 
     <div class="text-center mt-16 mb-8 mx-12 lg:mx-40">
         <h1
-            class="mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-4xl lg:text-5xl dark:text-white">
+            class="mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-4xl lg:text-5xl">
             Frequently Asked Question</h1>
         <p class="text-lg font-normal lg:text-xl sm:px-16 xl:px-48">
             Berikut merupakan daftar pertanyaan yang sering diajukan dalam proses pengelolaan SOP di Departemen Sistem Informasi Universitas Andalas.
@@ -43,13 +43,13 @@ onMounted(() => {
         <template v-for="(item, index) in dataFaq">
             <h2 :id="`accordion-faq-heading-${index}`">
                 <button type="button"
-                    class="flex items-center justify-between w-full py-5 font-medium border-b border-gray-200 gap-3"
+                    class="flex items-center justify-between w-full py-5 font-medium border-b border-gray-300 gap-3 px-4"
                     :data-accordion-target="`#accordion-faq-body-${index}`" aria-expanded="true" aria-controls="accordion-faq-body-1">
-                    <span class="text-xl text-left">{{ item.q }}</span>
+                    <span class="text-xl text-left text-black">{{ item.q }}</span>
                     <IconAngle />
                 </button>
             </h2>
-            <div :id="`accordion-faq-body-${index}`" class="hidden" :aria-labelledby="`accordion-faq-heading-${index}`">
+            <div :id="`accordion-faq-body-${index}`" class="hidden px-4" :aria-labelledby="`accordion-faq-heading-${index}`">
                 <div class="py-5 border-b border-gray-200">
                     <p class="mb-2">{{ item.a }}</p>
                 </div>
