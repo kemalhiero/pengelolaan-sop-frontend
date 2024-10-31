@@ -19,12 +19,12 @@ const data = [
 ]
 
 onMounted(() => {
-    if (document.getElementById("default-table") && typeof DataTable !== 'undefined') {
-        new DataTable(document.getElementById("default-table"), {
-            searchable: true,
-            sortable: true,
-        });
-    }
+  if (document.getElementById("default-table") && typeof DataTable !== 'undefined') {
+    new DataTable(document.getElementById("default-table"), {
+      searchable: true,
+      sortable: true,
+    });
+  }
 })
 </script>
 
@@ -81,9 +81,9 @@ onMounted(() => {
                         <td>{{ item.umpan_balik }}</td>
                         <td>{{ item.tanggal }}</td>
                         <td>
-                            <GreenBadgeIndicator teks="Sudah ditindaklanjuti" v-if="item.is_followed_up_yet == 'sudah'" />
-                            <YellowBadgeIndicator teks="Sedang diproses" v-if="item.is_followed_up_yet == 'belum'" />
-                            <RedBadgeIndicator teks="Batal / Spam" v-if="item.is_followed_up_yet == 'spam'" />
+                            <GreenBadgeIndicator teks="Sudah ditindaklanjuti" v-if="item.is_followed_up_yet === 'sudah'" />
+                            <YellowBadgeIndicator teks="Sedang diproses" v-if="item.is_followed_up_yet === 'belum'" />
+                            <RedBadgeIndicator teks="Batal / Spam" v-if="item.is_followed_up_yet === 'spam'" />
                         </td>
                         <td>
                             <!-- <router-link :to="{ name: 'DetailSop' }"> -->

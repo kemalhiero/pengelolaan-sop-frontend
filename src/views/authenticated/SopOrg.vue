@@ -1,19 +1,63 @@
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import { initModals } from 'flowbite';
 import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
+import { getOrg, createOrg, updateOrg, deleteOrg } from '@/api/orgApi.js';
 
-const data = [
-    { nama: 'Departemen Sistem Informasi', pj: 'Husnil Kamil', lvl: 'Departemen', ket: 'demi apa? demikian~' },
-    { nama: 'Labor Dasar Komputasi', pj: 'Jefril Rahmadoni', lvl: 'Labor', ket: '-' },
-    { nama: 'Labor Enterprise Application', pj: 'Adi Arga', lvl: 'Labor', ket: '-' },
-    { nama: 'Labor Geographic Information System', pj: 'Surya Afnarius', lvl: 'Labor', ket: '-' },
-    { nama: 'Labor Business Intellegence', pj: 'Dwi Welly', lvl: 'Labor', ket: '-' },
-]
+// const data = [
+//     { name: 'Departemen Sistem Informasi', pic: 'Husnil Kamil', level: 'Departemen', about: 'demi apa? demikian~' },
+//     { name: 'Labor Dasar Komputasi', pic: 'Jefril Rahmadoni', level: 'Labor', about: '-' },
+//     { name: 'Labor Enterprise Application', pic: 'Adi Arga', level: 'Labor', about: '-' },
+//     { name: 'Labor Geographic Information System', pic: 'Surya Afnarius', level: 'Labor', about: '-' },
+//     { name: 'Labor Business Intellegence', pic: 'Dwi Welly', level: 'Labor', about: '-' },
+// ]
+
+const data = ref([]);
+const form = ref({
+    id_pic: '',
+    name: '',
+    level: '',
+    about: '',
+    id_org_parent: null
+});
+
+const fetchData = async () => {
+  try {
+    const result = await getOrg();
+    data.value = result.data;
+  } catch (error) {
+    console.error('Error fetching items:', error);
+  }
+};
+
+const addData = async () => {
+  try {
+    const newItem = { 
+        id_pic: form.value.id_pic||'oyoyooy',
+        name: form.value.name,
+        level: form.value.level,
+        about: form.value.about,
+        id_org_parent: form.value.id_org_parent,
+     };
+    await createOrg(newItem);
+
+    form.value.id_pic = '';
+    form.value.name = '';
+    form.value.level = '';
+    form.value.about = '';
+    form.value.id_org_parent = null;
+
+    fetchData(); // refresh item list
+  } catch (error) {
+    console.error('Error adding item:', error);
+  }
+};
+
 
 onMounted(() => {
     initModals();
+    fetchData()
 })
 
 </script>
@@ -27,18 +71,18 @@ onMounted(() => {
             </h1>
         </div>
 
-        <div class="container mx-auto p-8 lg:px-32">
+        <div class="container mx-auto p-8 lg:px-16">
 
             <!-- modal tambah aturan -->
             <div class="flex justify-end mb-4">
-                <button data-modal-target="modal-law-input" data-modal-toggle="modal-law-input"
+                <button data-modal-target="modal-org-input" data-modal-toggle="modal-org-input"
                     class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center me-2 mb-2 ml-auto"
                     title="" type="button">
                     <CirclePlusIcon class="w-5 mr-3 fill-current" />
                     Input Organisasi Baru
                 </button>
 
-                <div id="modal-law-input" tabindex="-1" aria-hidden="true"
+                <div id="modal-org-input" tabindex="-1" aria-hidden="true"
                     class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
                     <div class="relative p-4 w-full max-w-md max-h-full">
                         <!-- Modal content -->
@@ -50,7 +94,7 @@ onMounted(() => {
                                 </h3>
                                 <button type="button"
                                     class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
-                                    data-modal-toggle="modal-law-input">
+                                    data-modal-toggle="modal-org-input">
                                     <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                                         fill="none" viewBox="0 0 14 14">
                                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
@@ -60,12 +104,12 @@ onMounted(() => {
                                 </button>
                             </div>
                             <!-- Modal body -->
-                            <form class="p-4 md:p-5">
+                            <form class="p-4 md:p-5" @submit.prevent="addData">
                                 <div class="grid gap-4 mb-4 grid-cols-2">
                                     <div class="col-span-2">
                                         <label for="name"
                                             class="block mb-2 text-sm font-medium text-gray-900">Nama</label>
-                                        <input type="text" name="name" id="name"
+                                        <input type="text" id="name" v-model="form.name"
                                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                                             placeholder="Mis. Laboratorium Aplikasi Perusahaan" required>
                                     </div>
@@ -73,7 +117,7 @@ onMounted(() => {
                                         <label for="pic" class="block mb-2 text-sm font-medium text-gray-900">
                                             Penanggung Jawab
                                         </label>
-                                        <select id="pic"
+                                        <select id="pic" v-model="form.id_pic"
                                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
                                             <option value="">Pilih PJ</option>
                                             <option value="">Husnil Kamil</option>
@@ -85,22 +129,22 @@ onMounted(() => {
                                         <label for="level" class="block mb-2 text-sm font-medium text-gray-900">
                                             Level
                                         </label>
-                                        <select id="level"
+                                        <select id="level" v-model="form.level"
                                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                                            <!-- <option selected>Pilih level</option> -->
-                                            <option value="">Laboratorium</option>
-                                            <option value="">Departemen</option>
+                                            <option selected>Pilih level</option>
+                                            <option value="laboratorium">Laboratorium</option>
+                                            <option value="departemen">Departemen</option>
                                         </select>
                                     </div>
                                     <div class="col-span-2">
                                         <label for="explanation"
                                             class="block mb-2 text-sm font-medium text-gray-900">Keterangan</label>
-                                        <textarea id="explanation" rows="4"
+                                        <textarea id="explanation" rows="4" v-model="form.about"
                                             class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                                             placeholder="ketikkan keterangan tambahan mengenai organisasi"></textarea>
                                     </div>
                                 </div>
-                                <button type="submit"
+                                <button type="submit" data-modal-toggle="modal-org-input"
                                     class="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
                                     <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
                                         xmlns="http://www.w3.org/2000/svg">
@@ -139,17 +183,17 @@ onMounted(() => {
                     </thead>
                     <tbody>
                         <tr v-for="(item, index) in data" :key="index" class="bg-white border-b">
-                            <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                                {{ item.nama }}
+                            <th scope="row" class="px-6 py-4 font-medium text-gray-900">
+                                {{ item.name }}
                             </th>
                             <td class="px-6 py-4">
-                                {{ item.pj }}
+                                {{ item.pic }}
                             </td>
                             <td class="px-6 py-4">
-                                {{ item.lvl }}
+                                {{ item.level }}
                             </td>
                             <td class="px-6 py-4">
-                                {{ item.ket }}
+                                {{ item.about }}
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <button :title="`Edit organisasi ${index + 1}`"

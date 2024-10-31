@@ -58,12 +58,12 @@ const router = createRouter({
       component: () => import('@/views/authenticated/SopOrg.vue')
     },
     {
-      path: '/app/law',
+      path: '/app/lawbasis',
       name: 'SopLawBasis',
       component: () => import('@/views/authenticated/SopLawBasis.vue')
     },
     {
-      path: '/app/law/type',
+      path: '/app/lawtype',
       name: 'SopLawType',
       component: () => import('@/views/authenticated/SopLawType.vue')
     },

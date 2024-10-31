@@ -5,7 +5,7 @@ import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 
-import { API_BASE_URL } from '@/utils/api';
+import { API_BASE_URL } from '@/api/apiClient';
 import PulseLoading from '@/components/PulseLoading.vue';
 import SuccessToast from '@/components/toast/SuccessToast.vue';
 import DangerToast from '@/components/toast/DangerToast.vue';

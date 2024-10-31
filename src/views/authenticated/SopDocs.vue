@@ -10,12 +10,12 @@ import CirclePlusIcon from "@/assets/icons/CirclePlusIcon.vue";
 
 
 const data = [
-    { nama: 'SOP Bimbingan Akademik', tanggal: '2021/25/09', organisasi: 'Departemen', applicable: true },
-    { nama: 'SOP Keuangan LEA', tanggal: '2024/25/09', organisasi: 'Labor', applicable: false },
-    { nama: 'SOP Pengadaan Barang Habis Pakai', tanggal: '2024/02/09', organisasi: 'Labor', applicable: true },
-    { nama: 'SOP Pelaksanaan Kerja Praktik', tanggal: '2024/01/09', organisasi: 'Departemen', applicable: true },
-    { nama: 'SOP Pendaftaran Kerja Praktik', tanggal: '2024/03/09', organisasi: 'Departemen', applicable: true },
-    { nama: 'SOP Perubahan Nilai Mata Kuliah', tanggal: '2024/03/09', organisasi: 'Departemen', applicable: false },
+    { no: 'T/003/UN16.17.02/OT.01.00/2024', nama: 'SOP Bimbingan Akademik', organisasi: 'Departemen', applicable: true },
+    { no: 'T/002/UN16.17.02/OT.01.00/2022', nama: 'SOP Keuangan LEA', organisasi: 'Labor', applicable: false },
+    { no: 'T/001/UN16.17.02/OT.01.00/2021', nama: 'SOP Pengadaan Barang Habis Pakai', organisasi: 'Labor', applicable: true },
+    { no: 'T/004/UN16.17.02/OT.01.00/2023', nama: 'SOP Pelaksanaan Kerja Praktik', organisasi: 'Departemen', applicable: true },
+    { no: 'T/005/UN16.17.02/OT.01.00/2023', nama: 'SOP Pendaftaran Kerja Praktik', organisasi: 'Departemen', applicable: true },
+    { no: 'T/002/UN16.17.02/OT.01.00/2023', nama: 'SOP Perubahan Nilai Mata Kuliah', organisasi: 'Departemen', applicable: false },
 ]
 
 onMounted(() => {
@@ -37,7 +37,7 @@ onMounted(() => {
             </h1>
         </div>
 
-        <div class="container mx-auto p-8 lg:px-32">
+        <div class="container mx-auto p-8 lg:px-16">
 
             <div class="flex justify-end mb-4">
                 <router-link :to="{ name: 'SopPropose' }">
@@ -55,16 +55,22 @@ onMounted(() => {
                     <tr>
                         <th>
                             <span class="flex items-center">
+                                No
+                                <IconSort />
+                            </span>
+                        </th>
+                        <th>
+                            <span class="flex items-center">
                                 Nama
                                 <IconSort />
                             </span>
                         </th>
-                        <th data-type="date" data-format="YYYY/DD/MM" title="Tanggal Pembuatan">
+                        <!-- <th data-type="date" data-format="YYYY/DD/MM" title="Tanggal Pembuatan">
                             <span class="flex items-center">
                                 Tanggal
                                 <IconSort />
                             </span>
-                        </th>
+                        </th> -->
                         <th>
                             <span class="flex items-center">
                                 Organisasi
@@ -92,8 +98,9 @@ onMounted(() => {
                 </thead>
                 <tbody>
                     <tr v-for="(item, index) in data" :key="index">
-                        <td class="font-medium text-gray-900 whitespace-nowrap dark:text-white">{{ item.nama }}</td>
-                        <td>{{ item.tanggal }}</td>
+                        <td class="text-black">{{ item.no }}</td>
+                        <td class="font-medium text-gray-900 whitespace-nowrap">{{ item.nama }}</td>
+                        <!-- <td>{{ item.tanggal }}</td> -->
                         <td>{{ item.organisasi }}</td>
                         <td>
                             <GreenBadgeIndicator teks="Berlaku" v-if="item.applicable == true" />
