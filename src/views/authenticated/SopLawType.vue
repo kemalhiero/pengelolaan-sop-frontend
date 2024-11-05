@@ -5,64 +5,45 @@ import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 
-import { API_BASE_URL } from '@/api/apiClient';
 import PulseLoading from '@/components/PulseLoading.vue';
 import SuccessToast from '@/components/toast/SuccessToast.vue';
 import DangerToast from '@/components/toast/DangerToast.vue';
-const data = ref(null);
+import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
+import { getLawType, createLawType, updateLawType, deleteLawType } from '@/api/lawTypeApi';
+
+const data = ref([]);
+const form = ref({
+    law_type: '',
+    description: ''
+});
+const isSucces = ref(null);
+const operation = ref('');
 
 // Fungsi untuk fetch data dari API
 const fetchData = async () => {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/lawtype`, {
-            method: 'GET'
-        });
-
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-
-        const result = await response.json();
+        const result = await getLawType();
         data.value = result.data; // Menyimpan data yang di-fetch
     } catch (error) {
         console.error('Fetch error:', error);
     }
 };
 
-// Variabel reaktif untuk menyimpan data form
-const isSucces = ref(null);
-const operation = ref('')
-const law_type = ref('');
-const description = ref('');
 
 // Fungsi untuk mengirim data ke API dengan metode POST
 const submitData = async () => {
-
     operation.value = 'post'
-
     try {
-        const response = await fetch(`${API_BASE_URL}/api/lawtype`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                law_type: law_type.value,
-                description: description.value,
-            }),
-        });
+        const newItem = {
+            law_type: form.value.law_type,
+            description: form.value.description,
+        };
 
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-            isSucces.value = 'no'
-        }
+        await createLawType(newItem);
 
-        law_type.value = '';  // Mengosongkan form setelah pengiriman
-        description.value = '';
+        form.value.law_type = '';  // Mengosongkan form setelah pengiriman
+        form.value.description = '';
         isSucces.value = 'yes'
-
-        law_type.value = ''
-        description.value = ''
 
         fetchData();
 
@@ -87,24 +68,10 @@ const closeDeleteModal = () => {
 };
 
 const deleteData = async (id) => {  // Fungsi untuk menghapus data berdasarkan ID
-
     operation.value = 'delete'
-
     try {
-        const response = await fetch(`${API_BASE_URL}/api/lawtype?id=${id}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                law_type: law_type.value,
-                description: description.value,
-            }),
-        });
-
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
+        const response = await deleteLawType(id);
+        console.log(response);
 
         // Lakukan penghapusan item dari array data
         data.value = data.value.filter(item => item.id_law_type !== id);
@@ -126,17 +93,17 @@ let dataYangDitemukan;
 const openUpdateModal = (id) => {
     selectedUpdateId.value = id; // Menyimpan ID yang dipilih
     showModalUpdate.value = true; // Tampilkan modal
-    const dataLawType = data.value;
+    const dataModal = data.value;
 
-    for (let i = 0; i < dataLawType.length; i++) {
-        if (dataLawType[i].id_law_type === id) {
-            dataYangDitemukan = dataLawType[i];
+    for (let i = 0; i < dataModal.length; i++) {
+        if (dataModal[i].id_law_type === id) {
+            dataYangDitemukan = dataModal[i];
             break; // Keluar dari loop setelah data ditemukan
         }
     }
 
-    law_type.value = dataYangDitemukan.law_type
-    description.value = dataYangDitemukan.description
+    form.value.law_type = dataYangDitemukan.law_type
+    form.value.description = dataYangDitemukan.description
 
     if (dataYangDitemukan) {
         console.log(dataYangDitemukan);
@@ -149,27 +116,20 @@ const closeUpdateModal = () => {
     showModalUpdate.value = false; // Sembunyikan modal
     selectedUpdateId.value = null; // Reset ID setelah modal ditutup
 
-    law_type.value = ''
-    description.value = ''
+    form.value.law_type = ''
+    form.value.description = ''
 };
 
 const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan ID
-
     operation.value = 'update'
-
     try {
-        const response = await fetch(`${API_BASE_URL}/api/lawtype?id=${id}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                law_type: law_type.value,
-                description: description.value,
-            }),
-        });
+        const newItem = {
+            law_type: form.value.law_type,
+            description: form.value.description
+        };
 
-        if (!response.ok) throw new Error('Network response was not ok');
+        const response = await updateLawType(id, newItem);
+        console.log(response);
 
         isSucces.value = 'yes'
         console.log(`Data dengan ID ${id} berhasil diperbarui`);
@@ -207,7 +167,7 @@ onMounted(() => {
             </h1>
         </div>
 
-        <div class="container mx-auto p-8 lg:px-32">
+        <div class="container mx-auto p-8 lg:px-16">
 
             <!-- modal tambah aturan -->
             <div class="flex justify-end mb-4">
@@ -233,11 +193,7 @@ onMounted(() => {
                                 <button type="button"
                                     class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
                                     data-modal-toggle="crud-modal">
-                                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                        fill="none" viewBox="0 0 14 14">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                            stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
-                                    </svg>
+                                    <XMarkCloseIcon/>
                                     <span class="sr-only">Tutup modal</span>
                                 </button>
                             </div>
@@ -248,14 +204,14 @@ onMounted(() => {
                                     <div class="col-span-2">
                                         <label for="law_type" class="block mb-2 text-sm font-medium text-gray-900">Jenis
                                             peraturan</label>
-                                        <input type="text" v-model="law_type"
+                                        <input type="text" v-model="form.law_type"
                                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                                             placeholder="Mis. Peraturan Presiden" required>
                                     </div>
                                     <div class="col-span-2">
                                         <label for="description"
                                             class="block mb-2 text-sm font-medium text-gray-900">Deskripsi</label>
-                                        <textarea id="description" rows="4" v-model="description"
+                                        <textarea id="description" rows="4" v-model="form.description"
                                             class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                                             placeholder="ketikkan deskripsi disini..."></textarea>
                                     </div>
@@ -313,8 +269,7 @@ onMounted(() => {
                                         class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
                                         <PenToSquareIcon class="fill-current w-4" />
                                     </button>
-                                    <button :title="`Hapus item ${index + 1}`"
-                                        @click="openDeleteModal(item.id_law_type)"
+                                    <button :title="`Hapus item ${index + 1}`" @click="openDeleteModal(item.id_law_type)"
                                         class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
                                         <TrashCanIcon class="fill-current w-4" />
                                     </button>
@@ -332,18 +287,14 @@ onMounted(() => {
         <!-- modal hapus -->
         <div v-if="showModalDelete" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
             <!-- Overlay gelap -->
-            <div class="fixed inset-0 bg-gray-800 bg-opacity-30"></div>
+            <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="closeDeleteModal"></div>
 
             <!-- Modal Konten -->
             <div class="relative p-4 w-full max-w-md max-h-full z-10">
                 <div class="relative bg-white rounded-lg shadow">
                     <button type="button" @click="closeDeleteModal"
-                        class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white">
-                        <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
-                            viewBox="0 0 14 14">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
-                        </svg>
+                        class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center">
+                        <XMarkCloseIcon/>
                         <span class="sr-only">Tutup modal</span>
                     </button>
                     <div class="p-4 md:p-5 text-center">
@@ -371,7 +322,7 @@ onMounted(() => {
         <div v-if="showModalUpdate" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
 
             <!-- Overlay gelap -->
-            <div class="fixed inset-0 bg-gray-800 bg-opacity-30"></div>
+            <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="closeUpdateModal"></div>
 
             <!-- Modal content -->
             <div class="relative p-4 w-full max-w-md max-h-full z-10">
@@ -384,11 +335,7 @@ onMounted(() => {
                         </h3>
                         <button type="button" @click="closeUpdateModal"
                             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">
-                            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                viewBox="0 0 14 14">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                    stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
-                            </svg>
+                            <XMarkCloseIcon/>
                             <span class="sr-only">Tutup modal</span>
                         </button>
                     </div>
@@ -397,16 +344,16 @@ onMounted(() => {
                     <form class="p-4 md:p-5" @submit.prevent="updateData(selectedUpdateId)">
                         <div class="grid gap-4 mb-4 grid-cols-2">
                             <div class="col-span-2">
-                                <label for="law_type" class="block mb-2 text-sm font-medium text-gray-900">Jenis
+                                <label  class="block mb-2 text-sm font-medium text-gray-900" for="law_type">Jenis
                                     peraturan</label>
-                                <input type="text" v-model="law_type"
+                                <input type="text" v-model="form.law_type" id="law_type"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-yellow-300 focus:border-yellow-300 block w-full p-2.5"
                                     placeholder="Mis. Peraturan Presiden" required>
                             </div>
                             <div class="col-span-2">
                                 <label for="description"
                                     class="block mb-2 text-sm font-medium text-gray-900">Deskripsi</label>
-                                <textarea id="description" rows="4" v-model="description"
+                                <textarea id="description" rows="4" v-model="form.description"
                                     class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-yellow-300 focus:border-yellow-300"
                                     placeholder="ketikkan deskripsi disini..."></textarea>
                             </div>

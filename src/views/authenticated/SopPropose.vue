@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import dateNow from '@/utils/dateNow';
-import XMarkIcon from '@/assets/icons/XMarkIcon.vue';
+import XMarkDeleteIcon from '@/assets/icons/XMarkDeleteIcon.vue';
 
 const items = ref(['Pelaksana 1', 'Pelaksana 2', 'Pelaksana 3']); // Daftar awal item
 const selectedItems = ref([]); // Menyimpan item yang dipilih
@@ -185,7 +185,7 @@ const removeUser = (user) => {
                                         class="flex items-center py-1 px-3">
                                         {{ user.name }}
                                         <button @click="removeUser(user)" class="ml-2" title="Hapus user ini">
-                                            <XMarkIcon class="w-4 fill-red-600" />
+                                            <XMarkDeleteIcon class="w-4 fill-red-600" />
                                         </button>
                                     </li>
                                 </ul>
