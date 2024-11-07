@@ -1,11 +1,15 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { initModals } from 'flowbite';
+import { getOrg, createOrg, updateOrg, deleteOrg } from '@/api/orgApi.js';
+
 import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
-import { getOrg, createOrg, updateOrg, deleteOrg } from '@/api/orgApi.js';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
+import SuccessToast from '@/components/toast/SuccessToast.vue';
+import DangerToast from '@/components/toast/DangerToast.vue';
+import ExclamationMarkIcon from '@/assets/icons/ExclamationMarkIcon.vue';
 
 const data = ref([]);
 const form = ref({
@@ -44,10 +48,12 @@ const addData = async () => {
         form.value.level = '';
         form.value.about = '';
         form.value.id_org_parent = null;
+        isSucces.value = 'yes'
 
         fetchData(); // refresh item list
     } catch (error) {
         console.error('Error adding item:', error);
+        isSucces.value = 'no';
     }
 };
 
@@ -78,8 +84,8 @@ const deleteData = async (id) => {  // Fungsi untuk menghapus data berdasarkan I
 
         console.log(`Data dengan ID ${id} berhasil dihapus`);
     } catch (error) {
-        isSucces.value = 'no'
         console.error('Delete error:', error);
+        isSucces.value = 'no';
     }
 };
 
@@ -146,8 +152,8 @@ const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan I
         closeUpdateModal(); // Tutup modal setelah penghapusan
 
     } catch (error) {
-        isSucces.value = 'no'
         console.error('Update error:', error);
+        isSucces.value = 'no';
     }
 };
 
@@ -160,6 +166,13 @@ onMounted(() => {
 
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
+
+        <SuccessToast v-if="isSucces == 'yes' && operation == 'post'" teks="Data Berhasil Ditambahkan!" />
+        <SuccessToast v-else-if="isSucces == 'yes' && operation == 'update'" teks="Data Berhasil Diperbarui!" />
+        <SuccessToast v-else-if="isSucces == 'yes' && operation == 'delete'" teks="Data Berhasil Dihapus!" />
+        <DangerToast v-else-if="isSucces == 'no' && operation == 'post'" teks="Data Gagal Ditambahkan" />
+        <DangerToast v-else-if="isSucces == 'no' && operation == 'update'" teks="Data Gagal Diperbarui" />
+        <DangerToast v-else-if="isSucces == 'no' && operation == 'delete'" teks="Data Gagal Dihapus" />
 
         <div class="text-center mt-3 mb-7">
             <h1 class="text-3xl font-extrabold leading-none tracking-tight text-gray-900 lg:text-4xl dark:text-white">
@@ -191,11 +204,7 @@ onMounted(() => {
                                 <button type="button"
                                     class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
                                     data-modal-toggle="modal-org-input">
-                                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                        fill="none" viewBox="0 0 14 14">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                            stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
-                                    </svg>
+                                    <XMarkCloseIcon class="w-3 h-3"/>
                                     <span class="sr-only">Tutup modal</span>
                                 </button>
                             </div>
@@ -326,7 +335,7 @@ onMounted(() => {
                         </h3>
                         <button type="button" @click="closeUpdateModal"
                             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">
-                            <XMarkCloseIcon/>
+                            <XMarkCloseIcon class="w-3 h-3"/>
                             <span class="sr-only">Tutup modal</span>
                         </button>
                     </div>
@@ -379,15 +388,11 @@ onMounted(() => {
                 <div class="relative bg-white rounded-lg shadow">
                     <button type="button" @click="closeDeleteModal"
                         class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center">
-                        <XMarkCloseIcon/>
+                        <XMarkCloseIcon class="w-3 h-3"/>
                         <span class="sr-only">Tutup modal</span>
                     </button>
                     <div class="p-4 md:p-5 text-center">
-                        <svg class="mx-auto mb-4 text-gray-400 w-12 h-12 dark:text-gray-200" aria-hidden="true"
-                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                        </svg>
+                        <ExclamationMarkIcon class="mx-auto mb-4 text-gray-400 w-12 h-12"/>
                         <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
                             Anda yakin ingin menghapus data ini?</h3>
                         <button @click="deleteData(selectedDeleteId)"

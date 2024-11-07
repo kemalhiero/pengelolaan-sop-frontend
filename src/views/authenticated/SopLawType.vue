@@ -1,15 +1,16 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { initModals } from 'flowbite';
+import { getLawType, createLawType, updateLawType, deleteLawType } from '@/api/lawTypeApi';
+
 import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
-
 import PulseLoading from '@/components/PulseLoading.vue';
 import SuccessToast from '@/components/toast/SuccessToast.vue';
 import DangerToast from '@/components/toast/DangerToast.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
-import { getLawType, createLawType, updateLawType, deleteLawType } from '@/api/lawTypeApi';
+import ExclamationMarkIcon from '@/assets/icons/ExclamationMarkIcon.vue';
 
 const data = ref([]);
 const form = ref({
@@ -34,16 +35,13 @@ const fetchData = async () => {
 const submitData = async () => {
     operation.value = 'post'
     try {
-        const newItem = {
-            law_type: form.value.law_type,
-            description: form.value.description,
+        await createLawType(form.value);
+
+        isSucces.value = 'yes';
+        form.value = {
+            law_type: '',
+            description: ''
         };
-
-        await createLawType(newItem);
-
-        form.value.law_type = '';  // Mengosongkan form setelah pengiriman
-        form.value.description = '';
-        isSucces.value = 'yes'
 
         fetchData();
 
@@ -116,19 +114,17 @@ const closeUpdateModal = () => {
     showModalUpdate.value = false; // Sembunyikan modal
     selectedUpdateId.value = null; // Reset ID setelah modal ditutup
 
-    form.value.law_type = ''
-    form.value.description = ''
+    form.value = {
+        law_type: '',
+        description: ''
+    };
 };
 
 const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan ID
     operation.value = 'update'
     try {
-        const newItem = {
-            law_type: form.value.law_type,
-            description: form.value.description
-        };
 
-        const response = await updateLawType(id, newItem);
+        const response = await updateLawType(id, form.value);
         console.log(response);
 
         isSucces.value = 'yes'
@@ -193,7 +189,7 @@ onMounted(() => {
                                 <button type="button"
                                     class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
                                     data-modal-toggle="crud-modal">
-                                    <XMarkCloseIcon/>
+                                    <XMarkCloseIcon class="w-3 h-3"/>
                                     <span class="sr-only">Tutup modal</span>
                                 </button>
                             </div>
@@ -294,15 +290,11 @@ onMounted(() => {
                 <div class="relative bg-white rounded-lg shadow">
                     <button type="button" @click="closeDeleteModal"
                         class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center">
-                        <XMarkCloseIcon/>
+                        <XMarkCloseIcon class="w-3 h-3"/>
                         <span class="sr-only">Tutup modal</span>
                     </button>
                     <div class="p-4 md:p-5 text-center">
-                        <svg class="mx-auto mb-4 text-gray-400 w-12 h-12 dark:text-gray-200" aria-hidden="true"
-                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                        </svg>
+                        <ExclamationMarkIcon class="mx-auto mb-4 text-gray-400 w-12 h-12"/>
                         <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
                             Anda yakin ingin menghapus data ini?</h3>
                         <button @click="deleteData(selectedDeleteId)"
@@ -335,7 +327,7 @@ onMounted(() => {
                         </h3>
                         <button type="button" @click="closeUpdateModal"
                             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">
-                            <XMarkCloseIcon/>
+                            <XMarkCloseIcon class="w-3 h-3"/>
                             <span class="sr-only">Tutup modal</span>
                         </button>
                     </div>
