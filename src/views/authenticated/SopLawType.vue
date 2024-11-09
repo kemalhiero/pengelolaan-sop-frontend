@@ -91,17 +91,9 @@ let dataYangDitemukan;
 const openUpdateModal = (id) => {
     selectedUpdateId.value = id; // Menyimpan ID yang dipilih
     showModalUpdate.value = true; // Tampilkan modal
-    const dataModal = data.value;
 
-    for (let i = 0; i < dataModal.length; i++) {
-        if (dataModal[i].id_law_type === id) {
-            dataYangDitemukan = dataModal[i];
-            break; // Keluar dari loop setelah data ditemukan
-        }
-    }
-
-    form.value.law_type = dataYangDitemukan.law_type
-    form.value.description = dataYangDitemukan.description
+    dataYangDitemukan = data.value.find(item => item.id_law_type === id);
+    form.value = { ...dataYangDitemukan };
 
     if (dataYangDitemukan) {
         console.log(dataYangDitemukan);

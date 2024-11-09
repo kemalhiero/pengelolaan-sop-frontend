@@ -43,11 +43,13 @@ const addData = async () => {
         };
         await createOrg(newItem);
 
-        form.value.id_pic = '';
-        form.value.name = '';
-        form.value.level = '';
-        form.value.about = '';
-        form.value.id_org_parent = null;
+        form.value = {
+            id_pic: '',
+            name: '',
+            level: '',
+            about: '',
+            id_org_parent: null
+        };
         isSucces.value = 'yes'
 
         fetchData(); // refresh item list
@@ -95,23 +97,12 @@ const selectedUpdateId = ref(null);
 let dataYangDitemukan;
 
 const openUpdateModal = (id) => {
+    console.log('id update', id);
     selectedUpdateId.value = id; // Menyimpan ID yang dipilih
     showModalUpdate.value = true; // Tampilkan modal
-    const dataModal = data.value;
-    console.log(id)
 
-    for (let i = 0; i < dataModal.length; i++) {
-        if (dataModal[i].id === id) {
-            dataYangDitemukan = dataModal[i];
-            break; // Keluar dari loop setelah data ditemukan
-        }
-    }
-
-    form.value.pic = dataYangDitemukan.pic
-    form.value.name = dataYangDitemukan.name
-    form.value.level = dataYangDitemukan.level
-    form.value.about = dataYangDitemukan.about
-    form.value.id_org_parent = dataYangDitemukan.id_org_parent
+    dataYangDitemukan = data.value.find(item => item.id_legal === id);
+    form.value = { ...dataYangDitemukan };
 
     if (dataYangDitemukan) {
         console.log(dataYangDitemukan);
@@ -124,11 +115,13 @@ const closeUpdateModal = () => {
     showModalUpdate.value = false; // Sembunyikan modal
     selectedUpdateId.value = null; // Reset ID setelah modal ditutup
 
-    form.value.id_pic = ''
-    form.value.name = ''
-    form.value.level = ''
-    form.value.about = ''
-    form.value.id_org_parent = ''
+    form.value = {
+        id_pic: '',
+        name: '',
+        level: '',
+        about: '',
+        id_org_parent: ''
+    };
 };
 
 const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan ID

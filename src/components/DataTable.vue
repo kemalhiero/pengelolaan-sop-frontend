@@ -1,0 +1,271 @@
+<script setup>
+import IconSort from '@/assets/icons/IconSort.vue';
+import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
+import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
+import { ref, computed } from 'vue';
+
+const props = defineProps({
+    data: {
+        type: Array,
+        required: true
+    },
+    columns: {
+        type: Array,
+        required: true
+    },
+    searchable: {
+        type: Array,
+        required: true
+    },
+    sortable: {
+        type: Array,
+        required: true
+    }
+});
+
+const searchQuery = ref('');
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+const sortDirection = ref({});
+const sortField = ref(null);
+
+// Opsi untuk jumlah item per halaman
+const itemsPerPageOptions = [5, 10, 15, 20, 25, 50, 100];
+
+// Computed property untuk info pagination
+const paginationInfo = computed(() => {
+    const total = filteredAndSortedData.value.length;
+    const start = (currentPage.value - 1) * itemsPerPage.value + 1;
+    const end = Math.min(start + itemsPerPage.value - 1, total);
+    return {
+        start,
+        end,
+        total
+    };
+});
+
+// Computed property untuk filtering, sorting, dan pagination
+const filteredAndSortedData = computed(() => {
+    // Filter data terlebih dahulu
+    let result = props.data.filter(item => {
+        return props.searchable.some(field => {
+            return String(item[field]).toLowerCase().includes(searchQuery.value.toLowerCase());
+        });
+    });
+
+    // Sort data jika ada field yang dipilih
+    if (sortField.value) {
+        result = [...result].sort((a, b) => {
+            if (a[sortField.value] < b[sortField.value]) 
+                return sortDirection.value[sortField.value] === 'asc' ? -1 : 1;
+            if (a[sortField.value] > b[sortField.value]) 
+                return sortDirection.value[sortField.value] === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }
+
+    return result;
+});
+
+const paginatedData = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage.value;
+    const end = start + itemsPerPage.value;
+    return filteredAndSortedData.value.slice(start, end);
+});
+
+const totalPages = computed(() => 
+    Math.ceil(filteredAndSortedData.value.length / itemsPerPage.value)
+);
+
+// Handler untuk perubahan items per page
+const handleItemsPerPageChange = (event) => {
+    itemsPerPage.value = Number(event.target.value);
+    currentPage.value = 1; // Reset ke halaman pertama
+};
+
+const sortData = (field) => {
+    // Jika field yang sama diklik, toggle arah sort
+    if (sortField.value === field) {
+        sortDirection.value[field] = sortDirection.value[field] === 'asc' ? 'desc' : 'asc';
+    } else {
+        // Jika field berbeda, set sebagai field sort baru dengan arah ascending
+        sortField.value = field;
+        sortDirection.value[field] = 'asc';
+    }
+};
+
+const nextPage = () => {
+    if (currentPage.value < totalPages.value) {
+        currentPage.value++;
+    }
+};
+
+const prevPage = () => {
+    if (currentPage.value > 1) {
+        currentPage.value--;
+    }
+};
+
+// Computed property untuk menentukan halaman yang ditampilkan
+const displayedPages = computed(() => {
+    const total = totalPages.value;
+    const current = currentPage.value;
+    const pages = [];
+    
+    if (total <= 7) {
+        // Jika total halaman <= 7, tampilkan semua
+        for (let i = 1; i <= total; i++) {
+            pages.push(i);
+        }
+    } else {
+        // Selalu tampilkan halaman pertama
+        pages.push(1);
+        
+        if (current <= 3) {
+            // Jika di awal, tampilkan 1-5
+            for (let i = 2; i <= 5; i++) {
+                pages.push(i);
+            }
+            pages.push('...');
+            pages.push(total);
+        } else if (current >= total - 2) {
+            // Jika di akhir, tampilkan 4 angka terakhir
+            pages.push('...');
+            for (let i = total - 4; i <= total; i++) {
+                pages.push(i);
+            }
+        } else {
+            // Di tengah, tampilkan current-2 sampai current+2
+            pages.push('...');
+            for (let i = current - 1; i <= current + 1; i++) {
+                pages.push(i);
+            }
+            pages.push('...');
+            pages.push(total);
+        }
+    }
+    
+    return pages;
+});
+
+// Fungsi untuk pindah ke halaman tertentu
+const goToPage = (page) => {
+    if (typeof page === 'number' && page >= 1 && page <= totalPages.value) {
+        currentPage.value = page;
+    }
+};
+
+</script>
+
+<template>
+    <div class="flex justify-between items-center mb-4">
+        <input 
+            v-model="searchQuery"
+            type="text"
+            placeholder="Cari..."
+            class="mb-4 p-2 border rounded-lg border-gray-300"
+        />
+    
+        <!-- Items per page selector di kanan atas -->
+        <div class="flex items-center">
+            <select 
+                v-model="itemsPerPage"
+                @change="handleItemsPerPageChange"
+                class="p-2 border rounded-lg border-gray-300">
+                <option 
+                    v-for="option in itemsPerPageOptions" 
+                    :key="option" 
+                    :value="option">
+                    {{ option }}
+                </option>
+            </select>
+            <label class="ml-2"> item per halaman</label>
+        </div>
+    </div>
+
+    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+        <table class="w-full text-sm text-left text-gray-500">
+            <thead class="text-xs text-gray-900 uppercase bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3">No.</th>
+                    <th v-for="column in columns" :key="column.field" class="px-6 py-3" scope="col">
+                        <div class="flex items-center">
+                            {{ column.label }}
+                            <!-- Tambahkan container div dan event handler pada IconSort -->
+                            <div v-if="column.sortable" 
+                                @click="sortData(column.field)"
+                                class="ml-2 cursor-pointer">
+                                <IconSort />
+                            </div>
+                        </div>
+                    </th>
+                    <!-- <th>Aksi</th> -->
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="(item, index) in paginatedData" :key="index" class="bg-white border-b">
+                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                        {{ index + 1 }}
+                    </th>
+                    <td v-for="column in columns" :key="column.field" class="px-6 py-4 text-black">
+                        {{ item[column.field] }}
+                    </td>
+                    <td class="px-6 py-4 flex">
+                        <button :title="`Edit item ${index + 1}`" @click="$emit('edit', item.id)"
+                            class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
+                            <PenToSquareIcon class="fill-current w-4" />
+                        </button>
+                        <button :title="`Hapus item ${index + 1}`" @click="$emit('delete', item.id)"
+                            class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
+                            <TrashCanIcon class="fill-current w-4" />
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Footer dengan info pagination dan navigasi -->
+    <div class="mt-4 flex justify-between items-center">
+        <!-- Info jumlah item di kiri -->
+        <div class="text-sm text-gray-700">
+            Menampilkan {{ paginationInfo.start }} sampai {{ paginationInfo.end }} 
+            dari {{ paginationInfo.total }} item
+        </div>
+
+        <!-- Navigasi pagination di kanan -->
+        <div class="flex items-center gap-1">
+            <!-- Tombol Previous -->
+            <button 
+                @click="prevPage"
+                :disabled="currentPage === 1"
+                class="px-3 py-1 border rounded-lg hover:bg-gray-100"
+                :class="{ 'opacity-50 cursor-not-allowed': currentPage === 1 }">
+                <span class="text-sm">&lt;</span>
+            </button>
+
+            <!-- Tombol halaman -->
+            <template v-for="pageNumber in displayedPages" :key="pageNumber">
+                <button 
+                    @click="goToPage(pageNumber)"
+                    class="px-3 py-1 border rounded-lg text-sm"
+                    :class="{
+                        'bg-blue-600 text-white': currentPage === pageNumber,
+                        'hover:bg-gray-100': currentPage !== pageNumber
+                    }">
+                    {{ pageNumber }}
+                </button>
+            </template>
+
+            <!-- Tombol Next -->
+            <button 
+                @click="nextPage"
+                :disabled="currentPage === totalPages"
+                class="px-3 py-1 border rounded-lg hover:bg-gray-100"
+                :class="{ 'opacity-50 cursor-not-allowed': currentPage === totalPages }">
+                <span class="text-sm">&gt;</span>
+            </button>
+        </div>
+    </div>
+
+</template>

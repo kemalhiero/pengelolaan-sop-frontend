@@ -1,22 +1,18 @@
 <script setup>
-import { nextTick, onMounted, ref } from "vue";
-import { DataTable } from "simple-datatables";
+import { onMounted, ref } from "vue";
 import { initModals } from "flowbite";
 import { getLawType } from "@/api/lawTypeApi";
 import { getLawBasis, createLawBasis, updateLawBasis, deleteLawBasis } from "@/api/lawBasisApi";
 
 import IconSort from "@/assets/icons/IconSort.vue";
-// import IconEye from "@/assets/icons/IconEye.vue";
-// import GreenBadgeIndicator from "@/components/indicator/GreenBadgeIndicator.vue";
-// import RedBadgeIndicator from "@/components/indicator/RedBadgeIndicator.vue";
 import CirclePlusIcon from "@/assets/icons/CirclePlusIcon.vue";
 import PenToSquareIcon from "@/assets/icons/PenToSquareIcon.vue";
 import TrashCanIcon from "@/assets/icons/TrashCanIcon.vue";
 import XMarkCloseIcon from "@/assets/icons/XMarkCloseIcon.vue";
 import ExclamationMarkIcon from "@/assets/icons/ExclamationMarkIcon.vue";
+import DataTable from "@/components/DataTable.vue";
 
 const tipePeraturan = ref([]);
-const table = ref(null); // Menyimpan instance DataTable
 const data = ref([]);
 const form = ref({
     id_law_type: '',
@@ -27,6 +23,7 @@ const form = ref({
 const isSucces = ref(null);
 const operation = ref('');
 
+// Fetch data untuk tabel
 const fetchTipePeraturan = async () => {
     try {
         const result = await getLawType();
@@ -36,37 +33,16 @@ const fetchTipePeraturan = async () => {
     }
 };
 
-// Fetch data untuk tabel
 const fetchData = async () => {
     try {
         const response = await getLawBasis();
-        data.value = response.data; // Update data tabel
-        await nextTick(); // Tunggu sampai data di-render di DOM
-
-        // Jika DataTable belum diinisialisasi, buat instance baru
-        if (!table.value) {
-            const tableElement = document.getElementById("default-table");
-            if (tableElement) {
-                table.value = new DataTable(tableElement, {
-                    searchable: true,
-                    sortable: true,
-                });
-            }
-        } else {
-            // Jika DataTable sudah ada, cukup refresh data yang ada
-            table.value.destroy(); // Hancurkan instance DataTable sebelumnya
-            const tableElement = document.getElementById("default-table");
-            table.value = new DataTable(tableElement, {
-                searchable: true,
-                sortable: true,
-            });
-        }
-
+        data.value = response.data;
     } catch (error) {
         console.error('Fetch error:', error);
     }
 };
 
+// submit data
 const submitData = async () => {
     operation.value = 'post'
     try {
@@ -130,16 +106,8 @@ const openUpdateModal = (id) => {
     console.log('id update', id)
     selectedUpdateId.value = id; // Menyimpan ID yang dipilih
     showModalUpdate.value = true; // Tampilkan modal
-    const dataModal = data.value;
 
-
-    for (let i = 0; i < dataModal.length; i++) {
-        if (dataModal[i].id_legal === id) {
-            dataYangDitemukan = dataModal[i];
-            break; // Keluar dari loop setelah data ditemukan
-        }
-    }
-
+    dataYangDitemukan = data.value.find(item => item.id === id);
     form.value = { ...dataYangDitemukan };
 
     if (dataYangDitemukan) {
@@ -179,8 +147,19 @@ const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan I
     }
 };
 
+// tabel
 
-onMounted(async () => {
+const columns = [
+    { field: 'law_type', label: 'Jenis', sortable: true },
+    { field: 'number', label: 'Nomor', sortable: true },
+    { field: 'year', label: 'Tahun', sortable: true },
+    { field: 'about', label: 'Tentang', sortable: false }
+];
+
+const searchableFields = ['law_type', 'number', 'year', 'about'];
+const sortableFields = ['law_type', 'number', 'year'];
+
+onMounted( () => {
     initModals(); // Inisialisasi modals jika diperlukan
     fetchTipePeraturan();
     fetchData(); // Ambil data tabel
@@ -196,7 +175,7 @@ onMounted(async () => {
             </h1>
         </div>
 
-        <div class="container mx-auto p-8 lg:px-24">
+        <div class="container mx-auto p-8 lg:px-16">
 
             <!-- modal tambah aturan -->
             <div class="flex justify-end mb-4">
@@ -275,78 +254,15 @@ onMounted(async () => {
                 </div>
             </div>
 
-            <table id="default-table" class="mx-auto">
-                <thead>
-                    <tr>
-                        <th class="text-black">
-                            <span class="flex items-center">
-                                No
-                            </span>
-                        </th>
-                        <th class="text-black">
-                            <span class="flex items-center">
-                                Jenis
-                                <IconSort />
-                            </span>
-                        </th>
-                        <th class="text-black">
-                            <span class="flex items-center">
-                                Nomor
-                                <IconSort />
-                            </span>
-                        </th>
-                        <th class="text-black">
-                            <span class="flex items-center">
-                                Tahun
-                                <IconSort />
-                            </span>
-                        </th>
-                        <th class="text-black" title="Pembahasan peraturan">
-                            <span class="flex items-center">
-                                Tentang
-                                <IconSort />
-                            </span>
-                        </th>
-                        <!-- <th class="text-black" title="Jumlah SOP yang menggunakan peraturan terkait">
-                            <span class="flex items-center">
-                                Jumlah
-                                <IconSort />
-                            </span>
-                        </th> -->
-                        <th>
-                            <span class="flex items-center">
-                                Aksi
-                            </span>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="(item, index) in data" :key="index">
-                        <th scope="row">
-                            {{ index+1 }}
-                        </th>
-                        <td class="text-black">{{ item.law_type }}</td>
-                        <td class="text-black">{{ item.number }}</td>
-                        <td class="text-black">{{ item.year }}</td>
-                        <td class="text-black">{{ item.about }}</td>
-                        <!-- <td class="text-black">{{ item.jumlah }}</td> -->
-                        <td class="inline-flex">
-                            {{ item.id_legal }}
-                            <!-- Suntiang -->
-                            <button :title="`Edit peraturan ${index + 1}`" @click="openUpdateModal(item.id_legal)"
-                                class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
-                                <PenToSquareIcon class="fill-current w-4" />{{ item.id_legal }}
-                            </button>
-
-                            <!-- Apuih -->
-                            <button title="Dapat dihapus karena belum ada sop yang menggunakan" @click="openDeleteModal(item.id_legal)"
-                                class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
-                                <TrashCanIcon class="fill-current w-4" />{{ item.id_legal }}
-                            </button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <DataTable 
+                :data="data"
+                :columns="columns"
+                :searchable="searchableFields"
+                :sortable="sortableFields"
+                @edit="openUpdateModal"
+                @delete="openDeleteModal"
+            />
+            
         </div>
 
         <!-- modal hapus -->
@@ -408,7 +324,7 @@ onMounted(async () => {
                                 <label  class="block mb-2 text-sm font-medium text-gray-900" for="update_law_type">
                                     Jenis Peraturan
                                 </label>
-                                <input type="text" v-model="form.id_law_type" id="update_law_type"
+                                <input type="text" v-model="form.law_type" id="update_law_type"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-yellow-300 focus:border-yellow-300 block w-full p-2.5"
                                     placeholder="Mis. Peraturan Presiden" required>
                             </div>
