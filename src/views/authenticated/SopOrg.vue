@@ -217,10 +217,10 @@ onMounted(() => {
                                         </label>
                                         <select id="pic" v-model="form.id_pic"
                                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                                            <option value="">Pilih PJ</option>
-                                            <option value="">Husnil Kamil</option>
-                                            <option value="">Ricky Akbar</option>
-                                            <option value="">Jefril Rahmadoni</option>
+                                            <option value="" disabled>Pilih PJ</option>
+                                            <option value="hk">Husnil Kamil</option>
+                                            <option value="ra">Ricky Akbar</option>
+                                            <option value="jr">Jefril Rahmadoni</option>
                                         </select>
                                     </div>
                                     <div class="col-span-2">
@@ -229,8 +229,8 @@ onMounted(() => {
                                         </label>
                                         <select id="level" v-model="form.level"
                                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                                            <option selected>Pilih level</option>
-                                            <option value="laboratorium">Laboratorium</option>
+                                            <option value="" disabled>Pilih level</option>
+                                            <option value="labor">Laboratorium</option>
                                             <option value="departemen">Departemen</option>
                                         </select>
                                     </div>

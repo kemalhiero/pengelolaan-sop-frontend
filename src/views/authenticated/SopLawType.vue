@@ -1,16 +1,15 @@
 <script setup>
 import { onMounted, ref } from 'vue';
-import { initModals } from 'flowbite';
 import { getLawType, createLawType, updateLawType, deleteLawType } from '@/api/lawTypeApi';
 
 import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 import PulseLoading from '@/components/PulseLoading.vue';
-import SuccessToast from '@/components/toast/SuccessToast.vue';
-import DangerToast from '@/components/toast/DangerToast.vue';
-import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
-import ExclamationMarkIcon from '@/assets/icons/ExclamationMarkIcon.vue';
+import ShowToast from '@/components/toast/ShowToast.vue';
+import AddDataModal from '@/components/modal/AddDataModal.vue';
+import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
+import EditDataModal from '@/components/modal/EditDataModal.vue';
 
 const data = ref([]);
 const form = ref({
@@ -30,6 +29,8 @@ const fetchData = async () => {
     }
 };
 
+// tampil modal tambah data
+const showAddModal = ref(false);
 
 // Fungsi untuk mengirim data ke API dengan metode POST
 const submitData = async () => {
@@ -43,6 +44,7 @@ const submitData = async () => {
             description: ''
         };
 
+        showAddModal.value = false;
         fetchData();
 
     } catch (error) {
@@ -68,11 +70,12 @@ const closeDeleteModal = () => {
 const deleteData = async (id) => {  // Fungsi untuk menghapus data berdasarkan ID
     operation.value = 'delete'
     try {
+        console.log(id)
         const response = await deleteLawType(id);
         console.log(response);
 
         // Lakukan penghapusan item dari array data
-        data.value = data.value.filter(item => item.id_law_type !== id);
+        data.value = data.value.filter(item => item.id !== id);
         closeDeleteModal(); // Tutup modal setelah penghapusan
         isSucces.value = 'yes'
 
@@ -89,10 +92,12 @@ const selectedUpdateId = ref(null);
 let dataYangDitemukan;
 
 const openUpdateModal = (id) => {
+    console.log(id);
+    
     selectedUpdateId.value = id; // Menyimpan ID yang dipilih
     showModalUpdate.value = true; // Tampilkan modal
 
-    dataYangDitemukan = data.value.find(item => item.id_law_type === id);
+    dataYangDitemukan = data.value.find(item => item.id === id);
     form.value = { ...dataYangDitemukan };
 
     if (dataYangDitemukan) {
@@ -133,7 +138,6 @@ const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan I
 
 // ---------------------------------
 onMounted(() => {
-    initModals();
     fetchData();
 });
 
@@ -142,12 +146,10 @@ onMounted(() => {
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
 
-        <SuccessToast v-if="isSucces == 'yes' && operation == 'post'" teks="Data Berhasil Ditambahkan!" />
-        <SuccessToast v-else-if="isSucces == 'yes' && operation == 'update'" teks="Data Berhasil Diperbarui!" />
-        <SuccessToast v-else-if="isSucces == 'yes' && operation == 'delete'" teks="Data Berhasil Dihapus!" />
-        <DangerToast v-else-if="isSucces == 'no' && operation == 'post'" teks="Data Gagal Ditambahkan" />
-        <DangerToast v-else-if="isSucces == 'no' && operation == 'update'" teks="Data Gagal Diperbarui" />
-        <DangerToast v-else-if="isSucces == 'no' && operation == 'delete'" teks="Data Gagal Dihapus" />
+        <ShowToast 
+            :isSucces="isSucces"
+            :operation="operation"
+        />
 
         <div class="text-center mt-3 mb-7">
             <h1 class="text-3xl font-extrabold leading-none tracking-tight text-gray-900 lg:text-4xl dark:text-white">
@@ -157,70 +159,28 @@ onMounted(() => {
 
         <div class="container mx-auto p-8 lg:px-16">
 
-            <!-- modal tambah aturan -->
+            <!-- modal tambah tipe aturan -->
             <div class="flex justify-end mb-4">
-
-                <button data-modal-target="crud-modal" data-modal-toggle="crud-modal"
+                <button @click="showAddModal = true"
                     class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center me-2 mb-2 ml-auto"
-                    title="" type="button">
+                    type="button" title="Tambah jenis peraturan baru">
                     <CirclePlusIcon class="w-5 mr-3 fill-current" />
                     Input Jenis Peraturan Baru
                 </button>
-
-                <div id="crud-modal" tabindex="-1" aria-hidden="true"
-                    class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-                    <div class="relative p-4 w-full max-w-md max-h-full">
-                        <!-- Modal content -->
-                        <div class="relative bg-white rounded-lg shadow">
-
-                            <!-- Modal header -->
-                            <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
-                                <h3 class="text-lg font-semibold text-gray-900">
-                                    Tambahkan jenis peraturan baru
-                                </h3>
-                                <button type="button"
-                                    class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
-                                    data-modal-toggle="crud-modal">
-                                    <XMarkCloseIcon class="w-3 h-3"/>
-                                    <span class="sr-only">Tutup modal</span>
-                                </button>
-                            </div>
-
-                            <!-- Modal body -->
-                            <form class="p-4 md:p-5" @submit.prevent="submitData">
-                                <div class="grid gap-4 mb-4 grid-cols-2">
-                                    <div class="col-span-2">
-                                        <label for="law_type" class="block mb-2 text-sm font-medium text-gray-900">Jenis
-                                            peraturan</label>
-                                        <input type="text" v-model="form.law_type"
-                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                            placeholder="Mis. Peraturan Presiden" required>
-                                    </div>
-                                    <div class="col-span-2">
-                                        <label for="description"
-                                            class="block mb-2 text-sm font-medium text-gray-900">Deskripsi</label>
-                                        <textarea id="description" rows="4" v-model="form.description"
-                                            class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                                            placeholder="ketikkan deskripsi disini..."></textarea>
-                                    </div>
-                                </div>
-                                <button type="submit" data-modal-hide="crud-modal"
-                                    class="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-                                    <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path fill-rule="evenodd"
-                                            d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                                            clip-rule="evenodd"></path>
-                                    </svg>
-                                    Tambahkan
-                                </button>
-                            </form>
-
-                        </div>
-                    </div>
-                </div>
-
             </div>
+
+            <!-- Komponen AddDataModal -->
+            <AddDataModal
+                modalTitle="Tambahkan jenis peraturan baru"
+                :showModal="showAddModal"
+                :formFields="[
+                    { id: 'law_type', label: 'Jenis peraturan', type: 'text', placeholder: 'Mis. Peraturan Presiden', required: true, minlength: 5, maxlength: 100 },
+                    { id: 'description', label: 'Deskripsi', type: 'textarea', placeholder: 'ketikkan deskripsi disini...' }
+                ]"
+                :formData="form"
+                :submitData="submitData"
+                @update:showModal="showAddModal = $event"
+            />
 
             <template v-if="data && data.length">
                 <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -253,11 +213,11 @@ onMounted(() => {
                                     {{ item.description }}
                                 </td>
                                 <td class="px-6 py-4 flex">
-                                    <button :title="`Edit item ${index + 1}`" @click="openUpdateModal(item.id_law_type)"
+                                    <button :title="`Edit item ${index + 1}`" @click="openUpdateModal(item.id)"
                                         class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
                                         <PenToSquareIcon class="fill-current w-4" />
                                     </button>
-                                    <button :title="`Hapus item ${index + 1}`" @click="openDeleteModal(item.id_law_type)"
+                                    <button :title="`Hapus item ${index + 1}`" @click="openDeleteModal(item.id)"
                                         class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
                                         <TrashCanIcon class="fill-current w-4" />
                                     </button>
@@ -272,85 +232,27 @@ onMounted(() => {
 
         </div>
 
-        <!-- modal hapus -->
-        <div v-if="showModalDelete" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
-            <!-- Overlay gelap -->
-            <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="closeDeleteModal"></div>
+        <!-- Komponen DeleteDataModal -->
+        <DeleteDataModal
+            :showModal="showModalDelete"
+            :deleteData="deleteData"
+            :selectedId="selectedDeleteId"
+            @update:showModal="showModalDelete = $event"
+        />
 
-            <!-- Modal Konten -->
-            <div class="relative p-4 w-full max-w-md max-h-full z-10">
-                <div class="relative bg-white rounded-lg shadow">
-                    <button type="button" @click="closeDeleteModal"
-                        class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center">
-                        <XMarkCloseIcon class="w-3 h-3"/>
-                        <span class="sr-only">Tutup modal</span>
-                    </button>
-                    <div class="p-4 md:p-5 text-center">
-                        <ExclamationMarkIcon class="mx-auto mb-4 text-gray-400 w-12 h-12"/>
-                        <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-                            Anda yakin ingin menghapus data ini?</h3>
-                        <button @click="deleteData(selectedDeleteId)"
-                            class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
-                            Ya
-                        </button>
-                        <button @click="closeDeleteModal"
-                            class="py-2.5 px-5 ms-3 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100">
-                            Batal
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- modal edit -->
-        <div v-if="showModalUpdate" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
-
-            <!-- Overlay gelap -->
-            <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="closeUpdateModal"></div>
-
-            <!-- Modal content -->
-            <div class="relative p-4 w-full max-w-md max-h-full z-10">
-                <div class="relative bg-white rounded-lg shadow">
-
-                    <!-- Modal header -->
-                    <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
-                        <h3 class="text-lg font-semibold text-gray-900">
-                            Perbarui jenis peraturan
-                        </h3>
-                        <button type="button" @click="closeUpdateModal"
-                            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">
-                            <XMarkCloseIcon class="w-3 h-3"/>
-                            <span class="sr-only">Tutup modal</span>
-                        </button>
-                    </div>
-
-                    <!-- Modal body -->
-                    <form class="p-4 md:p-5" @submit.prevent="updateData(selectedUpdateId)">
-                        <div class="grid gap-4 mb-4 grid-cols-2">
-                            <div class="col-span-2">
-                                <label  class="block mb-2 text-sm font-medium text-gray-900" for="law_type">Jenis
-                                    peraturan</label>
-                                <input type="text" v-model="form.law_type" id="law_type"
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-yellow-300 focus:border-yellow-300 block w-full p-2.5"
-                                    placeholder="Mis. Peraturan Presiden" required>
-                            </div>
-                            <div class="col-span-2">
-                                <label for="description"
-                                    class="block mb-2 text-sm font-medium text-gray-900">Deskripsi</label>
-                                <textarea id="description" rows="4" v-model="form.description"
-                                    class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-yellow-300 focus:border-yellow-300"
-                                    placeholder="ketikkan deskripsi disini..."></textarea>
-                            </div>
-                        </div>
-                        <button type="submit"
-                            class="text-white inline-flex items-center bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-                            Perbarui
-                        </button>
-                    </form>
-
-                </div>
-            </div>
-        </div>
+        <!-- Komponen EditDataModal -->
+        <EditDataModal
+            modalTitle="Perbarui jenis peraturan"
+            :showModal="showModalUpdate"
+            :formFields="[
+                { id: 'law_type', label: 'Jenis peraturan', type: 'text', colSpan: 'full', placeholder: 'Mis. Peraturan Presiden', required: true },
+                { id: 'description', label: 'Deskripsi', type: 'textarea', colSpan: 'full', placeholder: 'ketikkan deskripsi disini...' }
+            ]"
+            :formData="form"
+            :updateData="updateData"
+            :selectedId="selectedUpdateId"
+            @update:showModal="showModalUpdate = $event"
+        />
 
     </main>
 </template>

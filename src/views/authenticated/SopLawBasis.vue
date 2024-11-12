@@ -4,13 +4,13 @@ import { initModals } from "flowbite";
 import { getLawType } from "@/api/lawTypeApi";
 import { getLawBasis, createLawBasis, updateLawBasis, deleteLawBasis } from "@/api/lawBasisApi";
 
-import IconSort from "@/assets/icons/IconSort.vue";
 import CirclePlusIcon from "@/assets/icons/CirclePlusIcon.vue";
-import PenToSquareIcon from "@/assets/icons/PenToSquareIcon.vue";
-import TrashCanIcon from "@/assets/icons/TrashCanIcon.vue";
-import XMarkCloseIcon from "@/assets/icons/XMarkCloseIcon.vue";
-import ExclamationMarkIcon from "@/assets/icons/ExclamationMarkIcon.vue";
 import DataTable from "@/components/DataTable.vue";
+import PulseLoading from "@/components/PulseLoading.vue";
+import ShowToast from "@/components/toast/ShowToast.vue";
+import DeleteDataModal from "@/components/modal/DeleteDataModal.vue";
+import AddDataModal from "@/components/modal/AddDataModal.vue";
+import EditDataModal from "@/components/modal/EditDataModal.vue";
 
 const tipePeraturan = ref([]);
 const data = ref([]);
@@ -42,10 +42,14 @@ const fetchData = async () => {
     }
 };
 
+// tampil modal tambah data
+const showAddModal = ref(false);
+
 // submit data
 const submitData = async () => {
     operation.value = 'post'
     try {
+        console.log(form.value)
         await createLawBasis(form.value);
 
         isSucces.value = 'yes';
@@ -56,6 +60,7 @@ const submitData = async () => {
             about: ''
         };
 
+        showAddModal.value = false;
         fetchData();
 
     } catch (error) {
@@ -86,7 +91,7 @@ const deleteData = async (id) => {  // Fungsi untuk menghapus data berdasarkan I
         console.log(response);
 
         // Lakukan penghapusan item dari array data
-        data.value = data.value.filter(item => item.id_legal !== id);
+        data.value = data.value.filter(item => item.id !== id);
         closeDeleteModal(); // Tutup modal setelah penghapusan
         isSucces.value = 'yes'
 
@@ -103,10 +108,9 @@ const selectedUpdateId = ref(null);
 let dataYangDitemukan;
 
 const openUpdateModal = (id) => {
-    console.log('id update', id)
     selectedUpdateId.value = id; // Menyimpan ID yang dipilih
     showModalUpdate.value = true; // Tampilkan modal
-
+    
     dataYangDitemukan = data.value.find(item => item.id === id);
     form.value = { ...dataYangDitemukan };
 
@@ -147,18 +151,6 @@ const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan I
     }
 };
 
-// tabel
-
-const columns = [
-    { field: 'law_type', label: 'Jenis', sortable: true },
-    { field: 'number', label: 'Nomor', sortable: true },
-    { field: 'year', label: 'Tahun', sortable: true },
-    { field: 'about', label: 'Tentang', sortable: false }
-];
-
-const searchableFields = ['law_type', 'number', 'year', 'about'];
-const sortableFields = ['law_type', 'number', 'year'];
-
 onMounted( () => {
     initModals(); // Inisialisasi modals jika diperlukan
     fetchTipePeraturan();
@@ -168,6 +160,11 @@ onMounted( () => {
 
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
+
+        <ShowToast 
+            :is-succes="isSucces"
+            :operation="operation"
+        />
 
         <div class="text-center mt-3 mb-7">
             <h1 class="text-3xl font-extrabold leading-none tracking-tight text-gray-900 lg:text-4xl">
@@ -179,186 +176,88 @@ onMounted( () => {
 
             <!-- modal tambah aturan -->
             <div class="flex justify-end mb-4">
-                <button data-modal-target="modal-law-input" data-modal-toggle="modal-law-input"
+                <button @click="showAddModal = true"
                     class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center me-2 mb-2 ml-auto"
                     title="" type="button">
                     <CirclePlusIcon class="w-5 mr-3 fill-current" />
                     Input Peraturan Baru
                 </button>
-
-                <div id="modal-law-input" tabindex="-1" aria-hidden="true"
-                    class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-                    <div class="relative p-4 w-full max-w-md max-h-full">
-                        <!-- Modal content -->
-                        <div class="relative bg-white rounded-lg shadow">
-                            <!-- Modal header -->
-                            <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
-                                <h3 class="text-lg font-semibold text-gray-900">
-                                    Tambahkan peraturan baru
-                                </h3>
-                                <button type="button"
-                                    class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
-                                    data-modal-toggle="modal-law-input">
-                                    <XMarkCloseIcon class="w-3 h-3"/>
-                                    <span class="sr-only">Tutup modal</span>
-                                </button>
-                            </div>
-                            <!-- Modal body -->
-                            <form class="p-4 md:p-5" @submit.prevent="submitData">
-                                <div class="grid gap-4 mb-4 grid-cols-2">
-                                    <div class="col-span-2">
-                                        <label for="category" class="block mb-2 text-sm font-medium text-gray-900">Jenis
-                                            Peraturan</label>
-                                        <select id="category" v-model="form.id_law_type"
-                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                                            <option selected>Pilih jenis</option>
-                                            <option v-for="(item, index) in tipePeraturan" :key="index"
-                                                :value="`${item.id_law_type}`">{{ item.law_type }}</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-span-2 sm:col-span-1">
-                                        <label for="law-num"
-                                            class="block mb-2 text-sm font-medium text-gray-900">Nomor</label>
-                                        <input type="number" id="law-num" v-model="form.number"
-                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                            placeholder="Mis. 95" required min="1" max="999">
-                                    </div>
-                                    <div class="col-span-2 sm:col-span-1">
-                                        <label for="year"
-                                            class="block mb-2 text-sm font-medium text-gray-900">Tahun</label>
-                                        <input type="number" id="year" v-model="form.year"
-                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                            placeholder="Mis. 2022" required min="1945" :max="new Date().getFullYear()">
-                                    </div>
-                                    <div class="col-span-2">
-                                        <label for="description"
-                                            class="block mb-2 text-sm font-medium text-gray-900">Pembahasan</label>
-                                        <textarea id="description" rows="4" v-model="form.about"
-                                            class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                                            placeholder="Misal: Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas"></textarea>
-                                    </div>
-                                </div>
-                                <button type="submit"
-                                    class="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-                                    <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path fill-rule="evenodd"
-                                            d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                                            clip-rule="evenodd"></path>
-                                    </svg>
-                                    Tambahkan
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
             </div>
 
-            <DataTable 
-                :data="data"
-                :columns="columns"
-                :searchable="searchableFields"
-                :sortable="sortableFields"
-                @edit="openUpdateModal"
-                @delete="openDeleteModal"
+            <!-- Komponen AddDataModal -->
+            <AddDataModal
+                modalTitle="Tambahkan peraturan baru"
+                :showModal="showAddModal"
+                :formFields="[
+                    { 
+                        id: 'id_law_type', 
+                        label: 'Jenis Peraturan', 
+                        type: 'select',
+                        placeholder: 'Pilih jenis peraturan',
+                        required: true,
+                        options: tipePeraturan,
+                        optionValue: 'id',
+                        optionLabel: 'law_type'
+                    },
+                    { id: 'number', label: 'Nomor', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 95', required: true, min: 1, max: 999 },
+                    { id: 'year', label: 'Tahun', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 2022', required: true, min: 1945, max: new Date().getFullYear() },
+                    { id: 'about', label: 'Pembahasan', type: 'textarea', placeholder: 'Misal: Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas', required: true }
+                ]"
+                :formData="form"
+                :submitData="submitData"
+                @update:showModal="showAddModal = $event"
             />
+
+            <template v-if="data && data.length">
+                <DataTable 
+                    :data="data"
+                    :columns="[
+                        { field: 'law_type', label: 'Jenis', sortable: true },
+                        { field: 'number', label: 'Nomor', sortable: true },
+                        { field: 'year', label: 'Tahun', sortable: true },
+                        { field: 'about', label: 'Tentang', sortable: false }
+                    ]"
+                    :searchable="['law_type', 'number', 'year', 'about']"
+                    @edit="openUpdateModal"
+                    @delete="openDeleteModal"
+                />
+            </template>
+            <PulseLoading v-else />
             
         </div>
 
-        <!-- modal hapus -->
-        <div v-if="showModalDelete" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
-            <!-- Overlay gelap -->
-            <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="closeDeleteModal"></div>
-
-            <!-- Modal Konten -->
-            <div class="relative p-4 w-full max-w-md max-h-full z-10">
-                <div class="relative bg-white rounded-lg shadow">
-                    <button type="button" @click="closeDeleteModal"
-                        class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center">
-                        <XMarkCloseIcon class="w-3 h-3"/>
-                        <span class="sr-only">Tutup modal</span>
-                    </button>
-                    <div class="p-4 md:p-5 text-center">
-                        <ExclamationMarkIcon class="mx-auto mb-4 text-gray-400 w-12 h-12"/>
-                        <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-                            Anda yakin ingin menghapus data ini?</h3>
-                        <button @click="deleteData(selectedDeleteId)"
-                            class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
-                            Ya
-                        </button>
-                        <button @click="closeDeleteModal"
-                            class="py-2.5 px-5 ms-3 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100">
-                            Batal
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Komponen DeleteDataModal -->
+        <DeleteDataModal
+            :showModal="showModalDelete"
+            :deleteData="deleteData"
+            :selectedId="selectedDeleteId"
+            @update:showModal="showModalDelete = $event"
+        />
 
         <!-- modal edit -->
-        <div v-if="showModalUpdate" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
-
-            <!-- Overlay gelap -->
-            <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="closeUpdateModal"></div>
-
-            <!-- Modal content -->
-            <div class="relative p-4 w-full max-w-md max-h-full z-10">
-                <div class="relative bg-white rounded-lg shadow">
-
-                    <!-- Modal header -->
-                    <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
-                        <h3 class="text-lg font-semibold text-gray-900">
-                            Perbarui dasar hukum
-                        </h3>
-                        <button type="button" @click="closeUpdateModal"
-                            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">
-                            <XMarkCloseIcon class="w-3 h-3"/>
-                            <span class="sr-only">Tutup modal</span>
-                        </button>
-                    </div>
-
-                    <!-- Modal body -->
-                    <form class="p-4 md:p-5" @submit.prevent="updateData(selectedUpdateId)">
-                        <div class="grid gap-4 mb-4 grid-cols-2">
-                            <div class="col-span-2">
-                                <label  class="block mb-2 text-sm font-medium text-gray-900" for="update_law_type">
-                                    Jenis Peraturan
-                                </label>
-                                <input type="text" v-model="form.law_type" id="update_law_type"
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-yellow-300 focus:border-yellow-300 block w-full p-2.5"
-                                    placeholder="Mis. Peraturan Presiden" required>
-                            </div>
-                            <div class="col-span-2 sm:col-span-1">
-                                <label for="update_law-num"
-                                    class="block mb-2 text-sm font-medium text-gray-900">Nomor</label>
-                                <input type="number" id="update_law-num" v-model="form.number"
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                    placeholder="Mis. 95" required min="1" max="999">
-                            </div>
-                            <div class="col-span-2 sm:col-span-1">
-                                <label for="update_year"
-                                    class="block mb-2 text-sm font-medium text-gray-900">Tahun</label>
-                                <input type="number" id="update_year" v-model="form.year"
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                    placeholder="Mis. 2022" required min="1945" :max="new Date().getFullYear()">
-                            </div>
-                            <div class="col-span-2">
-                                <label for="update_description"
-                                    class="block mb-2 text-sm font-medium text-gray-900">Deskripsi</label>
-                                <textarea id="update_description" rows="4" v-model="form.about"
-                                    class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-yellow-300 focus:border-yellow-300"
-                                    placeholder="ketikkan deskripsi disini..."></textarea>
-                            </div>
-                        </div>
-                        <button type="submit"
-                            class="text-white inline-flex items-center bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-                            Perbarui
-                        </button>
-                    </form>
-
-                </div>
-            </div>
-        </div>
+        <EditDataModal
+            modalTitle="Perbarui dasar hukum"
+            :showModal="showModalUpdate"
+            :formFields="[
+                { 
+                    id: 'id_law_type', 
+                    label: 'Jenis Peraturan', 
+                    type: 'select',
+                    placeholder: 'Pilih jenis peraturan',
+                    required: true,
+                    options: tipePeraturan,
+                    optionValue: 'id',
+                    optionLabel: 'law_type'
+                },
+                { id: 'number', label: 'Nomor', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 95', required: true, min: 1, max: 999 },
+                { id: 'year', label: 'Tahun', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 2022', required: true, min: 1945, max: new Date().getFullYear() },
+                { id: 'about', label: 'Pembahasan', type: 'textarea', placeholder: 'Misal: Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas', required: true }
+            ]"
+            :formData="form"
+            :updateData="updateData"
+            :selectedId="selectedUpdateId"
+            @update:showModal="showModalUpdate = $event"
+        />
 
     </main>
 </template>

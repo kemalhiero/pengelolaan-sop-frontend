@@ -16,10 +16,6 @@ const props = defineProps({
     searchable: {
         type: Array,
         required: true
-    },
-    sortable: {
-        type: Array,
-        required: true
     }
 });
 
@@ -205,7 +201,7 @@ const goToPage = (page) => {
             <tbody>
                 <tr v-for="(item, index) in paginatedData" :key="index" class="bg-white border-b">
                     <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
-                        {{ index + 1 }}
+                        {{ (currentPage - 1) * itemsPerPage + index + 1 }}
                     </th>
                     <td v-for="column in columns" :key="column.field" class="px-6 py-4 text-black">
                         {{ item[column.field] }}
