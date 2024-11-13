@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import dateNow from '@/utils/dateNow';
 import XMarkDeleteIcon from '@/assets/icons/XMarkDeleteIcon.vue';
+import PageTitle from '@/components/authenticated/PageTitle.vue';
 
 const items = ref(['Pelaksana 1', 'Pelaksana 2', 'Pelaksana 3']); // Daftar awal item
 const selectedItems = ref([]); // Menyimpan item yang dipilih
@@ -67,11 +68,7 @@ const removeUser = (user) => {
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
 
-        <div class="text-center mt-3 mb-7">
-            <h1 class="text-3xl font-extrabold leading-none tracking-tight text-gray-900 lg:text-4xl">
-                Usulkan POS baru
-            </h1>
-        </div>
+        <PageTitle judul="Usulkan POS baru" />
 
         <section class="bg-white">
             <div class="py-8 px-4 mx-auto max-w-3xl">

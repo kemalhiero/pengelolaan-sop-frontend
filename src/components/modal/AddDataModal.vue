@@ -24,8 +24,7 @@
                     <div class="grid gap-4 mb-4 grid-cols-2">
                         <div v-for="field in formFields" :key="field.id"
                             :class="field.isColSpanHalf ? 'col-span-2 sm:col-span-1' : 'col-span-2'">
-                            <label :for="field.id" class="block mb-2 text-sm font-medium text-gray-900">{{ field.label
-                                }}</label>
+                            <label :for="field.id" class="block mb-2 text-sm font-medium text-gray-900">{{ field.label }}</label>
                             <input v-if="field.type === 'text'" :type="field.type" :id="field.id"
                                 v-model="formData[field.id]"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"

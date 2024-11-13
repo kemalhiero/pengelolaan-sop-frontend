@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { initAccordions } from 'flowbite';
 
 import IconAngle from '@/assets/icons/IconAngle.vue';
+import PageTitle from '@/components/authenticated/PageTitle.vue';
 
 onMounted(() => {
     initAccordions();
@@ -12,11 +13,7 @@ onMounted(() => {
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
 
-        <div class="text-center mt-3 mb-10">
-            <h1 class="text-3xl font-extrabold leading-none tracking-tight text-gray-900 lg:text-4xl dark:text-white">
-                Panduan Penggunaan Aplikasi
-            </h1>
-        </div>
+        <PageTitle judul="Panduan Penggunaan Aplikasi" />
 
         <div id="accordion-collapse" data-accordion="open" class="max-w-screen-lg mx-auto">
             <h2 id="accordion-collapse-heading-1">

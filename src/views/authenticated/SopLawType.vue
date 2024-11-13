@@ -2,7 +2,6 @@
 import { onMounted, ref } from 'vue';
 import { getLawType, createLawType, updateLawType, deleteLawType } from '@/api/lawTypeApi';
 
-import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 import PulseLoading from '@/components/PulseLoading.vue';
@@ -10,6 +9,8 @@ import ShowToast from '@/components/toast/ShowToast.vue';
 import AddDataModal from '@/components/modal/AddDataModal.vue';
 import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
 import EditDataModal from '@/components/modal/EditDataModal.vue';
+import PageTitle from '@/components/authenticated/PageTitle.vue';
+import AddDataButton from '@/components/modal/AddDataButton.vue';
 
 const data = ref([]);
 const form = ref({
@@ -151,22 +152,13 @@ onMounted(() => {
             :operation="operation"
         />
 
-        <div class="text-center mt-3 mb-7">
-            <h1 class="text-3xl font-extrabold leading-none tracking-tight text-gray-900 lg:text-4xl dark:text-white">
-                Daftar Jenis Peraturan
-            </h1>
-        </div>
+        <PageTitle judul="Daftar Jenis Peraturan" />
 
         <div class="container mx-auto p-8 lg:px-16">
 
             <!-- modal tambah tipe aturan -->
             <div class="flex justify-end mb-4">
-                <button @click="showAddModal = true"
-                    class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center me-2 mb-2 ml-auto"
-                    type="button" title="Tambah jenis peraturan baru">
-                    <CirclePlusIcon class="w-5 mr-3 fill-current" />
-                    Input Jenis Peraturan Baru
-                </button>
+                <AddDataButton btnLabel="Input Jenis Peraturan Baru" @click="showAddModal = true" />
             </div>
 
             <!-- Komponen AddDataModal -->

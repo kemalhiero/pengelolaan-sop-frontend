@@ -7,6 +7,7 @@ import IconEye from "@/assets/icons/IconEye.vue";
 import GreenBadgeIndicator from "@/components/indicator/GreenBadgeIndicator.vue";
 import YellowBadgeIndicator from "@/components/indicator/YellowBadgeIndicator.vue";
 import RedBadgeIndicator from "@/components/indicator/RedBadgeIndicator.vue";
+import PageTitle from "@/components/authenticated/PageTitle.vue";
 
 
 const data = [
@@ -31,11 +32,7 @@ onMounted(() => {
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
 
-        <div class="text-center mt-3 mb-7">
-            <h1 class="text-3xl font-extrabold leading-none tracking-tight text-gray-900 lg:text-4xl dark:text-white">
-                Umpan Balik terhadap SOP yang Dikelola
-            </h1>
-        </div>
+        <PageTitle judul="Umpan Balik terhadap SOP yang Dikelola" />
 
         <div class="container mx-auto p-8 lg:px-32">
 
