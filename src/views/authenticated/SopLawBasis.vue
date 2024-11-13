@@ -49,7 +49,6 @@ const showAddModal = ref(false);
 const submitData = async () => {
     operation.value = 'post'
     try {
-        console.log(form.value)
         await createLawBasis(form.value);
 
         isSucces.value = 'yes';

@@ -6,10 +6,10 @@ import { getOrg, createOrg, updateOrg, deleteOrg } from '@/api/orgApi.js';
 import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
-import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
-import SuccessToast from '@/components/toast/SuccessToast.vue';
-import DangerToast from '@/components/toast/DangerToast.vue';
-import ExclamationMarkIcon from '@/assets/icons/ExclamationMarkIcon.vue';
+import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
+import ShowToast from '@/components/toast/ShowToast.vue';
+import AddDataModal from '@/components/modal/AddDataModal.vue';
+import EditDataModal from '@/components/modal/EditDataModal.vue';
 
 const data = ref([]);
 const form = ref({
@@ -22,6 +22,17 @@ const form = ref({
 const isSucces = ref(null);     //apakah proses sukses atau tidak
 const operation = ref('');      //jenis operasinya apa?
 
+const pic = [
+    {id: 'hk', name: 'Husnil Kamil'},
+    {id: 'ra', name: 'Ricky Akbar'},
+    {id: 'jr', name: 'Jefril Rahmadoni'},
+];
+
+const level = [
+    {id: 'laboratorium', name: 'Laboratorium'},
+    {id: 'departemen', name: 'Departemen'},
+]
+
 const fetchData = async () => {
   try {
     const result = await getOrg();
@@ -30,6 +41,9 @@ const fetchData = async () => {
     console.error('Error fetching items:', error);
   }
 };
+
+// tampil modal untuk tambah data
+const showAddModal = ref(false);
 
 const addData = async () => {
     operation.value = 'post'
@@ -41,8 +55,10 @@ const addData = async () => {
             about: form.value.about,
             id_org_parent: form.value.id_org_parent,
         };
+        
         await createOrg(newItem);
 
+        isSucces.value = 'yes'
         form.value = {
             id_pic: '',
             name: '',
@@ -50,9 +66,10 @@ const addData = async () => {
             about: '',
             id_org_parent: null
         };
-        isSucces.value = 'yes'
 
+        showAddModal.value = false;
         fetchData(); // refresh item list
+
     } catch (error) {
         console.error('Error adding item:', error);
         isSucces.value = 'no';
@@ -101,7 +118,7 @@ const openUpdateModal = (id) => {
     selectedUpdateId.value = id; // Menyimpan ID yang dipilih
     showModalUpdate.value = true; // Tampilkan modal
 
-    dataYangDitemukan = data.value.find(item => item.id_legal === id);
+    dataYangDitemukan = data.value.find(item => item.id === id);
     form.value = { ...dataYangDitemukan };
 
     if (dataYangDitemukan) {
@@ -160,12 +177,10 @@ onMounted(() => {
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
 
-        <SuccessToast v-if="isSucces == 'yes' && operation == 'post'" teks="Data Berhasil Ditambahkan!" />
-        <SuccessToast v-else-if="isSucces == 'yes' && operation == 'update'" teks="Data Berhasil Diperbarui!" />
-        <SuccessToast v-else-if="isSucces == 'yes' && operation == 'delete'" teks="Data Berhasil Dihapus!" />
-        <DangerToast v-else-if="isSucces == 'no' && operation == 'post'" teks="Data Gagal Ditambahkan" />
-        <DangerToast v-else-if="isSucces == 'no' && operation == 'update'" teks="Data Gagal Diperbarui" />
-        <DangerToast v-else-if="isSucces == 'no' && operation == 'delete'" teks="Data Gagal Dihapus" />
+        <ShowToast
+            :isSucces="isSucces"
+            :operation="operation"
+        />
 
         <div class="text-center mt-3 mb-7">
             <h1 class="text-3xl font-extrabold leading-none tracking-tight text-gray-900 lg:text-4xl dark:text-white">
@@ -177,86 +192,46 @@ onMounted(() => {
 
             <!-- modal tambah aturan -->
             <div class="flex justify-end mb-4">
-                <button data-modal-target="modal-org-input" data-modal-toggle="modal-org-input"
+                <button @click="showAddModal = true"
                     class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center me-2 mb-2 ml-auto"
                     title="" type="button">
                     <CirclePlusIcon class="w-5 mr-3 fill-current" />
                     Input Organisasi Baru
                 </button>
-
-                <div id="modal-org-input" tabindex="-1" aria-hidden="true"
-                    class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-                    <div class="relative p-4 w-full max-w-md max-h-full">
-                        <!-- Modal content -->
-                        <div class="relative bg-white rounded-lg shadow">
-                            <!-- Modal header -->
-                            <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
-                                <h3 class="text-lg font-semibold text-gray-900">
-                                    Tambahkan organisasi baru
-                                </h3>
-                                <button type="button"
-                                    class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
-                                    data-modal-toggle="modal-org-input">
-                                    <XMarkCloseIcon class="w-3 h-3"/>
-                                    <span class="sr-only">Tutup modal</span>
-                                </button>
-                            </div>
-                            <!-- Modal body -->
-                            <form class="p-4 md:p-5" @submit.prevent="addData">
-                                <div class="grid gap-4 mb-4 grid-cols-2">
-                                    <div class="col-span-2">
-                                        <label for="name"
-                                            class="block mb-2 text-sm font-medium text-gray-900">Nama</label>
-                                        <input type="text" id="name" v-model="form.name"
-                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                            placeholder="Mis. Laboratorium Aplikasi Perusahaan" required>
-                                    </div>
-                                    <div class="col-span-2">
-                                        <label for="pic" class="block mb-2 text-sm font-medium text-gray-900">
-                                            Penanggung Jawab
-                                        </label>
-                                        <select id="pic" v-model="form.id_pic"
-                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                                            <option value="" disabled>Pilih PJ</option>
-                                            <option value="hk">Husnil Kamil</option>
-                                            <option value="ra">Ricky Akbar</option>
-                                            <option value="jr">Jefril Rahmadoni</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-span-2">
-                                        <label for="level" class="block mb-2 text-sm font-medium text-gray-900">
-                                            Level
-                                        </label>
-                                        <select id="level" v-model="form.level"
-                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                                            <option value="" disabled>Pilih level</option>
-                                            <option value="labor">Laboratorium</option>
-                                            <option value="departemen">Departemen</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-span-2">
-                                        <label for="explanation"
-                                            class="block mb-2 text-sm font-medium text-gray-900">Keterangan</label>
-                                        <textarea id="explanation" rows="4" v-model="form.about"
-                                            class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                                            placeholder="ketikkan keterangan tambahan mengenai organisasi"></textarea>
-                                    </div>
-                                </div>
-                                <button type="submit" data-modal-toggle="modal-org-input"
-                                    class="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-                                    <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path fill-rule="evenodd"
-                                            d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                                            clip-rule="evenodd"></path>
-                                    </svg>
-                                    Tambahkan
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
             </div>
+
+            <!-- Komponen AddDataModal -->
+            <AddDataModal
+                modalTitle="Tambahkan organisasi baru"
+                :showModal="showAddModal"
+                :formFields="[
+                    { id: 'name', label: 'Nama', type: 'text', placeholder: 'Mis. Laboratorium Aplikasi Perusahaan', required: true, minlength: 5, maxlength: 100 },
+                    { 
+                        id: 'id_pic', 
+                        label: 'Penanggung Jawab', 
+                        type: 'select',
+                        placeholder: 'Pilih PJ',
+                        required: false,         //sementara false, karena belum ada dari be
+                        options: pic,
+                        optionValue: 'id',
+                        optionLabel: 'name'
+                    },
+                    { 
+                        id: 'level', 
+                        label: 'Level', 
+                        type: 'select',
+                        placeholder: 'Pilih level',
+                        required: true,
+                        options: level,
+                        optionValue: 'id',
+                        optionLabel: 'name'
+                    },
+                    { id: 'about', label: 'Keterangan', type: 'textarea', placeholder: 'ketikkan keterangan tambahan mengenai organisasi' }
+                ]"
+                :formData="form"
+                :submitData="addData"
+                @update:showModal="showAddModal = $event"
+            />
 
             <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
                 <table class="w-full text-sm text-left text-gray-500">
@@ -312,94 +287,46 @@ onMounted(() => {
         </div>
 
         <!-- modal edit -->
-        <div v-if="showModalUpdate" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
+        <EditDataModal
+            modalTitle="Perbarui data organisasi"
+            :showModal="showModalUpdate"
+            :formFields="[
+                { id: 'name', label: 'Nama', type: 'text', placeholder: 'Mis. Laboratorium Aplikasi Perusahaan', required: true, minlength: 5, maxlength: 100 },
+                { 
+                    id: 'id_pic', 
+                    label: 'Penanggung Jawab', 
+                    type: 'select',
+                    placeholder: 'Pilih PJ',
+                    required: false,         //sementara false, karena belum ada dari be
+                    options: pic,
+                    optionValue: 'id',
+                    optionLabel: 'name'
+                },
+                { 
+                    id: 'level', 
+                    label: 'Level', 
+                    type: 'select',
+                    placeholder: 'Pilih level',
+                    required: true,
+                    options: level,
+                    optionValue: 'id',
+                    optionLabel: 'name'
+                },
+                { id: 'about', label: 'Keterangan', type: 'textarea', placeholder: 'ketikkan keterangan tambahan mengenai organisasi' }
+            ]"
+            :formData="form"
+            :updateData="updateData"
+            :selectedId="selectedUpdateId"
+            @update:showModal="showModalUpdate = $event"
+        />
 
-            <!-- Overlay gelap -->
-            <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="closeUpdateModal"></div>
-
-            <!-- Modal content -->
-            <div class="relative p-4 w-full max-w-md max-h-full z-10">
-                <div class="relative bg-white rounded-lg shadow">
-
-                    <!-- Modal header -->
-                    <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
-                        <h3 class="text-lg font-semibold text-gray-900">
-                            Perbarui data organisasi
-                        </h3>
-                        <button type="button" @click="closeUpdateModal"
-                            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">
-                            <XMarkCloseIcon class="w-3 h-3"/>
-                            <span class="sr-only">Tutup modal</span>
-                        </button>
-                    </div>
-
-                    <!-- Modal body -->
-                    <form class="p-4 md:p-5" @submit.prevent="updateData(selectedUpdateId)">
-                        <div class="grid gap-4 mb-4 grid-cols-2">
-                            <div class="col-span-2">
-                                <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Nama</label>
-                                <input type="text" v-model="form.name" id="name"
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-yellow-300 focus:border-yellow-300 block w-full p-2.5"
-                                    placeholder="Mis. Laboratory of Enterprise Application" required>
-                            </div>
-                            <div class="col-span-2">
-                                <label for="pic" class="block mb-2 text-sm font-medium text-gray-900">Penanggung Jawab</label>
-                                <input type="text" v-model="form.pic" id="pic"
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-yellow-300 focus:border-yellow-300 block w-full p-2.5"
-                                    placeholder="" required>
-                            </div>
-                            <div class="col-span-2">
-                                <label for="level" class="block mb-2 text-sm font-medium text-gray-900">Level</label>
-                                <input type="text" v-model="form.level" id="level"
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-yellow-300 focus:border-yellow-300 block w-full p-2.5"
-                                    placeholder="Mis. Laboratory of Enterprise Application" required>
-                            </div>
-                            <div class="col-span-2">
-                                <label for="about" class="block mb-2 text-sm font-medium text-gray-900">Keterangan</label>
-                                <textarea id="about" rows="4" v-model="form.about"
-                                    class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-yellow-300 focus:border-yellow-300"
-                                    placeholder="ketikkan deskripsi disini..."></textarea>
-                            </div>
-                        </div>
-                        <button type="submit"
-                            class="text-white inline-flex items-center bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-                            Perbarui
-                        </button>
-                    </form>
-
-                </div>
-            </div>
-        </div>
-
-        <!-- modal hapus -->
-        <div v-if="showModalDelete" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
-            <!-- Overlay gelap -->
-            <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="closeDeleteModal"></div>
-
-            <!-- Modal Konten -->
-            <div class="relative p-4 w-full max-w-md max-h-full z-10">
-                <div class="relative bg-white rounded-lg shadow">
-                    <button type="button" @click="closeDeleteModal"
-                        class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center">
-                        <XMarkCloseIcon class="w-3 h-3"/>
-                        <span class="sr-only">Tutup modal</span>
-                    </button>
-                    <div class="p-4 md:p-5 text-center">
-                        <ExclamationMarkIcon class="mx-auto mb-4 text-gray-400 w-12 h-12"/>
-                        <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-                            Anda yakin ingin menghapus data ini?</h3>
-                        <button @click="deleteData(selectedDeleteId)"
-                            class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
-                            Ya
-                        </button>
-                        <button @click="closeDeleteModal"
-                            class="py-2.5 px-5 ms-3 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100">
-                            Batal
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Komponen DeleteDataModal -->
+        <DeleteDataModal
+            :showModal="showModalDelete"
+            :deleteData="deleteData"
+            :selectedId="selectedDeleteId"
+            @update:showModal="showModalDelete = $event"
+        />
 
     </main>
 </template>
