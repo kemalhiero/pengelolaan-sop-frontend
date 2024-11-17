@@ -211,6 +211,7 @@ onMounted( () => {
                     :searchable="['law_type', 'number', 'year', 'about']"
                     @edit="openUpdateModal"
                     @delete="openDeleteModal"
+                    table-type="crud"
                 />
             </template>
             <PulseLoading v-else />

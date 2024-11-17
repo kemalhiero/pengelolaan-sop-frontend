@@ -1,32 +1,21 @@
 <script setup>
 import { onMounted, ref } from 'vue';
-import { initModals, initTooltips } from 'flowbite';
-import { DataTable } from "simple-datatables";
-import IconSort from '@/assets/icons/IconSort.vue';
+import { initModals } from 'flowbite';
+
 import CircleInfoIcon from '@/assets/icons/CircleInfoIcon.vue';
-import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
-import CircleQuestionIcon from '@/assets/icons/CircleQuestionIcon.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
+import DataTable from '@/components/DataTable.vue';
+import Tooltip from '@/components/Tooltip.vue';
 
 // Data peraturan
 const data = [
-    {nama: 'Peraturan Pemerintah Nomor 95 Tahun 2021 tentang Perguruan Tinggi Negeri Badan Hukum Universitas Andalas'},
-    {nama: ' Peraturan Rektor Universitas Andalas Nomor 8 Tahun 2022 tentang Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas'}
+    { nama: 'Peraturan Pemerintah Nomor 95 Tahun 2021 tentang Perguruan Tinggi Negeri Badan Hukum Universitas Andalas' },
+    { nama: ' Peraturan Rektor Universitas Andalas Nomor 8 Tahun 2022 tentang Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas' }
 ];
 
 // State untuk menyimpan peraturan yang dipilih
 const selectedLaws = ref([]);
-
-// Fungsi untuk menambah atau menghapus peraturan dari daftar yang dipilih
-const toggleLaw = (law) => {
-    const index = selectedLaws.value.findIndex(item => item.nama === law.nama);
-    if (index === -1) {
-        selectedLaws.value.push(law);
-    } else {
-        selectedLaws.value.splice(index, 1);
-    }
-}
 
 // Fungsi untuk menghapus peraturan yang sudah dipilih
 const removeLaw = (index) => {
@@ -97,21 +86,9 @@ const removeRecord = (index) => {
     recordItems.value.splice(index, 1);
 }
 
-
-
 // -----------------------
 onMounted(() => {
     initModals();
-    initTooltips();
-
-    if (document.getElementById("sop-docs-table") && typeof DataTable !== 'undefined') {
-        new DataTable(document.getElementById("sop-docs-table"), {
-            searchable: true,
-            sortable: true,
-            perPage: 5
-        });
-    };
-
 });
 
 </script>
@@ -215,8 +192,8 @@ onMounted(() => {
                 Seksi
             </label>
             <input type="text" id="sop-section"
-            class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
-            value="Semua Seksi di Lingkungan Departemen Sistem Informasi" />
+                class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
+                value="Semua Seksi di Lingkungan Departemen Sistem Informasi" />
         </div>
 
         <div class="mb-4">
@@ -227,17 +204,20 @@ onMounted(() => {
             <!-- Daftar Dasar Hukum yang Dipilih -->
             <div v-if="selectedLaws.length > 0" class="my-4">
                 <ul>
-                    <li v-for="(law, index) in selectedLaws" :key="index" class="flex items-center justify-between p-2 bg-gray-200 rounded-lg mb-2">
+                    <li v-for="(law, index) in selectedLaws" :key="index"
+                        class="flex items-center justify-between p-2 bg-gray-200 rounded-lg mb-2">
                         <span class="text-sm">{{ law.nama }}</span>
                         <button :title="`Hapus peraturan ${index + 1}`" @click="removeLaw(index)"
                             class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
-                                <TrashCanIcon class="fill-current w-4" />
+                            <TrashCanIcon class="fill-current w-4" />
                         </button>
                     </li>
                 </ul>
             </div>
 
-            <button data-modal-target="law-basis-modal" data-modal-toggle="law-basis-modal" class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800" type="button">
+            <button data-modal-target="law-basis-modal" data-modal-toggle="law-basis-modal"
+                class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                type="button">
                 Tambah Dasar Hukum
             </button>
         </div>
@@ -245,11 +225,7 @@ onMounted(() => {
         <div class="my-4">
             <label for="implement-qualification" class="mb-2 text-sm font-medium inline-flex">
                 Kualifikasi Pelaksanaan
-                <CircleQuestionIcon class="w-4 mx-2" data-tooltip-target="tooltip-implement-qualification" data-tooltip-placement="right" />
-                <div id="tooltip-implement-qualification" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-1.5 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip">
-                    Misal: Memiliki kemampuan pengolahan data sederhana
-                    <div class="tooltip-arrow" data-popper-arrow></div>
-                </div>
+                <Tooltip field="implement-qualification" text="Misal: Memiliki kemampuan pengolahan data sederhana" />
             </label>
             <input type="text" id="implement-qualification" v-model="newIQItem" @keyup.enter.prevent="addIQ"
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
@@ -258,11 +234,12 @@ onMounted(() => {
             <!-- Daftar kualifikasi pelaksanaan -->
             <div v-if="implementQualificationItems.length > 0" class="my-4">
                 <ul>
-                    <li v-for="(iq, index) in implementQualificationItems" :key="index" class="flex items-center justify-between p-2 bg-gray-200 rounded-lg mb-2">
+                    <li v-for="(iq, index) in implementQualificationItems" :key="index"
+                        class="flex items-center justify-between p-2 bg-gray-200 rounded-lg mb-2">
                         <span>{{ iq }}</span>
                         <button :title="`Hapus item ${index + 1}`" @click="removeImplementQualification(index)"
                             class="p-2 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
-                                <TrashCanIcon class="fill-current w-4" />
+                            <TrashCanIcon class="fill-current w-4" />
                         </button>
                     </li>
                 </ul>
@@ -272,11 +249,7 @@ onMounted(() => {
         <div class="my-4">
             <label for="related-sop" class="mb-2 text-sm font-medium inline-flex">
                 Keterkaitan dengan POS AP Lain
-                <CircleQuestionIcon class="w-4 mx-2" data-tooltip-target="tooltip-related-sop" data-tooltip-placement="right" />
-                <div id="tooltip-related-sop" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-1.5 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip">
-                    Misal: POS AP Pelaksanaan KP
-                    <div class="tooltip-arrow" data-popper-arrow></div>
-                </div>
+                <Tooltip field="related-sop" text="Misal: POS AP Pelaksanaan KP" />
             </label>
             <input type="text" id="related-sop" v-model="newRelatedSopItem" @keyup.enter.prevent="addRelatedSop"
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
@@ -285,11 +258,12 @@ onMounted(() => {
             <!-- Daftar POS AP yang terkait -->
             <div v-if="relatedSopItems.length > 0" class="my-4">
                 <ul>
-                    <li v-for="(rs, index) in relatedSopItems" :key="index" class="flex items-center justify-between p-2 bg-gray-200 rounded-lg mb-2">
+                    <li v-for="(rs, index) in relatedSopItems" :key="index"
+                        class="flex items-center justify-between p-2 bg-gray-200 rounded-lg mb-2">
                         <span>{{ rs }}</span>
                         <button :title="`Hapus item ${index + 1}`" @click="removeRelatedSop(index)"
                             class="p-2 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
-                                <TrashCanIcon class="fill-current w-4" />
+                            <TrashCanIcon class="fill-current w-4" />
                         </button>
                     </li>
                 </ul>
@@ -299,11 +273,7 @@ onMounted(() => {
         <div class="my-4">
             <label for="equipment-input" class="mb-2 text-sm font-medium inline-flex">
                 Peralatan/Perlengkapan
-                <CircleQuestionIcon class="w-4 mx-2" data-tooltip-target="tooltip-equipment" data-tooltip-placement="right" />
-                <div id="tooltip-equipment" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-1.5 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip">
-                    Misal: Komputer
-                    <div class="tooltip-arrow" data-popper-arrow></div>
-                </div>
+                <Tooltip field="equipment" text="Misal: Komputer" />
             </label>
             <input type="text" id="equipment-input" v-model="newEquipmentItem" @keyup.enter.prevent="addEquipment"
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
@@ -312,11 +282,12 @@ onMounted(() => {
             <!-- Daftar peralatan/perlengkapan -->
             <div v-if="equipmentItems.length > 0" class="my-4">
                 <ul class="flex flex-wrap gap-2">
-                    <li v-for="(rs, index) in equipmentItems" :key="index" class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
+                    <li v-for="(rs, index) in equipmentItems" :key="index"
+                        class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
                         <span class="mr-2">{{ rs }}</span>
                         <button :title="`Hapus item ${index + 1}`" @click="removeEquipment(index)"
                             class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
-                                <TrashCanIcon class="fill-current w-4" />
+                            <TrashCanIcon class="fill-current w-4" />
                         </button>
                     </li>
                 </ul>
@@ -327,26 +298,17 @@ onMounted(() => {
         <div class="mb-4">
             <label for="sop-warning" class="mb-2 text-sm font-medium inline-flex">
                 Peringatan
-                <CircleQuestionIcon class="w-4 mx-2" data-tooltip-target="tooltip-warning" data-tooltip-placement="right" />
-                <div id="tooltip-warning" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-1.5 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip">
-                    Misal: Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses 
-                    kerja praktik mahasiswa.
-                    <div class="tooltip-arrow" data-popper-arrow></div>
-                </div>
+                <Tooltip field="warning" text="Misal: Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses 
+                    kerja praktik mahasiswa." />
             </label>
             <textarea id="sop-warning" placeholder="ketikkan teks peringatan disini"
-            class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 h-24"
-            ></textarea>
+                class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 h-24"></textarea>
         </div>
 
         <div class="my-4">
             <label for="data-record-input" class="mb-2 text-sm font-medium inline-flex">
                 Pencatatan dan Pendataan
-                <CircleQuestionIcon class="w-4 mx-2" data-tooltip-target="tooltip-data-record" data-tooltip-placement="right" />
-                <div id="tooltip-data-record" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-1.5 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip">
-                    Misal: Dokumen
-                    <div class="tooltip-arrow" data-popper-arrow></div>
-                </div>
+                <Tooltip field="data-record" text="Misal: Dokumen" />
             </label>
             <input type="text" id="data-record-input" v-model="newRecordItem" @keyup.enter.prevent="addRecord"
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
@@ -355,11 +317,12 @@ onMounted(() => {
             <!-- Daftar peralatan/perlengkapan -->
             <div v-if="recordItems.length > 0" class="my-4">
                 <ul class="flex flex-wrap gap-2">
-                    <li v-for="(rs, index) in recordItems" :key="index" class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
+                    <li v-for="(rs, index) in recordItems" :key="index"
+                        class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
                         <span class="mr-2">{{ rs }}</span>
                         <button :title="`Hapus item ${index + 1}`" @click="removeRecord(index)"
                             class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
-                                <TrashCanIcon class="fill-current w-4" />
+                            <TrashCanIcon class="fill-current w-4" />
                         </button>
                     </li>
                 </ul>
@@ -369,7 +332,8 @@ onMounted(() => {
     </div>
 
     <!-- Large Modal -->
-    <div id="law-basis-modal" tabindex="-1" class="fixed top-0 left-0 right-0 z-50 hidden w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div id="law-basis-modal" tabindex="-1"
+        class="fixed top-0 left-0 right-0 z-50 hidden w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
         <div class="relative w-full max-w-4xl max-h-full">
             <!-- Modal content -->
             <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
@@ -378,14 +342,11 @@ onMounted(() => {
                     <h3 class="text-xl font-medium text-gray-900 dark:text-white">
                         Centang peraturan yang akan ditambahkan ke SOP
                     </h3>
-                    <CircleQuestionIcon class="w-4 mx-2" data-tooltip-target="tooltip-law-modal" data-tooltip-placement="right" />
-                    <div id="tooltip-law-modal" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-1.5 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip">
-                        Misal: Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses 
-                        kerja praktik mahasiswa.
-                        <div class="tooltip-arrow" data-popper-arrow></div>
-                    </div>
-                    <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-hide="law-basis-modal">
-                        <XMarkCloseIcon class="w-3 h-3"/>
+                    <!-- <Tooltip field="law-modal" text="Misal: Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses kerja praktik mahasiswa." /> -->
+                    <button type="button"
+                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                        data-modal-hide="law-basis-modal">
+                        <XMarkCloseIcon class="w-3 h-3" />
                         <span class="sr-only">Tutup modal</span>
                     </button>
                 </div>
@@ -393,7 +354,7 @@ onMounted(() => {
                 <div class="p-4 md:p-5 space-y-4">
 
                     <!-- <div class="flex justify-end mb-4">
-                        <router-link :to="{ name: 'SopPropose' }">
+                        <router-link to="#">
                             <button
                                 class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center dark:focus:ring-[#2557D6]/50 me-2 mb-2 ml-auto"
                                 title="">
@@ -403,44 +364,17 @@ onMounted(() => {
                         </router-link>
                     </div> -->
 
-                    <table id="sop-docs-table" class="mx-auto">
-                        <thead>
-                            <tr>
-                                <th>
-                                    <span class="flex items-center">
-                                        No.
-                                    </span>
-                                </th>
-                                <th>
-                                    <span class="flex items-center">
-                                        Nama
-                                        <IconSort />
-                                    </span>
-                                </th>
-                                <th>
-                                    <!-- <span class="flex items-center">
-                                        Aksi
-                                    </span> -->
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="(item, index) in data" :key="index">
-                                <td class="font-medium text-gray-900 whitespace-nowrap">{{ index + 1 }}</td>
-                                <td class="font-medium text-gray-900 whitespace-wrap">{{ item.nama }}</td>
-                                <td>
-                                    <input type="checkbox"
-                                    :checked="selectedLaws.some(law => law.nama === item.nama)" @change="toggleLaw(item)"
-                                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <DataTable :data="data" :columns="[
+                        { field: 'nama', label: 'Nama', sortable: true },
+                    ]" :searchable="['nama']" :table-type="'check'" v-model:selectedItems="selectedLaws" />
 
                 </div>
                 <!-- Modal footer -->
-                <div class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                    <button data-modal-hide="law-basis-modal" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Tambahkan</button>
+                <div
+                    class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
+                    <button :disabled="selectedLaws.length == 0" data-modal-hide="law-basis-modal"
+                        @click="console.log(selectedLaws)" type="button"
+                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Tambahkan</button>
                 </div>
             </div>
         </div>

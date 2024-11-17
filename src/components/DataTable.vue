@@ -16,6 +16,11 @@ const props = defineProps({
     searchable: {
         type: Array,
         required: true
+    },
+    tableType: {
+        type: String,
+        default: 'crud',
+        validator: (value) => ['crud', 'check'].includes(value)
     }
 });
 
@@ -27,6 +32,24 @@ const sortField = ref(null);
 
 // Opsi untuk jumlah item per halaman
 const itemsPerPageOptions = [5, 10, 15, 20, 25, 50, 100];
+
+// kolom checkbox
+const emit = defineEmits(['edit', 'delete', 'update:selectedItems']);
+
+const selectedItems = ref([]);
+
+const toggleItem = (item) => {
+    const index = selectedItems.value.findIndex(selectedItem => selectedItem.nama === item.nama);
+    if (index === -1) {
+        selectedItems.value.push(item);
+    } else {
+        selectedItems.value.splice(index, 1);
+    }
+    emit('update:selectedItems', selectedItems.value);
+};
+
+// Tambahkan method helper untuk mengecek tipe tabel
+const isCrudTable = computed(() => props.tableType === 'crud');
 
 // Computed property untuk info pagination
 const paginationInfo = computed(() => {
@@ -206,15 +229,25 @@ const goToPage = (page) => {
                     <td v-for="column in columns" :key="column.field" class="px-6 py-4 text-black">
                         {{ item[column.field] }}
                     </td>
-                    <td class="px-6 py-4 flex">
-                        <button :title="`Edit item ${index + 1}`" @click="$emit('edit', item.id)"
-                            class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
-                            <PenToSquareIcon class="fill-current w-4" />
-                        </button>
-                        <button :title="`Hapus item ${index + 1}`" @click="$emit('delete', item.id)"
-                            class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
-                            <TrashCanIcon class="fill-current w-4" />
-                        </button>
+                    <td class="px-6 py-4" :class="{ 'flex': props.tableType === 'crud' }">
+                        <template v-if="props.tableType === 'crud'">
+                            <button :title="`Edit item ${index + 1}`" v-if="isCrudTable" @click="$emit('edit', item.id)"
+                                class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
+                                <PenToSquareIcon class="fill-current w-4" />
+                            </button>
+                            <button :title="`Hapus item ${index + 1}`" v-if="isCrudTable" @click="$emit('delete', item.id)"
+                                class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
+                                <TrashCanIcon class="fill-current w-4" />
+                            </button>
+                        </template>
+                        <template v-else>
+                            <input 
+                                type="checkbox"
+                                :checked="selectedItems.some(selected => selected.nama === item.nama)"
+                                @change="toggleItem(item)"
+                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                            >
+                        </template>
                     </td>
                 </tr>
             </tbody>
