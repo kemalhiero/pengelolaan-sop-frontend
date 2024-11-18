@@ -26,7 +26,7 @@ const props = defineProps({
 
 const searchQuery = ref('');
 const currentPage = ref(1);
-const itemsPerPage = ref(10);
+const itemsPerPage = ref(5);
 const sortDirection = ref({});
 const sortField = ref(null);
 

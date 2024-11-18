@@ -1,67 +1,70 @@
 <script setup>
-import { ref } from 'vue';
-import dateNow from '@/utils/dateNow';
-import XMarkDeleteIcon from '@/assets/icons/XMarkDeleteIcon.vue';
+import { onMounted, ref } from 'vue';
+import { getOrg } from '@/api/orgApi';
+import { initModals } from 'flowbite';
+
 import PageTitle from '@/components/authenticated/PageTitle.vue';
+import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
+import DataTable from '@/components/DataTable.vue';
+import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
+import { getImplementer } from '@/api/sopImplementerApi';
 
-const items = ref(['Pelaksana 1', 'Pelaksana 2', 'Pelaksana 3']); // Daftar awal item
-const selectedItems = ref([]); // Menyimpan item yang dipilih
-const newItem = ref(''); // Menyimpan input item baru
+// pelaksana
+const executor = [
+    { nama: 'pelaksana 1' },
+    { nama: 'pelaksana 2' },
+    { nama: 'pelaksana 3' },
+    { nama: 'pelaksana 4' },
+    { nama: 'pelaksana 5' },
+    { nama: 'pelaksana 6' },
+    { nama: 'pelaksana 7' },
+];
+const selectedExecutor = ref([]);
+const removeExecutor = (index) => {
+    selectedExecutor.value.splice(index, 1);
+};
 
-const addItem = () => {
-    if (newItem.value && !items.value.includes(newItem.value)) {
-        items.value.push(newItem.value); // Menambahkan item baru
-        newItem.value = ''; // Mengosongkan input setelah ditambah
+const editablePart = ref('000');
+
+// penugasan
+const employe = [
+    { nama: 'John Doe' },
+    { nama: 'Jane Smith' },
+    { nama: 'Michael Johnson' },
+    { nama: 'Kemal Muhammad Hiero' },
+    { nama: 'Keke' },
+    { nama: 'Jessica' },
+];
+const selectedEmploye = ref([]);
+const removeEmploye = (index) => {
+    selectedEmploye.value.splice(index, 1);
+};
+
+const dataOrg = ref([]);
+const fetchOrg = async () => {
+    try {
+        const result = await getOrg();
+        dataOrg.value = result.data;
+    } catch (error) {
+        console.error('Fetch error:', error);
     }
 };
 
-const editablePart = ref('000')
-
-// ------------penugasan--------
-// Definisikan state dengan ref
-const searchQuery = ref('');
-const users = ref([
-    { id: 1, name: 'John Doe' },
-    { id: 2, name: 'Jane Smith' },
-    { id: 3, name: 'Michael Johnson' },
-    { id: 4, name: 'Kemal Muhammad Hiero' },
-    { id: 5, name: 'Keke' },
-    { id: 6, name: 'Jessica' },
-    // Tambahkan lebih banyak data user di sini atau dapatkan dari API
-]);
-
-const filteredUsers = ref([]);
-const selectedUsers = ref([]);
-
-// Fungsi pencarian user
-const searchUser = () => {
-    if (searchQuery.value.length > 0) {
-        filteredUsers.value = users.value
-            .filter(user =>
-                user.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-            )
-            .filter(user =>
-                !selectedUsers.value.some(selected => selected.id === user.id)
-            );
-    } else {
-        filteredUsers.value = [];
+const dataImplementer = ref([]);
+const fetchImplementer = async () => {
+    try {
+        const result = await getImplementer();
+        dataImplementer.value = result.data;        
+    } catch (error) {
+        console.error('Fetch error:', error);
     }
-};
+}
 
-// Fungsi untuk memilih user
-const selectUser = (user) => {
-    // Cek apakah user sudah ada dalam daftar terpilih
-    if (!selectedUsers.value.find(selected => selected.id === user.id)) {
-        selectedUsers.value.push(user);
-    }
-    searchQuery.value = '';
-    filteredUsers.value = [];
-};
-
-// Fungsi untuk menghapus user dari daftar terpilih
-const removeUser = (user) => {
-    selectedUsers.value = selectedUsers.value.filter(selected => selected.id !== user.id);
-};
+onMounted(() => {
+    fetchOrg();
+    fetchImplementer();
+    initModals();
+});
 
 </script>
 
@@ -72,7 +75,7 @@ const removeUser = (user) => {
 
         <section class="bg-white">
             <div class="py-8 px-4 mx-auto max-w-3xl">
-                <form action="#">
+                <form>
                     <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
                         <div class="sm:col-span-2">
                             <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
@@ -82,6 +85,7 @@ const removeUser = (user) => {
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                                 placeholder="Contoh : Pengusulan Kerja Praktik (langsung judul, tanpa perlu 'SOP' atau 'POS' di awal)">
                         </div>
+
                         <div class="sm:col-span-2">
                             <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
                                 Nomor POS
@@ -100,19 +104,17 @@ const removeUser = (user) => {
                                 </span>
                             </div>
                         </div>
+
                         <div>
-                            <label for="org"
-                                class="block mb-2 text-sm font-medium text-gray-900">Organisasi</label>
+                            <label for="org" class="block mb-2 text-sm font-medium text-gray-900">Organisasi</label>
                             <select id="org"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                                <option selected>Pilih organisasi</option>
-                                <option value="dsi">DSI</option>
-                                <option value="lea">LEA</option>
-                                <option value="ldkom">LDKOM</option>
-                                <option value="labgis">LABGIS</option>
-                                <option value="lbi">LBI</option>
+                                <option selected value="">Pilih organisasi</option>
+                                <option v-for="(item, index) in dataOrg" :value="item.id" :key="`org-${index}`">{{
+                                    item.name }}</option>
                             </select>
                         </div>
+
                         <div class="w-full">
                             <label for="sop-date-make" class="block mb-2 text-sm font-medium text-gray-900">
                                 Tanggal Pembuatan
@@ -121,31 +123,57 @@ const removeUser = (user) => {
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                                 placeholder="Masukkan tanggal">
                         </div>
+
                         <div class="sm:col-span-2">
-                            <label class="block mb-2 text-sm font-medium text-gray-900">
+                            <label class="block mb-2 text-sm font-medium">
                                 Pelaksana
                             </label>
 
-                            <div v-for="(item, index) in items" :key="index" class="flex items-center mb-2">
-                                <input type="checkbox" :id="`pelaksana-${index}`" :value="item" v-model="selectedItems"
-                                    class="bg-gray-50 border border-gray-300 text-primary-600 rounded focus:ring-primary-600">
-                                <label :for="`pelaksana-${index}`"
-                                    class="ml-2 text-sm font-medium text-gray-900">
-                                    {{ item }}
-                                </label>
+                            <div v-if="selectedExecutor.length > 0" class="my-4">
+                                <ul class="flex flex-wrap gap-2">
+                                    <li v-for="(item, index) in selectedExecutor" :key="index"
+                                        class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
+                                        <span class="mr-2">{{ item.nama }}</span>
+                                        <button :title="`Hapus item ${index + 1}`" @click="removeExecutor(index)"
+                                            type="button"
+                                            class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
+                                            <TrashCanIcon class="fill-current w-4" />
+                                        </button>
+                                    </li>
+                                </ul>
                             </div>
 
-                            <div class="flex items-center">
-                                <input v-model="newItem" type="text" placeholder="Tambah pelaksana baru" @keyup.enter.prevent="addItem"
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5">
-                                <button @click="addItem" type="button"
-                                    class="ml-2 text-sm text-white bg-primary-600 hover:bg-primary-700 p-2 rounded">
-                                    Tambah
-                                </button>
+                            <button data-modal-target="executor-modal" data-modal-toggle="executor-modal"
+                                class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center"
+                                type="button">
+                                Tambah Pelaksana
+                            </button>
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label class="block mb-2 text-sm font-medium">
+                                Penugasan
+                            </label>
+
+                            <div v-if="selectedEmploye.length > 0" class="my-4">
+                                <ul class="flex flex-wrap gap-2">
+                                    <li v-for="(item, index) in selectedEmploye" :key="index"
+                                        class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
+                                        <span class="mr-2">{{ item.nama }}</span>
+                                        <button :title="`Hapus item ${index + 1}`" @click="removeEmploye(index)"
+                                            type="button"
+                                            class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
+                                            <TrashCanIcon class="fill-current w-4" />
+                                        </button>
+                                    </li>
+                                </ul>
                             </div>
 
-                            <p class="mt-2 text-sm text-gray-500">Pelaksana yang dipilih: {{
-                                selectedItems.join(', ') }}</p>
+                            <button data-modal-target="employe-modal" data-modal-toggle="employe-modal"
+                                class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center"
+                                type="button">
+                                Tambahkan User
+                            </button>
                         </div>
 
                         <div class="sm:col-span-2">
@@ -154,40 +182,6 @@ const removeUser = (user) => {
                             <textarea id="description" rows="8"
                                 class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500"
                                 placeholder="Ketikkan deskripsi SOP disini..."></textarea>
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label class="block mb-2 text-sm font-medium text-gray-900" for="search">
-                                Penugasan
-                            </label>
-                            <input type="text" id="search" v-model="searchQuery" @input="searchUser"
-                                placeholder="Ketikkan nama user, lalu klik nama yang dimaksud"
-                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
-
-                            <!-- Dropdown hasil pencarian -->
-                            <div v-if="filteredUsers.length > 0"
-                                class="border border-gray-300 rounded mt-2 max-h-40 overflow-auto bg-white">
-                                <ul>
-                                    <li v-for="user in filteredUsers" :key="user.id" @click="selectUser(user)"
-                                        class="cursor-pointer p-2 hover:bg-blue-100">
-                                        {{ user.name }}
-                                    </li>
-                                </ul>
-                            </div>
-
-                            <!-- User yang dipilih -->
-                            <div v-if="selectedUsers.length > 0" class="mt-4">
-                                <p>User yang dipilih:</p>
-                                <ul>
-                                    <li v-for="(user, index) in selectedUsers" :key="index"
-                                        class="flex items-center py-1 px-3">
-                                        {{ user.name }}
-                                        <button @click="removeUser(user)" class="ml-2" title="Hapus user ini">
-                                            <XMarkDeleteIcon class="w-4 fill-red-600" />
-                                        </button>
-                                    </li>
-                                </ul>
-                            </div>
-
                         </div>
                     </div>
                     <button type="button"
@@ -198,4 +192,100 @@ const removeUser = (user) => {
             </div>
         </section>
     </main>
+
+    <div id="executor-modal" tabindex="-1"
+        class="fixed top-0 left-0 right-0 z-50 hidden w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div class="relative w-full max-w-xl max-h-full">
+            <!-- Modal content -->
+            <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                <!-- Modal header -->
+                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
+                    <h3 class="text-xl font-medium text-gray-900">
+                        Centang peraturan yang akan ditambahkan ke SOP
+                    </h3>
+                    <!-- <Tooltip field="law-modal" text="Misal: Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses kerja praktik mahasiswa." /> -->
+                    <button type="button"
+                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                        data-modal-hide="executor-modal">
+                        <XMarkCloseIcon class="w-3 h-3" />
+                        <span class="sr-only">Tutup modal</span>
+                    </button>
+                </div>
+                <!-- Modal body -->
+                <div class="p-4 md:p-5 space-y-4">
+
+                    <!-- <div class="flex justify-end mb-4">
+                        <router-link to="#">
+                            <button
+                                class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center dark:focus:ring-[#2557D6]/50 me-2 mb-2 ml-auto"
+                                title="">
+                                <CirclePlusIcon class="w-5 mr-3 fill-current" />
+                                Tambah SOP Baru
+                            </button>
+                        </router-link>
+                    </div> -->
+
+                    <DataTable 
+                        :data="executor" 
+                        :columns="[
+                            { field: 'implementer_name', label: 'Nama', sortable: true },
+                        ]" 
+                        :searchable="['nama']" 
+                        :table-type="'check'" 
+                        v-model:selectedItems="selectedExecutor" 
+                    />
+
+                </div>
+                <!-- Modal footer -->
+                <div
+                    class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
+                    <button :disabled="selectedExecutor.length == 0" data-modal-hide="executor-modal"
+                        @click="console.log(selectedExecutor)" type="button"
+                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Tambahkan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="employe-modal" tabindex="-1"
+        class="fixed top-0 left-0 right-0 z-50 hidden w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
+        <div class="relative w-full max-w-2xl max-h-full">
+            <!-- Modal content -->
+            <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+                <!-- Modal header -->
+                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
+                    <h3 class="text-xl font-medium text-gray-900">
+                        Centang user yang akan ditugaskan untuk membuat SOP
+                    </h3>
+
+                    <button type="button"
+                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+                        data-modal-hide="employe-modal">
+                        <XMarkCloseIcon class="w-3 h-3" />
+                        <span class="sr-only">Tutup modal</span>
+                    </button>
+                </div>
+                <!-- Modal body -->
+                <div class="p-4 md:p-5 space-y-4">
+                    <DataTable 
+                        :data="employe" 
+                        :columns="[
+                            { field: 'nama', label: 'Nama', sortable: true },
+                        ]" 
+                        :searchable="['name']" 
+                        :table-type="'check'" 
+                        v-model:selectedItems="selectedEmploye" 
+                    />
+
+                </div>
+                <!-- Modal footer -->
+                <div
+                    class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
+                    <button :disabled="selectedEmploye.length == 0" data-modal-hide="employe-modal"
+                        @click="console.log(selectedEmploye)" type="button"
+                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Tambahkan</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
