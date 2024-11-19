@@ -39,7 +39,7 @@ const emit = defineEmits(['edit', 'delete', 'update:selectedItems']);
 const selectedItems = ref([]);
 
 const toggleItem = (item) => {
-    const index = selectedItems.value.findIndex(selectedItem => selectedItem.nama === item.nama);
+    const index = selectedItems.value.findIndex(selectedItem => selectedItem.id === item.id);
     if (index === -1) {
         selectedItems.value.push(item);
     } else {
@@ -243,7 +243,7 @@ const goToPage = (page) => {
                         <template v-else>
                             <input 
                                 type="checkbox"
-                                :checked="selectedItems.some(selected => selected.nama === item.nama)"
+                                :checked="selectedItems.some(selected => selected.id === item.id)"
                                 @change="toggleItem(item)"
                                 class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                             >

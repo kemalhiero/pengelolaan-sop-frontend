@@ -1,39 +1,27 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { getOrg } from '@/api/orgApi';
-import { initModals } from 'flowbite';
+import { getImplementer } from '@/api/sopImplementerApi';
 
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import DataTable from '@/components/DataTable.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
-import { getImplementer } from '@/api/sopImplementerApi';
 
-// pelaksana
-const executor = [
-    { nama: 'pelaksana 1' },
-    { nama: 'pelaksana 2' },
-    { nama: 'pelaksana 3' },
-    { nama: 'pelaksana 4' },
-    { nama: 'pelaksana 5' },
-    { nama: 'pelaksana 6' },
-    { nama: 'pelaksana 7' },
-];
-const selectedExecutor = ref([]);
-const removeExecutor = (index) => {
-    selectedExecutor.value.splice(index, 1);
-};
+// tampil modal tambah data
+const showExecutorModal = ref(false);
+const showEmployeModal = ref(false);
 
 const editablePart = ref('000');
 
 // penugasan
 const employe = [
-    { nama: 'John Doe' },
-    { nama: 'Jane Smith' },
-    { nama: 'Michael Johnson' },
-    { nama: 'Kemal Muhammad Hiero' },
-    { nama: 'Keke' },
-    { nama: 'Jessica' },
+    { id: 1, name: 'John Doe' },
+    { id: 2, name: 'Jane Smith' },
+    { id: 3, name: 'Michael Johnson' },
+    { id: 4, name: 'Kemal Muhammad Hiero' },
+    { id: 5, name: 'Keke' },
+    { id: 6, name: 'Jessica' },
 ];
 const selectedEmploye = ref([]);
 const removeEmploye = (index) => {
@@ -50,6 +38,7 @@ const fetchOrg = async () => {
     }
 };
 
+// implementer
 const dataImplementer = ref([]);
 const fetchImplementer = async () => {
     try {
@@ -59,11 +48,14 @@ const fetchImplementer = async () => {
         console.error('Fetch error:', error);
     }
 }
+const selectedImplementer = ref([]);
+const removeImplementer = (index) => {
+    selectedImplementer.value.splice(index, 1);
+};
 
 onMounted(() => {
     fetchOrg();
     fetchImplementer();
-    initModals();
 });
 
 </script>
@@ -129,12 +121,12 @@ onMounted(() => {
                                 Pelaksana
                             </label>
 
-                            <div v-if="selectedExecutor.length > 0" class="my-4">
+                            <div v-if="selectedImplementer.length > 0" class="my-4">
                                 <ul class="flex flex-wrap gap-2">
-                                    <li v-for="(item, index) in selectedExecutor" :key="index"
+                                    <li v-for="(item, index) in selectedImplementer" :key="index"
                                         class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
-                                        <span class="mr-2">{{ item.nama }}</span>
-                                        <button :title="`Hapus item ${index + 1}`" @click="removeExecutor(index)"
+                                        <span class="mr-2">{{ item.name }}</span>
+                                        <button :title="`Hapus item ${index + 1}`" @click="removeImplementer(index)"
                                             type="button"
                                             class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
                                             <TrashCanIcon class="fill-current w-4" />
@@ -143,7 +135,7 @@ onMounted(() => {
                                 </ul>
                             </div>
 
-                            <button data-modal-target="executor-modal" data-modal-toggle="executor-modal"
+                            <button @click="showExecutorModal = true"
                                 class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center"
                                 type="button">
                                 Tambah Pelaksana
@@ -159,7 +151,7 @@ onMounted(() => {
                                 <ul class="flex flex-wrap gap-2">
                                     <li v-for="(item, index) in selectedEmploye" :key="index"
                                         class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
-                                        <span class="mr-2">{{ item.nama }}</span>
+                                        <span class="mr-2">{{ item.name }}</span>
                                         <button :title="`Hapus item ${index + 1}`" @click="removeEmploye(index)"
                                             type="button"
                                             class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
@@ -169,7 +161,7 @@ onMounted(() => {
                                 </ul>
                             </div>
 
-                            <button data-modal-target="employe-modal" data-modal-toggle="employe-modal"
+                            <button @click="showEmployeModal = true"
                                 class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center"
                                 type="button">
                                 Tambahkan User
@@ -193,20 +185,22 @@ onMounted(() => {
         </section>
     </main>
 
-    <div id="executor-modal" tabindex="-1"
-        class="fixed top-0 left-0 right-0 z-50 hidden w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div v-show="showExecutorModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
+
+        <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showExecutorModal = false"></div>
+
         <div class="relative w-full max-w-xl max-h-full">
             <!-- Modal content -->
-            <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+            <div class="relative bg-white rounded-lg shadow">
                 <!-- Modal header -->
-                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
+                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
                     <h3 class="text-xl font-medium text-gray-900">
                         Centang peraturan yang akan ditambahkan ke SOP
                     </h3>
                     <!-- <Tooltip field="law-modal" text="Misal: Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses kerja praktik mahasiswa." /> -->
                     <button type="button"
-                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
-                        data-modal-hide="executor-modal">
+                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+                        @click="showExecutorModal = false">
                         <XMarkCloseIcon class="w-3 h-3" />
                         <span class="sr-only">Tutup modal</span>
                     </button>
@@ -224,43 +218,45 @@ onMounted(() => {
                             </button>
                         </router-link>
                     </div> -->
-
-                    <DataTable 
-                        :data="executor" 
+                    <DataTable  
+                        :data="dataImplementer" 
                         :columns="[
-                            { field: 'implementer_name', label: 'Nama', sortable: true },
+                            { field: 'name', label: 'Nama', sortable: true },
                         ]" 
-                        :searchable="['nama']" 
+                        :searchable="['name']" 
                         :table-type="'check'" 
-                        v-model:selectedItems="selectedExecutor" 
+                        v-model:selectedItems="selectedImplementer" 
                     />
 
                 </div>
                 <!-- Modal footer -->
                 <div
                     class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                    <button :disabled="selectedExecutor.length == 0" data-modal-hide="executor-modal"
-                        @click="console.log(selectedExecutor)" type="button"
+                    <button :disabled="selectedImplementer.length == 0"
+                        @click="showExecutorModal = false" type="button"
                         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Tambahkan</button>
                 </div>
             </div>
         </div>
+
     </div>
 
-    <div id="employe-modal" tabindex="-1"
-        class="fixed top-0 left-0 right-0 z-50 hidden w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div v-show="showEmployeModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
+
+        <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showEmployeModal = false"></div>
+
         <div class="relative w-full max-w-2xl max-h-full">
             <!-- Modal content -->
-            <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+            <div class="relative bg-white rounded-lg shadow">
                 <!-- Modal header -->
-                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
+                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
                     <h3 class="text-xl font-medium text-gray-900">
                         Centang user yang akan ditugaskan untuk membuat SOP
                     </h3>
 
                     <button type="button"
-                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
-                        data-modal-hide="employe-modal">
+                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+                        @click="showEmployeModal = false">
                         <XMarkCloseIcon class="w-3 h-3" />
                         <span class="sr-only">Tutup modal</span>
                     </button>
@@ -270,7 +266,7 @@ onMounted(() => {
                     <DataTable 
                         :data="employe" 
                         :columns="[
-                            { field: 'nama', label: 'Nama', sortable: true },
+                            { field: 'name', label: 'Nama', sortable: true },
                         ]" 
                         :searchable="['name']" 
                         :table-type="'check'" 
@@ -281,11 +277,12 @@ onMounted(() => {
                 <!-- Modal footer -->
                 <div
                     class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                    <button :disabled="selectedEmploye.length == 0" data-modal-hide="employe-modal"
-                        @click="console.log(selectedEmploye)" type="button"
+                    <button :disabled="selectedEmploye.length == 0" 
+                        @click="showEmployeModal = false" type="button"
                         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Tambahkan</button>
                 </div>
             </div>
         </div>
+
     </div>
 </template>
