@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { getOrg } from '@/api/orgApi';
+import { getEmploye } from '@/api/userApi';
 import { getImplementer } from '@/api/sopImplementerApi';
 
 import PageTitle from '@/components/authenticated/PageTitle.vue';
@@ -12,23 +13,26 @@ import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 const showExecutorModal = ref(false);
 const showEmployeModal = ref(false);
 
-const editablePart = ref('000');
+const currentYear = new Date().getFullYear();
 
-// penugasan
-const employe = [
-    { id: 1, name: 'John Doe' },
-    { id: 2, name: 'Jane Smith' },
-    { id: 3, name: 'Michael Johnson' },
-    { id: 4, name: 'Kemal Muhammad Hiero' },
-    { id: 5, name: 'Keke' },
-    { id: 6, name: 'Jessica' },
-];
-const selectedEmploye = ref([]);
-const removeEmploye = (index) => {
-    selectedEmploye.value.splice(index, 1);
-};
-
+// data dari api
 const dataOrg = ref([]);
+const dataEmploye = ref([]);
+const dataImplementer = ref([]);
+
+// data yang dipilih
+
+// data form
+const form = ref({
+    name: '',
+    number: 0,
+    id_org: '',
+    implementer: [],
+    employe: [],
+    description: ''
+});
+
+// organisasi
 const fetchOrg = async () => {
     try {
         const result = await getOrg();
@@ -38,8 +42,20 @@ const fetchOrg = async () => {
     }
 };
 
-// implementer
-const dataImplementer = ref([]);
+// penugasan
+const fetchEmploye = async () => {
+    try {
+        const result = await getEmploye();
+        dataEmploye.value = result.data;
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+};
+const removeEmploye = (index) => {
+    form.value.employe.splice(index, 1);
+};
+
+// pelaksana
 const fetchImplementer = async () => {
     try {
         const result = await getImplementer();
@@ -48,14 +64,23 @@ const fetchImplementer = async () => {
         console.error('Fetch error:', error);
     }
 }
-const selectedImplementer = ref([]);
 const removeImplementer = (index) => {
-    selectedImplementer.value.splice(index, 1);
+    form.value.implementer.splice(index, 1);
+};
+
+const submitData = async () => {
+    try {
+        console.log(form.value);
+        
+    } catch (error) {
+        console.error('Error saat mengirim data:', error);
+    }
 };
 
 onMounted(() => {
     fetchOrg();
     fetchImplementer();
+    fetchEmploye();
 });
 
 </script>
@@ -67,18 +92,18 @@ onMounted(() => {
 
         <section class="bg-white">
             <div class="py-8 px-4 mx-auto max-w-3xl">
-                <form>
+                <form @submit.prevent="submitData">
                     <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
-                        <div class="sm:col-span-2">
+                        <div class="col-span-2">
                             <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
                                 Nama POS
                             </label>
-                            <input type="text" name="name" id="name"
+                            <input type="text" v-model="form.name" id="name" placeholder="ketik nama sop disini..."
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                placeholder="Contoh : Pengusulan Kerja Praktik (langsung judul, tanpa perlu 'SOP' atau 'POS' di awal)">
+                                title="Contoh : Pengusulan Kerja Praktik (langsung judul, tanpa perlu 'SOP' atau 'POS' di awal)">
                         </div>
 
-                        <div class="sm:col-span-2">
+                        <div class="col-span-2 sm:col-span-1">
                             <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
                                 Nomor POS
                             </label>
@@ -87,43 +112,43 @@ onMounted(() => {
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg p-2.5">
                                     T/
                                 </span>
-                                <input type="text" v-model="editablePart"
-                                    class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5"
+                                <input type="text" v-model="form.number"
+                                    class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 min-w-12 w-full"
                                     placeholder="Masukkan no urut sop">
                                 <span
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5">
-                                    /UN16.17.02/OT.01.00/{{ new Date().getFullYear() }}
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5 w-fit whitespace-nowrap">
+                                    /UN16.17.02/OT.01.00/{{ currentYear }}
                                 </span>
                             </div>
                         </div>
 
-                        <div>
+                        <div class="col-span-2 sm:col-span-1">
                             <label for="org" class="block mb-2 text-sm font-medium text-gray-900">Organisasi</label>
-                            <select id="org"
+                            <select id="org" v-model="form.id_org"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                                <option selected value="">Pilih organisasi</option>
+                                <option selected disabled value="">Pilih organisasi</option>
                                 <option v-for="(item, index) in dataOrg" :value="item.id" :key="`org-${index}`">{{
                                     item.name }}</option>
                             </select>
                         </div>
 
-                        <div class="w-full">
+                        <!-- <div class="w-full">
                             <label for="sop-date-make" class="block mb-2 text-sm font-medium text-gray-900">
                                 Tanggal Pembuatan
                             </label>
                             <input type="date" name="sop-date-make" id="sop-date-make"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                                 placeholder="Masukkan tanggal">
-                        </div>
+                        </div> -->
 
                         <div class="sm:col-span-2">
                             <label class="block mb-2 text-sm font-medium">
                                 Pelaksana
                             </label>
 
-                            <div v-if="selectedImplementer.length > 0" class="my-4">
+                            <div v-if="form.implementer.length > 0" class="my-4">
                                 <ul class="flex flex-wrap gap-2">
-                                    <li v-for="(item, index) in selectedImplementer" :key="index"
+                                    <li v-for="(item, index) in form.implementer" :key="index"
                                         class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
                                         <span class="mr-2">{{ item.name }}</span>
                                         <button :title="`Hapus item ${index + 1}`" @click="removeImplementer(index)"
@@ -147,9 +172,9 @@ onMounted(() => {
                                 Penugasan
                             </label>
 
-                            <div v-if="selectedEmploye.length > 0" class="my-4">
+                            <div v-if="form.employe.length > 0" class="my-4">
                                 <ul class="flex flex-wrap gap-2">
-                                    <li v-for="(item, index) in selectedEmploye" :key="index"
+                                    <li v-for="(item, index) in form.employe" :key="index"
                                         class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
                                         <span class="mr-2">{{ item.name }}</span>
                                         <button :title="`Hapus item ${index + 1}`" @click="removeEmploye(index)"
@@ -171,12 +196,12 @@ onMounted(() => {
                         <div class="sm:col-span-2">
                             <label for="description"
                                 class="block mb-2 text-sm font-medium text-gray-900">Deskripsi</label>
-                            <textarea id="description" rows="8"
+                            <textarea id="description" rows="8" v-model="form.description"
                                 class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500"
-                                placeholder="Ketikkan deskripsi SOP disini..."></textarea>
+                                placeholder="ketikkan deskripsi SOP disini..."></textarea>
                         </div>
                     </div>
-                    <button type="button"
+                    <button type="submit"
                         class="inline-flex items-center px-5 py-2.5 mt-4 sm:mt-6 text-sm font-medium text-center text-white bg-primary-700 rounded-lg focus:ring-4 focus:ring-primary-200 hover:bg-primary-800">
                         Mulai buat SOP baru
                     </button>
@@ -195,7 +220,7 @@ onMounted(() => {
                 <!-- Modal header -->
                 <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
                     <h3 class="text-xl font-medium text-gray-900">
-                        Centang peraturan yang akan ditambahkan ke SOP
+                        Centang pelaksana yang akan ditambahkan ke SOP
                     </h3>
                     <!-- <Tooltip field="law-modal" text="Misal: Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses kerja praktik mahasiswa." /> -->
                     <button type="button"
@@ -225,14 +250,14 @@ onMounted(() => {
                         ]" 
                         :searchable="['name']" 
                         :table-type="'check'" 
-                        v-model:selectedItems="selectedImplementer" 
+                        v-model:selectedItems="form.implementer" 
                     />
 
                 </div>
                 <!-- Modal footer -->
                 <div
                     class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                    <button :disabled="selectedImplementer.length == 0"
+                    <button :disabled="form.implementer.length == 0"
                         @click="showExecutorModal = false" type="button"
                         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Tambahkan</button>
                 </div>
@@ -253,7 +278,6 @@ onMounted(() => {
                     <h3 class="text-xl font-medium text-gray-900">
                         Centang user yang akan ditugaskan untuk membuat SOP
                     </h3>
-
                     <button type="button"
                         class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
                         @click="showEmployeModal = false">
@@ -264,20 +288,19 @@ onMounted(() => {
                 <!-- Modal body -->
                 <div class="p-4 md:p-5 space-y-4">
                     <DataTable 
-                        :data="employe" 
+                        :data="dataEmploye" 
                         :columns="[
                             { field: 'name', label: 'Nama', sortable: true },
                         ]" 
                         :searchable="['name']" 
                         :table-type="'check'" 
-                        v-model:selectedItems="selectedEmploye" 
+                        v-model:selectedItems="form.employe" 
                     />
-
                 </div>
                 <!-- Modal footer -->
                 <div
                     class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                    <button :disabled="selectedEmploye.length == 0" 
+                    <button :disabled="form.employe.length == 0" 
                         @click="showEmployeModal = false" type="button"
                         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Tambahkan</button>
                 </div>

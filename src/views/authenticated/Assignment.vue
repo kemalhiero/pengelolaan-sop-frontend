@@ -41,37 +41,37 @@ import YellowBadgeIndicator from "@/components/indicator/YellowBadgeIndicator.vu
             <thead>
                 <tr>
                     <th>
-                        <span class="flex items-center">
+                        <span class="flex items-center text-black">
                             Nama
                             <IconSort/>
                         </span>
                     </th>
                     <th data-type="date" data-format="YYYY/DD/MM">
-                        <span class="flex items-center">
+                        <span class="flex items-center text-black">
                             Tanggal
                             <IconSort/>
                         </span>
                     </th>
                     <th>
-                        <span class="flex items-center">
+                        <span class="flex items-center text-black">
                             Organisasi
                             <IconSort/>
                         </span>
                     </th>
                     <th>
-                        <span class="flex items-center">
+                        <span class="flex items-center text-black">
                             Penugas
                             <IconSort/>
                         </span>
                     </th>
                     <th>
-                        <span class="flex items-center">
+                        <span class="flex items-center text-black">
                             Status
                             <IconSort/>
                         </span>
                     </th>
                     <th>
-                        <span class="flex items-center">
+                        <span class="flex items-center text-black">
                             Aksi
                         </span>
                     </th>
@@ -79,10 +79,10 @@ import YellowBadgeIndicator from "@/components/indicator/YellowBadgeIndicator.vu
             </thead>
             <tbody>
                 <tr v-for="(item, index) in data" :key="index">
-                    <td class="font-medium text-gray-900 whitespace-nowrap dark:text-white">{{ item.nama }}</td>
-                    <td>{{ item.tanggal }}</td>
-                    <td>{{ item.organisasi }}</td>
-                    <td>{{ item.penugas }}</td>
+                    <td class="font-medium whitespace-nowrap text-black">{{ item.nama }}</td>
+                    <td class="text-black">{{ item.tanggal }}</td>
+                    <td class="text-black">{{ item.organisasi }}</td>
+                    <td class="text-black">{{ item.penugas }}</td>
                     <td>
                         <GreenBadgeIndicator teks="Selesai" v-if="item.status == 'selesai' " />
                         <YellowBadgeIndicator teks="Belum Selesai" v-else-if="item.status == 'blm-selesai'" />
