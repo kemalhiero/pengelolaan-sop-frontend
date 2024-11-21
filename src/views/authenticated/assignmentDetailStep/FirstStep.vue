@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import { initModals } from 'flowbite';
+import { getImplementer } from '@/api/sopImplementerApi';
 
 import CircleInfoIcon from '@/assets/icons/CircleInfoIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
@@ -10,85 +11,110 @@ import Tooltip from '@/components/Tooltip.vue';
 
 // Data peraturan
 const data = [
-    { nama: 'Peraturan Pemerintah Nomor 95 Tahun 2021 tentang Perguruan Tinggi Negeri Badan Hukum Universitas Andalas' },
-    { nama: ' Peraturan Rektor Universitas Andalas Nomor 8 Tahun 2022 tentang Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas' }
+    { id: 1, nama: 'Peraturan Pemerintah Nomor 95 Tahun 2021 tentang Perguruan Tinggi Negeri Badan Hukum Universitas Andalas' },
+    { id: 2, nama: ' Peraturan Rektor Universitas Andalas Nomor 8 Tahun 2022 tentang Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas' }
 ];
 
-// State untuk menyimpan peraturan yang dipilih
-const selectedLaws = ref([]);
+const form = ref({
+    section: '',
+    implementer: [],
+    legalBasis: [],
+    implementQualification: [],
+    relatedSop: [],
+    equipment: [],
+    warning: '',
+    record: []
+});
+
+const showModal = ref({
+    legalBasis: false,
+    executor: false
+})
 
 // Fungsi untuk menghapus peraturan yang sudah dipilih
 const removeLaw = (index) => {
-    selectedLaws.value.splice(index, 1);
+    form.value.legalBasis.splice(index, 1);
+};
+
+// pelaksana
+const dataImplementer = ref([]);
+
+const fetchImplementer = async () => {
+    try {
+        const result = await getImplementer();
+        dataImplementer.value = result.data;        
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
 }
+const removeImplementer = (index) => {
+    form.value.implementer.splice(index, 1);
+};
 
 // kualifikasi pelaksanaan
-const implementQualificationItems = ref([]);
 const newIQItem = ref([]);
 
 const addIQ = () => {
-    if (newIQItem.value && !implementQualificationItems.value.includes(newIQItem.value)) {
-        implementQualificationItems.value.push(newIQItem.value); // Menambahkan item baru
+    if (newIQItem.value && !form.value.implementQualification.includes(newIQItem.value)) {
+        form.value.implementQualification.push(newIQItem.value); // Menambahkan item baru
         newIQItem.value = ''; // Mengosongkan input setelah ditambah
     }
-    console.log(implementQualificationItems);
+    console.log(form.value.implementQualification);
 };
 
 const removeImplementQualification = (index) => {
-    implementQualificationItems.value.splice(index, 1);
+    form.value.implementQualification.splice(index, 1);
 }
 
 // keterkaitan dengan pos ap lain
-const relatedSopItems = ref([]);
 const newRelatedSopItem = ref([]);
 
 const addRelatedSop = () => {
-    if (newRelatedSopItem.value && !relatedSopItems.value.includes(newRelatedSopItem.value)) {
-        relatedSopItems.value.push(newRelatedSopItem.value); // Menambahkan item baru
+    if (newRelatedSopItem.value && !form.value.relatedSop.includes(newRelatedSopItem.value)) {
+        form.value.relatedSop.push(newRelatedSopItem.value); // Menambahkan item baru
         newRelatedSopItem.value = ''; // Mengosongkan input setelah ditambah
     }
-    console.log(relatedSopItems);
+    console.log(form.value.relatedSop);
 };
 
 const removeRelatedSop = (index) => {
-    relatedSopItems.value.splice(index, 1);
+    form.value.relatedSop.splice(index, 1);
 }
 
 // peralatan/perlengkapan
-const equipmentItems = ref([]);
 const newEquipmentItem = ref([]);
 
 const addEquipment = () => {
-    if (newEquipmentItem.value && !equipmentItems.value.includes(newEquipmentItem.value)) {
-        equipmentItems.value.push(newEquipmentItem.value); // Menambahkan item baru
+    if (newEquipmentItem.value && !form.value.equipment.includes(newEquipmentItem.value)) {
+        form.value.equipment.push(newEquipmentItem.value); // Menambahkan item baru
         newEquipmentItem.value = ''; // Mengosongkan input setelah ditambah
     }
-    console.log(equipmentItems);
+    console.log(form.value.equipment);
 };
 
 const removeEquipment = (index) => {
-    equipmentItems.value.splice(index, 1);
+    form.value.equipment.splice(index, 1);
 }
 
 // pencatatan dan pendataan
-const recordItems = ref([]);
 const newRecordItem = ref([]);
 
 const addRecord = () => {
-    if (newRecordItem.value && !recordItems.value.includes(newRecordItem.value)) {
-        recordItems.value.push(newRecordItem.value); // Menambahkan item baru
+    if (newRecordItem.value && !form.value.record.includes(newRecordItem.value)) {
+        form.value.record.push(newRecordItem.value); // Menambahkan item baru
         newRecordItem.value = ''; // Mengosongkan input setelah ditambah
     }
-    console.log(recordItems);
+    console.log(form.value.record);
 };
 
 const removeRecord = (index) => {
-    recordItems.value.splice(index, 1);
+    form.value.record.splice(index, 1);
 }
 
 // -----------------------
 onMounted(() => {
     initModals();
+    fetchImplementer();
 });
 
 </script>
@@ -191,10 +217,37 @@ onMounted(() => {
             <label for="sop-section" class="block mb-2 text-sm font-medium ">
                 Seksi
             </label>
-            <input type="text" id="sop-section"
+            <input type="text" id="sop-section" v-model="form.section"
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
                 value="Semua Seksi di Lingkungan Departemen Sistem Informasi" />
         </div>
+
+        <div class="mb-4">
+            <label class="block mb-2 text-sm font-medium">
+                Pelaksana
+            </label>
+
+            <div v-if="form.implementer.length > 0" class="my-4">
+                <ul class="flex flex-wrap gap-2">
+                    <li v-for="(item, index) in form.implementer" :key="index"
+                        class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
+                        <span class="mr-2">{{ item.name }}</span>
+                        <button :title="`Hapus item ${index + 1}`" @click="removeImplementer(index)"
+                            type="button"
+                            class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
+                            <TrashCanIcon class="fill-current w-4" />
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <button @click="showModal.executor = true"
+                class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center"
+                type="button">
+                Tambah Pelaksana
+            </button>
+        </div>
+
 
         <div class="mb-4">
             <label class="block mb-2 text-sm font-medium ">
@@ -202,9 +255,9 @@ onMounted(() => {
             </label>
 
             <!-- Daftar Dasar Hukum yang Dipilih -->
-            <div v-if="selectedLaws.length > 0" class="my-4">
+            <div v-if="form.legalBasis.length > 0" class="my-4">
                 <ul>
-                    <li v-for="(law, index) in selectedLaws" :key="index"
+                    <li v-for="(law, index) in form.legalBasis" :key="index"
                         class="flex items-center justify-between p-2 bg-gray-200 rounded-lg mb-2">
                         <span class="text-sm">{{ law.nama }}</span>
                         <button :title="`Hapus peraturan ${index + 1}`" @click="removeLaw(index)"
@@ -215,7 +268,7 @@ onMounted(() => {
                 </ul>
             </div>
 
-            <button data-modal-target="law-basis-modal" data-modal-toggle="law-basis-modal"
+            <button @click="showModal.legalBasis = true"
                 class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center"
                 type="button">
                 Tambah Dasar Hukum
@@ -232,9 +285,9 @@ onMounted(() => {
                 placeholder="ketikkan, lalu tekan enter" title="Contoh: Memiliki Kemampuan pengolahan data sederhana" />
 
             <!-- Daftar kualifikasi pelaksanaan -->
-            <div v-if="implementQualificationItems.length > 0" class="my-4">
+            <div v-if="form.implementQualification.length > 0" class="my-4">
                 <ul>
-                    <li v-for="(iq, index) in implementQualificationItems" :key="index"
+                    <li v-for="(iq, index) in form.implementQualification" :key="index"
                         class="flex items-center justify-between p-2 bg-gray-200 rounded-lg mb-2">
                         <span>{{ iq }}</span>
                         <button :title="`Hapus item ${index + 1}`" @click="removeImplementQualification(index)"
@@ -256,9 +309,9 @@ onMounted(() => {
                 placeholder="ketikkan, lalu tekan enter" />
 
             <!-- Daftar POS AP yang terkait -->
-            <div v-if="relatedSopItems.length > 0" class="my-4">
+            <div v-if="form.relatedSop.length > 0" class="my-4">
                 <ul>
-                    <li v-for="(rs, index) in relatedSopItems" :key="index"
+                    <li v-for="(rs, index) in form.relatedSop" :key="index"
                         class="flex items-center justify-between p-2 bg-gray-200 rounded-lg mb-2">
                         <span>{{ rs }}</span>
                         <button :title="`Hapus item ${index + 1}`" @click="removeRelatedSop(index)"
@@ -280,9 +333,9 @@ onMounted(() => {
                 placeholder="ketikkan, lalu tekan enter" />
 
             <!-- Daftar peralatan/perlengkapan -->
-            <div v-if="equipmentItems.length > 0" class="my-4">
+            <div v-if="form.equipment.length > 0" class="my-4">
                 <ul class="flex flex-wrap gap-2">
-                    <li v-for="(rs, index) in equipmentItems" :key="index"
+                    <li v-for="(rs, index) in form.equipment" :key="index"
                         class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
                         <span class="mr-2">{{ rs }}</span>
                         <button :title="`Hapus item ${index + 1}`" @click="removeEquipment(index)"
@@ -294,14 +347,13 @@ onMounted(() => {
             </div>
         </div>
 
-
         <div class="mb-4">
             <label for="sop-warning" class="mb-2 text-sm font-medium inline-flex">
                 Peringatan
                 <Tooltip field="warning" text="Misal: Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses 
                     kerja praktik mahasiswa." />
             </label>
-            <textarea id="sop-warning" placeholder="ketikkan teks peringatan disini"
+            <textarea id="sop-warning" placeholder="ketikkan teks peringatan disini" v-model="form.warning"
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 h-24"></textarea>
         </div>
 
@@ -315,9 +367,9 @@ onMounted(() => {
                 placeholder="ketikkan, lalu tekan enter" />
 
             <!-- Daftar peralatan/perlengkapan -->
-            <div v-if="recordItems.length > 0" class="my-4">
+            <div v-if="form.record.length > 0" class="my-4">
                 <ul class="flex flex-wrap gap-2">
-                    <li v-for="(rs, index) in recordItems" :key="index"
+                    <li v-for="(rs, index) in form.record" :key="index"
                         class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
                         <span class="mr-2">{{ rs }}</span>
                         <button :title="`Hapus item ${index + 1}`" @click="removeRecord(index)"
@@ -331,12 +383,14 @@ onMounted(() => {
 
     </div>
 
+    <button @click="console.log(form)">konsol</button>
+
     <!-- Large Modal -->
-    <div id="law-basis-modal" tabindex="-1"
-        class="fixed top-0 left-0 right-0 z-50 hidden w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div v-show="showModal.legalBasis" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
+        <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showModal.legalBasis = false"></div>
+        
         <div class="relative w-full max-w-4xl max-h-full">
-            <!-- Modal content -->
-            <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+            <div class="relative bg-white rounded-lg shadow">
                 <!-- Modal header -->
                 <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
                     <h3 class="text-xl font-medium text-gray-900 dark:text-white">
@@ -366,14 +420,51 @@ onMounted(() => {
 
                     <DataTable :data="data" :columns="[
                         { field: 'nama', label: 'Nama', sortable: true },
-                    ]" :searchable="['nama']" :table-type="'check'" v-model:selectedItems="selectedLaws" />
+                    ]" :searchable="['nama']" :table-type="'check'" v-model:selectedItems="form.legalBasis" />
 
                 </div>
                 <!-- Modal footer -->
                 <div
                     class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                    <button :disabled="selectedLaws.length == 0" data-modal-hide="law-basis-modal"
-                        @click="console.log(selectedLaws)" type="button"
+                    <button :disabled="form.legalBasis.length == 0"
+                        @click="showModal.legalBasis = false" type="button"
+                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Tambahkan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div v-show="showModal.executor" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
+        <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showModal.executor = false"></div>
+
+        <div class="relative w-full max-w-xl max-h-full">
+            <div class="relative bg-white rounded-lg shadow">
+                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
+                    <h3 class="text-xl font-medium text-gray-900">
+                        Centang pelaksana yang akan ditambahkan ke SOP
+                    </h3>
+                    <button type="button"
+                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+                        @click="showModal.executor = false">
+                        <XMarkCloseIcon class="w-3 h-3" />
+                        <span class="sr-only">Tutup modal</span>
+                    </button>
+                </div>
+                <div class="p-4 md:p-5 space-y-4">
+                    <DataTable  
+                        :data="dataImplementer" 
+                        :columns="[
+                            { field: 'name', label: 'Nama', sortable: true },
+                        ]" 
+                        :searchable="['name']" 
+                        :table-type="'check'" 
+                        v-model:selectedItems="form.implementer" 
+                    />
+                </div>
+                <div
+                    class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
+                    <button :disabled="form.implementer.length == 0"
+                        @click="showModal.executor = false" type="button"
                         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Tambahkan</button>
                 </div>
             </div>

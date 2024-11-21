@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue';
+
 import CheckIcon from '@/assets/icons/CheckIcon.vue';
 import NumberOneCircleIcon from '@/assets/icons/NumberOneCircleIcon.vue';
 import NumberTwoCircleIcon from '@/assets/icons/NumberTwoCircleIcon.vue';
@@ -7,10 +8,9 @@ import NumberThreeCircleIcon from '@/assets/icons/NumberThreeCircleIcon.vue';
 import CircleArrowRight from '@/assets/icons/CircleArrowRight.vue';
 import CircleArrowLeft from '@/assets/icons/CircleArrowLeft.vue';
 
-
-import FirstStep from './assignmentDetailStep.vue/FirstStep.vue';
-import SecondStep from './assignmentDetailStep.vue/SecondStep.vue';
-import ThirdStep from './assignmentDetailStep.vue/ThirdStep.vue';
+import FirstStep from './assignmentDetailStep/FirstStep.vue';
+import SecondStep from './assignmentDetailStep/SecondStep.vue';
+import ThirdStep from './assignmentDetailStep/ThirdStep.vue';
 
 // State untuk mengatur langkah
 const currentStep = ref(1);  // Langkah sekarang
@@ -48,7 +48,7 @@ const prevStep = () => {
             </span>
         </li>
         <li class="flex md:w-full items-center after:content-[''] after:w-full after:h-1 after:border-b after:border-gray-400 after:border-1 after:hidden sm:after:inline-block after:mx-6 xl:after:mx-10 hover:cursor-pointer"
-            :class="{ 'text-blue-600': currentStep === 2 }"
+            :class="{ 'text-blue-600': currentStep >= 2 }"
             @click="currentStep = 2">
             <span class="flex items-center after:content-['/'] sm:after:hidden after:mx-2 after:text-gray-400">
                 <span class="me-2" v-if="currentStep < 2">2</span>
@@ -68,16 +68,9 @@ const prevStep = () => {
 
     <!-- tampilan data -->
     <div class="my-8 px-6 md:px-0">
-
-        <!-- form tahap pertama -->
         <FirstStep v-if="currentStep == 1"  />
-
-        <!-- form tahap kedua -->
         <SecondStep  v-else-if="currentStep == 2"/>
-
-        <!-- form tahap ketiga -->
         <ThirdStep  v-else-if="currentStep == 3" />
-
     </div>
 
     <div class="flex justify-between mb-8 px-6 max-w-2xl mx-auto">
