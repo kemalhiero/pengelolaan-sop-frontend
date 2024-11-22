@@ -1,6 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue';
-import { initModals } from 'flowbite';
+import { onMounted, ref, defineEmits, defineExpose } from 'vue';
 import { getImplementer } from '@/api/sopImplementerApi';
 
 import CircleInfoIcon from '@/assets/icons/CircleInfoIcon.vue';
@@ -8,6 +7,7 @@ import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import DataTable from '@/components/DataTable.vue';
 import Tooltip from '@/components/Tooltip.vue';
+import WarningText from '@/components/validation/WarningText.vue';
 
 // Data peraturan
 const data = [
@@ -29,7 +29,63 @@ const form = ref({
 const showModal = ref({
     legalBasis: false,
     executor: false
-})
+});
+
+// Definisikan emit untuk validasi
+const emit = defineEmits(['validate-step'])
+
+const showWarningText = ref({
+    section: false,
+    implementer: false,
+    legalBasis: false,
+    implementQualification: false,
+    // relatedSop: false,
+    // equipment: false,
+    warning: false,
+    record: false
+});
+
+// Fungsi validasi untuk setiap field
+const validateFields = () => {
+
+    // Reset semua warning text
+    Object.keys(showWarningText.value).forEach(key => {
+        showWarningText.value[key] = false;
+    });
+
+    // Validasi dengan satu fungsi
+    const validations = {
+        section: () => !form.value.section.trim(),
+        implementer: () => form.value.implementer.length === 0,
+        legalBasis: () => form.value.legalBasis.length === 0,
+        implementQualification: () => form.value.implementQualification.length === 0,
+        warning: () => !form.value.warning.trim(),
+        record: () => form.value.record.length === 0
+    };
+
+    Object.entries(validations).forEach(([key, validation]) => {
+        if (validation()) {
+            showWarningText.value[key] = true;
+        }
+    });
+
+    // Cek apakah semua validasi lolos
+    const isValid = Object.values(showWarningText.value).every(value => !value);
+
+    // Emit event validasi
+    emit('validate-step', {
+        isValid: isValid,
+        showWarningText: showWarningText.value,
+        data: form.value
+    });
+
+    return isValid;
+};
+
+// Expose metode validasi ke komponen induk
+defineExpose({
+    validateFields
+});
 
 // Fungsi untuk menghapus peraturan yang sudah dipilih
 const removeLaw = (index) => {
@@ -42,17 +98,17 @@ const dataImplementer = ref([]);
 const fetchImplementer = async () => {
     try {
         const result = await getImplementer();
-        dataImplementer.value = result.data;        
+        dataImplementer.value = result.data;
     } catch (error) {
         console.error('Fetch error:', error);
     }
-}
+};
 const removeImplementer = (index) => {
     form.value.implementer.splice(index, 1);
 };
 
 // kualifikasi pelaksanaan
-const newIQItem = ref([]);
+const newIQItem = ref('');
 
 const addIQ = () => {
     if (newIQItem.value && !form.value.implementQualification.includes(newIQItem.value)) {
@@ -67,7 +123,7 @@ const removeImplementQualification = (index) => {
 }
 
 // keterkaitan dengan pos ap lain
-const newRelatedSopItem = ref([]);
+const newRelatedSopItem = ref('');
 
 const addRelatedSop = () => {
     if (newRelatedSopItem.value && !form.value.relatedSop.includes(newRelatedSopItem.value)) {
@@ -82,7 +138,7 @@ const removeRelatedSop = (index) => {
 }
 
 // peralatan/perlengkapan
-const newEquipmentItem = ref([]);
+const newEquipmentItem = ref('');
 
 const addEquipment = () => {
     if (newEquipmentItem.value && !form.value.equipment.includes(newEquipmentItem.value)) {
@@ -97,7 +153,7 @@ const removeEquipment = (index) => {
 }
 
 // pencatatan dan pendataan
-const newRecordItem = ref([]);
+const newRecordItem = ref('');
 
 const addRecord = () => {
     if (newRecordItem.value && !form.value.record.includes(newRecordItem.value)) {
@@ -113,7 +169,6 @@ const removeRecord = (index) => {
 
 // -----------------------
 onMounted(() => {
-    initModals();
     fetchImplementer();
 });
 
@@ -214,17 +269,18 @@ onMounted(() => {
         </div>
 
         <div class="mb-4">
-            <label for="sop-section" class="block mb-2 text-sm font-medium ">
-                Seksi
+            <label for="sop-section" class="mb-2 text-sm font-medium inline-flex">
+                Seksi<span class="text-red-600">*</span>
+                <Tooltip field="section" text="Misal: Semua Seksi di Lingkungan Departemen Sistem Informasi" />
             </label>
-            <input type="text" id="sop-section" v-model="form.section"
-                class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
-                value="Semua Seksi di Lingkungan Departemen Sistem Informasi" />
+            <input type="text" id="sop-section" v-model="form.section" required
+                class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 " />
+            <WarningText v-if="showWarningText.section" text="Harap isi data ini!" />
         </div>
 
         <div class="mb-4">
             <label class="block mb-2 text-sm font-medium">
-                Pelaksana
+                Pelaksana<span class="text-red-600">*</span>
             </label>
 
             <div v-if="form.implementer.length > 0" class="my-4">
@@ -232,8 +288,7 @@ onMounted(() => {
                     <li v-for="(item, index) in form.implementer" :key="index"
                         class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
                         <span class="mr-2">{{ item.name }}</span>
-                        <button :title="`Hapus item ${index + 1}`" @click="removeImplementer(index)"
-                            type="button"
+                        <button :title="`Hapus item ${index + 1}`" @click="removeImplementer(index)" type="button"
                             class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
                             <TrashCanIcon class="fill-current w-4" />
                         </button>
@@ -246,12 +301,13 @@ onMounted(() => {
                 type="button">
                 Tambah Pelaksana
             </button>
-        </div>
 
+            <WarningText v-if="showWarningText.implementer" text="Jangan lupa pilih pelaksana pada SOP!" />
+        </div>
 
         <div class="mb-4">
             <label class="block mb-2 text-sm font-medium ">
-                Dasar Hukum
+                Dasar Hukum<span class="text-red-600">*</span>
             </label>
 
             <!-- Daftar Dasar Hukum yang Dipilih -->
@@ -273,17 +329,20 @@ onMounted(() => {
                 type="button">
                 Tambah Dasar Hukum
             </button>
+
+            <WarningText v-if="showWarningText.legalBasis" text="Jangan lupa pilih dasar hukum!" />
         </div>
 
         <div class="my-4">
             <label for="implement-qualification" class="mb-2 text-sm font-medium inline-flex">
-                Kualifikasi Pelaksanaan
+                Kualifikasi Pelaksanaan<span class="text-red-600">*</span>
                 <Tooltip field="implement-qualification" text="Misal: Memiliki kemampuan pengolahan data sederhana" />
             </label>
             <input type="text" id="implement-qualification" v-model="newIQItem" @keyup.enter.prevent="addIQ"
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
                 placeholder="ketikkan, lalu tekan enter" title="Contoh: Memiliki Kemampuan pengolahan data sederhana" />
-
+            <WarningText v-if="showWarningText.implementQualification"
+                text="Jangan lupa ketikkan kualifikasi pelaksanaan!" />
             <!-- Daftar kualifikasi pelaksanaan -->
             <div v-if="form.implementQualification.length > 0" class="my-4">
                 <ul>
@@ -331,7 +390,6 @@ onMounted(() => {
             <input type="text" id="equipment-input" v-model="newEquipmentItem" @keyup.enter.prevent="addEquipment"
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
                 placeholder="ketikkan, lalu tekan enter" />
-
             <!-- Daftar peralatan/perlengkapan -->
             <div v-if="form.equipment.length > 0" class="my-4">
                 <ul class="flex flex-wrap gap-2">
@@ -349,23 +407,24 @@ onMounted(() => {
 
         <div class="mb-4">
             <label for="sop-warning" class="mb-2 text-sm font-medium inline-flex">
-                Peringatan
+                Peringatan<span class="text-red-600">*</span>
                 <Tooltip field="warning" text="Misal: Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses 
                     kerja praktik mahasiswa." />
             </label>
-            <textarea id="sop-warning" placeholder="ketikkan teks peringatan disini" v-model="form.warning"
+            <textarea id="sop-warning" placeholder="ketikkan teks peringatan disini" v-model="form.warning" required
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 h-24"></textarea>
+            <WarningText v-if="showWarningText.warning" text="Harap isi teks peringatan!" />
         </div>
 
         <div class="my-4">
             <label for="data-record-input" class="mb-2 text-sm font-medium inline-flex">
-                Pencatatan dan Pendataan
+                Pencatatan dan Pendataan<span class="text-red-600">*</span>
                 <Tooltip field="data-record" text="Misal: Dokumen" />
             </label>
             <input type="text" id="data-record-input" v-model="newRecordItem" @keyup.enter.prevent="addRecord"
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
                 placeholder="ketikkan, lalu tekan enter" />
-
+            <WarningText v-if="showWarningText.record" text="Jangan lupa ketikkan media pencatatan dan pendataan!" />
             <!-- Daftar peralatan/perlengkapan -->
             <div v-if="form.record.length > 0" class="my-4">
                 <ul class="flex flex-wrap gap-2">
@@ -383,12 +442,12 @@ onMounted(() => {
 
     </div>
 
-    <button @click="console.log(form)">konsol</button>
+    <!-- <button @click="console.log(form)">konsol</button> -->
 
     <!-- Large Modal -->
     <div v-show="showModal.legalBasis" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
         <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showModal.legalBasis = false"></div>
-        
+
         <div class="relative w-full max-w-4xl max-h-full">
             <div class="relative bg-white rounded-lg shadow">
                 <!-- Modal header -->
@@ -426,8 +485,7 @@ onMounted(() => {
                 <!-- Modal footer -->
                 <div
                     class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                    <button :disabled="form.legalBasis.length == 0"
-                        @click="showModal.legalBasis = false" type="button"
+                    <button :disabled="form.legalBasis.length == 0" @click="showModal.legalBasis = false" type="button"
                         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Tambahkan</button>
                 </div>
             </div>
@@ -451,20 +509,13 @@ onMounted(() => {
                     </button>
                 </div>
                 <div class="p-4 md:p-5 space-y-4">
-                    <DataTable  
-                        :data="dataImplementer" 
-                        :columns="[
-                            { field: 'name', label: 'Nama', sortable: true },
-                        ]" 
-                        :searchable="['name']" 
-                        :table-type="'check'" 
-                        v-model:selectedItems="form.implementer" 
-                    />
+                    <DataTable :data="dataImplementer" :columns="[
+                        { field: 'name', label: 'Nama', sortable: true },
+                    ]" :searchable="['name']" :table-type="'check'" v-model:selectedItems="form.implementer" />
                 </div>
                 <div
                     class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                    <button :disabled="form.implementer.length == 0"
-                        @click="showModal.executor = false" type="button"
+                    <button :disabled="form.implementer.length == 0" @click="showModal.executor = false" type="button"
                         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Tambahkan</button>
                 </div>
             </div>

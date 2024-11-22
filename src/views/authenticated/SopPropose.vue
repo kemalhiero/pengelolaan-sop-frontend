@@ -7,6 +7,7 @@ import PageTitle from '@/components/authenticated/PageTitle.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import DataTable from '@/components/DataTable.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
+import WarningText from '@/components/validation/WarningText.vue';
 
 // tampil modal tambah data
 const showEmployeModal = ref(false);
@@ -160,9 +161,7 @@ onMounted(() => {
                                 Tambahkan User
                             </button>
 
-                            <p v-show="showWarningEmploye" class="mt-2 text-sm text-yellow-400">
-                                <span class="font-medium">Ups, ada yang terlewat.</span> Jangan lupa untuk memilih user yang akan ditugaskan!
-                            </p>
+                            <WarningText v-show="showWarningEmploye" text="Jangan lupa untuk memilih user yang akan ditugaskan!" />
 
                         </div>
 
@@ -211,7 +210,7 @@ onMounted(() => {
                 <!-- Modal footer -->
                 <div
                     class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                    <button :disabled="form.employe.length == 0" @click="showEmployeModal = false" type="button"
+                    <button :disabled="form.employe.length == 0" @click="showEmployeModal = false, showWarningEmploye = false" type="button"
                         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">
                         Pilih
                     </button>
