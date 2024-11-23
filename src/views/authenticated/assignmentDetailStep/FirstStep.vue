@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, defineEmits, defineExpose } from 'vue';
+import { onMounted, ref, inject } from 'vue';
 import { getImplementer } from '@/api/sopImplementerApi';
 
 import CircleInfoIcon from '@/assets/icons/CircleInfoIcon.vue';
@@ -15,16 +15,6 @@ const data = [
     { id: 2, nama: ' Peraturan Rektor Universitas Andalas Nomor 8 Tahun 2022 tentang Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas' }
 ];
 
-const form = ref({
-    section: '',
-    implementer: [],
-    legalBasis: [],
-    implementQualification: [],
-    relatedSop: [],
-    equipment: [],
-    warning: '',
-    record: []
-});
 
 const showModal = ref({
     legalBasis: false,
@@ -32,7 +22,10 @@ const showModal = ref({
 });
 
 // Definisikan emit untuk validasi
-const emit = defineEmits(['validate-step'])
+const emit = defineEmits(['validate-step']);
+
+// Inject form data dari komponen induk
+const { formData, updateFormData } = inject('sopFormData');
 
 const showWarningText = ref({
     section: false,
@@ -55,12 +48,12 @@ const validateFields = () => {
 
     // Validasi dengan satu fungsi
     const validations = {
-        section: () => !form.value.section.trim(),
-        implementer: () => form.value.implementer.length === 0,
-        legalBasis: () => form.value.legalBasis.length === 0,
-        implementQualification: () => form.value.implementQualification.length === 0,
-        warning: () => !form.value.warning.trim(),
-        record: () => form.value.record.length === 0
+        section: () => !formData.value.section.trim(),
+        implementer: () => formData.value.implementer.length === 0,
+        legalBasis: () => formData.value.legalBasis.length === 0,
+        implementQualification: () => formData.value.implementQualification.length === 0,
+        warning: () => !formData.value.warning.trim(),
+        record: () => formData.value.record.length === 0
     };
 
     Object.entries(validations).forEach(([key, validation]) => {
@@ -76,7 +69,7 @@ const validateFields = () => {
     emit('validate-step', {
         isValid: isValid,
         showWarningText: showWarningText.value,
-        data: form.value
+        data: formData.value
     });
 
     return isValid;
@@ -87,14 +80,25 @@ defineExpose({
     validateFields
 });
 
-// Fungsi untuk menghapus peraturan yang sudah dipilih
-const removeLaw = (index) => {
-    form.value.legalBasis.splice(index, 1);
-};
+const createArrayHandler = (fieldName) => ({
+    newItem: ref(''),
+    addItem() {
+        if (this.newItem.value && !formData.value[fieldName].includes(this.newItem.value)) {
+            updateFormData({ 
+                [fieldName]: [...formData.value[fieldName], this.newItem.value] 
+            });
+            this.newItem.value = '';
+        }
+    },
+    removeItem(index) {
+        updateFormData({ 
+            [fieldName]: formData.value[fieldName].filter((_, i) => i !== index) 
+        });
+    }
+});
 
 // pelaksana
 const dataImplementer = ref([]);
-
 const fetchImplementer = async () => {
     try {
         const result = await getImplementer();
@@ -103,69 +107,13 @@ const fetchImplementer = async () => {
         console.error('Fetch error:', error);
     }
 };
-const removeImplementer = (index) => {
-    form.value.implementer.splice(index, 1);
-};
 
-// kualifikasi pelaksanaan
-const newIQItem = ref('');
-
-const addIQ = () => {
-    if (newIQItem.value && !form.value.implementQualification.includes(newIQItem.value)) {
-        form.value.implementQualification.push(newIQItem.value); // Menambahkan item baru
-        newIQItem.value = ''; // Mengosongkan input setelah ditambah
-    }
-    console.log(form.value.implementQualification);
-};
-
-const removeImplementQualification = (index) => {
-    form.value.implementQualification.splice(index, 1);
-}
-
-// keterkaitan dengan pos ap lain
-const newRelatedSopItem = ref('');
-
-const addRelatedSop = () => {
-    if (newRelatedSopItem.value && !form.value.relatedSop.includes(newRelatedSopItem.value)) {
-        form.value.relatedSop.push(newRelatedSopItem.value); // Menambahkan item baru
-        newRelatedSopItem.value = ''; // Mengosongkan input setelah ditambah
-    }
-    console.log(form.value.relatedSop);
-};
-
-const removeRelatedSop = (index) => {
-    form.value.relatedSop.splice(index, 1);
-}
-
-// peralatan/perlengkapan
-const newEquipmentItem = ref('');
-
-const addEquipment = () => {
-    if (newEquipmentItem.value && !form.value.equipment.includes(newEquipmentItem.value)) {
-        form.value.equipment.push(newEquipmentItem.value); // Menambahkan item baru
-        newEquipmentItem.value = ''; // Mengosongkan input setelah ditambah
-    }
-    console.log(form.value.equipment);
-};
-
-const removeEquipment = (index) => {
-    form.value.equipment.splice(index, 1);
-}
-
-// pencatatan dan pendataan
-const newRecordItem = ref('');
-
-const addRecord = () => {
-    if (newRecordItem.value && !form.value.record.includes(newRecordItem.value)) {
-        form.value.record.push(newRecordItem.value); // Menambahkan item baru
-        newRecordItem.value = ''; // Mengosongkan input setelah ditambah
-    }
-    console.log(form.value.record);
-};
-
-const removeRecord = (index) => {
-    form.value.record.splice(index, 1);
-}
+const implementer = createArrayHandler('implementer');
+const legalBasis = createArrayHandler('legalBasis');
+const implementQualification = createArrayHandler('implementQualification');
+const relatedSop = createArrayHandler('relatedSop');
+const equipment = createArrayHandler('equipment');
+const record = createArrayHandler('record');
 
 // -----------------------
 onMounted(() => {
@@ -273,7 +221,7 @@ onMounted(() => {
                 Seksi<span class="text-red-600">*</span>
                 <Tooltip field="section" text="Misal: Semua Seksi di Lingkungan Departemen Sistem Informasi" />
             </label>
-            <input type="text" id="sop-section" v-model="form.section" required
+            <input type="text" id="sop-section" v-model="formData.section" required
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 " />
             <WarningText v-if="showWarningText.section" text="Harap isi data ini!" />
         </div>
@@ -283,12 +231,12 @@ onMounted(() => {
                 Pelaksana<span class="text-red-600">*</span>
             </label>
 
-            <div v-if="form.implementer.length > 0" class="my-4">
+            <div v-if="formData.implementer.length > 0" class="my-4">
                 <ul class="flex flex-wrap gap-2">
-                    <li v-for="(item, index) in form.implementer" :key="index"
+                    <li v-for="(item, index) in formData.implementer" :key="index"
                         class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
                         <span class="mr-2">{{ item.name }}</span>
-                        <button :title="`Hapus item ${index + 1}`" @click="removeImplementer(index)" type="button"
+                        <button :title="`Hapus item ${index + 1}`" @click="implementer.removeItem(index)" type="button"
                             class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
                             <TrashCanIcon class="fill-current w-4" />
                         </button>
@@ -311,12 +259,12 @@ onMounted(() => {
             </label>
 
             <!-- Daftar Dasar Hukum yang Dipilih -->
-            <div v-if="form.legalBasis.length > 0" class="my-4">
+            <div v-if="formData.legalBasis.length > 0" class="my-4">
                 <ul>
-                    <li v-for="(law, index) in form.legalBasis" :key="index"
+                    <li v-for="(law, index) in formData.legalBasis" :key="index"
                         class="flex items-center justify-between p-2 bg-gray-200 rounded-lg mb-2">
                         <span class="text-sm">{{ law.nama }}</span>
-                        <button :title="`Hapus peraturan ${index + 1}`" @click="removeLaw(index)"
+                        <button :title="`Hapus peraturan ${index + 1}`" @click="legalBasis.removeItem(index)"
                             class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
                             <TrashCanIcon class="fill-current w-4" />
                         </button>
@@ -338,18 +286,18 @@ onMounted(() => {
                 Kualifikasi Pelaksanaan<span class="text-red-600">*</span>
                 <Tooltip field="implement-qualification" text="Misal: Memiliki kemampuan pengolahan data sederhana" />
             </label>
-            <input type="text" id="implement-qualification" v-model="newIQItem" @keyup.enter.prevent="addIQ"
+            <input type="text" id="implement-qualification" v-model="implementQualification.newItem.value" @keyup.enter.prevent="implementQualification.addItem"
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
                 placeholder="ketikkan, lalu tekan enter" title="Contoh: Memiliki Kemampuan pengolahan data sederhana" />
             <WarningText v-if="showWarningText.implementQualification"
                 text="Jangan lupa ketikkan kualifikasi pelaksanaan!" />
             <!-- Daftar kualifikasi pelaksanaan -->
-            <div v-if="form.implementQualification.length > 0" class="my-4">
+            <div v-if="formData.implementQualification.length > 0" class="my-4">
                 <ul>
-                    <li v-for="(iq, index) in form.implementQualification" :key="index"
+                    <li v-for="(iq, index) in formData.implementQualification" :key="index"
                         class="flex items-center justify-between p-2 bg-gray-200 rounded-lg mb-2">
                         <span>{{ iq }}</span>
-                        <button :title="`Hapus item ${index + 1}`" @click="removeImplementQualification(index)"
+                        <button :title="`Hapus item ${index + 1}`" @click="implementQualification.removeItem(index)"
                             class="p-2 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
                             <TrashCanIcon class="fill-current w-4" />
                         </button>
@@ -363,17 +311,17 @@ onMounted(() => {
                 Keterkaitan dengan POS AP Lain
                 <Tooltip field="related-sop" text="Misal: POS AP Pelaksanaan KP" />
             </label>
-            <input type="text" id="related-sop" v-model="newRelatedSopItem" @keyup.enter.prevent="addRelatedSop"
+            <input type="text" id="related-sop" v-model="relatedSop.newItem.value" @keyup.enter.prevent="relatedSop.addItem"
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
                 placeholder="ketikkan, lalu tekan enter" />
 
             <!-- Daftar POS AP yang terkait -->
-            <div v-if="form.relatedSop.length > 0" class="my-4">
+            <div v-if="formData.relatedSop.length > 0" class="my-4">
                 <ul>
-                    <li v-for="(rs, index) in form.relatedSop" :key="index"
+                    <li v-for="(rs, index) in formData.relatedSop" :key="index"
                         class="flex items-center justify-between p-2 bg-gray-200 rounded-lg mb-2">
                         <span>{{ rs }}</span>
-                        <button :title="`Hapus item ${index + 1}`" @click="removeRelatedSop(index)"
+                        <button :title="`Hapus item ${index + 1}`" @click="relatedSop.removeItem(index)"
                             class="p-2 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
                             <TrashCanIcon class="fill-current w-4" />
                         </button>
@@ -387,16 +335,16 @@ onMounted(() => {
                 Peralatan/Perlengkapan
                 <Tooltip field="equipment" text="Misal: Komputer" />
             </label>
-            <input type="text" id="equipment-input" v-model="newEquipmentItem" @keyup.enter.prevent="addEquipment"
+            <input type="text" id="equipment-input" v-model="equipment.newItem.value" @keyup.enter.prevent="equipment.addItem"
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
                 placeholder="ketikkan, lalu tekan enter" />
             <!-- Daftar peralatan/perlengkapan -->
-            <div v-if="form.equipment.length > 0" class="my-4">
+            <div v-if="formData.equipment.length > 0" class="my-4">
                 <ul class="flex flex-wrap gap-2">
-                    <li v-for="(rs, index) in form.equipment" :key="index"
+                    <li v-for="(rs, index) in formData.equipment" :key="index"
                         class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
                         <span class="mr-2">{{ rs }}</span>
-                        <button :title="`Hapus item ${index + 1}`" @click="removeEquipment(index)"
+                        <button :title="`Hapus item ${index + 1}`" @click="equipment.removeItem(index)"
                             class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
                             <TrashCanIcon class="fill-current w-4" />
                         </button>
@@ -411,7 +359,7 @@ onMounted(() => {
                 <Tooltip field="warning" text="Misal: Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses 
                     kerja praktik mahasiswa." />
             </label>
-            <textarea id="sop-warning" placeholder="ketikkan teks peringatan disini" v-model="form.warning" required
+            <textarea id="sop-warning" placeholder="ketikkan teks peringatan disini" v-model="formData.warning" required
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 h-24"></textarea>
             <WarningText v-if="showWarningText.warning" text="Harap isi teks peringatan!" />
         </div>
@@ -421,17 +369,17 @@ onMounted(() => {
                 Pencatatan dan Pendataan<span class="text-red-600">*</span>
                 <Tooltip field="data-record" text="Misal: Dokumen" />
             </label>
-            <input type="text" id="data-record-input" v-model="newRecordItem" @keyup.enter.prevent="addRecord"
+            <input type="text" id="data-record-input" v-model="record.newItem.value" @keyup.enter.prevent="record.addItem"
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
                 placeholder="ketikkan, lalu tekan enter" />
             <WarningText v-if="showWarningText.record" text="Jangan lupa ketikkan media pencatatan dan pendataan!" />
             <!-- Daftar peralatan/perlengkapan -->
-            <div v-if="form.record.length > 0" class="my-4">
+            <div v-if="formData.record.length > 0" class="my-4">
                 <ul class="flex flex-wrap gap-2">
-                    <li v-for="(rs, index) in form.record" :key="index"
+                    <li v-for="(rs, index) in formData.record" :key="index"
                         class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
                         <span class="mr-2">{{ rs }}</span>
-                        <button :title="`Hapus item ${index + 1}`" @click="removeRecord(index)"
+                        <button :title="`Hapus item ${index + 1}`" @click="record.removeItem(index)"
                             class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
                             <TrashCanIcon class="fill-current w-4" />
                         </button>
@@ -477,15 +425,19 @@ onMounted(() => {
                         </router-link>
                     </div> -->
 
-                    <DataTable :data="data" :columns="[
-                        { field: 'nama', label: 'Nama', sortable: true },
-                    ]" :searchable="['nama']" :table-type="'check'" v-model:selectedItems="form.legalBasis" />
+                    <DataTable 
+                        :data="data" 
+                        :columns="[{ field: 'nama', label: 'Nama', sortable: true }]" 
+                        :searchable="['nama']" 
+                        :table-type="'check'" 
+                        v-model="formData.legalBasis" 
+                    />
 
                 </div>
                 <!-- Modal footer -->
                 <div
                     class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                    <button :disabled="form.legalBasis.length == 0" @click="showModal.legalBasis = false" type="button"
+                    <button :disabled="formData.legalBasis.length == 0" @click="showModal.legalBasis = false" type="button"
                         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Tambahkan</button>
                 </div>
             </div>
@@ -509,13 +461,17 @@ onMounted(() => {
                     </button>
                 </div>
                 <div class="p-4 md:p-5 space-y-4">
-                    <DataTable :data="dataImplementer" :columns="[
-                        { field: 'name', label: 'Nama', sortable: true },
-                    ]" :searchable="['name']" :table-type="'check'" v-model:selectedItems="form.implementer" />
+                    <DataTable
+                        :data="dataImplementer" 
+                        :columns="[{ field: 'name', label: 'Nama', sortable: true }]" 
+                        :searchable="['name']" 
+                        table-type="check" 
+                        v-model="formData.implementer"
+                    />
                 </div>
                 <div
                     class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                    <button :disabled="form.implementer.length == 0" @click="showModal.executor = false" type="button"
+                    <button :disabled="formData.implementer.length == 0" @click="showModal.executor = false" type="button"
                         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Tambahkan</button>
                 </div>
             </div>

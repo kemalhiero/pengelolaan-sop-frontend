@@ -1,8 +1,8 @@
 <script setup>
+import { ref, computed, watch } from 'vue';
 import IconSort from '@/assets/icons/IconSort.vue';
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
-import { ref, computed } from 'vue';
 
 const props = defineProps({
     data: {
@@ -21,6 +21,10 @@ const props = defineProps({
         type: String,
         default: 'crud',
         validator: (value) => ['crud', 'check'].includes(value)
+    },
+    modelValue: {
+        type: Array,
+        default: () => []
     }
 });
 
@@ -33,10 +37,14 @@ const sortField = ref(null);
 // Opsi untuk jumlah item per halaman
 const itemsPerPageOptions = [5, 10, 15, 20, 25, 50, 100];
 
-// kolom checkbox
-const emit = defineEmits(['edit', 'delete', 'update:selectedItems']);
+const emit = defineEmits(['edit', 'delete', 'update:modelValue']);
 
-const selectedItems = ref([]);
+const selectedItems = ref(props.modelValue);
+
+// Watch for changes in modelValue prop
+watch(() => props.modelValue, (newValue) => {
+    selectedItems.value = newValue;
+}, { deep: true });
 
 const toggleItem = (item) => {
     const index = selectedItems.value.findIndex(selectedItem => selectedItem.id === item.id);
@@ -45,7 +53,10 @@ const toggleItem = (item) => {
     } else {
         selectedItems.value.splice(index, 1);
     }
-    emit('update:selectedItems', selectedItems.value);
+};
+
+const isItemSelected = (item) => {
+    return selectedItems.value.some(selected => selected.id === item.id);
 };
 
 // Tambahkan method helper untuk mengecek tipe tabel
@@ -243,7 +254,7 @@ const goToPage = (page) => {
                         <template v-else>
                             <input 
                                 type="checkbox"
-                                :checked="selectedItems.some(selected => selected.id === item.id)"
+                                :checked="isItemSelected(item)"
                                 @change="toggleItem(item)"
                                 class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                             >

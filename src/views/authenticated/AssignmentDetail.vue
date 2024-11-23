@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, provide } from 'vue';
 
 import CheckIcon from '@/assets/icons/CheckIcon.vue';
 import NumberOneCircleIcon from '@/assets/icons/NumberOneCircleIcon.vue';
@@ -15,6 +15,26 @@ import ThirdStep from './assignmentDetailStep/ThirdStep.vue';
 // State untuk mengatur langkah
 const currentStep = ref(1);  // Langkah sekarang
 const firstStepRef = ref(null);
+
+// State untuk form data
+const formData = ref({
+    section: '',
+    implementer: [],
+    legalBasis: [],
+    implementQualification: [],
+    relatedSop: [],
+    equipment: [],
+    warning: '',
+    record: []
+});
+
+// Provide form data ke komponen anak
+provide('sopFormData', {
+    formData,
+    updateFormData(newData) {
+        formData.value = { ...formData.value, ...newData }
+    }
+});
 
 // Fungsi untuk ke langkah berikutnya
 const nextStep = () => {

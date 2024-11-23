@@ -106,11 +106,11 @@ const removeStep = (index) => {
                             <input v-model="step.output" class="w-full p-2 border border-gray-300 rounded-md" />
                         </td>
                         <td class="px-2 py-3">
-                            <input v-model="step.keterangan" class="w-full p-2 border border-gray-300 rounded-md" />
+                            <input v-model="step.keterangan" class="w-full p-2 border border-gray-300 rounded-md " />
                         </td>
                         <td class="px-2 py-3">
-                            <button @click="removeStep(index)" :title="`Hapus tahapan ${index + 1}`"
-                                class="px-3 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
+                            <button @click="removeStep(index)" :title="`Hapus tahapan ${index + 1}`" :disabled="steps.length == 1"
+                                class="px-3 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex disabled:cursor-not-allowed">
                                 <TrashCanIcon class="fill-current w-4" />
                             </button>
                         </td>
