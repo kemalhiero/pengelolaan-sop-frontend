@@ -8,6 +8,10 @@ import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import DataTable from '@/components/DataTable.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import WarningText from '@/components/validation/WarningText.vue';
+import { createSopDetail } from '@/api/sopDetailApi';
+import { createDrafter } from '@/api/drafterApi';
+import { createSop } from '@/api/sopApi';
+import ShowToast from '@/components/toast/ShowToast.vue';
 
 // tampil modal tambah data
 const showEmployeModal = ref(false);
@@ -18,7 +22,6 @@ const currentYear = new Date().getFullYear();
 const dataOrg = ref([]);
 const dataEmploye = ref([]);
 
-
 // data form
 const form = ref({
     name: '',
@@ -26,6 +29,11 @@ const form = ref({
     id_org: '',
     employe: [],
     description: ''
+});
+
+const toastOption = ref({
+    isSucces: '',
+    operation: ''
 });
 
 const formatNumber = () => {
@@ -59,14 +67,44 @@ const removeEmploye = (index) => {
 };
 
 const showWarningEmploye = ref(false);
-const submitData = async () => {
+
+// sop
+const submitSop = async () => {
+    toastOption.value.operation = 'post'
     try {
         if (form.value.employe.length == 0) {
             return showWarningEmploye.value = true
         }
         console.log(form.value);
         showWarningEmploye.value = false;
+
+        const dataSop = await createSop({
+            id_org: form.value.id_org,
+            name: form.value.name
+        });
+        console.log(dataSop);
+        
+        const resultSopdetail = await createSopDetail(
+            dataSop.data.id_sop,
+            {
+                number: form.value.number,
+                description: form.value.description
+            }
+        );
+        console.log(resultSopdetail);
+        
+        form.value.employe.forEach(async (item) => {
+            await createDrafter({
+                id_user: item.id,
+                id_sop_detail: resultSopdetail.data.id_sop_detail,
+            })
+        });
+
+        toastOption.value.isSucces = 'yes'
+        console.log('sukses submit semua');
+
     } catch (error) {
+        toastOption.value.isSucces = 'no'
         console.error('Error saat mengirim data:', error);
     }
 };
@@ -81,15 +119,20 @@ onMounted(() => {
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
 
+        <ShowToast 
+            :is-succes="toastOption.isSucces"
+            :operation="toastOption.operation"
+        />
+
         <PageTitle judul="Usulkan POS baru" />
 
         <section class="bg-white">
             <div class="py-8 px-4 mx-auto max-w-3xl">
-                <form @submit.prevent="submitData">
+                <form @submit.prevent="submitSop">
                     <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
                         <div class="col-span-2">
                             <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
-                                Nama
+                                Nama<span class="text-red-600">*</span>
                             </label>
                             <input type="text" v-model="form.name" id="name" placeholder="ketik nama sop disini..."
                                 required
@@ -99,7 +142,7 @@ onMounted(() => {
 
                         <div class="col-span-2 sm:col-span-1">
                             <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
-                                Nomor
+                                Nomor<span class="text-red-600">*</span>
                             </label>
                             <div class="flex items-center">
                                 <span
@@ -118,7 +161,9 @@ onMounted(() => {
                         </div>
 
                         <div class="col-span-2 sm:col-span-1">
-                            <label for="org" class="block mb-2 text-sm font-medium text-gray-900">Organisasi</label>
+                            <label for="org" class="block mb-2 text-sm font-medium text-gray-900">
+                                Organisasi<span class="text-red-600">*</span>
+                            </label>
                             <select id="org" v-model="form.id_org" required
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
                                 <option selected disabled value="">Pilih organisasi</option>
@@ -138,7 +183,7 @@ onMounted(() => {
 
                         <div class="col-span-2">
                             <label class="block mb-2 text-sm font-medium">
-                                Penugasan
+                                Penugasan<span class="text-red-600">*</span>
                             </label>
 
                             <div v-if="form.employe.length > 0" class="my-4">
@@ -167,7 +212,9 @@ onMounted(() => {
 
                         <div class="col-span-2">
                             <label for="description"
-                                class="block mb-2 text-sm font-medium text-gray-900">Deskripsi</label>
+                                class="block mb-2 text-sm font-medium text-gray-900">
+                                Deskripsi<span class="text-red-600">*</span>
+                            </label>
                             <textarea id="description" rows="8" v-model="form.description" required
                                 class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500"
                                 placeholder="ketikkan deskripsi SOP disini..."></textarea>
@@ -203,9 +250,12 @@ onMounted(() => {
                 </div>
                 <!-- Modal body -->
                 <div class="p-4 md:p-5 space-y-4">
-                    <DataTable :data="dataEmploye" :columns="[
-                        { field: 'name', label: 'Nama', sortable: true },
-                    ]" :searchable="['name']" :table-type="'check'" v-model:selectedItems="form.employe" />
+                    <DataTable 
+                        :data="dataEmploye" 
+                        :columns="[ { field: 'name', label: 'Nama', sortable: true },]" 
+                        :searchable="['name']" 
+                        :table-type="'check'" 
+                        v-model="form.employe" />
                 </div>
                 <!-- Modal footer -->
                 <div
