@@ -2,17 +2,19 @@
 import { onMounted, ref } from 'vue';
 import { getOrg } from '@/api/orgApi';
 import { getEmploye } from '@/api/userApi';
+import { createSopDetail } from '@/api/sopDetailApi';
+import { createDrafter } from '@/api/drafterApi';
+import { createSop } from '@/api/sopApi';
+import { useRouter } from 'vue-router';
 
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import DataTable from '@/components/DataTable.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import WarningText from '@/components/validation/WarningText.vue';
-import { createSopDetail } from '@/api/sopDetailApi';
-import { createDrafter } from '@/api/drafterApi';
-import { createSop } from '@/api/sopApi';
 import ShowToast from '@/components/toast/ShowToast.vue';
 
+const router = useRouter();
 // tampil modal tambah data
 const showEmployeModal = ref(false);
 
@@ -102,6 +104,9 @@ const submitSop = async () => {
 
         toastOption.value.isSucces = 'yes'
         console.log('sukses submit semua');
+        setTimeout(() => {
+            router.push('/app/docs')
+        }, 2000) // Delay 2 detik
 
     } catch (error) {
         toastOption.value.isSucces = 'no'

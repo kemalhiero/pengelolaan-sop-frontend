@@ -3,6 +3,8 @@ import { ref, computed, watch } from 'vue';
 import IconSort from '@/assets/icons/IconSort.vue';
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
+import GreenBadgeIndicator from './indicator/GreenBadgeIndicator.vue';
+import RedBadgeIndicator from './indicator/RedBadgeIndicator.vue';
 
 const props = defineProps({
     data: {
@@ -13,6 +15,9 @@ const props = defineProps({
         type: Array,
         required: true
     },
+    statusColumns: {
+        type: Array
+    },
     searchable: {
         type: Array,
         required: true
@@ -20,7 +25,7 @@ const props = defineProps({
     tableType: {
         type: String,
         default: 'crud',
-        validator: (value) => ['crud', 'check'].includes(value)
+        validator: (value) => ['crud', 'check', 'other'].includes(value)
     },
     modelValue: {
         type: Array,
@@ -229,6 +234,11 @@ const goToPage = (page) => {
                             </div>
                         </div>
                     </th>
+                    <th v-for="column in statusColumns" :key="column.field" class="px-6 py-3" scope="col">
+                        <div class="flex items-center">
+                            {{ column.label }}
+                        </div>
+                    </th>
                     <!-- <th>Aksi</th> -->
                 </tr>
             </thead>
@@ -239,6 +249,10 @@ const goToPage = (page) => {
                     </th>
                     <td v-for="column in columns" :key="column.field" class="px-6 py-4 text-black">
                         {{ item[column.field] }}
+                    </td>
+                    <td v-for="column in statusColumns" :key="column.field" class="px-6 py-4 text-black">
+                        <GreenBadgeIndicator teks="Berlaku" v-if="item[column.field] === true " />
+                        <RedBadgeIndicator teks="Tidak Berlaku" v-else/>
                     </td>
                     <td class="px-6 py-4" :class="{ 'flex': props.tableType === 'crud' }">
                         <template v-if="props.tableType === 'crud'">
@@ -251,13 +265,16 @@ const goToPage = (page) => {
                                 <TrashCanIcon class="fill-current w-4" />
                             </button>
                         </template>
-                        <template v-else>
+                        <template v-else-if="props.tableType === 'check'">
                             <input 
                                 type="checkbox"
                                 :checked="isItemSelected(item)"
                                 @change="toggleItem(item)"
                                 class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                             >
+                        </template>
+                        <template v-else-if="props.tableType === 'other'">
+                            <slot name="link"></slot>
                         </template>
                     </td>
                 </tr>

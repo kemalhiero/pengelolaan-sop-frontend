@@ -1,25 +1,13 @@
 <script setup>
-import { ref } from 'vue';
+import { inject } from 'vue';
 import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 
-// Define an array of steps with default empty values
-const steps = ref([
-    {
-        kegiatan: '',
-        tipeKegiatan: '',
-        pelaksana: '',
-        perusahaan: '',
-        kelengkapan: '',
-        mutuBakuWaktu: '',
-        output: '',
-        keterangan: ''
-    }
-]);
+const { sopStep, updateSopStep } = inject('sopStep');
 
 // Function to add a new step (empty object)
 const addStep = () => {
-    steps.value.push({
+    sopStep.value.push({
         kegiatan: '',
         tipeKegiatan: '',
         pelaksana: '',
@@ -33,7 +21,7 @@ const addStep = () => {
 
 // Function to remove a step by index
 const removeStep = (index) => {
-    steps.value.splice(index, 1)
+    sopStep.value.splice(index, 1)
 };
 
 </script>
@@ -56,7 +44,7 @@ const removeStep = (index) => {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="(step, index) in steps" :key="index"
+                    <tr v-for="(step, index) in sopStep" :key="index"
                         class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
                         <th scope="row" class="px-2 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                             {{ index + 1 }}
@@ -109,7 +97,7 @@ const removeStep = (index) => {
                             <input v-model="step.keterangan" class="w-full p-2 border border-gray-300 rounded-md " />
                         </td>
                         <td class="px-2 py-3">
-                            <button @click="removeStep(index)" :title="`Hapus tahapan ${index + 1}`" :disabled="steps.length == 1"
+                            <button @click="removeStep(index)" :title="`Hapus tahapan ${index + 1}`" :disabled="sopStep.length == 1"
                                 class="px-3 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex disabled:cursor-not-allowed">
                                 <TrashCanIcon class="fill-current w-4" />
                             </button>

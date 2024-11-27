@@ -27,12 +27,29 @@ const formData = ref({
     warning: '',
     record: []
 });
-
-// Provide form data ke komponen anak
 provide('sopFormData', {
     formData,
     updateFormData(newData) {
         formData.value = { ...formData.value, ...newData }
+    }
+});
+
+const sopStep = ref([
+    {
+        kegiatan: '',
+        tipeKegiatan: '',
+        pelaksana: '',
+        perusahaan: '',
+        kelengkapan: '',
+        mutuBakuWaktu: '',
+        output: '',
+        keterangan: ''
+    }
+]);
+provide('sopStep', {
+    sopStep,
+    updateSopStep(newData) {
+        sopStep.value = { ...sopStep.value, ...newData }
     }
 });
 
