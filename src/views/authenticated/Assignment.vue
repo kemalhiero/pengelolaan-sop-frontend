@@ -1,27 +1,24 @@
 <script setup>
-    import { onMounted } from "vue";
-    import { DataTable } from "simple-datatables";
-    import IconSort from "@/assets/icons/IconSort.vue";
-    import IconEye from "@/assets/icons/IconEye.vue";
-    import GreenBadgeIndicator from "@/components/indicator/GreenBadgeIndicator.vue";
-    import RedBadgeIndicator from "@/components/indicator/RedBadgeIndicator.vue";
-import YellowBadgeIndicator from "@/components/indicator/YellowBadgeIndicator.vue";
+import { onMounted, ref } from "vue";
+import { getSop } from "@/api/sopApi";
 
+import IconEye from "@/assets/icons/IconEye.vue";
+import DataTable from "@/components/DataTable.vue";
 
-    const data = [
-        { nama: 'SOP Keuangan LEA', tanggal: '2024/25/09', organisasi: 'Labor', penugas: 'Adi Arga Arifnur', status: 'selesai' },
-        { nama: 'SOP Pendaftaran Kerja Praktik', tanggal: '2024/03/09', organisasi: 'Departemen', penugas: 'Husnil Kamil', status: 'blm-selesai' },
-        { nama: 'SOP Pendaftaran Seminar Kerja Praktik', tanggal: '2024/03/12', organisasi: 'Departemen', penugas: 'Husnil Kamil', status: 'batal' },
-    ]
+const data = ref([]);
 
-    onMounted(() => {
-        if (document.getElementById("assignment-table") && typeof DataTable !== 'undefined') {
-            new DataTable(document.getElementById("assignment-table"), {
-                searchable: true, 
-                sortable: true,
-            });
-        }
-    })
+const fetchData = async () => {
+    try {
+        const result = await getSop();
+        data.value = result.data;
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+onMounted(() => {
+    fetchData();
+})
 </script>
 
 <template>
@@ -31,75 +28,41 @@ import YellowBadgeIndicator from "@/components/indicator/YellowBadgeIndicator.vu
             class="mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-4xl lg:text-5xl dark:text-white">
             Penugasan Pembuatan / Revisi SOP</h1>
         <p class="text-lg font-normal lg:text-xl sm:px-16 xl:px-48">
-            Berikut merupakan daftar tugas yang diberikan oleh penanggung jawab organisasi di lingkungan Departemen Sistem Informasi Universitas Andalas.
+            Berikut merupakan daftar tugas yang diberikan oleh penanggung jawab organisasi di lingkungan Departemen
+            Sistem Informasi Universitas Andalas.
         </p>
     </div>
 
-    <div class="container mx-auto p-8 lg:px-32">    
+    <div class="container mx-auto p-8 lg:px-32">
 
-        <table id="assignment-table" class="mx-auto">
-            <thead>
-                <tr>
-                    <th>
-                        <span class="flex items-center text-black">
-                            Nama
-                            <IconSort/>
-                        </span>
-                    </th>
-                    <th data-type="date" data-format="YYYY/DD/MM">
-                        <span class="flex items-center text-black">
-                            Tanggal
-                            <IconSort/>
-                        </span>
-                    </th>
-                    <th>
-                        <span class="flex items-center text-black">
-                            Organisasi
-                            <IconSort/>
-                        </span>
-                    </th>
-                    <th>
-                        <span class="flex items-center text-black">
-                            Penugas
-                            <IconSort/>
-                        </span>
-                    </th>
-                    <th>
-                        <span class="flex items-center text-black">
-                            Status
-                            <IconSort/>
-                        </span>
-                    </th>
-                    <th>
-                        <span class="flex items-center text-black">
-                            Aksi
-                        </span>
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="(item, index) in data" :key="index">
-                    <td class="font-medium whitespace-nowrap text-black">{{ item.nama }}</td>
-                    <td class="text-black">{{ item.tanggal }}</td>
-                    <td class="text-black">{{ item.organisasi }}</td>
-                    <td class="text-black">{{ item.penugas }}</td>
-                    <td>
-                        <GreenBadgeIndicator teks="Selesai" v-if="item.status == 'selesai' " />
-                        <YellowBadgeIndicator teks="Belum Selesai" v-else-if="item.status == 'blm-selesai'" />
-                        <RedBadgeIndicator teks="Batal" v-else-if="item.status == 'batal'" />
-                    </td>
-                    <td>
-                        <router-link to="/assignment/detail" v-if="item.status != 'selesai'">
-                            <button class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center dark:focus:ring-[#2557D6]/50 me-2 mb-2" title="Lihat detail tugas">
-                                <IconEye class="w-5 mr-3 fill-current"/>
+        <template v-if="data">
+                <DataTable v-if="data.length > 0"
+                    :data="data"
+                    :columns="[
+                        { field: 'name', label: 'Nama Sop', sortable: true },
+                        { field: 'creation_date', label: 'Tanggal Penugasan', sortable: true },
+                        { field: 'org_name', label: 'Organisasi', sortable: true },
+                    ]"
+                    :status-columns="[
+                        { field: 'is_active', label: 'Status' }
+                    ]"
+                    :searchable="['name', 'creation_date', 'org_name']"
+                    table-type="other"
+                    :badge-text="['Batal', 'Selesai', 'Belum Selesai']"
+                >
+                    <template #link>
+                        <router-link to="/assignment/detail">
+                            <button
+                                class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center dark:focus:ring-[#2557D6]/50 me-2 mb-2"
+                                title="Lihat detail dokumen">
+                                <IconEye class="w-5 mr-3 fill-current" />
                                 Lihat
                             </button>
                         </router-link>
-                        <p v-else>-</p>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                        <!-- <p v-else>-</p> -->
+                    </template>
+                </DataTable>
+            </template>
 
     </div>
 

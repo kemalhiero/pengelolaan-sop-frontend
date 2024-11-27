@@ -42,8 +42,8 @@ onMounted(() => {
                 </router-link>
             </div>
 
-            <template v-if="data && data.length">
-                <DataTable
+            <template v-if="data">
+                <DataTable v-if="data.length > 0"
                     :data="data"
                     :columns="[
                         { field: 'name', label: 'Nama', sortable: true },
@@ -54,6 +54,7 @@ onMounted(() => {
                     ]"
                     :searchable="['name', 'org_name']"
                     table-type="other"
+                    :badge-text="['Tidak Berlaku', 'Berlaku', 'Belum Berlaku']"
                 >
                     <template #link>
                         <router-link :to="{ name: 'SopDocDetail' }">

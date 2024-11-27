@@ -199,8 +199,8 @@ onMounted( () => {
                 @update:showModal="showAddModal = $event"
             />
 
-            <template v-if="data && data.length">
-                <DataTable 
+            <template v-if="data">
+                <DataTable v-if="data.length > 0"
                     :data="data"
                     :columns="[
                         { field: 'law_type', label: 'Jenis', sortable: true },

@@ -5,6 +5,7 @@ import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import GreenBadgeIndicator from './indicator/GreenBadgeIndicator.vue';
 import RedBadgeIndicator from './indicator/RedBadgeIndicator.vue';
+import YellowBadgeIndicator from './indicator/YellowBadgeIndicator.vue';
 
 const props = defineProps({
     data: {
@@ -16,6 +17,9 @@ const props = defineProps({
         required: true
     },
     statusColumns: {
+        type: Array
+    },
+    badgeText: {
         type: Array
     },
     searchable: {
@@ -251,8 +255,9 @@ const goToPage = (page) => {
                         {{ item[column.field] }}
                     </td>
                     <td v-for="column in statusColumns" :key="column.field" class="px-6 py-4 text-black">
-                        <GreenBadgeIndicator teks="Berlaku" v-if="item[column.field] === true " />
-                        <RedBadgeIndicator teks="Tidak Berlaku" v-else/>
+                        <RedBadgeIndicator :teks="badgeText[0]" v-if="item[column.field] === 0"/>
+                        <GreenBadgeIndicator :teks="badgeText[1]" v-else-if="item[column.field] === 1 " />
+                        <YellowBadgeIndicator :teks="badgeText[2]" v-else-if="item[column.field] === 2" />
                     </td>
                     <td class="px-6 py-4" :class="{ 'flex': props.tableType === 'crud' }">
                         <template v-if="props.tableType === 'crud'">
