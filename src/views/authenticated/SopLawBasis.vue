@@ -12,6 +12,7 @@ import AddDataModal from "@/components/modal/AddDataModal.vue";
 import EditDataModal from "@/components/modal/EditDataModal.vue";
 import PageTitle from "@/components/authenticated/PageTitle.vue";
 import AddDataButton from "@/components/modal/AddDataButton.vue";
+import Error from "@/components/Error.vue";
 
 const tipePeraturan = ref([]);
 const data = ref([]);
@@ -36,9 +37,11 @@ const fetchTipePeraturan = async () => {
 
 const fetchData = async () => {
     try {
+        data.value = [];
         const response = await getLawBasis();
         data.value = response.data;
     } catch (error) {
+        data.value = null;
         console.error('Fetch error:', error);
     }
 };
@@ -213,9 +216,9 @@ onMounted( () => {
                     @delete="openDeleteModal"
                     table-type="crud"
                 />
+                <PulseLoading v-else-if="data.length == 0" />
             </template>
-            <PulseLoading v-else />
-            
+            <Error @click="fetchData" v-else/>
         </div>
 
         <!-- Komponen DeleteDataModal -->

@@ -11,6 +11,7 @@ import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
 import EditDataModal from '@/components/modal/EditDataModal.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import AddDataButton from '@/components/modal/AddDataButton.vue';
+import Error from '@/components/Error.vue';
 
 const data = ref([]);
 const form = ref({
@@ -23,9 +24,11 @@ const operation = ref('');
 // Fungsi untuk fetch data dari API
 const fetchData = async () => {
     try {
+        data.value = [];
         const result = await getLawType();
         data.value = result.data; // Menyimpan data yang di-fetch
     } catch (error) {
+        data.value = null;
         console.error('Fetch error:', error);
     }
 };
@@ -174,8 +177,8 @@ onMounted(() => {
                 @update:showModal="showAddModal = $event"
             />
 
-            <template v-if="data && data.length">
-                <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+            <template v-if="data">
+                <div v-if="data.length > 0" class="relative overflow-x-auto shadow-md sm:rounded-lg">
                     <table class="w-full text-sm text-left text-gray-500">
                         <thead class="text-xs text-gray-900 uppercase bg-gray-50">
                             <tr>
@@ -218,9 +221,9 @@ onMounted(() => {
                         </tbody>
                     </table>
                 </div>
+                <PulseLoading v-else-if="data.length == 0" />
             </template>
-
-            <PulseLoading v-else />
+            <Error @click="fetchData" v-else/>
 
         </div>
 

@@ -7,14 +7,17 @@ import PageTitle from "@/components/authenticated/PageTitle.vue";
 import PulseLoading from "@/components/PulseLoading.vue";
 import DataTable from "@/components/DataTable.vue";
 import IconEye from "@/assets/icons/IconEye.vue";
+import Error from "@/components/Error.vue";
 
 const data = ref([]);
 
 const fetchData = async () => {
     try {
+        data.value = [];
         const result = await getSop();
         data.value = result.data;
     } catch (error) {
+        data.value = null;
         console.error(error);
     }
 };
@@ -66,9 +69,11 @@ onMounted(() => {
                             </button>
                         </router-link>
                     </template>
+                    
                 </DataTable>
+                <PulseLoading v-else-if="data.length == 0" />
             </template>
-            <PulseLoading v-else />
+            <Error @click="fetchData" v-else/>
         </div>
 
     </main>

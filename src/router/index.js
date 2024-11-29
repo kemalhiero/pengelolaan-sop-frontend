@@ -78,6 +78,11 @@ const router = createRouter({
       component: () => import('@/views/authenticated/SopPropose.vue')
     },
     {
+      path: '/app/propose-version',
+      name: 'SopProposeVersion',
+      component: () => import('@/views/authenticated/SopProposeVersion.vue')
+    },
+    {
       path: '/app/review',
       name: 'SopReview',
       component: () => import('@/views/authenticated/SopReview.vue')

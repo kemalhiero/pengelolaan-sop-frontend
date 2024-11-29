@@ -6,6 +6,7 @@ import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import GreenBadgeIndicator from './indicator/GreenBadgeIndicator.vue';
 import RedBadgeIndicator from './indicator/RedBadgeIndicator.vue';
 import YellowBadgeIndicator from './indicator/YellowBadgeIndicator.vue';
+import IconEye from '@/assets/icons/IconEye.vue';
 
 const props = defineProps({
     data: {
@@ -29,7 +30,7 @@ const props = defineProps({
     tableType: {
         type: String,
         default: 'crud',
-        validator: (value) => ['crud', 'check', 'other'].includes(value)
+        validator: (value) => ['crud', 'check', 'detail', 'other'].includes(value)
     },
     modelValue: {
         type: Array,
@@ -277,6 +278,12 @@ const goToPage = (page) => {
                                 @change="toggleItem(item)"
                                 class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                             >
+                        </template>
+                        <template v-else-if="props.tableType === 'detail'">
+                            <button :title="`Detail item ${index + 1}`"
+                                class="bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 me-2 mb-2 focus:outline-none">
+                                <IconEye class="fill-white w-5" />
+                            </button>
                         </template>
                         <template v-else-if="props.tableType === 'other'">
                             <slot name="link"></slot>

@@ -4,7 +4,8 @@ import { ref } from 'vue';
 
 export const useAuthStore = defineStore('auth', () => {
   const isLoggedIn = ref(true);
-  const role = ref('admin'); // Default role sebagai guest, [admin, guest]
+  const role = ref('admin');
+  // const role = ref('guest');
 
   function login() {
     isLoggedIn.value = true;

@@ -25,10 +25,11 @@ const dataOrg = ref([]);
 const dataEmploye = ref([]);
 
 // data form
+// TODO ambil dari data sop yang sekarang perbarui
 const form = ref({
-    name: '',
+    name: 'Pengusulan Kerja Praktik',
     number: '',
-    id_org: '',
+    id_org: 1,
     employe: [],
     description: ''
 });
@@ -130,7 +131,7 @@ onMounted(() => {
             :operation="toastOption.operation"
         />
 
-        <PageTitle judul="Usulkan POS baru" />
+        <PageTitle judul="Perbarui versi POS" />
 
         <section class="bg-white">
             <div class="py-8 px-4 mx-auto max-w-3xl">
@@ -140,10 +141,8 @@ onMounted(() => {
                             <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
                                 Nama<span class="text-red-600">*</span>
                             </label>
-                            <input type="text" v-model="form.name" id="name" placeholder="ketik nama sop disini..."
-                                required
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                title="Contoh : Pengusulan Kerja Praktik (langsung judul, tanpa perlu 'SOP' atau 'POS' di awal)">
+                            <input type="text" v-model="form.name" id="name" disabled
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5">
                         </div>
 
                         <div class="col-span-2 sm:col-span-1">
@@ -170,22 +169,13 @@ onMounted(() => {
                             <label for="org" class="block mb-2 text-sm font-medium text-gray-900">
                                 Organisasi<span class="text-red-600">*</span>
                             </label>
-                            <select id="org" v-model="form.id_org" required
+                            <select id="org" v-model="form.id_org" disabled
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
                                 <option selected disabled value="">Pilih organisasi</option>
                                 <option v-for="(item, index) in dataOrg" :value="item.id" :key="`org-${index}`">{{
                                     item.name }}</option>
                             </select>
                         </div>
-
-                        <!-- <div class="w-full">
-                            <label for="sop-date-make" class="block mb-2 text-sm font-medium text-gray-900">
-                                Tanggal Pembuatan
-                            </label>
-                            <input type="date" name="sop-date-make" id="sop-date-make"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                placeholder="Masukkan tanggal">
-                        </div> -->
 
                         <div class="col-span-2">
                             <label class="block mb-2 text-sm font-medium">
@@ -228,7 +218,7 @@ onMounted(() => {
                     </div>
                     <button type="submit"
                         class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-3 sm:mt-6 text-center">
-                        Mulai buat SOP baru
+                        Mulai buat SOP versi terbaru
                     </button>
                 </form>
             </div>

@@ -4,14 +4,18 @@ import { getSop } from "@/api/sopApi";
 
 import IconEye from "@/assets/icons/IconEye.vue";
 import DataTable from "@/components/DataTable.vue";
+import PulseLoading from "@/components/PulseLoading.vue";
+import Error from "@/components/Error.vue";
 
 const data = ref([]);
 
 const fetchData = async () => {
     try {
+        data.value = [];
         const result = await getSop();
         data.value = result.data;
     } catch (error) {
+        data.value = null;
         console.error(error);
     }
 };
@@ -25,7 +29,7 @@ onMounted(() => {
 
     <div class="text-center mt-16 mb-8 mx-12 lg:mx-40">
         <h1
-            class="mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-4xl lg:text-5xl dark:text-white">
+            class="mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-4xl lg:text-5xl">
             Penugasan Pembuatan / Revisi SOP</h1>
         <p class="text-lg font-normal lg:text-xl sm:px-16 xl:px-48">
             Berikut merupakan daftar tugas yang diberikan oleh penanggung jawab organisasi di lingkungan Departemen
@@ -62,8 +66,9 @@ onMounted(() => {
                         <!-- <p v-else>-</p> -->
                     </template>
                 </DataTable>
+                <PulseLoading v-else-if="data.length == 0" />
             </template>
-
+            <Error @click="fetchData" v-else/>
     </div>
 
 </template>

@@ -45,56 +45,56 @@
     
     <div class="container mx-auto px-4 max-w-screen-xl">
 
-        <h2 class="text-4xl text-center my-12 font-bold dark:text-white">SOP Pendaftaran Kerja Praktik</h2>
+        <h2 class="text-4xl text-center my-12 font-bold">SOP Pendaftaran Kerja Praktik</h2>
     
         <div class="step-cards">
             <div class="step-card">
                 <h4>Nomor SOP</h4>
-                <h6 class="text-sm font-bold dark:text-white">
+                <h6 class="text-sm font-bold">
                     T/00213/UN16.17.02/OT.01.00/2023
                 </h6>
-                <!-- <h5 class="text-xl font-bold dark:text-white"></h5> -->
+                <!-- <h5 class="text-xl font-bold"></h5> -->
             </div>
             <div class="step-card">
                 <h4>Tanggal Pembuatan</h4>
-                <h5 class="text-xl font-bold dark:text-white">
+                <h5 class="text-xl font-bold">
                     18 Agustus 2022
                 </h5>
             </div>
             <div class="step-card">
                 <h4>Tanggal Revisi</h4>
-                <h5 class="text-xl font-bold dark:text-white">
+                <h5 class="text-xl font-bold">
                     23 Agustus 2023
                 </h5>
             </div>
             <div class="step-card">
                 <h4>Tanggal Efektif</h4>
-                <h5 class="text-xl font-bold dark:text-white">
+                <h5 class="text-xl font-bold">
                     23 Januari 2024
                 </h5>
             </div>
             <div class="step-card">
                 <h4>Disahkan Oleh</h4>
-                <h5 class="text-lg font-bold dark:text-white">
+                <h5 class="text-lg font-bold">
                     Husnil Kamil, MT
                 </h5>
                 <p>NIP. 198201182008121002</p>
             </div>
             <div class="step-card">
                 <h4>Seksi</h4>
-                <h5 class="text-lg font-bold dark:text-white">
+                <h5 class="text-lg font-bold">
                     Semua Seksi di Lingkungan Departemen Sistem Informasi
                 </h5>
             </div>
             <div class="step-card">
                 <h4>Departemen</h4>
-                <h5 class="text-lg font-bold dark:text-white">
+                <h5 class="text-lg font-bold">
                     Sistem Informasi
                 </h5>
             </div>
             <div class="step-card">
                 <h4>Fakultas</h4>
-                <h5 class="text-lg font-bold dark:text-white">
+                <h5 class="text-lg font-bold">
                     Teknologi Informasi
                 </h5>
             </div>
@@ -158,7 +158,7 @@
             </div>
         </div>
 
-        <h2 class="text-2xl text-center mt-10 mb-6 font-bold dark:text-white">Alur Proses</h2>
+        <h2 class="text-2xl text-center mt-10 mb-6 font-bold">Alur Proses</h2>
 
         <MermaidDiagram :diagram="mermaidChart" class="my-5"/>
 

@@ -11,6 +11,8 @@ import AddDataModal from '@/components/modal/AddDataModal.vue';
 import EditDataModal from '@/components/modal/EditDataModal.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import AddDataButton from '@/components/modal/AddDataButton.vue';
+import PulseLoading from '@/components/PulseLoading.vue';
+import Error from '@/components/Error.vue';
 
 const data = ref([]);
 const form = ref({
@@ -36,9 +38,11 @@ const level = [
 
 const fetchData = async () => {
   try {
+    data.value = [];
     const result = await getOrg();
     data.value = result.data;
   } catch (error) {
+    data.value = null;
     console.error('Error fetching items:', error);
   }
 };
@@ -225,57 +229,62 @@ onMounted(() => {
                 @update:showModal="showAddModal = $event"
             />
 
-            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
-                <table class="w-full text-sm text-left text-gray-500">
-                    <thead class="text-xs text-gray-900 uppercase bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3">
-                                Nama
-                            </th>
-                            <th scope="col" class="px-6 py-3">
-                                Penanggung Jawab
-                            </th>
-                            <th scope="col" class="px-6 py-3">
-                                Level
-                            </th>
-                            <th scope="col" class="px-6 py-3">
-                                Keterangan
-                            </th>
-                            <th scope="col" class="px-6 py-3">
-                                <span class="sr-only">Edit</span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="(item, index) in data" :key="index" class="bg-white border-b">
-                            <th scope="row" class="px-6 py-4 font-medium text-gray-900">
-                                {{ item.name }}
-                            </th>
-                            <td class="px-6 py-4">
-                                {{ item.pic }}
-                            </td>
-                            <td class="px-6 py-4">
-                                {{ item.level }}
-                            </td>
-                            <td class="px-6 py-4">
-                                {{ item.about }}
-                            </td>
-                            <td class="px-6 py-4 flex">
-                                <!-- Edit -->
-                                <button :title="`Edit organisasi ${index + 1}`" @click="openUpdateModal(item.id)"
-                                    class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
-                                    <PenToSquareIcon class="fill-current w-4" />
-                                </button>
-                                <!-- Hapus -->
-                                <button :title="`Hapus item ${index + 1}`" @click="openDeleteModal(item.id)"
-                                    class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
-                                    <TrashCanIcon class="fill-current w-4" />
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+            <template v-if="data">
+                <div v-if="data.length > 0"  class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-900 uppercase bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">
+                                    Nama
+                                </th>
+                                <th scope="col" class="px-6 py-3">
+                                    Penanggung Jawab
+                                </th>
+                                <th scope="col" class="px-6 py-3">
+                                    Level
+                                </th>
+                                <th scope="col" class="px-6 py-3">
+                                    Keterangan
+                                </th>
+                                <th scope="col" class="px-6 py-3">
+                                    <span class="sr-only">Edit</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(item, index) in data" :key="index" class="bg-white border-b">
+                                <th scope="row" class="px-6 py-4 font-medium text-gray-900">
+                                    {{ item.name }}
+                                </th>
+                                <td class="px-6 py-4">
+                                    {{ item.pic }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    {{ item.level }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    {{ item.about }}
+                                </td>
+                                <td class="px-6 py-4 flex">
+                                    <!-- Edit -->
+                                    <button :title="`Edit organisasi ${index + 1}`" @click="openUpdateModal(item.id)"
+                                        class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
+                                        <PenToSquareIcon class="fill-current w-4" />
+                                    </button>
+                                    <!-- Hapus -->
+                                    <button :title="`Hapus item ${index + 1}`" @click="openDeleteModal(item.id)"
+                                        class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
+                                        <TrashCanIcon class="fill-current w-4" />
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <PulseLoading v-else-if="data.length == 0" />
+            </template>
+            <Error @click="fetchData" v-else/>
+
         </div>
 
         <!-- modal edit -->
