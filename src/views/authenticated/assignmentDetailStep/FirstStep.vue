@@ -181,21 +181,21 @@ onMounted(() => {
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 h-48">Lorem ipsum dolor sit amet consectetur adipisicing elit. Assumenda incidunt dolores veniam molestias doloribus voluptatem itaque fugiat commodi quibusdam voluptate eveniet quo eligendi, laudantium cupiditate obcaecati quaerat praesentium a labore reiciendis, aut cumque! Exercitationem ea quaerat iure quae dolorem, temporibus perferendis aperiam ducimus nemo dolor harum reiciendis atque? Vitae, ipsum.</textarea>
         </div>
 
-        <div class="grid gap-4 sm:grid-cols-2 sm:gap-6 text-black">
-            <div class="mb-5">
+        <div class="text-black">
+            <!-- <div class="mb-5">
                 <h2 class="mb-2 text-sm font-semibold text-gray-900 dark:text-white">Pelaksana:</h2>
                 <ul class="max-w-md space-y-1 list-disc list-inside text-sm">
                     <li>Mahasiswa</li>
                     <li>Departemen</li>
                     <li>Perusahaan</li>
                 </ul>
-            </div>
+            </div> -->
             <div class="mb-5">
-                <h2 class="mb-2 text-sm font-semibold text-gray-900 dark:text-white">User yang ditugaskan:</h2>
-                <ul class="max-w-md space-y-1 list-disc list-inside text-sm">
-                    <li>Kemal</li>
-                    <li>Kamal</li>
-                    <li>Kamil</li>
+                <h2 class="mb-2 text-sm font-semibold dark:text-white">User yang ditugaskan:</h2>
+                <ul class="space-y-1 list-disc list-inside text-sm columns-2">
+                    <li>(2011523019) Kemal</li>
+                    <li>(2011523019) Muhammad</li>
+                    <li>(2011523019) Hiero</li>
                 </ul>
             </div>
         </div>

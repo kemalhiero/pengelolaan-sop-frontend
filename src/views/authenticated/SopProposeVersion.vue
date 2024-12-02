@@ -135,11 +135,11 @@ onMounted(() => {
 
         <section class="bg-white">
             <div class="py-8 px-4 mx-auto max-w-3xl">
-                <form @submit.prevent="submitSop">
+                <form @submit.prevent="">
                     <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
                         <div class="col-span-2">
                             <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
-                                Nama<span class="text-red-600">*</span>
+                                Nama
                             </label>
                             <input type="text" v-model="form.name" id="name" disabled
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5">
@@ -167,7 +167,7 @@ onMounted(() => {
 
                         <div class="col-span-2 sm:col-span-1">
                             <label for="org" class="block mb-2 text-sm font-medium text-gray-900">
-                                Organisasi<span class="text-red-600">*</span>
+                                Organisasi
                             </label>
                             <select id="org" v-model="form.id_org" disabled
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">

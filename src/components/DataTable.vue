@@ -280,7 +280,7 @@ const goToPage = (page) => {
                             >
                         </template>
                         <template v-else-if="props.tableType === 'detail'">
-                            <button :title="`Detail item ${index + 1}`"
+                            <button :title="`Detail item ${index + 1}`" @click="$emit('click', item.id)"
                                 class="bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 me-2 mb-2 focus:outline-none">
                                 <IconEye class="fill-white w-5" />
                             </button>

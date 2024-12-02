@@ -11,6 +11,7 @@ import CircleArrowLeft from '@/assets/icons/CircleArrowLeft.vue';
 import FirstStep from './assignmentDetailStep/FirstStep.vue';
 import SecondStep from './assignmentDetailStep/SecondStep.vue';
 import ThirdStep from './assignmentDetailStep/ThirdStep.vue';
+import FloppyDiskIcon from '@/assets/icons/FloppyDiskIcon.vue';
 
 // State untuk mengatur langkah
 const currentStep = ref(1);  // Langkah sekarang
@@ -118,18 +119,23 @@ const prevStep = () => {
         <ThirdStep v-else-if="currentStep == 3" />
     </div>
 
-    <div class="flex justify-between mb-8 px-6 max-w-2xl mx-auto">
-        <!-- Tombol "Sebelumnya" -->
+    <div class="flex justify-between mb-8 px-6 max-w-3xl mx-auto">
         <button type="button" :disabled="currentStep == 1"
-            class="w-5/12 text-white bg-gray-500 hover:bg-gray-600 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-1/4 text-white bg-gray-500 hover:bg-gray-600 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             @click="prevStep">
             <CircleArrowLeft class="fill-current w-5 mr-2 mt-1" />
             Sebelumnya
         </button>
 
-        <!-- Tombol "Lanjut" -->
+        <button type="button" title="Klik untuk menyimpan progres saat ini ke server"
+            class="w-[28%] text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center"
+            @click="saveProgress">
+            <FloppyDiskIcon class="fill-current w-5 mr-2" />
+            Simpan Progres
+        </button>
+
         <button type="button"
-            class="w-5/12 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-1/4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             @click="nextStep">
             <p v-if="currentStep == 3">Kirim</p>
             <p v-else>Lanjut</p>
