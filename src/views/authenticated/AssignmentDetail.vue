@@ -1,5 +1,7 @@
 <script setup>
-import { ref, provide } from 'vue';
+import { ref, provide, onMounted } from 'vue';
+import { useRoute } from 'vue-router'
+import { getAssignmentDetail } from '@/api/sopApi';
 
 import CheckIcon from '@/assets/icons/CheckIcon.vue';
 import NumberOneCircleIcon from '@/assets/icons/NumberOneCircleIcon.vue';
@@ -7,15 +9,28 @@ import NumberTwoCircleIcon from '@/assets/icons/NumberTwoCircleIcon.vue';
 import NumberThreeCircleIcon from '@/assets/icons/NumberThreeCircleIcon.vue';
 import CircleArrowRight from '@/assets/icons/CircleArrowRight.vue';
 import CircleArrowLeft from '@/assets/icons/CircleArrowLeft.vue';
+import FloppyDiskIcon from '@/assets/icons/FloppyDiskIcon.vue';
 
 import FirstStep from './assignmentDetailStep/FirstStep.vue';
 import SecondStep from './assignmentDetailStep/SecondStep.vue';
 import ThirdStep from './assignmentDetailStep/ThirdStep.vue';
-import FloppyDiskIcon from '@/assets/icons/FloppyDiskIcon.vue';
+
+const route = useRoute();
 
 // State untuk mengatur langkah
 const currentStep = ref(1);  // Langkah sekarang
 const firstStepRef = ref(null);
+
+const picInfo = ref();
+const fetchPicInfo = async () => {
+    try {
+        const response = await getAssignmentDetail(route.params.id);
+        picInfo.value = response.data;
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+};
+provide('picData', picInfo);
 
 // State untuk form data
 const formData = ref({
@@ -79,6 +94,9 @@ const prevStep = () => {
     }
 };
 
+onMounted(() => {
+    fetchPicInfo();
+});
 </script>
 
 <template>

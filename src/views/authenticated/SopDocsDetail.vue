@@ -1,12 +1,17 @@
 <script setup>
+import { onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router'
+import { getOneSop } from '@/api/sopApi';
+import getStatus from '@/utils/getStatus';
+
 import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import UpRightFromSquareIcon from '@/assets/icons/UpRightFromSquareIcon.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
+import PulseLoading from '@/components/PulseLoading.vue';
 import DataTable from '@/components/DataTable.vue';
 import Error from '@/components/Error.vue';
-import PulseLoading from '@/components/PulseLoading.vue';
-import { ref } from 'vue';
 
+const route = useRoute();
 const showDetailModal = ref(false);
 
 const data = [
@@ -15,6 +20,22 @@ const data = [
   { id: 3, number: 'T/022/UN16.17.02/OT.01.00/2023', version: 3, tanggal_revisi: '-', tanggal_efektif: '-', status: 2 },
 ];
 
+const sopData = ref();
+const fetchData = async () => {
+    try {
+        const response = await getOneSop(route.params.id);
+        sopData.value = response.data;
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+};
+
+onMounted(() => {
+  fetchData();
+  console.log(sopData.value);
+  
+});
+
 </script>
 
 <template>
@@ -22,26 +43,27 @@ const data = [
 
     <h2 class="text-4xl text-center my-8 font-bold">SOP Pendaftaran Kerja Praktik</h2>
 
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-5">
+    <div v-if="sopData" class="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-5">
       <div class="bg-gray-200 p-5 rounded-xl shadow-md">
         <h4 class="mb-2.5 text-lg">Organisasi</h4>
         <h5 class="text-lg font-bold">
-          Laboratory Enterprise Application
+          {{ sopData.organization }}
         </h5>
       </div>
       <div class="bg-gray-200 p-5 rounded-xl shadow-md">
         <h4 class="mb-2.5 text-lg">Tanggal Pembuatan</h4>
         <h5 class="text-xl font-bold">
-          18 Agustus 2023
+          {{ sopData.creation_date }}
         </h5>
       </div>
       <div class="bg-gray-200 p-5 rounded-xl shadow-md">
         <h4 class="mb-2.5 text-lg">Status</h4>
         <h5 class="text-xl font-bold">
-          Belum Berlaku
+          {{ getStatus(sopData.is_active) }}
         </h5>
       </div>
     </div>
+    <PulseLoading v-else />
 
     <div v-if="data" class="my-8">
         <DataTable v-if="data.length > 0" 

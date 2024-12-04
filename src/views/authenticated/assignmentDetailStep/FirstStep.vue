@@ -8,6 +8,7 @@ import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import DataTable from '@/components/DataTable.vue';
 import Tooltip from '@/components/Tooltip.vue';
 import WarningText from '@/components/validation/WarningText.vue';
+import PulseLoading from '@/components/PulseLoading.vue';
 
 // Data peraturan
 const data = [
@@ -15,6 +16,7 @@ const data = [
     { id: 2, nama: ' Peraturan Rektor Universitas Andalas Nomor 8 Tahun 2022 tentang Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas' }
 ];
 
+const picInfo = inject('picData');
 
 const showModal = ref({
     legalBasis: false,
@@ -129,76 +131,69 @@ onMounted(() => {
             Informasi dari Penanggung Jawab, tidak bisa diubah!
         </div>
 
-        <div class="mb-4">
-            <label for="sop-number" class="block mb-2 text-sm font-medium ">
-                Nama
-            </label>
-            <input type="text" id="sop-number"
-                class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
-                value="Pendaftaran Kerja Praktik" readonly />
-        </div>
-
-        <div class="grid gap-4 sm:grid-cols-2 sm:gap-5 text-black mb-4">
-            <div>
-                <label for="sop-number" class="block mb-2 text-sm font-medium ">
-                    Nomor
+        <template v-if="picInfo">
+            <div class="mb-4">
+                <label for="sop-name" class="block mb-2 text-sm font-medium ">
+                    Nama
                 </label>
-                <input type="text" id="sop-number"
+                <input type="text" id="sop-name"
                     class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
-                    value="T/001/UN16.17.02/OT.01.00/2024" readonly />
+                    :value="picInfo.name" readonly />
             </div>
-            <div>
-                <label for="sop-date" class="block mb-2 text-sm font-medium ">
-                    Tanggal
-                </label>
-                <input type="text" id="sop-date"
-                    class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                    value="11/10/2024" readonly />
+    
+            <div class="grid gap-4 sm:grid-cols-2 sm:gap-5 text-black mb-4">
+                <div>
+                    <label for="sop-number" class="block mb-2 text-sm font-medium ">
+                        Nomor
+                    </label>
+                    <input type="text" id="sop-number"
+                        class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
+                        :value="picInfo.number" readonly />
+                </div>
+                <div>
+                    <label for="sop-assignment-time" class="block mb-2 text-sm font-medium ">
+                        Waktu Penugasan
+                    </label>
+                    <input type="text" id="sop-assignment-time"
+                        class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                        :value="picInfo.creation_date" readonly />
+                </div>
+                <div>
+                    <label for="sop-org" class="block mb-2 text-sm font-medium ">
+                        Organisasi
+                    </label>
+                    <input type="text" id="sop-org"
+                        class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                        :value="picInfo.organization" readonly />
+                </div>
+                <div>
+                    <label for="sop-pic" class="block mb-2 text-sm font-medium ">
+                        Penanggung Jawab
+                    </label>
+                    <input type="text" id="sop-pic"
+                        class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                        :value="`${picInfo.pic_number} - ${picInfo.pic_name}`" readonly />
+                </div>
             </div>
-            <div>
-                <label for="sop-org" class="block mb-2 text-sm font-medium ">
-                    Organisasi
-                </label>
-                <input type="text" id="sop-org"
-                    class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                    value="Departemen Sistem Informasi" readonly />
-            </div>
-            <div>
-                <label for="sop-pic" class="block mb-2 text-sm font-medium ">
-                    Penanggung Jawab
-                </label>
-                <input type="text" id="sop-pic"
-                    class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                    value="Husnil Kamil" readonly />
-            </div>
-        </div>
-
-        <div class="mb-5">
-            <label for="sop-description" class="block mb-2 text-sm font-medium ">
-                Deskripsi
-            </label>
-            <textarea id="sop-description" disabled
-                class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 h-48">Lorem ipsum dolor sit amet consectetur adipisicing elit. Assumenda incidunt dolores veniam molestias doloribus voluptatem itaque fugiat commodi quibusdam voluptate eveniet quo eligendi, laudantium cupiditate obcaecati quaerat praesentium a labore reiciendis, aut cumque! Exercitationem ea quaerat iure quae dolorem, temporibus perferendis aperiam ducimus nemo dolor harum reiciendis atque? Vitae, ipsum.</textarea>
-        </div>
-
-        <div class="text-black">
-            <!-- <div class="mb-5">
-                <h2 class="mb-2 text-sm font-semibold text-gray-900 dark:text-white">Pelaksana:</h2>
-                <ul class="max-w-md space-y-1 list-disc list-inside text-sm">
-                    <li>Mahasiswa</li>
-                    <li>Departemen</li>
-                    <li>Perusahaan</li>
-                </ul>
-            </div> -->
+    
             <div class="mb-5">
-                <h2 class="mb-2 text-sm font-semibold dark:text-white">User yang ditugaskan:</h2>
-                <ul class="space-y-1 list-disc list-inside text-sm columns-2">
-                    <li>(2011523019) Kemal</li>
-                    <li>(2011523019) Muhammad</li>
-                    <li>(2011523019) Hiero</li>
-                </ul>
+                <label for="sop-description" class="block mb-2 text-sm font-medium ">
+                    Deskripsi
+                </label>
+                <textarea id="sop-description" disabled
+                    class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 h-48">{{ picInfo.description }}</textarea>
             </div>
-        </div>
+    
+            <div class="text-black">
+                <div class="mb-5">
+                    <h2 class="mb-2 text-sm font-semibold dark:text-white">User yang ditugaskan:</h2>
+                    <ul class="space-y-1 list-disc list-inside text-sm columns-2">
+                        <li v-for="(item, index) in picInfo.drafter" :key="index">({{ item.id_number }}) {{ item.name }}</li>
+                    </ul>
+                </div>
+            </div>
+        </template>
+        <PulseLoading v-else />
 
         <div class="inline-flex items-center justify-center w-full">
             <hr class="w-64 h-1 my-8 bg-gray-300 border-0 rounded">

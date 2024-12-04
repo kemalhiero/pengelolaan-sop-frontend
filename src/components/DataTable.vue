@@ -30,7 +30,10 @@ const props = defineProps({
     tableType: {
         type: String,
         default: 'crud',
-        validator: (value) => ['crud', 'check', 'detail', 'other'].includes(value)
+        validator: (value) => ['crud', 'check', 'detail', 'link', 'other'].includes(value)
+    },
+    detailLink: {
+        type: String,
     },
     modelValue: {
         type: Array,
@@ -284,6 +287,15 @@ const goToPage = (page) => {
                                 class="bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 me-2 mb-2 focus:outline-none">
                                 <IconEye class="fill-white w-5" />
                             </button>
+                        </template>
+                        <template v-else-if="props.tableType === 'link'">
+                            <router-link :to="`${detailLink}/${item.id}`">
+                                <button
+                                    class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center me-2 mb-2">
+                                    <IconEye class="w-5 mr-3 fill-current" />
+                                    Lihat
+                                </button>
+                            </router-link>
                         </template>
                         <template v-else-if="props.tableType === 'other'">
                             <slot name="link"></slot>

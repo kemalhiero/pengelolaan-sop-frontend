@@ -2,9 +2,8 @@
 import { onMounted, ref } from 'vue';
 import { getOrg } from '@/api/orgApi';
 import { getEmploye } from '@/api/userApi';
-import { createSopDetail } from '@/api/sopDetailApi';
 import { createDrafter } from '@/api/drafterApi';
-import { createSop } from '@/api/sopApi';
+import { createSop, createSopDetail } from '@/api/sopApi';
 import { useRouter } from 'vue-router';
 
 import PageTitle from '@/components/authenticated/PageTitle.vue';

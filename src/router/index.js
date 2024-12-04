@@ -34,10 +34,12 @@ const router = createRouter({
     // Authenticated
     {
       path: '/assignment',
+      name: 'Assignment',
       component: () => import('@/views/authenticated/Assignment.vue')
     },
     {
-      path: '/assignment/detail',
+      path: '/assignment/:id',
+      name: 'AssignmentDetail',
       component: () => import('@/views/authenticated/AssignmentDetail.vue')
     },
 
@@ -53,7 +55,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/SopDocs.vue')
     },
     {
-      path: '/app/docs/detail',
+      path: '/app/docs/:id',
       name: 'SopDocDetail',
       component: () => import('@/views/authenticated/SopDocsDetail.vue')
     },

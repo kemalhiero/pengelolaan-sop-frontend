@@ -87,4 +87,4 @@ const deleteRequest = async (endpoint) => {
     }
 };
 
-export { getRequest, postRequest, patchRequest, deleteRequest }
+export { getRequest, postRequest, patchRequest, deleteRequest };

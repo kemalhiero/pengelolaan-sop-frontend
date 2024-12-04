@@ -2,9 +2,8 @@
 import { onMounted, ref } from 'vue';
 import { getOrg } from '@/api/orgApi';
 import { getEmploye } from '@/api/userApi';
-import { createSopDetail } from '@/api/sopDetailApi';
 import { createDrafter } from '@/api/drafterApi';
-import { createSop } from '@/api/sopApi';
+import { createSop, createSopDetail } from '@/api/sopApi';
 import { useRouter } from 'vue-router';
 
 import PageTitle from '@/components/authenticated/PageTitle.vue';
@@ -224,7 +223,7 @@ onMounted(() => {
             </div>
         </section>
     </main>
-
+    <!-- TODO ntar tampilin juga user yang sudah terpilih sebelumnya (sudah terceklis saat modal ditampilin) -->
     <div v-show="showEmployeModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
 
         <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showEmployeModal = false"></div>
