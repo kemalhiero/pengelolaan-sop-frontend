@@ -1,7 +1,7 @@
 <script setup>
 import { ref, provide, onMounted } from 'vue';
 import { useRoute } from 'vue-router'
-import { getAssignmentDetail } from '@/api/sopApi';
+import { createSopDetail, getAssignmentDetail } from '@/api/sopApi';
 
 import CheckIcon from '@/assets/icons/CheckIcon.vue';
 import NumberOneCircleIcon from '@/assets/icons/NumberOneCircleIcon.vue';
@@ -10,10 +10,17 @@ import NumberThreeCircleIcon from '@/assets/icons/NumberThreeCircleIcon.vue';
 import CircleArrowRight from '@/assets/icons/CircleArrowRight.vue';
 import CircleArrowLeft from '@/assets/icons/CircleArrowLeft.vue';
 import FloppyDiskIcon from '@/assets/icons/FloppyDiskIcon.vue';
+import SpinnerIcon from '@/assets/icons/SpinnerIcon.vue';
 
 import FirstStep from './assignmentDetailStep/FirstStep.vue';
 import SecondStep from './assignmentDetailStep/SecondStep.vue';
 import ThirdStep from './assignmentDetailStep/ThirdStep.vue';
+import { createSopLawBasis, getLawBasis } from '@/api/lawBasisApi';
+import { createSopImplementer } from '@/api/implementerApi';
+import { createIQ } from '@/api/implementQualification';
+import { createRelatedSop } from '@/api/relatedSopApi';
+import { createEquipment } from '@/api/equipmentApi';
+import { createRecord } from '@/api/recordApi';
 
 const route = useRoute();
 
@@ -31,6 +38,22 @@ const fetchPicInfo = async () => {
     }
 };
 provide('picData', picInfo);
+
+const legalBasisData = ref();
+const fetchLegalBasis = async () => {
+    try {
+        const response = await getLawBasis();
+        const stringifyLegal = response.data.map(item => ({
+            id: item.id,
+            legal: `${item.law_type} Nomor ${item.number} Tahun ${item.year} tentang ${item.about}`
+        }));
+
+        legalBasisData.value = stringifyLegal;
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+};
+provide('legalBasisData', legalBasisData);
 
 // State untuk form data
 const formData = ref({
@@ -69,6 +92,47 @@ provide('sopStep', {
     }
 });
 
+// sinkron info sop
+const submitSop = async () => {
+    try {
+        // TODO ini harusnya update
+        const resultSopdetail = await createSopDetail(picInfo.value.id,
+            {
+                section: formData.value.section,
+                warning: formData.value.warning
+            }
+        );
+
+        // pelaksana
+        formData.value.implementer.forEach(async (item) => {
+            await createSopImplementer(
+                {
+                    id_sop_detail: resultSopdetail.data.id_sop_detail,
+                    id_sop_implementer: item.id
+                }
+            );
+        });
+
+        // dasar hukum
+        formData.value.legalBasis.forEach(async (item) => {
+            await createSopLawBasis(
+                {
+                    id_sop_detail: resultSopdetail.data.id_sop_detail,
+                    id_legal: item.id
+                }
+            );
+        });
+
+        formData.value.record.forEach(async (item) => {await createRecord(item)});
+        formData.value.equipment.forEach(async (item) => { await createEquipment(item) });
+        formData.value.relatedSop.forEach(async (item) => { await createRelatedSop(item) });
+        formData.value.implementQualification.forEach(async (item) => { await createIQ(item) });
+
+    } catch (error) {
+        console.error('Error saat mengirim data:', error);
+    }
+};
+
 // Fungsi untuk ke langkah berikutnya
 const nextStep = () => {
     if (currentStep.value === 1) {
@@ -96,6 +160,7 @@ const prevStep = () => {
 
 onMounted(() => {
     fetchPicInfo();
+    fetchLegalBasis();
 });
 </script>
 
@@ -147,7 +212,9 @@ onMounted(() => {
 
         <button type="button" title="Klik untuk menyimpan progres saat ini ke server"
             class="w-[28%] text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center"
-            @click="saveProgress">
+            @click="submitSop">
+            <!-- <SpinnerIcon class="inline w-5 me-3 fill-current animate-spin" />
+            Loading... -->
             <FloppyDiskIcon class="fill-current w-5 mr-2" />
             Simpan Progres
         </button>

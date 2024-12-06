@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref, inject } from 'vue';
-import { getImplementer } from '@/api/sopImplementerApi';
+import { getImplementer } from '@/api/implementerApi';
 
 import CircleInfoIcon from '@/assets/icons/CircleInfoIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
@@ -10,12 +10,7 @@ import Tooltip from '@/components/Tooltip.vue';
 import WarningText from '@/components/validation/WarningText.vue';
 import PulseLoading from '@/components/PulseLoading.vue';
 
-// Data peraturan
-const data = [
-    { id: 1, nama: 'Peraturan Pemerintah Nomor 95 Tahun 2021 tentang Perguruan Tinggi Negeri Badan Hukum Universitas Andalas' },
-    { id: 2, nama: ' Peraturan Rektor Universitas Andalas Nomor 8 Tahun 2022 tentang Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas' }
-];
-
+const legalBasisData = inject('legalBasisData');
 const picInfo = inject('picData');
 
 const showModal = ref({
@@ -172,7 +167,7 @@ onMounted(() => {
                     </label>
                     <input type="text" id="sop-pic"
                         class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                        :value="`${picInfo.pic_number} - ${picInfo.pic_name}`" readonly />
+                        :value="`${picInfo.pic.number} - ${picInfo.pic.name}`" readonly />
                 </div>
             </div>
     
@@ -258,7 +253,7 @@ onMounted(() => {
                 <ul>
                     <li v-for="(law, index) in formData.legalBasis" :key="index"
                         class="flex items-center justify-between p-2 bg-gray-200 rounded-lg mb-2">
-                        <span class="text-sm">{{ law.nama }}</span>
+                        <span class="text-sm">{{ law.legal }}</span>
                         <button :title="`Hapus peraturan ${index + 1}`" @click="legalBasis.removeItem(index)"
                             class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
                             <TrashCanIcon class="fill-current w-4" />
@@ -394,7 +389,7 @@ onMounted(() => {
         <div class="relative w-full max-w-4xl max-h-full">
             <div class="relative bg-white rounded-lg shadow">
                 <!-- Modal header -->
-                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
+                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
                     <h3 class="text-xl font-medium text-gray-900 dark:text-white">
                         Centang peraturan yang akan ditambahkan ke SOP
                     </h3>
@@ -420,20 +415,21 @@ onMounted(() => {
                         </router-link>
                     </div> -->
 
-                    <DataTable 
-                        :data="data" 
-                        :columns="[{ field: 'nama', label: 'Nama', sortable: true }]" 
-                        :searchable="['nama']" 
+                    <DataTable v-if="legalBasisData"
+                        :data="legalBasisData" 
+                        :columns="[{ field: 'legal', label: 'Peraturan', sortable: true }]" 
+                        :searchable="['legal']" 
                         :table-type="'check'" 
                         v-model="formData.legalBasis" 
                     />
+                    <PulseLoading v-else />
 
                 </div>
                 <!-- Modal footer -->
                 <div
                     class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
                     <button :disabled="formData.legalBasis.length == 0" @click="showModal.legalBasis = false" type="button"
-                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Tambahkan</button>
+                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Pilih</button>
                 </div>
             </div>
         </div>

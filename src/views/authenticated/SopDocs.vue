@@ -6,7 +6,6 @@ import CirclePlusIcon from "@/assets/icons/CirclePlusIcon.vue";
 import PageTitle from "@/components/authenticated/PageTitle.vue";
 import PulseLoading from "@/components/PulseLoading.vue";
 import DataTable from "@/components/DataTable.vue";
-import IconEye from "@/assets/icons/IconEye.vue";
 import Error from "@/components/Error.vue";
 
 const data = ref([]);

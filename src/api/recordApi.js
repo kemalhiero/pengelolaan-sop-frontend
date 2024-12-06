@@ -1,5 +1,5 @@
 import { getRequest, postRequest, patchRequest, deleteRequest } from "./apiClient";
 
-const getImplementer = () => getRequest('implementer');
+const createRecord = (data) => postRequest('record', data);
 
-export {getImplementer}
+export { createRecord };
