@@ -1,9 +1,16 @@
 <script setup>
 import { ref, provide, onMounted } from 'vue';
 import { useRoute } from 'vue-router'
-import { createSopDetail, getAssignmentDetail } from '@/api/sopApi';
+import { validateText } from '@/utils/validation';
 
-import CheckIcon from '@/assets/icons/CheckIcon.vue';
+import { getAssignmentDetail, updateSopDetail } from '@/api/sopApi';
+import { createSopLawBasis, getLawBasis } from '@/api/lawBasisApi';
+import { createSopImplementer } from '@/api/implementerApi';
+import { createIQ } from '@/api/implementQualification';
+import { createRelatedSop } from '@/api/relatedSopApi';
+import { createEquipment } from '@/api/equipmentApi';
+import { createRecord } from '@/api/recordApi';
+
 import NumberOneCircleIcon from '@/assets/icons/NumberOneCircleIcon.vue';
 import NumberTwoCircleIcon from '@/assets/icons/NumberTwoCircleIcon.vue';
 import NumberThreeCircleIcon from '@/assets/icons/NumberThreeCircleIcon.vue';
@@ -11,16 +18,11 @@ import CircleArrowRight from '@/assets/icons/CircleArrowRight.vue';
 import CircleArrowLeft from '@/assets/icons/CircleArrowLeft.vue';
 import FloppyDiskIcon from '@/assets/icons/FloppyDiskIcon.vue';
 import SpinnerIcon from '@/assets/icons/SpinnerIcon.vue';
+import CheckIcon from '@/assets/icons/CheckIcon.vue';
 
 import FirstStep from './assignmentDetailStep/FirstStep.vue';
 import SecondStep from './assignmentDetailStep/SecondStep.vue';
 import ThirdStep from './assignmentDetailStep/ThirdStep.vue';
-import { createSopLawBasis, getLawBasis } from '@/api/lawBasisApi';
-import { createSopImplementer } from '@/api/implementerApi';
-import { createIQ } from '@/api/implementQualification';
-import { createRelatedSop } from '@/api/relatedSopApi';
-import { createEquipment } from '@/api/equipmentApi';
-import { createRecord } from '@/api/recordApi';
 
 const route = useRoute();
 
@@ -54,6 +56,8 @@ const fetchLegalBasis = async () => {
     }
 };
 provide('legalBasisData', legalBasisData);
+
+// TODO buat fetch untuk data sop, agar jika sebelumnya user sudah angsur dan menyimpan ke database bisa langsung ditampilin ke form
 
 // State untuk form data
 const formData = ref({
@@ -95,38 +99,51 @@ provide('sopStep', {
 // sinkron info sop
 const submitSop = async () => {
     try {
-        // TODO ini harusnya update
-        const resultSopdetail = await createSopDetail(picInfo.value.id,
-            {
-                section: formData.value.section,
-                warning: formData.value.warning
-            }
-        );
-
-        // pelaksana
+        const resultSopdetail = await updateSopDetail(picInfo.value.id, {
+            section: formData.value.section,
+            warning: formData.value.warning
+        });
+        console.log(resultSopdetail);
+        
         formData.value.implementer.forEach(async (item) => {
-            await createSopImplementer(
-                {
-                    id_sop_detail: resultSopdetail.data.id_sop_detail,
-                    id_sop_implementer: item.id
-                }
-            );
+            await createSopImplementer({
+                id_sop_detail: resultSopdetail.data.id_sop_detail,
+                id_sop_implementer: item.id
+            });
         });
-
-        // dasar hukum
         formData.value.legalBasis.forEach(async (item) => {
-            await createSopLawBasis(
-                {
-                    id_sop_detail: resultSopdetail.data.id_sop_detail,
-                    id_legal: item.id
-                }
-            );
+            await createSopLawBasis({
+                id_sop_detail: resultSopdetail.data.id_sop_detail,
+                id_legal: item.id
+            });
         });
 
-        formData.value.record.forEach(async (item) => {await createRecord(item)});
-        formData.value.equipment.forEach(async (item) => { await createEquipment(item) });
-        formData.value.relatedSop.forEach(async (item) => { await createRelatedSop(item) });
-        formData.value.implementQualification.forEach(async (item) => { await createIQ(item) });
+        formData.value.record.forEach(async (item) => {
+            await createRecord({
+                id_sop_detail: resultSopdetail.data.id_sop_detail,
+                data_record: item
+            })
+        });
+        formData.value.equipment.forEach(async (item) => { 
+            await createEquipment({
+                id_sop_detail: resultSopdetail.data.id_sop_detail,
+                equipment: item
+            }) 
+        });
+        formData.value.relatedSop.forEach(async (item) => {
+            await createRelatedSop({
+                id_sop_detail: resultSopdetail.data.id_sop_detail,
+                related_sop: item
+            }) 
+        });
+        formData.value.implementQualification.forEach(async (item) => { 
+            await createIQ({
+                id_sop_detail: resultSopdetail.data.id_sop_detail,
+                qualification: item
+            }) 
+        });
+
+        console.log('berhasil sinkronisasi semua data');
 
     } catch (error) {
         console.error('Error saat mengirim data:', error);

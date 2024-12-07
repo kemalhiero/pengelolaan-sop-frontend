@@ -5,8 +5,9 @@ const createSop = (data) => postRequest('sop', data);
 
 const getOneSop = (idSop) => getRequest(`sop/${idSop}`);
 
-const createSopDetail = (idSop, data) => postRequest(`sop/detail?id_sop=${idSop}`, data);
+const createSopDetail = (id, data) => postRequest(`sop/detail?id=${id}`, data);
+const updateSopDetail = (id, data) => patchRequest(`sop/detail?id=${id}`, data);
 
-const getAssignmentDetail = (idsop) => getRequest(`sop/assignment/${idsop}`);
+const getAssignmentDetail = (id) => getRequest(`sop/assignment/${id}`);
 
-export { getSop, createSop, createSopDetail, getAssignmentDetail, getOneSop };
+export { getSop, createSop, createSopDetail, updateSopDetail, getAssignmentDetail, getOneSop };
