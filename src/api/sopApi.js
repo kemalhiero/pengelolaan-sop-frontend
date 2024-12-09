@@ -10,4 +10,6 @@ const updateSopDetail = (id, data) => patchRequest(`sop/detail?id=${id}`, data);
 
 const getAssignmentDetail = (id) => getRequest(`sop/assignment/${id}`);
 
-export { getSop, createSop, createSopDetail, updateSopDetail, getAssignmentDetail, getOneSop };
+const getSectionandWarning = (iddetail) => getRequest(`sop/info/${iddetail}`);
+
+export { getSop, createSop, createSopDetail, updateSopDetail, getAssignmentDetail, getOneSop, getSectionandWarning };

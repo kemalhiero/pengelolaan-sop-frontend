@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue';
 import { getOrg } from '@/api/orgApi';
 import { getEmploye } from '@/api/userApi';
-import { createSopDrafter } from '@/api/drafterApi';
+import { createDrafter } from '@/api/drafterApi';
 import { createSop, createSopDetail } from '@/api/sopApi';
 import { useRouter } from 'vue-router';
 
@@ -96,7 +96,7 @@ const submitSop = async () => {
         console.log(resultSopdetail);
         
         form.value.employe.forEach(async (item) => {
-            await createSopDrafter({
+            await createDrafter({
                 id_user: item.id,
                 id_sop_detail: resultSopdetail.data.id_sop_detail,
             })

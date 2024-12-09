@@ -3,5 +3,6 @@ import { getRequest, postRequest, patchRequest, deleteRequest } from "./apiClien
 const getImplementer = () => getRequest('implementer');
 
 const createSopImplementer = (data) => postRequest('implementer/sop', data);
+const getSopImplementer = (id) => getRequest(`implementer/sop?id=${id}`);
 
-export { getImplementer, createSopImplementer }
+export { getImplementer, createSopImplementer, getSopImplementer }

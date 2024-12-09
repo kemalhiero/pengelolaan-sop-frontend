@@ -1,15 +1,15 @@
 <script setup>
-import { ref, provide, onMounted } from 'vue';
+import { ref, provide, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router'
 import { validateText } from '@/utils/validation';
 
-import { getAssignmentDetail, updateSopDetail } from '@/api/sopApi';
-import { createSopLawBasis, getLawBasis } from '@/api/lawBasisApi';
-import { createSopImplementer } from '@/api/implementerApi';
-import { createIQ } from '@/api/implementQualification';
-import { createRelatedSop } from '@/api/relatedSopApi';
-import { createEquipment } from '@/api/equipmentApi';
-import { createRecord } from '@/api/recordApi';
+import { getAssignmentDetail, getSectionandWarning, updateSopDetail } from '@/api/sopApi';
+import { createSopLawBasis, getLawBasis, getSopLawBasis } from '@/api/lawBasisApi';
+import { createSopImplementer, getSopImplementer } from '@/api/implementerApi';
+import { createRelatedSop, getRelatedSop } from '@/api/relatedSopApi';
+import { createEquipment, getSopEquipment } from '@/api/equipmentApi';
+import { createIQ, getIQ } from '@/api/implementQualification';
+import { createRecord, getSopRecord } from '@/api/recordApi';
 
 import NumberOneCircleIcon from '@/assets/icons/NumberOneCircleIcon.vue';
 import NumberTwoCircleIcon from '@/assets/icons/NumberTwoCircleIcon.vue';
@@ -57,9 +57,8 @@ const fetchLegalBasis = async () => {
 };
 provide('legalBasisData', legalBasisData);
 
-// TODO buat fetch untuk data sop, agar jika sebelumnya user sudah angsur dan menyimpan ke database bisa langsung ditampilin ke form
+// TODO buat tambah & fetch data info sop sudah✅, sekarang buat untuk proses updatenya/memperbarui
 
-// State untuk form data
 const formData = ref({
     section: '',
     implementer: [],
@@ -70,6 +69,50 @@ const formData = ref({
     warning: '',
     record: []
 });
+
+let idsopdetail;
+watch(() => picInfo.value,
+    (newValue) => {
+        if (newValue) {
+            idsopdetail = newValue.id_sop_detail;
+            fetchInfoSop();
+        }
+    }
+);
+
+const fetchInfoSop = async () => {
+    try {
+        let response = await getSectionandWarning(idsopdetail);
+        formData.value.section = response.data.section;
+        formData.value.warning = response.data.warning;
+
+        response = await getSopImplementer(idsopdetail);
+        formData.value.implementer = response.data;
+
+        response = await getSopLawBasis(idsopdetail);
+        formData.value.legalBasis = response.data.map(item => ({
+            id: item.id,
+            legal: `${item.law_type} Nomor ${item.number} Tahun ${item.year} tentang ${item.about}`
+        }));;
+
+        response = await getIQ(idsopdetail);
+        formData.value.implementQualification = response.data.map(item => item.qualification);
+
+        response = await getRelatedSop(idsopdetail);
+        formData.value.relatedSop = response.data.map(item => item.related_sop);
+
+        response = await getSopEquipment(idsopdetail);
+        formData.value.equipment = response.data.map(item => item.equipment);
+
+        response = await getSopRecord(idsopdetail);
+        formData.value.record = response.data.map(item => item.data_record);
+
+        response = null;
+
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+};
 provide('sopFormData', {
     formData,
     updateFormData(newData) {
@@ -77,6 +120,7 @@ provide('sopFormData', {
     }
 });
 
+// TODO buat sinkronisasi untuk tahapan sop, yaitu simpan, lihat, dan memsperbarui data
 const sopStep = ref([
     {
         kegiatan: '',
@@ -104,7 +148,7 @@ const submitSop = async () => {
             warning: formData.value.warning
         });
         console.log(resultSopdetail);
-        
+
         formData.value.implementer.forEach(async (item) => {
             await createSopImplementer({
                 id_sop_detail: resultSopdetail.data.id_sop_detail,
@@ -124,23 +168,23 @@ const submitSop = async () => {
                 data_record: item
             })
         });
-        formData.value.equipment.forEach(async (item) => { 
+        formData.value.equipment.forEach(async (item) => {
             await createEquipment({
                 id_sop_detail: resultSopdetail.data.id_sop_detail,
                 equipment: item
-            }) 
+            })
         });
         formData.value.relatedSop.forEach(async (item) => {
             await createRelatedSop({
                 id_sop_detail: resultSopdetail.data.id_sop_detail,
                 related_sop: item
-            }) 
+            })
         });
-        formData.value.implementQualification.forEach(async (item) => { 
+        formData.value.implementQualification.forEach(async (item) => {
             await createIQ({
                 id_sop_detail: resultSopdetail.data.id_sop_detail,
                 qualification: item
-            }) 
+            })
         });
 
         console.log('berhasil sinkronisasi semua data');
