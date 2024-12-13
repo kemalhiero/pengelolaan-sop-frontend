@@ -12,4 +12,11 @@ const getAssignmentDetail = (id) => getRequest(`sop/assignment/${id}`);
 
 const getSectionandWarning = (iddetail) => getRequest(`sop/info/${iddetail}`);
 
-export { getSop, createSop, createSopDetail, updateSopDetail, getAssignmentDetail, getOneSop, getSectionandWarning };
+const createSopStep = (data) => postRequest('sop/step', data);
+const getSopStep = (id) => getRequest(`sop/step?id=${id}`);
+
+export {
+    getSop, createSop, getOneSop,
+    createSopDetail, updateSopDetail, getAssignmentDetail, getSectionandWarning,
+    createSopStep, getSopStep
+};

@@ -3,7 +3,7 @@ import { ref, provide, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router'
 import { validateText } from '@/utils/validation';
 
-import { getAssignmentDetail, getSectionandWarning, updateSopDetail } from '@/api/sopApi';
+import { createSopStep, getAssignmentDetail, getSectionandWarning, getSopStep, updateSopDetail } from '@/api/sopApi';
 import { createSopLawBasis, getLawBasis, getSopLawBasis } from '@/api/lawBasisApi';
 import { createSopImplementer, getSopImplementer } from '@/api/implementerApi';
 import { createRelatedSop, getRelatedSop } from '@/api/relatedSopApi';
@@ -41,6 +41,17 @@ const fetchPicInfo = async () => {
 };
 provide('picData', picInfo);
 
+let idsopdetail;
+watch(() => picInfo.value,
+    (newValue) => {
+        if (newValue) {
+            idsopdetail = newValue.id_sop_detail;
+            fetchInfoSop();
+            fetchSopStep();
+        }
+    }
+);
+
 const legalBasisData = ref();
 const fetchLegalBasis = async () => {
     try {
@@ -69,16 +80,12 @@ const formData = ref({
     warning: '',
     record: []
 });
-
-let idsopdetail;
-watch(() => picInfo.value,
-    (newValue) => {
-        if (newValue) {
-            idsopdetail = newValue.id_sop_detail;
-            fetchInfoSop();
-        }
+provide('sopFormData', {
+    formData,
+    updateFormData(newData) {
+        formData.value = { ...formData.value, ...newData }
     }
-);
+});
 
 const fetchInfoSop = async () => {
     try {
@@ -110,25 +117,19 @@ const fetchInfoSop = async () => {
         response = null;
 
     } catch (error) {
-        console.error('Fetch error:', error);
+        console.error('Fetch info sop error:', error);
     }
 };
-provide('sopFormData', {
-    formData,
-    updateFormData(newData) {
-        formData.value = { ...formData.value, ...newData }
-    }
-});
 
-// TODO buat sinkronisasi untuk tahapan sop, yaitu simpan, lihat, dan memsperbarui data
+// TODO buat sinkronisasi untuk tahapan sop, yaitu simpan, lihat, dan memperbarui data
 const sopStep = ref([
     {
         kegiatan: '',
-        tipeKegiatan: '',
+        tipeKegiatan: 'terminator',
         pelaksana: '',
-        perusahaan: '',
         kelengkapan: '',
-        mutuBakuWaktu: '',
+        waktu: '',
+        satuanWaktu: 'h',
         output: '',
         keterangan: ''
     }
@@ -140,57 +141,115 @@ provide('sopStep', {
     }
 });
 
-// sinkron info sop
-const submitSop = async () => {
+const fetchSopStep = async () => {
     try {
-        const resultSopdetail = await updateSopDetail(picInfo.value.id, {
+        let response = await getSopStep(idsopdetail);
+        console.log(response)
+
+        sopStep.value = response.data.map(item => ({
+            kegiatan: item.name,
+            tipeKegiatan: item.type,
+            pelaksana: item.id_implementer,
+            kelengkapan: item.fittings,
+            waktu: item.time,
+            satuanWaktu: item.time_unit,
+            output: item.output,
+            keterangan: item.description
+        }));
+        
+    } catch (error) {
+        console.error('Fetch tahapan sop error:', error);
+    }
+};
+
+// sinkron data sop
+const syncSopInfo = async () => {
+    try {
+        await updateSopDetail(picInfo.value.id, {
             section: formData.value.section,
             warning: formData.value.warning
         });
-        console.log(resultSopdetail);
 
         formData.value.implementer.forEach(async (item) => {
             await createSopImplementer({
-                id_sop_detail: resultSopdetail.data.id_sop_detail,
-                id_sop_implementer: item.id
+                id_sop_detail: idsopdetail,
+                id_implementer: item.id
             });
         });
         formData.value.legalBasis.forEach(async (item) => {
             await createSopLawBasis({
-                id_sop_detail: resultSopdetail.data.id_sop_detail,
+                id_sop_detail: idsopdetail,
                 id_legal: item.id
             });
         });
 
         formData.value.record.forEach(async (item) => {
             await createRecord({
-                id_sop_detail: resultSopdetail.data.id_sop_detail,
+                id_sop_detail: idsopdetail,
                 data_record: item
             })
         });
         formData.value.equipment.forEach(async (item) => {
             await createEquipment({
-                id_sop_detail: resultSopdetail.data.id_sop_detail,
+                id_sop_detail: idsopdetail,
                 equipment: item
             })
         });
         formData.value.relatedSop.forEach(async (item) => {
             await createRelatedSop({
-                id_sop_detail: resultSopdetail.data.id_sop_detail,
+                id_sop_detail: idsopdetail,
                 related_sop: item
             })
         });
         formData.value.implementQualification.forEach(async (item) => {
             await createIQ({
-                id_sop_detail: resultSopdetail.data.id_sop_detail,
+                id_sop_detail: idsopdetail,
                 qualification: item
             })
         });
 
-        console.log('berhasil sinkronisasi semua data');
+        console.log('berhasil sinkronisasi data info sop');
 
     } catch (error) {
         console.error('Error saat mengirim data:', error);
+    }
+};
+
+const syncSopStep = async () => {
+    try {
+        sopStep.value.forEach(async (item, index) => {
+            await createSopStep({
+                id_sop_detail: idsopdetail,
+                seq_number: index + 1,
+                name: item.kegiatan,
+                type: item.tipeKegiatan,
+                id_implementer: item.pelaksana,
+                fittings: item.kelengkapan,
+                time: item.waktu,
+                time_unit: item.satuanWaktu,
+                output: item.output,
+                description: item.keterangan
+            })
+        });
+
+        console.log('berhasil sinkronisasi data tahapan sop');
+
+    } catch (error) {
+        console.error('Error saat mengirim data:', error);;
+    }
+};
+
+const syncData = () => {
+    switch (currentStep.value) {
+        case 1:
+            syncSopInfo();
+            break;
+        case 2:
+            console.log(sopStep.value);
+            syncSopStep();
+            break;
+        default:
+            break;
     }
 };
 
@@ -222,12 +281,14 @@ const prevStep = () => {
 onMounted(() => {
     fetchPicInfo();
     fetchLegalBasis();
+    
 });
 </script>
 
 <template>
     <h2 class="text-4xl text-center my-12 font-bold">Penyusunan Dokumen SOP</h2>
-
+    <p>{{ sopStep }}</p>
+    <p>{{ formData }}</p>
     <!-- stepper -->
     <ol
         class="flex items-center justify-center w-full text-sm font-medium text-center text-gray-500 sm:text-base max-w-2xl mx-auto">
@@ -271,9 +332,9 @@ onMounted(() => {
             Sebelumnya
         </button>
 
-        <button type="button" title="Klik untuk menyimpan progres saat ini ke server"
-            class="w-[28%] text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center"
-            @click="submitSop">
+        <button type="button" title="Klik untuk menyimpan progres saat ini ke server" :disabled="currentStep == 3"
+            class="w-[28%] text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            @click="syncData">
             <!-- <SpinnerIcon class="inline w-5 me-3 fill-current animate-spin" />
             Loading... -->
             <FloppyDiskIcon class="fill-current w-5 mr-2" />

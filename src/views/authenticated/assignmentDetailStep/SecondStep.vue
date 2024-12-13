@@ -4,6 +4,7 @@ import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 
 const { sopStep, updateSopStep } = inject('sopStep');
+const { formData } = inject('sopFormData');
 
 // Function to add a new step (empty object)
 const addStep = () => {
@@ -11,9 +12,9 @@ const addStep = () => {
         kegiatan: '',
         tipeKegiatan: '',
         pelaksana: '',
-        perusahaan: '',
         kelengkapan: '',
-        mutuBakuWaktu: '',
+        waktu: '',
+        satuanWaktu: 'h',
         output: '',
         keterangan: ''
     })
@@ -29,8 +30,8 @@ const removeStep = (index) => {
 <template>
     <div class="max-w-screen-xl mx-auto px-3 md:px-0">
         <div class="relative overflow-x-auto sm:rounded-lg">
-            <table class="w-full text-sm text-left text-gray-500">
-                <thead class="text-xs text-gray-900 uppercase bg-gray-50">
+            <table class="w-full text-sm text-left">
+                <thead class="text-xs uppercase bg-gray-50">
                     <tr>
                         <th scope="col" class="px-2 py-3">No</th>
                         <th scope="col" class="px-2 py-3">Kegiatan</th>
@@ -45,8 +46,8 @@ const removeStep = (index) => {
                 </thead>
                 <tbody>
                     <tr v-for="(step, index) in sopStep" :key="index"
-                        class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
-                        <th scope="row" class="px-2 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                        class="bg-white border-b">
+                        <th scope="row" class="px-2 py-3 font-medium whitespace-nowrap">
                             {{ index + 1 }}
                         </th>
                         <td class="px-2 py-3">
@@ -55,20 +56,18 @@ const removeStep = (index) => {
                         <td class="px-2 py-3">
                             <select v-model="step.tipeKegiatan" class="w-full p-2 border border-gray-300 rounded-md">
                                 <template v-if="index == 0">
-                                    <option value="" selected>Start</option>
+                                    <option value="terminator" selected>Start</option>
                                 </template>
                                 <template v-else>
-                                    <option value="">Task</option>
-                                    <option value="">Decision</option>                                    
-                                    <option value="">End</option>
+                                    <option value="task">Task</option>
+                                    <option value="decision">Decision</option>                                    
+                                    <option value="terminator">End</option>
                                 </template>
                             </select>
                         </td>
                         <td class="px-2 py-3">
                             <select v-model="step.pelaksana" class="w-full p-2 border border-gray-300 rounded-md">
-                                <option value="Mahasiswa">Mahasiswa</option>
-                                <option value="Departemen">Departemen</option>
-                                <option value="Perusahaan">Perusahaan</option>
+                                <option v-for="(item, index) in formData.implementer" :value="item.id" :key="index">{{ item.name }}</option>
                             </select>
                         </td>
                         <td class="px-2 py-3">
@@ -77,10 +76,10 @@ const removeStep = (index) => {
                         <td class="px-2 py-3">
                             <!-- <input v-model="step.mutuBakuWaktu" class="w-full p-2 border border-gray-300 rounded-md" /> -->
                             <div class="flex items-center">
-                                <input type="number" v-model="step.mutuBakuWaktu" min="0"
-                                    class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 rounded-l-md w-16"
+                                <input type="number" v-model="step.waktu" min="0"
+                                    class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 rounded-l-md w-14"
                                     placeholder="">
-                                <select class="p-2 border border-gray-300 rounded-r-md w-20">
+                                <select v-model="step.satuanWaktu" class="p-2 border border-gray-300 rounded-r-md w-20">
                                     <option value="h">Jam</option>
                                     <option value="m">Menit</option>
                                     <option value="d">Hari</option>
