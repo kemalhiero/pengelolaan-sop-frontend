@@ -2,5 +2,6 @@ import { getRequest, postRequest, patchRequest, deleteRequest } from "./apiClien
 
 const createIQ = (data) => postRequest('iq', data);
 const getIQ = (id) => getRequest(`iq?id=${id}`);
+const deleteIQ = (id) => deleteRequest(`iq?id=${id}`);
 
-export { createIQ, getIQ };
+export { createIQ, getIQ, deleteIQ };

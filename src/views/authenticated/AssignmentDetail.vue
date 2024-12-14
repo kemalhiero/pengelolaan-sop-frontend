@@ -95,7 +95,7 @@ const fetchInfoSop = async () => {
 
         response = await getSopImplementer(idsopdetail);
         formData.value.implementer = response.data;
-
+        
         response = await getSopLawBasis(idsopdetail);
         formData.value.legalBasis = response.data.map(item => ({
             id: item.id,
@@ -121,7 +121,7 @@ const fetchInfoSop = async () => {
     }
 };
 
-// TODO buat sinkronisasi untuk tahapan sop, yaitu simpan, lihat, dan memperbarui data
+// TODO buat sinkronisasi untuk tahapan sop, yaitu simpan✅, lihat✅, dan memperbarui data
 const sopStep = ref([
     {
         kegiatan: '',
@@ -144,7 +144,6 @@ provide('sopStep', {
 const fetchSopStep = async () => {
     try {
         let response = await getSopStep(idsopdetail);
-        console.log(response)
 
         sopStep.value = response.data.map(item => ({
             kegiatan: item.name,
@@ -287,8 +286,6 @@ onMounted(() => {
 
 <template>
     <h2 class="text-4xl text-center my-12 font-bold">Penyusunan Dokumen SOP</h2>
-    <p>{{ sopStep }}</p>
-    <p>{{ formData }}</p>
     <!-- stepper -->
     <ol
         class="flex items-center justify-center w-full text-sm font-medium text-center text-gray-500 sm:text-base max-w-2xl mx-auto">

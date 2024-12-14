@@ -2,5 +2,6 @@ import { getRequest, postRequest, patchRequest, deleteRequest } from "./apiClien
 
 const createEquipment = (data) => postRequest('equipment', data);
 const getSopEquipment = (id) => getRequest(`equipment?id=${id}`);
+const deleteSopEquipment = (id) => getRequest(`equipment?id=${id}`);
 
-export { createEquipment, getSopEquipment };
+export { createEquipment, getSopEquipment, deleteSopEquipment };
