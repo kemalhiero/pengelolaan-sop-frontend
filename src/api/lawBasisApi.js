@@ -7,7 +7,7 @@ const deleteLawBasis = (id) => deleteRequest(`law?id=${id}`);
 
 const createSopLawBasis = (data) => postRequest('law/sop', data);
 const getSopLawBasis = (id) => getRequest(`law/sop?id=${id}`);
-const deleteSopLawBasis = (idsopdetail, idlegal) => deleteRequest(`law/sop?id_sop_detail=16${idsopdetail}&id_legal=${idlegal}`);
+const deleteSopLawBasis = (idsopdetail, idlegal) => deleteRequest(`law/sop?id_sop_detail=${idsopdetail}&id_legal=${idlegal}`);
 
 export { 
     getLawBasis, createLawBasis, updateLawBasis, deleteLawBasis, 

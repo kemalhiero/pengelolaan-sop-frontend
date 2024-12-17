@@ -4,12 +4,12 @@ import { useRoute } from 'vue-router'
 import { validateText } from '@/utils/validation';
 
 import { createSopStep, getAssignmentDetail, getSectionandWarning, getSopStep, updateSopDetail } from '@/api/sopApi';
-import { createSopLawBasis, getLawBasis, getSopLawBasis } from '@/api/lawBasisApi';
-import { createSopImplementer, getSopImplementer } from '@/api/implementerApi';
-import { createRelatedSop, getRelatedSop } from '@/api/relatedSopApi';
-import { createEquipment, getSopEquipment } from '@/api/equipmentApi';
-import { createIQ, getIQ } from '@/api/implementQualification';
-import { createRecord, getSopRecord } from '@/api/recordApi';
+import { createSopLawBasis, getLawBasis, getSopLawBasis, deleteSopLawBasis } from '@/api/lawBasisApi';
+import { createSopImplementer, getSopImplementer, deleteSopImplementer } from '@/api/implementerApi';
+import { createEquipment, getSopEquipment, deleteSopEquipment } from '@/api/equipmentApi';
+import { createRelatedSop, getRelatedSop, deleteRelatedSop } from '@/api/relatedSopApi';
+import { createRecord, getSopRecord, deleteSopRecord } from '@/api/recordApi';
+import { createIQ, getIQ, deleteIQ } from '@/api/implementQualification';
 
 import NumberOneCircleIcon from '@/assets/icons/NumberOneCircleIcon.vue';
 import NumberTwoCircleIcon from '@/assets/icons/NumberTwoCircleIcon.vue';
@@ -95,7 +95,7 @@ const fetchInfoSop = async () => {
 
         response = await getSopImplementer(idsopdetail);
         formData.value.implementer = response.data;
-        
+
         response = await getSopLawBasis(idsopdetail);
         formData.value.legalBasis = response.data.map(item => ({
             id: item.id,
@@ -155,62 +155,196 @@ const fetchSopStep = async () => {
             output: item.output,
             keterangan: item.description
         }));
-        
+
     } catch (error) {
         console.error('Fetch tahapan sop error:', error);
     }
 };
 
 // sinkron data sop
+// TODO udah berhasil tapi yang ditambah dan dihapus masih berulang-ulang, padahal cuma nambahin satu data aja
 const syncSopInfo = async () => {
     try {
+        // Konfigurasi untuk setiap jenis data
+        const syncConfigurations = [
+            // ----------many to many-------------
+            {
+                existingData: formData.value.implementer,
+                createFn: createSopImplementer,
+                deleteFn: deleteSopImplementer,
+                idKey: 'id_implementer',
+                deleteParams: 'two'
+            },
+            {
+                existingData: formData.value.legalBasis,
+                createFn: createSopLawBasis,
+                deleteFn: deleteSopLawBasis,
+                idKey: 'id_legal',
+                deleteParams: 'two'
+            },
+            // ----------one to many-------------
+            {
+                existingData: formData.value.record,
+                createFn: createRecord,
+                deleteFn: deleteSopRecord,
+                idKey: 'data_record',
+                deleteParams: 'one'
+            },
+            {
+                existingData: formData.value.equipment,
+                createFn: createEquipment,
+                deleteFn: deleteSopEquipment,
+                idKey: 'equipment',
+                deleteParams: 'one'
+            },
+            {
+                existingData: formData.value.relatedSop,
+                createFn: createRelatedSop,
+                deleteFn: deleteRelatedSop,
+                idKey: 'related_sop',
+                deleteParams: 'one'
+            },
+            {
+                existingData: formData.value.implementQualification,
+                createFn: createIQ,
+                deleteFn: deleteIQ,
+                idKey: 'qualification',
+                deleteParams: 'one'
+            }
+        ];
+
+        // Update section dan warning
         await updateSopDetail(picInfo.value.id, {
             section: formData.value.section,
             warning: formData.value.warning
         });
 
-        formData.value.implementer.forEach(async (item) => {
-            await createSopImplementer({
-                id_sop_detail: idsopdetail,
-                id_implementer: item.id
-            });
-        });
-        formData.value.legalBasis.forEach(async (item) => {
-            await createSopLawBasis({
-                id_sop_detail: idsopdetail,
-                id_legal: item.id
-            });
-        });
+        let allNewData = [];
+        let allDeleteData = [];
 
-        formData.value.record.forEach(async (item) => {
-            await createRecord({
-                id_sop_detail: idsopdetail,
-                data_record: item
-            })
-        });
-        formData.value.equipment.forEach(async (item) => {
-            await createEquipment({
-                id_sop_detail: idsopdetail,
-                equipment: item
-            })
-        });
-        formData.value.relatedSop.forEach(async (item) => {
-            await createRelatedSop({
-                id_sop_detail: idsopdetail,
-                related_sop: item
-            })
-        });
-        formData.value.implementQualification.forEach(async (item) => {
-            await createIQ({
-                id_sop_detail: idsopdetail,
-                qualification: item
-            })
-        });
+        // Proses sinkronisasi untuk setiap konfigurasi
+        for (const config of syncConfigurations) {
+            const {
+                existingData,
+                createFn,
+                deleteFn,
+                idKey,
+                deleteParams
+            } = config;
 
-        console.log('berhasil sinkronisasi data info sop');
+            // Fetch data existing dari API untuk perbandingan
+            const apiResponse = await fetchExistingData(idsopdetail, idKey);
+            const apiData = apiResponse.data;
 
+            let newData;
+            let removedData;
+
+            if (deleteParams === 'two') {
+                newData = existingData.filter(
+                    newItem => !apiData.some(
+                        existItem => existItem.id === newItem.id
+                    )
+                );
+                removedData = apiData.filter(
+                    existItem => !existingData.some(
+                        newItem => existItem.id === newItem.id
+                    )
+                );
+            } else {
+                newData = existingData.filter(
+                    newItem => !apiData.some(
+                        existItem => existItem[idKey] === newItem
+                    )
+                );
+                removedData = apiData.filter(
+                    existItem => !existingData.some(
+                        newItem => existItem[idKey] === newItem
+                    )
+                );
+            };
+            // console.log('existingData')
+            // console.log(existingData)
+            // console.log('apiData')
+            // console.log(apiData)
+
+            // console.log('newData')
+            // console.log(newData)
+            // console.log('removedData')
+            // console.log(removedData)
+
+            allNewData.push(...newData)
+            allDeleteData.push(...removedData)
+
+            if (newData.length > 0) {
+                for (let i = 0; i < newData.length; i++) {
+                    await addNewData(newData[i], createFn, idKey, deleteParams);
+                }
+            }
+
+            if (removedData.length > 0) {
+                for (let i = 0; i < removedData.length; i++) {
+                    await deleteRemovedData(removedData[i], deleteFn, deleteParams);
+                }
+            }
+        };
+
+        console.log('allNewData')
+        console.log(allNewData)
+        console.log('allDeleteData')
+        console.log(allDeleteData)
+
+        console.log('Berhasil sinkronisasi data SOP');
     } catch (error) {
-        console.error('Error saat mengirim data:', error);
+        console.error('Error saat sinkronisasi data:', error);
+    }
+};
+
+async function addNewData(newData, createFn, idKey, deleteParams) {
+    if (deleteParams == 'two') {
+        await createFn({
+            id_sop_detail: idsopdetail,
+            [idKey]: newData.id
+        })
+    } else {
+        await createFn({
+            id_sop_detail: idsopdetail,
+            [idKey]: newData
+        })
+    }
+}
+
+async function deleteRemovedData(removedData, deleteFn, deleteParams) {
+    if (deleteParams === 'two') {
+        // For implementer and legal basis
+        await deleteFn(idsopdetail, removedData.id);
+    } else {
+        // For record, equipment, etc.
+        await deleteFn(removedData.id);
+    }
+}
+
+// Fungsi untuk fetch data existing (sesuaikan dengan kebutuhan API Anda)
+const fetchExistingData = async (idsopdetail, dataType) => {
+    try {
+        switch (dataType) {
+            case 'id_implementer':
+                return await getSopImplementer(idsopdetail);
+            case 'id_legal':
+                return await getSopLawBasis(idsopdetail);
+            case 'data_record':
+                return await getSopRecord(idsopdetail);
+            case 'equipment':
+                return await getSopEquipment(idsopdetail);
+            case 'related_sop':
+                return await getRelatedSop(idsopdetail);
+            case 'qualification':
+                return await getIQ(idsopdetail);
+            default:
+                return { data: [] };
+        }
+    } catch (error) {
+        console.error(`Error fetching existing data for ${dataType}:`, error);
+        return { data: [] };
     }
 };
 
@@ -280,7 +414,6 @@ const prevStep = () => {
 onMounted(() => {
     fetchPicInfo();
     fetchLegalBasis();
-    
 });
 </script>
 

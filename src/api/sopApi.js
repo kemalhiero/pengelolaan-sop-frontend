@@ -16,7 +16,7 @@ const createSopStep = (data) => postRequest('sop/step', data);
 const getSopStep = (id) => getRequest(`sop/step?id=${id}`);
 
 export {
-    getSop, createSop, getOneSop,
-    createSopDetail, updateSopDetail, getAssignmentDetail, getSectionandWarning,
-    createSopStep, getSopStep
+    getSop, createSop, getOneSop,       //tabel sop
+    createSopDetail, updateSopDetail, getAssignmentDetail, getSectionandWarning,       //tabel detail sop
+    createSopStep, getSopStep           //tabel sop step
 };
