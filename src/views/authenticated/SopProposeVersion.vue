@@ -1,10 +1,10 @@
 <script setup>
 import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { getOrg } from '@/api/orgApi';
-import { getEmploye } from '@/api/userApi';
+import { getDrafter } from '@/api/userApi';
 import { createDrafter } from '@/api/drafterApi';
 import { createSop, createSopDetail } from '@/api/sopApi';
-import { useRouter } from 'vue-router';
 
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
@@ -15,13 +15,13 @@ import ShowToast from '@/components/toast/ShowToast.vue';
 
 const router = useRouter();
 // tampil modal tambah data
-const showEmployeModal = ref(false);
+const showDrafterModal = ref(false);
 
 const currentYear = new Date().getFullYear();
 
 // data dari api
 const dataOrg = ref([]);
-const dataEmploye = ref([]);
+const dataDrafter = ref([]);
 
 // data form
 // TODO ambil dari data sop yang sekarang perbarui
@@ -29,7 +29,7 @@ const form = ref({
     name: 'Pengusulan Kerja Praktik',
     number: '',
     id_org: 1,
-    employe: [],
+    drafter: [],
     description: ''
 });
 
@@ -56,29 +56,29 @@ const fetchOrg = async () => {
 };
 
 // penugasan
-const fetchEmploye = async () => {
+const fetchDrafter = async () => {
     try {
-        const result = await getEmploye();
-        dataEmploye.value = result.data;
+        const result = await getDrafter();
+        dataDrafter.value = result.data;
     } catch (error) {
         console.error('Fetch error:', error);
     }
 };
-const removeEmploye = (index) => {
-    form.value.employe.splice(index, 1);
+const removeDrafter = (index) => {
+    form.value.drafter.splice(index, 1);
 };
 
-const showWarningEmploye = ref(false);
+const showDrafterWarning = ref(false);
 
 // sop
 const submitSop = async () => {
     toastOption.value.operation = 'post'
     try {
-        if (form.value.employe.length == 0) {
-            return showWarningEmploye.value = true
+        if (form.value.drafter.length == 0) {
+            return showDrafterWarning.value = true
         }
         console.log(form.value);
-        showWarningEmploye.value = false;
+        showDrafterWarning.value = false;
 
         const dataSop = await createSop({
             id_org: form.value.id_org,
@@ -96,7 +96,7 @@ const submitSop = async () => {
         );
         console.log(resultSopdetail);
         
-        form.value.employe.forEach(async (item) => {
+        form.value.drafter.forEach(async (item) => {
             await createDrafter({
                 id_user: item.id,
                 id_sop_detail: resultSopdetail.data.id_sop_detail,
@@ -117,7 +117,7 @@ const submitSop = async () => {
 
 onMounted(() => {
     fetchOrg();
-    fetchEmploye();
+    fetchDrafter();
 });
 
 </script>
@@ -181,12 +181,12 @@ onMounted(() => {
                                 Penugasan<span class="text-red-600">*</span>
                             </label>
 
-                            <div v-if="form.employe.length > 0" class="my-4">
+                            <div v-if="form.drafter.length > 0" class="my-4">
                                 <ul class="flex flex-wrap gap-2">
-                                    <li v-for="(item, index) in form.employe" :key="index"
+                                    <li v-for="(item, index) in form.drafter" :key="index"
                                         class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
                                         <span class="mr-2">{{ item.name }}</span>
-                                        <button :title="`Hapus item ${index + 1}`" @click="removeEmploye(index)"
+                                        <button :title="`Hapus item ${index + 1}`" @click="removeDrafter(index)"
                                             type="button"
                                             class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
                                             <TrashCanIcon class="fill-current w-4" />
@@ -195,13 +195,13 @@ onMounted(() => {
                                 </ul>
                             </div>
 
-                            <button @click="showEmployeModal = true"
+                            <button @click="showDrafterModal = true"
                                 class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center"
                                 type="button">
                                 Tambahkan User
                             </button>
 
-                            <WarningText v-show="showWarningEmploye" text="Jangan lupa untuk memilih user yang akan ditugaskan!" />
+                            <WarningText v-show="showDrafterWarning" text="Jangan lupa untuk memilih user yang akan ditugaskan!" />
 
                         </div>
 
@@ -224,9 +224,9 @@ onMounted(() => {
         </section>
     </main>
     <!-- TODO ntar tampilin juga user yang sudah terpilih sebelumnya (sudah terceklis saat modal ditampilin) -->
-    <div v-show="showEmployeModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
+    <div v-show="showDrafterModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
 
-        <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showEmployeModal = false"></div>
+        <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showDrafterModal = false"></div>
 
         <div class="relative w-full max-w-2xl max-h-full">
             <!-- Modal content -->
@@ -238,7 +238,7 @@ onMounted(() => {
                     </h3>
                     <button type="button"
                         class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
-                        @click="showEmployeModal = false">
+                        @click="showDrafterModal = false">
                         <XMarkCloseIcon class="w-3 h-3" />
                         <span class="sr-only">Tutup modal</span>
                     </button>
@@ -246,16 +246,16 @@ onMounted(() => {
                 <!-- Modal body -->
                 <div class="p-4 md:p-5 space-y-4">
                     <DataTable 
-                        :data="dataEmploye" 
+                        :data="dataDrafter" 
                         :columns="[ { field: 'name', label: 'Nama', sortable: true },]" 
                         :searchable="['name']" 
                         :table-type="'check'" 
-                        v-model="form.employe" />
+                        v-model="form.drafter" />
                 </div>
                 <!-- Modal footer -->
                 <div
                     class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                    <button :disabled="form.employe.length == 0" @click="showEmployeModal = false, showWarningEmploye = false" type="button"
+                    <button :disabled="form.drafter.length == 0" @click="showDrafterModal = false, showDrafterWarning = false" type="button"
                         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">
                         Pilih
                     </button>

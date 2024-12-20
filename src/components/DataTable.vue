@@ -256,7 +256,12 @@ const goToPage = (page) => {
                         {{ (currentPage - 1) * itemsPerPage + index + 1 }}
                     </th>
                     <td v-for="column in columns" :key="column.field" class="px-6 py-4 text-black">
-                        {{ item[column.field] }}
+                        <template v-if="item[column.field]">
+                            {{ item[column.field] }}
+                        </template>
+                        <template v-else>
+                            -
+                        </template>
                     </td>
                     <td v-for="column in statusColumns" :key="column.field" class="px-6 py-4 text-black">
                         <RedBadgeIndicator :teks="badgeText[0]" v-if="item[column.field] === 0"/>

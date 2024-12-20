@@ -1,5 +1,5 @@
 import { getRequest, postRequest, patchRequest, deleteRequest } from "./apiClient";
 
-const getEmploye = () => getRequest('user/employe');
+const getDrafter = () => getRequest('user/drafter');
 
-export { getEmploye };
+export { getDrafter };

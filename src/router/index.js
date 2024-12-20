@@ -80,7 +80,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/SopPropose.vue')
     },
     {
-      path: '/app/propose-version',
+      path: '/app/propose-version/:id',
       name: 'SopProposeVersion',
       component: () => import('@/views/authenticated/SopProposeVersion.vue')
     },
