@@ -3,7 +3,7 @@ import { ref, provide, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router'
 import { validateText } from '@/utils/validation';
 
-import { createSopStep, getAssignmentDetail, getSectionandWarning, getSopStep, updateSopDetail } from '@/api/sopApi';
+import { createSopStep, getAssignmentDetail, getSectionandWarning, getSopStep, updateSopDetail, updateSopStep, deleteSopStep } from '@/api/sopApi';
 import { createSopLawBasis, getLawBasis, getSopLawBasis, deleteSopLawBasis } from '@/api/lawBasisApi';
 import { createSopImplementer, getSopImplementer, deleteSopImplementer } from '@/api/implementerApi';
 import { createEquipment, getSopEquipment, deleteSopEquipment } from '@/api/equipmentApi';
@@ -68,8 +68,6 @@ const fetchLegalBasis = async () => {
 };
 provide('legalBasisData', legalBasisData);
 
-// TODO buat tambah & fetch data info sop sudah✅, sekarang buat untuk proses updatenya/memperbarui
-
 const formData = ref({
     section: '',
     implementer: [],
@@ -121,17 +119,17 @@ const fetchInfoSop = async () => {
     }
 };
 
-// TODO buat sinkronisasi untuk tahapan sop, yaitu simpan✅, lihat✅, dan memperbarui data
 const sopStep = ref([
     {
-        kegiatan: '',
-        tipeKegiatan: 'terminator',
-        pelaksana: '',
-        kelengkapan: '',
-        waktu: '',
-        satuanWaktu: 'h',
+        id_step: '',
+        name: '',
+        type: 'terminator',
+        id_implementer: '',
+        fittings: '',
+        time: '',
+        time_unit: 'h',
         output: '',
-        keterangan: ''
+        description: ''
     }
 ]);
 provide('sopStep', {
@@ -140,20 +138,26 @@ provide('sopStep', {
         sopStep.value = { ...sopStep.value, ...newData }
     }
 });
-
+let apiResponseStep;
 const fetchSopStep = async () => {
     try {
         let response = await getSopStep(idsopdetail);
+        console.log(response.data)
+        apiResponseStep = response.data
 
         sopStep.value = response.data.map(item => ({
-            kegiatan: item.name,
-            tipeKegiatan: item.type,
-            pelaksana: item.id_implementer,
-            kelengkapan: item.fittings,
-            waktu: item.time,
-            satuanWaktu: item.time_unit,
+            id_step: item.id_step,
+            id_next_step_if_no: item.id_next_step_if_no,
+            id_next_step_if_yes: item.id_next_step_if_yes,
+            seq_number: item.seq_number,
+            name: item.name,
+            type: item.type,
+            id_implementer: item.id_implementer,
+            fittings: item.fittings,
+            time: item.time,
+            time_unit: item.time_unit,
             output: item.output,
-            keterangan: item.description
+            description: item.description
         }));
 
     } catch (error) {
@@ -162,7 +166,6 @@ const fetchSopStep = async () => {
 };
 
 // sinkron data sop
-// TODO udah berhasil tapi yang ditambah dan dihapus masih berulang-ulang, padahal cuma nambahin satu data aja
 const syncSopInfo = async () => {
     try {
         // Konfigurasi untuk setiap jenis data
@@ -233,7 +236,7 @@ const syncSopInfo = async () => {
             } = config;
 
             // Fetch data existing dari API untuk perbandingan
-            const apiResponse = await fetchExistingData(idsopdetail, idKey);
+            const apiResponse = await fetchExistingSopInfo(idsopdetail, idKey);
             const apiData = apiResponse.data;
 
             let newData;
@@ -324,7 +327,7 @@ async function deleteRemovedData(removedData, deleteFn, deleteParams) {
 }
 
 // Fungsi untuk fetch data existing (sesuaikan dengan kebutuhan API Anda)
-const fetchExistingData = async (idsopdetail, dataType) => {
+const fetchExistingSopInfo = async (idsopdetail, dataType) => {
     try {
         switch (dataType) {
             case 'id_implementer':
@@ -348,29 +351,135 @@ const fetchExistingData = async (idsopdetail, dataType) => {
     }
 };
 
-const syncSopStep = async () => {
-    try {
-        sopStep.value.forEach(async (item, index) => {
-            await createSopStep({
-                id_sop_detail: idsopdetail,
-                seq_number: index + 1,
-                name: item.kegiatan,
-                type: item.tipeKegiatan,
-                id_implementer: item.pelaksana,
-                fittings: item.kelengkapan,
-                time: item.waktu,
-                time_unit: item.satuanWaktu,
-                output: item.output,
-                description: item.keterangan
-            })
-        });
+// ---------- fungsi sop step---------------
+const compareSteps = (responseSteps, currentSteps) => {
+  // Konversi array menjadi map untuk memudahkan pencarian
+  const responseStepsMap = new Map(
+    responseSteps.map(step => [step.id_step, step])
+  );
+  const currentStepsMap = new Map(
+    currentSteps.map(step => [step.id_step, step])
+  );
 
-        console.log('berhasil sinkronisasi data tahapan sop');
+  // Data untuk diproses
+  const stepsToAdd = [];    // Data baru untuk ditambahkan
+  const stepsToDelete = []; // Data yang akan dihapus
+  const stepsToUpdate = []; // Data yang akan diupdate
 
-    } catch (error) {
-        console.error('Error saat mengirim data:', error);;
+  // Cek data yang akan ditambahkan dan diupdate
+  currentSteps.forEach(currentStep => {
+    // Jika id_step null atau tidak ada di responseSteps, berarti data baru
+    if (!currentStep.id_step || !responseStepsMap.has(currentStep.id_step)) {
+      stepsToAdd.push(currentStep);
+      return;
     }
+
+    // Cek apakah ada perubahan pada data yang sudah ada
+    const responseStep = responseStepsMap.get(currentStep.id_step);
+    const hasChanges = Object.keys(currentStep).some(key => 
+      JSON.stringify(currentStep[key]) !== JSON.stringify(responseStep[key])
+    );
+
+    if (hasChanges) {
+      stepsToUpdate.push({
+        id: currentStep.id_step,
+        data: currentStep
+      });
+    }
+  });
+
+  // Cek data yang akan dihapus
+  responseSteps.forEach(responseStep => {
+    if (!currentStepsMap.has(responseStep.id_step)) {
+      stepsToDelete.push(responseStep.id_step);
+    }
+  });
+
+  return {
+    toAdd: stepsToAdd,
+    toUpdate: stepsToUpdate,
+    toDelete: stepsToDelete
+  };
 };
+
+const syncSopStep = async () => {
+  try {
+    const changes = compareSteps(apiResponseStep, sopStep.value);     // membandingkan antara data dari api dengan data sekarang yang (kemungkinan) sudah diubah oleh user
+    
+    // Proses penghapusan data
+    for (const id of changes.toDelete) {
+      await deleteSopStep(id);
+    }
+
+    // Proses update data
+    for (const {id, data} of changes.toUpdate) {
+      await updateSopStep(id, {
+        id_sop_detail: idsopdetail,
+        seq_number: data.seq_number,
+        name: data.name,
+        type: data.type,
+        id_implementer: data.id_implementer,
+        fittings: data.fittings,
+        time: data.time,
+        time_unit: data.time_unit,
+        output: data.output,
+        description: data.description
+      });
+    }
+
+    // Proses penambahan data baru
+    for (let i = 0; i < changes.toAdd.length; i++) {
+      const item = changes.toAdd[i];
+      await createSopStep({
+        id_sop_detail: idsopdetail,
+        seq_number: i + 1, // atau gunakan item.seq_number jika sudah tersedia
+        name: item.name,
+        type: item.type,
+        id_implementer: item.id_implementer,
+        fittings: item.fittings,
+        time: item.time,
+        time_unit: item.time_unit,
+        output: item.output,
+        description: item.description
+      });
+    }
+
+    console.log('Hasil sinkronisasi:', {
+      ditambahkan: changes.toAdd.length,
+      diupdate: changes.toUpdate.length,
+      dihapus: changes.toDelete.length
+    });
+
+    return true;
+  } catch (error) {
+    console.error('Error saat sinkronisasi data:', error);
+    return false;
+  }
+};
+
+// const syncSopStep = async () => {
+//     try {
+//         sopStep.value.forEach(async (item, index) => {
+//             await createSopStep({
+//                 id_sop_detail: idsopdetail,
+//                 seq_number: index + 1,
+//                 name: item.name,
+//                 type: item.type,
+//                 id_implementer: item.id_implementer,
+//                 fittings: item.fittings,
+//                 time: item.time,
+//                 time_unit: item.time_unit,
+//                 output: item.output,
+//                 description: item.description
+//             })
+//         });
+
+//         console.log('berhasil sinkronisasi data tahapan sop');
+
+//     } catch (error) {
+//         console.error('Error saat mengirim data:', error);;
+//     }
+// };
 
 const syncData = () => {
     switch (currentStep.value) {
@@ -378,7 +487,7 @@ const syncData = () => {
             syncSopInfo();
             break;
         case 2:
-            console.log(sopStep.value);
+            // console.log(sopStep.value);
             syncSopStep();
             break;
         default:
@@ -418,6 +527,10 @@ onMounted(() => {
 </script>
 
 <template>
+    <!-- <p>response step</p>
+    <p>{{ apiResponseStep }}</p>
+    <p>current step</p>
+    <p>{{ sopStep }}</p> -->
     <h2 class="text-4xl text-center my-12 font-bold">Penyusunan Dokumen SOP</h2>
     <!-- stepper -->
     <ol

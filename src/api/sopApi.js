@@ -14,9 +14,11 @@ const getSectionandWarning = (iddetail) => getRequest(`sop/info/${iddetail}`);
 
 const createSopStep = (data) => postRequest('sop/step', data);
 const getSopStep = (id) => getRequest(`sop/step?id=${id}`);
+const updateSopStep = (id, data) => patchRequest(`sop/step?id=${id}`, data);
+const deleteSopStep = (id) => deleteRequest(`sop/step?id=${id}`);
 
 export {
-    getSop, createSop, getOneSop,       //tabel sop
+    getSop, createSop, getOneSop,               //tabel sop
     createSopDetail, updateSopDetail, getAssignmentDetail, getSectionandWarning,       //tabel detail sop
-    createSopStep, getSopStep           //tabel sop step
+    createSopStep, getSopStep, updateSopStep, deleteSopStep    //tabel sop step
 };
