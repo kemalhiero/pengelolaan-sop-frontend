@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { inject, onMounted, ref } from 'vue';
 import { getOrg } from '@/api/orgApi';
 import { getDrafter } from '@/api/userApi';
 import { createDrafter } from '@/api/drafterApi';
@@ -13,10 +13,11 @@ import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import WarningText from '@/components/validation/WarningText.vue';
 import ShowToast from '@/components/toast/ShowToast.vue';
 
-const router = useRouter();
-// tampil modal tambah data
-const showDrafterModal = ref(false);
+const layoutType = inject('layoutType');
+layoutType.value = 'admin';
 
+const router = useRouter();
+const showDrafterModal = ref(false);
 const currentYear = new Date().getFullYear();
 
 // data dari api
@@ -37,12 +38,12 @@ const toastOption = ref({
     operation: ''
 });
 
-const formatNumber = () => {
-    if (form.value.number) {
-        // Pastikan angka menjadi tiga digit
-        form.value.number = String(form.value.number).padStart(3, '0');
-    }
-};
+// const formatNumber = () => {
+//     if (form.value.number) {
+//         // Pastikan angka menjadi tiga digit
+//         form.value.number = String(form.value.number).padStart(3, '0');
+//     }
+// };
 
 // organisasi
 const fetchOrg = async () => {
@@ -89,7 +90,7 @@ const submitSop = async () => {
         const resultSopdetail = await createSopDetail(
             dataSop.data.id_sop,
             {
-                number: form.value.number,
+                number: `T/${String(form.value.number).padStart(3, '0')}/UN16.17.02/OT.01.00/${currentYear}`,
                 description: form.value.description,
                 version: 1,
                 pic_position: org.pic.role
@@ -157,7 +158,7 @@ onMounted(() => {
                                     T/
                                 </span>
                                 <input type="number" min="1" max="999" required v-model="form.number"
-                                    @blur="formatNumber"
+                                    @blur=""
                                     class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 min-w-12 w-full"
                                     title="Masukkan no urut sop">
                                 <span

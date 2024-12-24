@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { inject, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router'
 import { getOneSop } from '@/api/sopApi';
 import getStatus from '@/utils/getStatus';
@@ -10,6 +10,9 @@ import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import PulseLoading from '@/components/PulseLoading.vue';
 import DataTable from '@/components/DataTable.vue';
 import Error from '@/components/Error.vue';
+
+const layoutType = inject('layoutType');
+layoutType.value = 'admin';
 
 const route = useRoute();
 const showDetailModal = ref(false);
@@ -40,7 +43,6 @@ const closeModal = () => {
 
 onMounted(() => {
   fetchData();
-  console.log(sopData.value);
 });
 
 </script>
@@ -49,7 +51,7 @@ onMounted(() => {
   <main class="p-4 md:ml-64 h-auto pt-20 px-10">
 
     <template v-if="sopData">
-      <h2 class="text-4xl text-center my-8 font-bold">{{ sopData.name }}</h2>
+      <h2 class="text-4xl text-center my-8 font-bold">SOP {{ sopData.name }}</h2>
 
       <div class="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-5">
         <div class="bg-gray-200 p-5 rounded-xl shadow-md">
@@ -138,6 +140,7 @@ onMounted(() => {
                 class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                 readonly
                 v-model="selectedVersion.warning"
+                placeholder="belum ada data"
               ></textarea>
             </div>
             <div class="col-span-2">
@@ -147,6 +150,7 @@ onMounted(() => {
                 id="section"
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                 v-model="selectedVersion.section"
+                placeholder="belum ada data"
                 readonly
               >
             </div>
@@ -158,14 +162,16 @@ onMounted(() => {
                 class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                 readonly
                 v-model="selectedVersion.description"
+                placeholder="belum ada data"
               ></textarea>
             </div>
             <div class="col-span-2">
-              <label class="block mb-2 text-sm font-medium text-gray-900">Pelaksana</label>
-              <ul class="max-w-lg space-y-1 list-disc list-inside columns-3">
-                <li v-for="implementer in selectedVersion.implementers" :key="implementer">
-                  {{ implementer }}
+              <label class="block mb-2 text-sm font-medium text-gray-900">Penyusun</label>
+              <ul class="max-w-2xl space-y-1 list-disc list-inside columns-2">
+                <li v-if="selectedVersion.users.length > 0" v-for="drafter in selectedVersion.users" :key="drafter" class="text-sm">
+                  {{ drafter.identity_number }} - {{ drafter.name }}
                 </li>
+                <li v-else class="italic text-gray-400 text-sm"> belum ada data </li>
               </ul>
             </div>
             <div class="col-span-2">
@@ -174,7 +180,8 @@ onMounted(() => {
                 type="text" 
                 id="position"
                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                v-model="selectedVersion.position_of_the_person_in_charge"
+                v-model="selectedVersion.pic_position"
+                placeholder="belum ada data"
                 readonly
               >
             </div>
@@ -184,7 +191,7 @@ onMounted(() => {
         <div class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
           <button type="button"
             class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center">
-            Lihat Versi Cetak
+            Lihat Versi Lengkap
             <UpRightFromSquareIcon class="w-4 ml-2 fill-current" />
           </button>
           <button type="button"

@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted } from 'vue'
+import { inject, onMounted } from 'vue'
 import { initAccordions } from 'flowbite';
 
 import IconAngle from '@/assets/icons/IconAngle.vue';
@@ -21,7 +21,10 @@ const dataFaq = [
         q: "Apakah saya bisa memberikan saran terhadap SOP yang ada pada sistem ini?",
         a: "Jika anda dosen atau mahasiswa DSI Universitas Andalas, anda dapat memberikan umpan balik (kritik atau saran) dengan masuk terlebih dahulu menggunakan username dan password, lalu cari sop yang dimaksud dan ketikkan umpan balik pada kolom yang telah disediakan."
     },
-]
+];
+
+const layoutType = inject('layoutType');
+layoutType.value = 'guest';
 
 onMounted(() => {
     initAccordions();

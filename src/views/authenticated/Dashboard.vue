@@ -1,6 +1,10 @@
 <script setup>
-import DashboardColumnChart from '@/components/authenticated/dashboard/DashboardColumnChart.vue';
+import { inject } from 'vue';
 import DashboardPieChart from '@/components/authenticated/dashboard/DashboardPieChart.vue';
+import DashboardColumnChart from '@/components/authenticated/dashboard/DashboardColumnChart.vue';
+
+const layoutType = inject('layoutType');
+layoutType.value = 'admin';
 </script>
 
 <template>

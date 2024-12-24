@@ -1,5 +1,5 @@
 <script setup>
-import { ref, provide, onMounted, watch } from 'vue';
+import { ref, provide, onMounted, watch, inject } from 'vue';
 import { useRoute } from 'vue-router'
 import { validateText } from '@/utils/validation';
 
@@ -23,6 +23,9 @@ import CheckIcon from '@/assets/icons/CheckIcon.vue';
 import FirstStep from './assignmentDetailStep/FirstStep.vue';
 import SecondStep from './assignmentDetailStep/SecondStep.vue';
 import ThirdStep from './assignmentDetailStep/ThirdStep.vue';
+
+const layoutType = inject('layoutType');
+layoutType.value = 'guest';
 
 const route = useRoute();
 

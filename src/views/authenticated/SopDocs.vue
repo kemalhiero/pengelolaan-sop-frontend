@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { inject, onMounted, ref } from "vue";
 import { getSop } from "@/api/sopApi";
 
 import CirclePlusIcon from "@/assets/icons/CirclePlusIcon.vue";
@@ -7,6 +7,9 @@ import PageTitle from "@/components/authenticated/PageTitle.vue";
 import PulseLoading from "@/components/PulseLoading.vue";
 import DataTable from "@/components/DataTable.vue";
 import Error from "@/components/Error.vue";
+
+const layoutType = inject('layoutType');
+layoutType.value = 'admin';
 
 const data = ref([]);
 
@@ -45,23 +48,16 @@ onMounted(() => {
             </div>
 
             <template v-if="data">
-                <DataTable v-if="data.length > 0"
-                    :data="data"
-                    :columns="[
-                        { field: 'name', label: 'Nama', sortable: true },
-                        { field: 'org_name', label: 'Organisasi', sortable: true },
-                    ]"
-                    :status-columns="[
+                <DataTable v-if="data.length > 0" :data="data" :columns="[
+                    { field: 'name', label: 'Nama', sortable: true },
+                    { field: 'org_name', label: 'Organisasi', sortable: true },
+                ]" :status-columns="[
                         { field: 'is_active', label: 'Status' }
-                    ]"
-                    :searchable="['name', 'org_name']"
-                    table-type="link"
-                    detail-link="/app/docs"
-                    :badge-text="['Tidak Berlaku', 'Berlaku', 'Belum Berlaku']"
-                />
+                    ]" :searchable="['name', 'org_name']" table-type="link" detail-link="/app/docs"
+                    :badge-text="['Tidak Berlaku', 'Berlaku', 'Belum Berlaku']" />
                 <PulseLoading v-else-if="data.length == 0" />
             </template>
-            <Error @click="fetchData" v-else/>
+            <Error @click="fetchData" v-else />
         </div>
 
     </main>

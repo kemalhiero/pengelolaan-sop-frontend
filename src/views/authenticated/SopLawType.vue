@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { inject, onMounted, ref } from 'vue';
 import { getLawType, createLawType, updateLawType, deleteLawType } from '@/api/lawTypeApi';
 
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
@@ -12,6 +12,9 @@ import EditDataModal from '@/components/modal/EditDataModal.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import AddDataButton from '@/components/modal/AddDataButton.vue';
 import Error from '@/components/Error.vue';
+
+const layoutType = inject('layoutType');
+layoutType.value = 'admin';
 
 const data = ref([]);
 const form = ref({

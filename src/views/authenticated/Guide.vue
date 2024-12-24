@@ -1,9 +1,12 @@
 <script setup>
-import { onMounted } from 'vue'
+import { inject, onMounted } from 'vue'
 import { initAccordions } from 'flowbite';
 
 import IconAngle from '@/assets/icons/IconAngle.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
+
+const layoutType = inject('layoutType');
+layoutType.value = 'admin';
 
 onMounted(() => {
     initAccordions();

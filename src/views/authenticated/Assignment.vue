@@ -1,10 +1,13 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { inject, onMounted, ref } from "vue";
 import { getSop } from "@/api/sopApi";
 
 import DataTable from "@/components/DataTable.vue";
 import PulseLoading from "@/components/PulseLoading.vue";
 import Error from "@/components/Error.vue";
+
+const layoutType = inject('layoutType');
+layoutType.value = 'guest';
 
 const data = ref([]);
 

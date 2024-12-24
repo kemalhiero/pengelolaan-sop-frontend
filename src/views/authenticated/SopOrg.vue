@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { inject, onMounted, ref } from 'vue';
 import { initModals } from 'flowbite';
 import { getOrg, createOrg, updateOrg, deleteOrg } from '@/api/orgApi.js';
 
@@ -13,6 +13,9 @@ import PageTitle from '@/components/authenticated/PageTitle.vue';
 import AddDataButton from '@/components/modal/AddDataButton.vue';
 import PulseLoading from '@/components/PulseLoading.vue';
 import Error from '@/components/Error.vue';
+
+const layoutType = inject('layoutType');
+layoutType.value = 'admin';
 
 const data = ref([]);
 const form = ref({
@@ -257,7 +260,7 @@ onMounted(() => {
                                     {{ item.name }}
                                 </th>
                                 <td class="px-6 py-4">
-                                    {{ item.pic }}
+                                    {{ item.pic.name }}
                                 </td>
                                 <td class="px-6 py-4">
                                     {{ item.level }}

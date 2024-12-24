@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted } from "vue";
+import { inject, onMounted } from "vue";
 import { DataTable } from "simple-datatables";
 
 import IconSort from "@/assets/icons/IconSort.vue";
@@ -9,6 +9,8 @@ import YellowBadgeIndicator from "@/components/indicator/YellowBadgeIndicator.vu
 import RedBadgeIndicator from "@/components/indicator/RedBadgeIndicator.vue";
 import PageTitle from "@/components/authenticated/PageTitle.vue";
 
+const layoutType = inject('layoutType');
+layoutType.value = 'admin';
 
 const data = [
     { nama: 'sepuh', umpan_balik: 'kelas king', tanggal: '2021/25/09', is_followed_up_yet: 'sudah'},

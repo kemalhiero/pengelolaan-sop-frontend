@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { inject, onMounted, ref } from "vue";
 import { initModals } from "flowbite";
 import { getLawType } from "@/api/lawTypeApi";
 import { getLawBasis, createLawBasis, updateLawBasis, deleteLawBasis } from "@/api/lawBasisApi";
@@ -13,6 +13,9 @@ import EditDataModal from "@/components/modal/EditDataModal.vue";
 import PageTitle from "@/components/authenticated/PageTitle.vue";
 import AddDataButton from "@/components/modal/AddDataButton.vue";
 import Error from "@/components/Error.vue";
+
+const layoutType = inject('layoutType');
+layoutType.value = 'admin';
 
 const tipePeraturan = ref([]);
 const data = ref([]);

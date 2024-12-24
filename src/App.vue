@@ -1,22 +1,26 @@
 <script setup>
+import { provide, ref } from 'vue';
 import { RouterView } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
+// import { useAuthStore } from '@/stores/auth';
 
+import AppShell from '@/components/authenticated/AppShell.vue';   // authenticated
 import Navbar from '@/components/Navbar.vue';
 import Footer from '@/components/Footer.vue';
 
-// authenticated
-import AppShell from '@/components/authenticated/AppShell.vue';
+// const authStore = useAuthStore();
 
-const authStore = useAuthStore();
-
+const layout = ref('guest');
+provide('layoutType', layout);
 </script>
 
 <template>
 
-  <AppShell v-if="authStore.role == 'admin'" />
-  <Navbar v-else-if="authStore.role == 'guest'" />
+  <template v-if="layout">
+    <AppShell v-if="layout === 'admin'" />
+    <Navbar v-else-if="layout === 'guest'" />
+  </template>
   <RouterView />
+
   <!-- <Footer/> -->
 
 </template>
