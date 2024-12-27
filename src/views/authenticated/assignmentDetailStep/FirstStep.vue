@@ -331,9 +331,9 @@ onMounted(() => {
             <!-- Daftar peralatan/perlengkapan -->
             <div v-if="formData.equipment.length > 0" class="my-4">
                 <ul class="flex flex-wrap gap-2">
-                    <li v-for="(rs, index) in formData.equipment" :key="index"
+                    <li v-for="(eq, index) in formData.equipment" :key="index"
                         class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
-                        <span class="mr-2">{{ rs }}</span>
+                        <span class="mr-2">{{ eq }}</span>
                         <button :title="`Hapus item ${index + 1}`" @click="equipment.removeItem(index)"
                             class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
                             <TrashCanIcon class="fill-current w-4" />
@@ -366,9 +366,9 @@ onMounted(() => {
             <!-- Daftar peralatan/perlengkapan -->
             <div v-if="formData.record.length > 0" class="my-4">
                 <ul class="flex flex-wrap gap-2">
-                    <li v-for="(rs, index) in formData.record" :key="index"
+                    <li v-for="(rd, index) in formData.record" :key="index"
                         class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
-                        <span class="mr-2">{{ rs }}</span>
+                        <span class="mr-2">{{ rd }}</span>
                         <button :title="`Hapus item ${index + 1}`" @click="record.removeItem(index)"
                             class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
                             <TrashCanIcon class="fill-current w-4" />

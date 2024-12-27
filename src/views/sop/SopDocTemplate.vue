@@ -36,6 +36,10 @@ const props = defineProps({
         type: String,
         required: true
     },
+    organization: {
+        type: String,
+        required: true
+    },
     lawBasis: {
         type: Array,
         required: true
@@ -79,38 +83,45 @@ const props = defineProps({
             <tr>
                 <td class="font-bold">NOMOR POS</td>
                 <td>:</td>
-                <td>{{ props.number }}</td>
+                <td v-if="props.number">{{ props.number }}</td>
+                <td v-else> - </td>
             </tr>
             <tr>
                 <td class="font-bold">TANGGAL PEMBUATAN</td>
                 <td>:</td>
-                <td>{{ props.createdDate }}</td>
+                <td v-if="props.createdDate">{{ props.createdDate }}</td>
+                <td v-else> - </td>
             </tr>
             <tr>
                 <td class="font-bold">TANGGAL REVISI</td>
                 <td>:</td>
-                <td>{{ props.revisionDate }}</td>
+                <td v-if="props.revisionDate">{{ props.revisionDate }}</td>
+                <td v-else> - </td>
             </tr>
             <tr>
                 <td class="font-bold">TANGGAL EFEKTIF</td>
                 <td>:</td>
-                <td>{{ props.effectiveDate }}</td>
+                <td v-if="props.effectiveDate">{{ props.effectiveDate }}</td>
+                <td v-else> - </td>
             </tr>
             <tr>
                 <td class="font-bold align-top">DISAHKAN OLEH</td>
                 <td class="align-top">:</td>
-                <td class="text-center font-bold">Ketua Departemen,<br><br><br><br>{{ props.picName }}<br>NIP.
-                    {{ props.picNumber }}</td>
+                <td class="text-center font-bold">
+                    Ketua Departemen,<br><br><br><br>{{ props.picName }}<br>
+                    NIP. {{ props.picNumber }}</td>
             </tr>
             <tr>
                 <td class="font-bold">NAMA POS</td>
                 <td>:</td>
-                <td class="font-bold">{{ props.name }}</td>
+                <td v-if="props.name" class="font-bold">{{ props.name }}</td>
+                <td v-else> - </td>
             </tr>
             <tr>
                 <td class="font-bold align-top">SEKSI</td>
                 <td>:</td>
-                <td>{{ props.section }}</td>
+                <td v-if="props.section">{{ props.section }}</td>
+                <td v-else> - </td>
             </tr>
             <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
             <tr>
@@ -122,16 +133,22 @@ const props = defineProps({
             <tr>
                 <td class="align-top">
                     <ol class="list-decimal list-outside ml-5">
-                        <li v-for="(item, index) in props.lawBasis" :key="index">
-                            {{ item }}
-                        </li>
+                        <template v-if="props.lawBasis && props.lawBasis.length > 0">
+                            <li v-for="(item, index) in props.lawBasis" :key="index">
+                                {{ item }}
+                            </li>
+                        </template>
+                        <p v-else> - </p>
                     </ol>
                 </td>
                 <td colspan="3" class="align-top">
                     <ol class="list-decimal list-outside ml-5">
-                        <li v-for="(item, index) in props.implementQualification" :key="index">
-                            {{ item }}
-                        </li>
+                        <template v-if="props.implementQualification && props.implementQualification.length > 0">
+                            <li v-for="(item, index) in props.implementQualification" :key="index">
+                                {{ item }}
+                            </li>
+                        </template>
+                        <p v-else> - </p>
                     </ol>
                 </td>
             </tr>
@@ -144,16 +161,22 @@ const props = defineProps({
             <tr>
                 <td class="align-top">
                     <ol class="list-decimal list-outside ml-5">
-                        <li v-for="(item, index) in props.relatedSop" :key="index">
-                            {{ item }}
-                        </li>
+                        <template v-if="props.relatedSop && props.relatedSop.length > 0">
+                            <li v-for="(item, index) in props.relatedSop" :key="index">
+                                {{ item }}
+                            </li>
+                        </template>
+                        <p v-else> - </p>
                     </ol>
                 </td>
                 <td colspan="3" class="align-top">
                     <ol class="list-decimal list-outside ml-5 columns-3">
-                        <li v-for="(item, index) in props.equipment" :key="index">
-                            {{ item }}
-                        </li>
+                        <template v-if="props.equipment && props.equipment.length > 0">
+                            <li v-for="(item, index) in props.equipment" :key="index">
+                                {{ item }}
+                            </li>
+                        </template>
+                        <p v-else> - </p>
                     </ol>
                 </td>
             </tr>
@@ -162,14 +185,18 @@ const props = defineProps({
                 <td class="font-bold" colspan="3">PENCATATAN DAN PENDATAAN</td>
             </tr>
             <tr>
-                <td class="align-top">
+                <td v-if="props.warning" class="align-top">
                     {{ props.warning }}
                 </td>
+                <td v-else> - </td>
                 <td colspan="3" class="align-top">
                     <ol class="list-decimal list-outside ml-5 columns-3">
-                        <li v-for="(item, index) in props.recordData" :key="index">
-                            {{ item }}
-                        </li>
+                        <template v-if="props.recordData && props.recordData.length > 0">
+                            <li v-for="(item, index) in props.recordData" :key="index">
+                                {{ item }}
+                            </li>
+                        </template>
+                        <p v-else> - </p>
                     </ol>
                 </td>
             </tr>

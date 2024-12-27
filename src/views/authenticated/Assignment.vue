@@ -1,6 +1,6 @@
 <script setup>
 import { inject, onMounted, ref } from "vue";
-import { getSop } from "@/api/sopApi";
+import { getAssignment } from "@/api/sopApi";
 
 import DataTable from "@/components/DataTable.vue";
 import PulseLoading from "@/components/PulseLoading.vue";
@@ -14,7 +14,7 @@ const data = ref([]);
 const fetchData = async () => {
     try {
         data.value = [];
-        const result = await getSop();
+        const result = await getAssignment();
         data.value = result.data;
     } catch (error) {
         data.value = null;

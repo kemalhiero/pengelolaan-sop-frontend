@@ -1,235 +1,124 @@
 <script setup>
 import { inject, ref } from 'vue';
-import MermaidDiagram from '@/components/sop/MermaidDiagram.vue';
+import SopDocTemplate from './SopDocTemplate.vue';
+import IconDownload from '@/assets/icons/IconDownload.vue';
+import PrintIcon from '@/assets/icons/PrintIcon.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';
 
-// Define the Mermaid diagram string
-const mermaidChart = ref(`
-        flowchart TB
-            %% Subgraph untuk Mahasiswa
-            subgraph Mahasiswa
-                A[Mengisi Formulir KP]
-                B[Menyerahkan Kelengkapan ke Departemen]
-                G1[Mahasiswa Menerima Surat Balasan]
-                H1[Mahasiswa Menyerahkan Surat Balasan ke Perusahaan]
-            end
-
-            %% Subgraph untuk Departemen
-            subgraph Departemen
-                C[Peninjauan Permohonan KP]
-                D1[Disposisi Permohonan KP] --> D2{Diterima?}
-                I[Membuat Surat Tugas KP]
-                J[Permohonan Ditolak]
-            end
-
-            %% Subgraph untuk Perusahaan
-            subgraph Perusahaan
-                E1[Mengirim Surat Balasan] --> F1[Surat Balasan Diterima Departemen]
-            end
-
-            %% Menyusun aktivitas dalam satu baris (misalnya, peninjauan & disposisi)
-            C --> D1 & E1
-            %% E1 berada di baris yang sama dengan D1
-
-            %% Alur ke Mahasiswa
-            F1 --> G1
-            G1 --> H1
-
-            %% Percabangan
-            D2 -->|Ya| I
-            D2 -->|Tidak| J
-    `);
+// State untuk status login
+const isLoggedIn = ref(false)
 
 </script>
 
 <template>
 
-    <div class="container mx-auto px-4 max-w-screen-xl">
+    <div class="container mx-auto px-4">
 
         <h2 class="text-4xl text-center my-12 font-bold">SOP Pendaftaran Kerja Praktik</h2>
 
-        <div class="step-cards">
-            <div class="step-card">
-                <h4>Nomor SOP</h4>
-                <h6 class="text-sm font-bold">
-                    T/00213/UN16.17.02/OT.01.00/2023
-                </h6>
-                <!-- <h5 class="text-xl font-bold"></h5> -->
+        <SopDocTemplate 
+            name="Prosedur Pendaftaran Kerja Praktik"
+            number="T/__/UN16.17.02/OT.01.00/2023"
+            created-date="18 Agustus 2023"
+            revision-date=""
+            effective-date="23 Januari 2023"
+            pic-name="Husnil Kamil, MT"
+            pic-number="198201182008121002"
+            section="Semua Seksi di Lingkungan Departemen Sistem Informasi"
+            
+            :law-basis="[
+                'Peraturan Pemerintah Nomor 95 Tahun 2021 tentang Perguruan Tinggi Negeri Badan Hukum Universitas Andalas',
+                'Peraturan Rektor Universitas Andalas Nomor 8 Tahun 2022 tentang Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas'
+            ]"
+            :implement-qualification="[
+                'Memiliki Kemampuan pengolahan data sederhana',
+                'Mengetahui tugas dan fungsi POS AP',
+                'Menguasai operasional komputer'
+            ]"
+            :related-sop="[
+                'POS Pelaksanaan KP', 'POS Pembatalan KP'
+            ]"
+            :equipment="[
+                'Komputer', 'Printer', 'HDD Kesternal', 'Dokumen OTK'
+            ]"
+            warning="Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses kerja praktik mahasiswa."
+            :record-data="[
+                'Dokumen', 'Pengarsipan', 'Surat/Disposisi'
+            ]"
+        />
+
+        <div class="flex flex-col lg:flex-row max-w-screen-lg mx-auto my-10 space-y-6 lg:space-y-0 lg:space-x-8">
+            <!-- Bagian Kiri: Tombol -->
+            <div class="w-full lg:w-1/3 p-6 flex flex-col space-y-4">
+            <h2 class="text-lg font-semibold mb-4">Simpan SOP</h2>
+            <button
+                class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-base py-3 px-6 flex items-center justify-center">
+                <IconDownload class="w-5 mr-3 fill-current" />
+                Unduh SOP
+            </button>
+            <button
+                class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-base py-3 px-6 flex items-center justify-center">
+                <PrintIcon class="w-5 mr-3 fill-current" />
+                Cetak SOP
+            </button>
             </div>
-            <div class="step-card">
-                <h4>Tanggal Pembuatan</h4>
-                <h5 class="text-xl font-bold">
-                    18 Agustus 2022
-                </h5>
+
+            <!-- Garis Pemisah -->
+            <div class="hidden lg:block w-0.5 rounded-3xl bg-gray-400"></div>
+
+            <!-- Bagian Kanan: Form dengan Overlay Login -->
+            <div class="w-full lg:w-2/3 relative">
+            <!-- Form Container -->
+            <form 
+                class="w-full bg-white p-6 space-y-5"
+                :class="{ 'blur-sm pointer-events-none': !isLoggedIn }"
+            >
+                <h2 class="text-lg font-semibold mb-4">Form Umpan Balik</h2>
+                <div>
+                <label for="nama" class="block mb-2 text-sm font-medium">Nama</label>
+                <input type="text" id="nama" 
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
+                    placeholder="Contoh: prabowo" required />
+                </div>
+                <div>
+                <label for="email" class="block mb-2 text-sm font-medium">Surat Elektronik</label>
+                <input type="email" id="email" 
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
+                    placeholder="Contoh: prabowo@email.com" required />
+                </div>
+                <div>
+                <label for="message" class="block mb-2 text-sm font-medium">Kritik/Saran</label>
+                <textarea id="message" rows="4" 
+                    class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" 
+                    placeholder="Ketikkan kritik atau saran Anda..."></textarea>
+                </div>
+                <button type="submit" 
+                class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5">
+                Submit
+                </button>
+            </form>
+
+            <!-- Overlay Login -->
+            <div 
+                v-if="!isLoggedIn"
+                class="absolute inset-0 flex items-center justify-center bg-gray-700/20 rounded-xl"
+            >
+                <div class="bg-white p-6 rounded-lg shadow-lg text-center">
+                <h3 class="text-lg font-semibold mb-4">Silakan Login</h3>
+                <p class="text-gray-600 mb-4">Anda harus login terlebih dahulu untuk memberikan umpan balik</p>
+                <RouterLink to="/login">
+                    <button class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-6 py-2.5">
+                        Login
+                    </button>
+                </RouterLink>
+                </div>
             </div>
-            <div class="step-card">
-                <h4>Tanggal Revisi</h4>
-                <h5 class="text-xl font-bold">
-                    23 Agustus 2023
-                </h5>
-            </div>
-            <div class="step-card">
-                <h4>Tanggal Efektif</h4>
-                <h5 class="text-xl font-bold">
-                    23 Januari 2024
-                </h5>
-            </div>
-            <div class="step-card">
-                <h4>Disahkan Oleh</h4>
-                <h5 class="text-lg font-bold">
-                    Husnil Kamil, MT
-                </h5>
-                <p>NIP. 198201182008121002</p>
-            </div>
-            <div class="step-card">
-                <h4>Seksi</h4>
-                <h5 class="text-lg font-bold">
-                    Semua Seksi di Lingkungan Departemen Sistem Informasi
-                </h5>
-            </div>
-            <div class="step-card">
-                <h4>Departemen</h4>
-                <h5 class="text-lg font-bold">
-                    Sistem Informasi
-                </h5>
-            </div>
-            <div class="step-card">
-                <h4>Fakultas</h4>
-                <h5 class="text-lg font-bold">
-                    Teknologi Informasi
-                </h5>
             </div>
         </div>
-
-        <!-- Sekarang kita buat 4 kotak besar dengan konten di kanan dan judul di kiri -->
-        <div class="detail-cards">
-            <div class="detail-card">
-                <h4>Deskripsi</h4>
-                <p class="">
-                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero rem eligendi dolore necessitatibus
-                    molestiae deleniti. Quidem ducimus dolorum eius possimus, est suscipit natus cumque, ea consequuntur
-                    aspernatur officia. Praesentium illo libero dicta minus ipsum cum, nisi aliquam illum officiis
-                    deserunt sint eum nobis fugit temporibus in ad obcaecati! Quam sed nemo, praesentium voluptatibus,
-                    distinctio itaque optio, ex deleniti consequuntur debitis corrupti corporis quibusdam beatae maiores
-                    ducimus possimus. Labore excepturi eum natus nisi dolorem, explicabo, a nostrum nulla pariatur
-                    repudiandae fugiat. Maiores praesentium excepturi minima iste? Quas, nisi in. Officia aliquid
-                    quibusdam voluptas quasi nihil commodi labore vel ipsam earum quae?
-                </p>
-            </div>
-
-            <div class="detail-card">
-                <h4>Dasar Hukum</h4>
-                <ul class="list-decimal list-inside">
-                    <li>Peraturan Pemerintah Nomor 95 Tahun 2021 tentang PTN-BH</li>
-                    <li>Peraturan Rektor Universitas Andalas Nomor 8 Tahun 2022</li>
-                </ul>
-            </div>
-
-            <div class="detail-card">
-                <h4>Kualifikasi Pelaksanaan</h4>
-                <ul class="list-decimal list-inside">
-                    <li>Memiliki Kemampuan pengolahan data sederhana</li>
-                    <li>Mengetahui tugas dan fungsi POS AP</li>
-                    <li>Menguasai operasional komputer</li>
-                </ul>
-            </div>
-
-            <div class="detail-card">
-                <h4>Peringatan</h4>
-                <p>Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses kerja praktik mahasiswa.</p>
-            </div>
-
-            <div class="detail-card">
-                <h4>Keterkaitan dengan POS AP Lain</h4>
-                <ul class="list-decimal list-inside">
-                    <li>POS AP Pelaksanaan KP</li>
-                    <li>POS AP Pembatalan KP</li>
-                </ul>
-            </div>
-
-            <div class="detail-card">
-                <h4>Peralatan atau Perlengkapan</h4>
-                <ul class="list-decimal list-inside">
-                    <li>Komputer</li>
-                    <li>Printer</li>
-                    <li>Hardisk Eksternal / Flashdisk</li>
-                    <li>Dokumen OTK</li>
-                </ul>
-            </div>
-
-            <div class="detail-card">
-                <h4>Pencatatan dan Pendataan</h4>
-                <ul class="list-decimal list-inside">
-                    <li>Dokumen Surat/Disposisi</li>
-                    <li>Pengarsipan</li>
-                </ul>
-            </div>
-        </div>
-
-        <h2 class="text-2xl text-center mt-10 mb-6 font-bold">Alur Proses</h2>
-
-        <MermaidDiagram :diagram="mermaidChart" class="my-5" />
 
     </div>
 
 </template>
 
-<style>
-.step-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    /* lebar kotaknya bisa diatur di kode di atas */
-    gap: 20px;
-    margin: 20px 0;
-}
-
-.step-card {
-    background-color: #dfe4ea;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.step-card h4 {
-    margin-bottom: 10px;
-    font-size: 18px;
-}
-
-/* Untuk kotak besar yang berisi detail */
-.detail-cards {
-    display: grid;
-    grid-template-columns: 1fr;
-    /* Satu kolom penuh untuk tiap kotak */
-    gap: 20px;
-}
-
-.detail-card {
-    display: grid;
-    grid-template-columns: 1fr 3fr;
-    /* 1 bagian judul, 3 bagian konten */
-    gap: 20px;
-    background-color: #dfe4ea;
-    padding: 20px;
-    border-radius: 12px;
-}
-
-.detail-card h4 {
-    font-size: 18px;
-    margin: 0;
-}
-
-.detail-card p,
-.detail-card ul {
-    margin: 0;
-}
-
-/* Responsive untuk tampilan mobile */
-@media (max-width: 768px) {
-    .detail-card {
-        grid-template-columns: 1fr;
-        /* Judul di atas, konten di bawah */
-    }
-}
-</style>

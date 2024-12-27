@@ -1,6 +1,6 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
-import { getSop } from '@/api/sopApi';
+import { getAllSop } from '@/api/sopApi';
 
 import IconEye from '@/assets/icons/IconEye.vue';
 import DataTable from '@/components/DataTable.vue';
@@ -16,7 +16,7 @@ const data = ref([]);
 const fetchData = async () => {
     try {
         data.value = [];
-        const result = await getSop();
+        const result = await getAllSop();
         data.value = result.data;
     } catch (error) {
         data.value = null;
@@ -56,14 +56,20 @@ onMounted(() => {
     <!-- TODO data yang tampil hanya yang statusnya sudah berlaku -->
     <div class="container mx-auto p-8 lg:px-32">
         <template v-if="data">
-            <DataTable v-if="data.length > 0" :data="data" :columns="[
-                { field: 'name', label: 'Nama', sortable: true },
-                { field: 'creation_date', label: 'Tanggal Efektif', sortable: true },
-                { field: 'org_name', label: 'Organisasi', sortable: true },
-            ]" :status-columns="[
+            <DataTable v-if="data.length > 0" 
+                :data="data" 
+                :columns="[
+                    { field: 'name', label: 'Nama', sortable: true },
+                    { field: 'creation_date', label: 'Tanggal Efektif', sortable: true },
+                    { field: 'org_name', label: 'Organisasi', sortable: true },
+                ]" 
+                :status-columns="[
                     { field: 'is_active', label: 'Status' }
-                ]" :searchable="['name', 'creation_date', 'org_name']" table-type="other"
-                :badge-text="['Tidak Berlaku', 'Berlaku', 'Belum Berlaku']">
+                ]" 
+                :searchable="['name', 'creation_date', 'org_name']" 
+                table-type="other"
+                :badge-text="['Tidak Berlaku', 'Berlaku', 'Belum Berlaku']"
+            >
                 <template #link>
                     <router-link :to="{ name: 'DetailSop' }">
                         <button
@@ -74,6 +80,7 @@ onMounted(() => {
                         </button>
                     </router-link>
                     <!-- TODO hanya bisa diunduh kalau statusnya sudah berlaku -->
+                    <!-- TODO buat tombol ni langsung menugnduh dokumen pdf nya -->
                     <router-link :to="{ name: 'DownloadSop' }" target="_blank">
                         <button
                             class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center me-2 mb-2"
