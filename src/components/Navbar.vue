@@ -5,6 +5,10 @@ import { useAuthStore } from '@/stores/auth';
 
 const authStore = useAuthStore();
 
+const handleLogout = () => {
+  authStore.logout();
+}
+
 onMounted(() => {
   initDrawers();
 })
@@ -17,26 +21,33 @@ onMounted(() => {
         <img src="https://flowbite.com/docs/images/logo.svg" class="h-8" alt="Flowbite Logo" />
         <span class="self-center text-2xl font-semibold whitespace-nowrap">SIPP DSI</span>
       </RouterLink>
+
+      <!-- <p class="text-black">{{ authStore }}</p> -->
       <div class="flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
 
         <!-- menu user apabila sudah login -->
-        <div v-if="authStore.isLoggedIn" class="flex items-center md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
-            <button type="button" class="flex text-sm bg-gray-800 rounded-full md:me-0 focus:ring-4 focus:ring-gray-300" id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown" data-dropdown-placement="bottom">
-              <span class="sr-only">Open user menu</span>
-              <img class="w-8 h-8 rounded-full" src="/logo_unand_kecil.png" alt="user photo">
-            </button>
-            <!-- Dropdown menu -->
-            <div class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-lg shadow" id="user-dropdown">
-              <div class="px-4 py-3">
-                <span class="block text-sm text-gray-900">Bonnie Green</span>
-                <span class="block text-sm  text-gray-500 truncate">name@flowbite.com</span>
-              </div>
-              <ul class="py-2" aria-labelledby="user-menu-button">
-                <li>
-                  <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
-                </li>
-              </ul>
+        <div v-if="authStore.isAuthenticated"
+          class="flex items-center md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
+          <button type="button" class="flex text-sm bg-gray-800 rounded-full md:me-0 focus:ring-4 focus:ring-gray-300"
+            id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown"
+            data-dropdown-placement="bottom">
+            <span class="sr-only">Open user menu</span>
+            <img class="w-8 h-8 rounded-full" src="/logo_unand_kecil.png" alt="user photo">
+          </button>
+          <!-- Dropdown menu -->
+          <div class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-lg shadow"
+            id="user-dropdown">
+            <div class="px-4 py-3">
+              <span class="block text-sm  text-gray-900 truncate">{{ authStore.userEmail }}</span>
+              <span class="block text-sm text-gray-500">{{ authStore.userRole }}</span>
             </div>
+            <ul class="py-2" aria-labelledby="user-menu-button">
+              <li>
+                <p @click="handleLogout"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:cursor-pointer">Keluar</p>
+              </li>
+            </ul>
+          </div>
         </div>
 
         <!-- menu apa bila belum login -->
@@ -46,6 +57,7 @@ onMounted(() => {
             Login
           </button>
         </RouterLink>
+
         <button data-collapse-toggle="navbar-cta" type="button"
           class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
           aria-controls="navbar-cta" aria-expanded="false">
@@ -82,7 +94,8 @@ onMounted(() => {
           </li>
 
           <li class="relative">
-            <RouterLink to="/assignment" activeClass="text-blue-500" v-if="authStore.isLoggedIn"
+            <RouterLink to="/assignment" activeClass="text-blue-500"
+              v-if="authStore.isAuthenticated && authStore.userRole == 'penyusun'"
               class="block py-2 px-3 md:p-0 rounded hover:bg-gray-100 md:hover:bg-transparent hover:text-blue-500">
               Penugasan
               <!-- Notifikasi -->

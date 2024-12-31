@@ -1,12 +1,12 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
-import IconSort from '@/assets/icons/IconSort.vue';
+import SortIcon from '@/assets/icons/SortIcon.vue';
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import GreenBadgeIndicator from './indicator/GreenBadgeIndicator.vue';
 import RedBadgeIndicator from './indicator/RedBadgeIndicator.vue';
 import YellowBadgeIndicator from './indicator/YellowBadgeIndicator.vue';
-import IconEye from '@/assets/icons/IconEye.vue';
+import EyeIcon from '@/assets/icons/EyeIcon.vue';
 
 const props = defineProps({
     data: {
@@ -234,11 +234,11 @@ const goToPage = (page) => {
                     <th v-for="column in columns" :key="column.field" class="px-6 py-3" scope="col">
                         <div class="flex items-center">
                             {{ column.label }}
-                            <!-- Tambahkan container div dan event handler pada IconSort -->
+                            <!-- Tambahkan container div dan event handler pada SortIcon -->
                             <div v-if="column.sortable" 
                                 @click="sortData(column.field)"
                                 class="ml-2 cursor-pointer">
-                                <IconSort />
+                                <SortIcon />
                             </div>
                         </div>
                     </th>
@@ -290,14 +290,14 @@ const goToPage = (page) => {
                         <template v-else-if="props.tableType === 'detail'">
                             <button :title="`Detail item ${index + 1}`" @click="$emit('click', item.id)"
                                 class="bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 me-2 mb-2 focus:outline-none">
-                                <IconEye class="fill-white w-5" />
+                                <EyeIcon class="fill-white w-5" />
                             </button>
                         </template>
                         <template v-else-if="props.tableType === 'link'">
                             <router-link :to="`${detailLink}/${item.id}`">
                                 <button
                                     class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center me-2 mb-2">
-                                    <IconEye class="w-5 mr-3 fill-current" />
+                                    <EyeIcon class="w-5 mr-3 fill-current" />
                                     Lihat
                                 </button>
                             </router-link>

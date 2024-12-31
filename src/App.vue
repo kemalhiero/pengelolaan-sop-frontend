@@ -1,15 +1,21 @@
 <script setup>
 import { provide, ref } from 'vue';
 import { RouterView } from 'vue-router';
-// import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '@/stores/auth';
+const authStore = useAuthStore();
 
 import AppShell from '@/components/authenticated/AppShell.vue';   // authenticated
 import Navbar from '@/components/Navbar.vue';
-import Footer from '@/components/Footer.vue';
+// import Footer from '@/components/Footer.vue';
 
-// const authStore = useAuthStore();
+// TODO buat pengecekan, kan ada 4 role nya, sedangkan sekarang cuma ada 2 pembeda tampilan
+// if role mahasiswa/dosen or penyusun, layout = guest, else if role = ph or kaprodi, layout = admin
 
-const layout = ref('guest');
+// pengecekan kayaknya langsung di router aja, yang udah ditunjukin sama claude ai
+
+const layout = ref('admin');
+authStore.userRole
+
 provide('layoutType', layout);
 </script>
 

@@ -2,7 +2,7 @@
 import { inject, onMounted } from 'vue'
 import { initAccordions } from 'flowbite';
 
-import IconAngle from '@/assets/icons/IconAngle.vue';
+import AngleIcon from '@/assets/icons/AngleIcon.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 
 const layoutType = inject('layoutType');
@@ -25,7 +25,7 @@ onMounted(() => {
                     data-accordion-target="#accordion-collapse-body-1" aria-expanded="true"
                     aria-controls="accordion-collapse-body-1">
                     <span>What is Flowbite?</span>
-                    <IconAngle/>
+                    <AngleIcon/>
                 </button>
             </h2>
             <div id="accordion-collapse-body-1" class="hidden" aria-labelledby="accordion-collapse-heading-1">
@@ -45,7 +45,7 @@ onMounted(() => {
                     data-accordion-target="#accordion-collapse-body-2" aria-expanded="false"
                     aria-controls="accordion-collapse-body-2">
                     <span>Is there a Figma file available?</span>
-                    <IconAngle/>
+                    <AngleIcon/>
                 </button>
             </h2>
             <div id="accordion-collapse-body-2" class="hidden" aria-labelledby="accordion-collapse-heading-2">
@@ -64,7 +64,7 @@ onMounted(() => {
                     data-accordion-target="#accordion-collapse-body-3" aria-expanded="false"
                     aria-controls="accordion-collapse-body-3">
                     <span>What are the differences between Flowbite and Tailwind UI?</span>
-                    <IconAngle/>
+                    <AngleIcon/>
                 </button>
             </h2>
             <div id="accordion-collapse-body-3" class="hidden" aria-labelledby="accordion-collapse-heading-3">

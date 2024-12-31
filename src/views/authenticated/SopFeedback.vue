@@ -2,8 +2,8 @@
 import { inject, onMounted } from "vue";
 import { DataTable } from "simple-datatables";
 
-import IconSort from "@/assets/icons/IconSort.vue";
-import IconEye from "@/assets/icons/IconEye.vue";
+import SortIcon from "@/assets/icons/SortIcon.vue";
+import EyeIcon from "@/assets/icons/EyeIcon.vue";
 import GreenBadgeIndicator from "@/components/indicator/GreenBadgeIndicator.vue";
 import YellowBadgeIndicator from "@/components/indicator/YellowBadgeIndicator.vue";
 import RedBadgeIndicator from "@/components/indicator/RedBadgeIndicator.vue";
@@ -46,25 +46,25 @@ onMounted(() => {
                         <th>
                             <span class="flex items-center">
                                 User
-                                <IconSort />
+                                <SortIcon />
                             </span>
                         </th>
                         <th data-type="date" data-format="YYYY/DD/MM">
                             <span class="flex items-center">
                                 Komentar
-                                <IconSort />
+                                <SortIcon />
                             </span>
                         </th>
                         <th>
                             <span class="flex items-center">
                                 Waktu
-                                <IconSort />
+                                <SortIcon />
                             </span>
                         </th>
                         <th>
                             <span class="flex items-center">
                                 Status
-                                <IconSort />
+                                <SortIcon />
                             </span>
                         </th>
                         <th>
@@ -89,7 +89,7 @@ onMounted(() => {
                                 <button
                                     class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center dark:focus:ring-[#2557D6]/50 me-2 mb-2"
                                     title="Lihat detail dokumen">
-                                    <IconEye class="w-5 mr-3 fill-current" />
+                                    <EyeIcon class="w-5 mr-3 fill-current" />
                                     belum tau apa
                                 </button>
                             <!-- </router-link> -->

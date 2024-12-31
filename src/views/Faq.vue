@@ -2,7 +2,7 @@
 import { inject, onMounted } from 'vue'
 import { initAccordions } from 'flowbite';
 
-import IconAngle from '@/assets/icons/IconAngle.vue';
+import IconAngle from '@/assets/icons/AngleIcon.vue';
 
 const dataFaq = [
     {

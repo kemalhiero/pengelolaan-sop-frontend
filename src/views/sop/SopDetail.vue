@@ -1,15 +1,14 @@
 <script setup>
 import { inject, ref } from 'vue';
 import SopDocTemplate from './SopDocTemplate.vue';
-import IconDownload from '@/assets/icons/IconDownload.vue';
+import IconDownload from '@/assets/icons/DownloadIcon.vue';
 import PrintIcon from '@/assets/icons/PrintIcon.vue';
+import { useAuthStore } from '@/stores/auth';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';
 
-// State untuk status login
-const isLoggedIn = ref(false)
-
+const authStore = useAuthStore();
 </script>
 
 <template>
@@ -73,7 +72,7 @@ const isLoggedIn = ref(false)
             <!-- Form Container -->
             <form 
                 class="w-full bg-white p-6 space-y-5"
-                :class="{ 'blur-sm pointer-events-none': !isLoggedIn }"
+                :class="{ 'blur-sm pointer-events-none': !authStore.isAuthenticated }"
             >
                 <h2 class="text-lg font-semibold mb-4">Form Umpan Balik</h2>
                 <div>
@@ -102,7 +101,7 @@ const isLoggedIn = ref(false)
 
             <!-- Overlay Login -->
             <div 
-                v-if="!isLoggedIn"
+                v-if="!authStore.isAuthenticated"
                 class="absolute inset-0 flex items-center justify-center bg-gray-700/20 rounded-xl"
             >
                 <div class="bg-white p-6 rounded-lg shadow-lg text-center">

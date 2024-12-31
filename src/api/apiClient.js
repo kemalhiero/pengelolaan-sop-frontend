@@ -32,15 +32,21 @@ const postRequest = async (endpoint, data) => {
             },
             body: JSON.stringify(data), // POST harus punya body
         });
-
-        if (!response.ok) {
-            throw new Error(`POST request error: ${response.status}`);
-        }
-
-        return await response.json();
+        const result = await response.json();
+        
+        return {
+            success: response.ok,
+            status: response.status,
+            data: result,
+            error: !response.ok ? result : null
+        };
     } catch (error) {
-        console.error('Error during POST request:', error);
-        throw error;
+        return {
+            success: false,
+            status: error.status || 500,
+            data: null,
+            error: error.message
+        };
     }
 };
 
