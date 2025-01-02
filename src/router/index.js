@@ -26,6 +26,10 @@ const router = createRouter({
       component: () => import('@/views/ForgetPassword.vue')
     },
     {
+      path: '/reset-pw',
+      component: () => import('@/views/ResetPassword.vue')
+    },
+    {
       path: '/unauthorized',
       component: () => import('@/views/Unauthorized.vue')
     },

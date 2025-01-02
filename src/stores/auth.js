@@ -10,24 +10,34 @@ export const useAuthStore = defineStore('auth', () => {
     role: ''
   });
 
+  const rememberMe = ref(false);
+  const initializeRememberMe = () => {
+    // Mengambil nilai dari localStorage, defaultnya false
+    rememberMe.value = localStorage.getItem('rememberMe') === 'true'
+  };
+
   // Mengambil data dari localStorage saat inisialisasi
   const initializeAuth = () => {
-    const savedToken = localStorage.getItem('token');
-    
+    let savedToken;
+    if (rememberMe.value) {
+      savedToken = localStorage.getItem('token');
+    } else {
+      savedToken = sessionStorage.getItem('token');
+    }
+
     if (savedToken) {
       try {
         token.value = savedToken;
         const decoded = jwtDecode(savedToken);
-        console.log(decoded)
+
         user.value.email = decoded.email;
-        user.value.role = decoded.role;        
+        user.value.role = decoded.role;
       } catch (error) {
         console.error('error saat inisialisasi sesi', error);
-      }      
+      }
     } else {
       console.log('token kosong');
     }
-
   };
 
   // Getters
@@ -50,19 +60,30 @@ export const useAuthStore = defineStore('auth', () => {
     user.value.role = null;
     token.value = null;
 
-    localStorage.removeItem('token');
+    if (rememberMe.value) {
+      localStorage.removeItem('token');
+    } else {
+      sessionStorage.removeItem('token');
+    }
   };
 
-  // Inisialisasi auth state
-  initializeAuth();
+  // Action untuk mengubah status rememberMe
+  const setRememberMe = (value) => {
+    rememberMe.value = value
+    localStorage.setItem('rememberMe', value.toString())
+  }
 
   return {
     isAuthenticated,
     userRole,
     userEmail,
+    rememberMe,
     hasRole,
     setUser,
     setToken,
-    logout
+    logout,
+    setRememberMe,
+    initializeRememberMe,
+    initializeAuth
   };
 });

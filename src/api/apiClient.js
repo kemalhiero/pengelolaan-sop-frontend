@@ -2,45 +2,64 @@
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
 // Fungsi GET
-const getRequest = async (endpoint) => {
+const getRequest = async (endpoint, token = null) => {
     try {
-        const response = await fetch(`${baseURL}/api/${endpoint}`, {
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` })
+        };
+
+        const fetchOptions = {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
+            headers
+        };
 
-        if (!response.ok) {
-            throw new Error(`GET request error: ${response.status}`);
-        }
+        const response = await fetch(`${baseURL}/api/${endpoint}`, fetchOptions);
+        const result = await response.json();
 
-        return await response.json();
+        return {
+            success: response.ok,
+            status: response.status,
+            data: result.data,
+            error: !response.ok ? result : null
+        };
+
     } catch (error) {
         console.error('Error during GET request:', error);
-        throw error;
+        return {
+            success: false,
+            status: error.status || 500,
+            data: null,
+            error: error.message
+        };
     }
 };
 
 // Fungsi POST
-const postRequest = async (endpoint, data) => {
+const postRequest = async (endpoint, data = null, token = null) => {
     try {
-        const response = await fetch(`${baseURL}/api/${endpoint}`, {
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` })
+        };
+
+        const fetchOptions = {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data), // POST harus punya body
-        });
+            headers,
+            ...(data && { body: JSON.stringify(data) })
+        };
+
+        const response = await fetch(`${baseURL}/api/${endpoint}`, fetchOptions);
         const result = await response.json();
-        
+
         return {
             success: response.ok,
             status: response.status,
-            data: result,
+            data: result.data,
             error: !response.ok ? result : null
         };
     } catch (error) {
+        console.error('Error during POST request:', error);
         return {
             success: false,
             status: error.status || 500,
@@ -51,45 +70,69 @@ const postRequest = async (endpoint, data) => {
 };
 
 // Fungsi PATCH
-const patchRequest = async (endpoint, data) => {
+const patchRequest = async (endpoint, data, token = null) => {
     try {
-        const response = await fetch(`${baseURL}/api/${endpoint}`, {
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` })
+        };
+
+        const fetchOptions = {
             method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data), // PATCH juga harus punya body
-        });
+            headers,
+            ...(data && { body: JSON.stringify(data) })
+        };
 
-        if (!response.ok) {
-            throw new Error(`PATCH request error: ${response.status}`);
-        }
+        const response = await fetch(`${baseURL}/api/${endpoint}`, fetchOptions);
+        const result = await response.json();
 
-        return await response.json();
+        return {
+            success: response.ok,
+            status: response.status,
+            data: result.data,
+            error: !response.ok ? result : null
+        };
     } catch (error) {
         console.error('Error during PATCH request:', error);
-        throw error;
+        return {
+            success: false,
+            status: error.status || 500,
+            data: null,
+            error: error.message
+        };
     }
 };
 
 // Fungsi DELETE
-const deleteRequest = async (endpoint) => {
+const deleteRequest = async (endpoint, token = null) => {
     try {
-        const response = await fetch(`${baseURL}/api/${endpoint}`, {
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` })
+        };
+
+        const fetchOptions = {
             method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
+            headers
+        };
 
-        if (!response.ok) {
-            throw new Error(`DELETE request error: ${response.status}`);
-        }
+        const response = await fetch(`${baseURL}/api/${endpoint}`, fetchOptions);
+        const result = await response.json();
 
-        return { message: 'Successfully deleted' };
+        return {
+            success: response.ok,
+            status: response.status,
+            data: result.data,
+            error: !response.ok ? result : null
+        };
     } catch (error) {
         console.error('Error during DELETE request:', error);
-        throw error;
+        return {
+            success: false,
+            status: error.status || 500,
+            data: null,
+            error: error.message
+        };
     }
 };
 

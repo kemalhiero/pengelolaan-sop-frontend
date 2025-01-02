@@ -2,11 +2,18 @@
 import { initDrawers } from 'flowbite';
 import { onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import { logoutUser } from '@/api/userApi';
+import { toast } from 'vue3-toastify';
 
 const authStore = useAuthStore();
 
-const handleLogout = () => {
+const handleLogout = async () => {
+  await logoutUser(localStorage.getItem('token'))
   authStore.logout();
+  toast("Berhasil keluar!", {
+    "type": "success",
+    "autoClose": 3000,
+  });
 }
 
 onMounted(() => {

@@ -8,14 +8,10 @@ import AppShell from '@/components/authenticated/AppShell.vue';   // authenticat
 import Navbar from '@/components/Navbar.vue';
 // import Footer from '@/components/Footer.vue';
 
-// TODO buat pengecekan, kan ada 4 role nya, sedangkan sekarang cuma ada 2 pembeda tampilan
-// if role mahasiswa/dosen or penyusun, layout = guest, else if role = ph or kaprodi, layout = admin
+authStore.initializeRememberMe();
+authStore.initializeAuth();
 
-// pengecekan kayaknya langsung di router aja, yang udah ditunjukin sama claude ai
-
-const layout = ref('admin');
-authStore.userRole
-
+const layout = ref('guest');
 provide('layoutType', layout);
 </script>
 
