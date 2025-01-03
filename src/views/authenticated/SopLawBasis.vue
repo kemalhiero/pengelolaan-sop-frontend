@@ -1,12 +1,11 @@
 <script setup>
 import { inject, onMounted, ref } from "vue";
-import { initModals } from "flowbite";
+import { toast } from "vue3-toastify";
 import { getLawType } from "@/api/lawTypeApi";
 import { getLawBasis, createLawBasis, updateLawBasis, deleteLawBasis } from "@/api/lawBasisApi";
 
 import DataTable from "@/components/DataTable.vue";
 import PulseLoading from "@/components/PulseLoading.vue";
-import ShowToast from "@/components/toast/ShowToast.vue";
 import DeleteDataModal from "@/components/modal/DeleteDataModal.vue";
 import AddDataModal from "@/components/modal/AddDataModal.vue";
 import EditDataModal from "@/components/modal/EditDataModal.vue";
@@ -25,8 +24,6 @@ const form = ref({
     year: null,
     about: ''
 });
-const isSucces = ref(null);
-const operation = ref('');
 
 // Fetch data untuk tabel
 const fetchTipePeraturan = async () => {
@@ -54,11 +51,9 @@ const showAddModal = ref(false);
 
 // submit data
 const submitData = async () => {
-    operation.value = 'post'
     try {
         await createLawBasis(form.value);
 
-        isSucces.value = 'yes';
         form.value = {
             id_law_type: '',
             number: '',
@@ -69,9 +64,18 @@ const submitData = async () => {
         showAddModal.value = false;
         fetchData();
 
+        toast("Data berhasil ditambahkan!", {
+            "type": "success",
+            "autoClose": 3000,
+        });
+
     } catch (error) {
         console.error('Error saat mengirim data:', error);
-        isSucces.value = 'no';
+        toast(`Data gagal ditambahkan! <br> ${error} `, {
+            "type": "error",
+            "autoClose": 5000,
+            'dangerouslyHTMLString': true
+        });
     }
 };
 
@@ -91,7 +95,6 @@ const closeDeleteModal = () => {
 };
 
 const deleteData = async (id) => {  // Fungsi untuk menghapus data berdasarkan ID
-    operation.value = 'delete'
     try {
         const response = await deleteLawBasis(id);
         console.log(response);
@@ -99,12 +102,20 @@ const deleteData = async (id) => {  // Fungsi untuk menghapus data berdasarkan I
         // Lakukan penghapusan item dari array data
         data.value = data.value.filter(item => item.id !== id);
         closeDeleteModal(); // Tutup modal setelah penghapusan
-        isSucces.value = 'yes'
+
+        toast("Data berhasil dihapus!", {
+            "type": "success",
+            "autoClose": 3000,
+        });
 
         console.log(`Data dengan ID ${id} berhasil dihapus`);
     } catch (error) {
-        isSucces.value = 'no'
         console.error('Delete error:', error);
+        toast(`Data gagal dihapus! <br> ${error} `, {
+            "type": "error",
+            "autoClose": 5000,
+            'dangerouslyHTMLString': true
+        });
     }
 };
 
@@ -116,7 +127,7 @@ let dataYangDitemukan;
 const openUpdateModal = (id) => {
     selectedUpdateId.value = id; // Menyimpan ID yang dipilih
     showModalUpdate.value = true; // Tampilkan modal
-    
+
     dataYangDitemukan = data.value.find(item => item.id === id);
     form.value = { ...dataYangDitemukan };
 
@@ -140,25 +151,30 @@ const closeUpdateModal = () => {
 };
 
 const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan ID
-    operation.value = 'update'
     try {
         const response = await updateLawBasis(id, form.value);
         console.log(response);
-
-        isSucces.value = 'yes'
         console.log(`Data dengan ID ${id} berhasil diperbarui`);
 
         fetchData();
         closeUpdateModal(); // Tutup modal setelah penghapusan
 
+        toast("Data berhasil diperbarui!", {
+            "type": "success",
+            "autoClose": 3000,
+        });
+
     } catch (error) {
-        isSucces.value = 'no'
         console.error('Update error:', error);
+        toast(`Data gagal diperbarui! <br> ${error} `, {
+            "type": "error",
+            "autoClose": 5000,
+            'dangerouslyHTMLString': true
+        });
     }
 };
 
-onMounted( () => {
-    initModals(); // Inisialisasi modals jika diperlukan
+onMounted(() => {
     fetchTipePeraturan();
     fetchData(); // Ambil data tabel
 });
@@ -166,11 +182,6 @@ onMounted( () => {
 
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
-
-        <ShowToast 
-            :is-succes="isSucces"
-            :operation="operation"
-        />
 
         <PageTitle judul="Daftar Peraturan yang Digunakan" />
 
@@ -182,64 +193,10 @@ onMounted( () => {
             </div>
 
             <!-- Komponen AddDataModal -->
-            <AddDataModal
-                modalTitle="Tambahkan peraturan baru"
-                :showModal="showAddModal"
-                :formFields="[
-                    { 
-                        id: 'id_law_type', 
-                        label: 'Jenis Peraturan', 
-                        type: 'select',
-                        placeholder: 'Pilih jenis peraturan',
-                        required: true,
-                        options: tipePeraturan,
-                        optionValue: 'id',
-                        optionLabel: 'law_type'
-                    },
-                    { id: 'number', label: 'Nomor', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 95', required: true, min: 1, max: 999 },
-                    { id: 'year', label: 'Tahun', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 2022', required: true, min: 1945, max: new Date().getFullYear() },
-                    { id: 'about', label: 'Pembahasan', type: 'textarea', placeholder: 'Misal: Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas', required: true }
-                ]"
-                :formData="form"
-                :submitData="submitData"
-                @update:showModal="showAddModal = $event"
-            />
-
-            <template v-if="data">
-                <DataTable v-if="data.length > 0"
-                    :data="data"
-                    :columns="[
-                        { field: 'law_type', label: 'Jenis', sortable: true },
-                        { field: 'number', label: 'Nomor', sortable: true },
-                        { field: 'year', label: 'Tahun', sortable: true },
-                        { field: 'about', label: 'Tentang', sortable: false }
-                    ]"
-                    :searchable="['law_type', 'number', 'year', 'about']"
-                    @edit="openUpdateModal"
-                    @delete="openDeleteModal"
-                    table-type="crud"
-                />
-                <PulseLoading v-else-if="data.length == 0" />
-            </template>
-            <Error @click="fetchData" v-else/>
-        </div>
-
-        <!-- Komponen DeleteDataModal -->
-        <DeleteDataModal
-            :showModal="showModalDelete"
-            :deleteData="deleteData"
-            :selectedId="selectedDeleteId"
-            @update:showModal="showModalDelete = $event"
-        />
-
-        <!-- modal edit -->
-        <EditDataModal
-            modalTitle="Perbarui dasar hukum"
-            :showModal="showModalUpdate"
-            :formFields="[
-                { 
-                    id: 'id_law_type', 
-                    label: 'Jenis Peraturan', 
+            <AddDataModal modalTitle="Tambahkan peraturan baru" :showModal="showAddModal" :formFields="[
+                {
+                    id: 'id_law_type',
+                    label: 'Jenis Peraturan',
                     type: 'select',
                     placeholder: 'Pilih jenis peraturan',
                     required: true,
@@ -250,12 +207,42 @@ onMounted( () => {
                 { id: 'number', label: 'Nomor', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 95', required: true, min: 1, max: 999 },
                 { id: 'year', label: 'Tahun', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 2022', required: true, min: 1945, max: new Date().getFullYear() },
                 { id: 'about', label: 'Pembahasan', type: 'textarea', placeholder: 'Misal: Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas', required: true }
-            ]"
-            :formData="form"
-            :updateData="updateData"
-            :selectedId="selectedUpdateId"
-            @update:showModal="showModalUpdate = $event"
-        />
+            ]" :formData="form" :submitData="submitData" @update:showModal="showAddModal = $event" />
+
+            <template v-if="data">
+                <DataTable v-if="data.length > 0" :data="data" :columns="[
+                    { field: 'law_type', label: 'Jenis', sortable: true },
+                    { field: 'number', label: 'Nomor', sortable: true },
+                    { field: 'year', label: 'Tahun', sortable: true },
+                    { field: 'about', label: 'Tentang', sortable: false }
+                ]" :searchable="['law_type', 'number', 'year', 'about']" @edit="openUpdateModal"
+                    @delete="openDeleteModal" table-type="crud" />
+                <PulseLoading v-else-if="data.length == 0" />
+            </template>
+            <Error @click="fetchData" v-else />
+        </div>
+
+        <!-- Komponen DeleteDataModal -->
+        <DeleteDataModal :showModal="showModalDelete" :deleteData="deleteData" :selectedId="selectedDeleteId"
+            @update:showModal="showModalDelete = $event" />
+
+        <!-- modal edit -->
+        <EditDataModal modalTitle="Perbarui dasar hukum" :showModal="showModalUpdate" :formFields="[
+            {
+                id: 'id_law_type',
+                label: 'Jenis Peraturan',
+                type: 'select',
+                placeholder: 'Pilih jenis peraturan',
+                required: true,
+                options: tipePeraturan,
+                optionValue: 'id',
+                optionLabel: 'law_type'
+            },
+            { id: 'number', label: 'Nomor', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 95', required: true, min: 1, max: 999 },
+            { id: 'year', label: 'Tahun', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 2022', required: true, min: 1945, max: new Date().getFullYear() },
+            { id: 'about', label: 'Pembahasan', type: 'textarea', placeholder: 'Misal: Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas', required: true }
+        ]" :formData="form" :updateData="updateData" :selectedId="selectedUpdateId"
+            @update:showModal="showModalUpdate = $event" />
 
     </main>
 </template>

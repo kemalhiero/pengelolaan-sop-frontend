@@ -67,6 +67,11 @@ const regist = async () => {
 
     } catch (error) {
         console.error(error);
+        toast(`Gagal membuat akun! <br> ${error} `, {
+            "type": "error",
+            "autoClose": 5000,
+            'dangerouslyHTMLString': true
+        });
     }
 };
 </script>

@@ -1,11 +1,11 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
+import { toast } from 'vue3-toastify';
 import { getLawType, createLawType, updateLawType, deleteLawType } from '@/api/lawTypeApi';
 
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 import PulseLoading from '@/components/PulseLoading.vue';
-import ShowToast from '@/components/toast/ShowToast.vue';
 import AddDataModal from '@/components/modal/AddDataModal.vue';
 import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
 import EditDataModal from '@/components/modal/EditDataModal.vue';
@@ -21,8 +21,6 @@ const form = ref({
     law_type: '',
     description: ''
 });
-const isSucces = ref(null);
-const operation = ref('');
 
 // Fungsi untuk fetch data dari API
 const fetchData = async () => {
@@ -41,11 +39,8 @@ const showAddModal = ref(false);
 
 // Fungsi untuk mengirim data ke API dengan metode POST
 const submitData = async () => {
-    operation.value = 'post'
     try {
         await createLawType(form.value);
-
-        isSucces.value = 'yes';
         form.value = {
             law_type: '',
             description: ''
@@ -54,9 +49,18 @@ const submitData = async () => {
         showAddModal.value = false;
         fetchData();
 
+        toast("Data berhasil ditambahkan!", {
+            "type": "success",
+            "autoClose": 3000,
+        });
+
     } catch (error) {
         console.error('Error saat mengirim data:', error);
-        isSucces.value = 'no';
+        toast(`Data gagal ditambahkan! <br> ${error} `, {
+            "type": "error",
+            "autoClose": 5000,
+            'dangerouslyHTMLString': true
+        });
     }
 };
 
@@ -75,7 +79,6 @@ const closeDeleteModal = () => {
 };
 
 const deleteData = async (id) => {  // Fungsi untuk menghapus data berdasarkan ID
-    operation.value = 'delete'
     try {
         console.log(id)
         const response = await deleteLawType(id);
@@ -84,12 +87,20 @@ const deleteData = async (id) => {  // Fungsi untuk menghapus data berdasarkan I
         // Lakukan penghapusan item dari array data
         data.value = data.value.filter(item => item.id !== id);
         closeDeleteModal(); // Tutup modal setelah penghapusan
-        isSucces.value = 'yes'
+
+        toast("Data berhasil dihapus!", {
+            "type": "success",
+            "autoClose": 3000,
+        });
 
         console.log(`Data dengan ID ${id} berhasil dihapus`);
     } catch (error) {
-        isSucces.value = 'no'
         console.error('Delete error:', error);
+        toast(`Data gagal dihapus! <br> ${error} `, {
+            "type": "error",
+            "autoClose": 5000,
+            'dangerouslyHTMLString': true
+        });
     }
 };
 
@@ -99,8 +110,6 @@ const selectedUpdateId = ref(null);
 let dataYangDitemukan;
 
 const openUpdateModal = (id) => {
-    console.log(id);
-    
     selectedUpdateId.value = id; // Menyimpan ID yang dipilih
     showModalUpdate.value = true; // Tampilkan modal
 
@@ -125,21 +134,26 @@ const closeUpdateModal = () => {
 };
 
 const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan ID
-    operation.value = 'update'
     try {
-
         const response = await updateLawType(id, form.value);
         console.log(response);
-
-        isSucces.value = 'yes'
         console.log(`Data dengan ID ${id} berhasil diperbarui`);
 
         fetchData();
         closeUpdateModal(); // Tutup modal setelah penghapusan
 
+        toast("Data berhasil diperbarui!", {
+            "type": "success",
+            "autoClose": 3000,
+        });
+
     } catch (error) {
-        isSucces.value = 'no'
         console.error('Update error:', error);
+        toast(`Data gagal diperbarui! <br> ${error} `, {
+            "type": "error",
+            "autoClose": 5000,
+            'dangerouslyHTMLString': true
+        });
     }
 };
 
@@ -153,11 +167,6 @@ onMounted(() => {
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
 
-        <ShowToast 
-            :isSucces="isSucces"
-            :operation="operation"
-        />
-
         <PageTitle judul="Daftar Jenis Peraturan" />
 
         <div class="container mx-auto p-8 lg:px-16">
@@ -168,17 +177,10 @@ onMounted(() => {
             </div>
 
             <!-- Komponen AddDataModal -->
-            <AddDataModal
-                modalTitle="Tambahkan jenis peraturan baru"
-                :showModal="showAddModal"
-                :formFields="[
-                    { id: 'law_type', label: 'Jenis peraturan', type: 'text', placeholder: 'Mis. Peraturan Presiden', required: true, minlength: 5, maxlength: 100 },
-                    { id: 'description', label: 'Deskripsi', type: 'textarea', placeholder: 'ketikkan deskripsi disini...' }
-                ]"
-                :formData="form"
-                :submitData="submitData"
-                @update:showModal="showAddModal = $event"
-            />
+            <AddDataModal modalTitle="Tambahkan jenis peraturan baru" :showModal="showAddModal" :formFields="[
+                { id: 'law_type', label: 'Jenis peraturan', type: 'text', placeholder: 'Mis. Peraturan Presiden', required: true, minlength: 5, maxlength: 100 },
+                { id: 'description', label: 'Deskripsi', type: 'textarea', placeholder: 'ketikkan deskripsi disini...' }
+            ]" :formData="form" :submitData="submitData" @update:showModal="showAddModal = $event" />
 
             <template v-if="data">
                 <div v-if="data.length > 0" class="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -226,31 +228,20 @@ onMounted(() => {
                 </div>
                 <PulseLoading v-else-if="data.length == 0" />
             </template>
-            <Error @click="fetchData" v-else/>
+            <Error @click="fetchData" v-else />
 
         </div>
 
         <!-- Komponen DeleteDataModal -->
-        <DeleteDataModal
-            :showModal="showModalDelete"
-            :deleteData="deleteData"
-            :selectedId="selectedDeleteId"
-            @update:showModal="showModalDelete = $event"
-        />
+        <DeleteDataModal :showModal="showModalDelete" :deleteData="deleteData" :selectedId="selectedDeleteId"
+            @update:showModal="showModalDelete = $event" />
 
         <!-- Komponen EditDataModal -->
-        <EditDataModal
-            modalTitle="Perbarui jenis peraturan"
-            :showModal="showModalUpdate"
-            :formFields="[
-                { id: 'law_type', label: 'Jenis peraturan', type: 'text', colSpan: 'full', placeholder: 'Mis. Peraturan Presiden', required: true },
-                { id: 'description', label: 'Deskripsi', type: 'textarea', colSpan: 'full', placeholder: 'ketikkan deskripsi disini...' }
-            ]"
-            :formData="form"
-            :updateData="updateData"
-            :selectedId="selectedUpdateId"
-            @update:showModal="showModalUpdate = $event"
-        />
+        <EditDataModal modalTitle="Perbarui jenis peraturan" :showModal="showModalUpdate" :formFields="[
+            { id: 'law_type', label: 'Jenis peraturan', type: 'text', colSpan: 'full', placeholder: 'Mis. Peraturan Presiden', required: true },
+            { id: 'description', label: 'Deskripsi', type: 'textarea', colSpan: 'full', placeholder: 'ketikkan deskripsi disini...' }
+        ]" :formData="form" :updateData="updateData" :selectedId="selectedUpdateId"
+            @update:showModal="showModalUpdate = $event" />
 
     </main>
 </template>

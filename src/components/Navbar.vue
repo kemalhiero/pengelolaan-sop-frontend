@@ -14,7 +14,7 @@ const handleLogout = async () => {
     "type": "success",
     "autoClose": 3000,
   });
-}
+};
 
 onMounted(() => {
   initDrawers();

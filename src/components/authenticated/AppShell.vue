@@ -1,29 +1,48 @@
 <script setup>
-import { initCollapses, initDropdowns, initTooltips } from 'flowbite';
+import { initCollapses, initDropdowns, initTooltips, initDrawers } from 'flowbite';
 import { onMounted } from 'vue';
+import { logoutUser } from '@/api/userApi';
+import { useAuthStore } from '@/stores/auth';
+import { toast } from 'vue3-toastify';
+import { useRouter } from 'vue-router';
 
 import NavbarNotification from './NavbarNotification.vue';
-import NavbarUser from './NavbarUser.vue';
-import SidebarSetting from './SidebarSetting.vue';
+// import SidebarSetting from './SidebarSetting.vue';
 
-const routes = []
+// const routes = []
 
 // icon svg
 import PageIcon from '@/assets/icons/PageIcon.vue'
 import AngleDownIcon from '@/assets/icons/AngleDownIcon.vue';
 import DashboardIcon from '@/assets/icons/DashboardIcon.vue';
-import SidebarNominalIndicator from '../indicator/SidebarNominalIndicator.vue';
-import StackDocumentIcon from '@/assets/icons/StackDocumentIcon.vue';
-import TaskIcon from '@/assets/icons/TaskIcon.vue';
+// import SidebarNominalIndicator from '../indicator/SidebarNominalIndicator.vue';
+// import StackDocumentIcon from '@/assets/icons/StackDocumentIcon.vue';
+// import TaskIcon from '@/assets/icons/TaskIcon.vue';
 import HelpIcon from '@/assets/icons/HelpIcon.vue';
 import BuildingIcon from '../../assets/icons/BuildingIcon.vue';
 import ScaleBalanced from '@/assets/icons/ScaleBalanced.vue';
 import FeedbackIcon from '@/assets/icons/FeedbackIcon.vue';
 
+const authStore = useAuthStore();
+const router = useRouter();
+
+const handleLogout = async () => {
+    await logoutUser(localStorage.getItem('token'))
+    authStore.logout();
+    toast("Berhasil keluar!", {
+        "type": "success",
+        "autoClose": 2000,
+    });
+    setTimeout(() => {
+        router.push('/')
+    }, 2000);
+};
+
 onMounted(() => {
     initCollapses();
     initDropdowns();
     initTooltips();
+    initDrawers();
 })
 
 </script>
@@ -61,8 +80,37 @@ onMounted(() => {
 
                 <!-- Notifications -->
                 <NavbarNotification />
+
                 <!-- User -->
-                <NavbarUser />
+                <button type="button"
+                    class="flex mx-3 text-sm bg-gray-800 rounded-full md:mr-0 focus:ring-4 focus:ring-gray-300"
+                    id="user-menu-button" aria-expanded="false" data-dropdown-toggle="dropdown">
+                    <span class="sr-only">Open user menu</span>
+                    <img class="w-8 h-8 rounded-full" src="/logo_unand_kecil.png" alt="user photo" />
+                </button>
+                <!-- Dropdown menu -->
+                <div class="hidden z-50 my-4 w-56 text-base list-none bg-white divide-y divide-gray-100 shadow rounded-xl"
+                    id="dropdown">
+                    <div class="py-3 px-4">
+                        <span class="block text-sm font-semibold text-gray-900">Nama user</span>
+                        <span class="block text-sm text-gray-900 truncate">{{ authStore.userEmail }}</span>
+                    </div>
+                    <ul class="py-1 text-gray-700" aria-labelledby="dropdown">
+                        <li>
+                            <a href="#" class="block py-2 px-4 text-sm hover:bg-gray-100">Profil Saya</a>
+                        </li>
+                        <!-- <li>
+                            <a href="#"
+                                class="block py-2 px-4 text-sm hover:bg-gray-100">Account
+                                settings</a>
+                        </li> -->
+                    </ul>
+                    <ul class="py-1 text-gray-700" aria-labelledby="dropdown">
+                        <li @click="handleLogout" class="hover:cursor-pointer">
+                            <p class="block py-2 px-4 text-sm hover:bg-gray-100">Keluar</p>
+                        </li>
+                    </ul>
+                </div>
 
             </div>
         </div>
@@ -110,7 +158,7 @@ onMounted(() => {
                         <ScaleBalanced
                             class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 fill-current" />
                         <span class="flex-1 ml-3 text-left whitespace-nowrap">Hukum</span>
-                        <AngleDownIcon/>
+                        <AngleDownIcon />
                     </button>
                     <ul id="dropdown-pages" class="py-2 space-y-2">
                         <li>

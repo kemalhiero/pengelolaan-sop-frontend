@@ -1,5 +1,7 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
+import { toast } from 'vue3-toastify';
+
 import { useRoute, useRouter } from 'vue-router';
 import { getDrafter } from '@/api/userApi';
 import { createDrafter } from '@/api/drafterApi';
@@ -10,7 +12,6 @@ import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import DataTable from '@/components/DataTable.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import WarningText from '@/components/validation/WarningText.vue';
-import ShowToast from '@/components/toast/ShowToast.vue';
 import { getOrg } from '@/api/orgApi';
 
 const layoutType = inject('layoutType');
@@ -59,11 +60,6 @@ const fetchLatestSopInYear = async () => {
   }
 };
 
-const toastOption = ref({
-    isSucces: '',
-    operation: ''
-});
-
 // const formatNumber = () => {
 //     if (form.value.number) {
 //         // Pastikan angka menjadi tiga digit
@@ -102,7 +98,6 @@ const fetchOrg = async () => {
 
 // sop
 const submitSop = async () => {
-    toastOption.value.operation = 'post'
     try {
         if (form.value.drafter.length == 0) {
             return showDrafterWarning.value = true
@@ -130,15 +125,23 @@ const submitSop = async () => {
             })
         });
 
-        toastOption.value.isSucces = 'yes'
+        toast("Data berhasil ditambahkan!", {
+                "type": "success",
+                "autoClose": 3000,
+            });
+        
         console.log('sukses submit semua');
         setTimeout(() => {
             router.push(`/app/docs/${route.params.id}`)
         }, 2000) // Delay 2 detik
 
     } catch (error) {
-        toastOption.value.isSucces = 'no'
         console.error('Error saat mengirim data:', error);
+        toast(`Data gagal ditambahkan! <br> ${error} `, {
+            "type": "error",
+            "autoClose": 5000,
+            'dangerouslyHTMLString': true
+        });
     }
 };
 
@@ -153,8 +156,6 @@ onMounted(async() => {
 
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
-
-        <ShowToast :is-succes="toastOption.isSucces" :operation="toastOption.operation" />
 
         <PageTitle judul="Perbarui versi SOP" />
 

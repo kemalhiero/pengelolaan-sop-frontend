@@ -1,5 +1,7 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
+import { toast } from 'vue3-toastify';
+
 import { getOrg } from '@/api/orgApi';
 import { getDrafter } from '@/api/userApi';
 import { createDrafter } from '@/api/drafterApi';
@@ -11,7 +13,6 @@ import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import DataTable from '@/components/DataTable.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import WarningText from '@/components/validation/WarningText.vue';
-import ShowToast from '@/components/toast/ShowToast.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -31,11 +32,6 @@ const form = ref({
     id_org: '',
     drafter: [],
     description: ''
-});
-
-const toastOption = ref({
-    isSucces: '',
-    operation: ''
 });
 
 // const formatNumber = () => {
@@ -72,7 +68,6 @@ const showDrafterWarning = ref(false);
 
 // sop
 const submitSop = async () => {
-    toastOption.value.operation = 'post'
     try {
         if (form.value.drafter.length == 0) {
             return showDrafterWarning.value = true
@@ -97,7 +92,7 @@ const submitSop = async () => {
             }
         );
         console.log(resultSopdetail);
-        
+
         form.value.drafter.forEach(async (item) => {
             await createDrafter({
                 id_user: item.id,
@@ -105,15 +100,24 @@ const submitSop = async () => {
             })
         });
 
-        toastOption.value.isSucces = 'yes'
         console.log('sukses submit semua');
+
+        toast("Data berhasil ditambahkan!", {
+            "type": "success",
+            "autoClose": 2000,
+        });
+
         setTimeout(() => {
             router.push('/app/docs')
         }, 2000) // Delay 2 detik
 
     } catch (error) {
-        toastOption.value.isSucces = 'no'
         console.error('Error saat mengirim data:', error);
+        toast(`Data gagal ditambahkan! <br> ${error} `, {
+            "type": "error",
+            "autoClose": 5000,
+            'dangerouslyHTMLString': true
+        });
     }
 };
 
@@ -126,11 +130,6 @@ onMounted(() => {
 
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
-
-        <ShowToast 
-            :is-succes="toastOption.isSucces"
-            :operation="toastOption.operation"
-        />
 
         <PageTitle judul="Usulkan POS baru" />
 
@@ -157,8 +156,7 @@ onMounted(() => {
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg p-2.5">
                                     T/
                                 </span>
-                                <input type="number" min="1" max="999" required v-model="form.number"
-                                    @blur=""
+                                <input type="number" min="1" max="999" required v-model="form.number" @blur=""
                                     class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 min-w-12 w-full"
                                     title="Masukkan no urut sop">
                                 <span
@@ -214,13 +212,13 @@ onMounted(() => {
                                 Tambahkan User
                             </button>
 
-                            <WarningText v-show="showDrafterWarning" text="Jangan lupa untuk memilih user yang akan ditugaskan!" />
+                            <WarningText v-show="showDrafterWarning"
+                                text="Jangan lupa untuk memilih user yang akan ditugaskan!" />
 
                         </div>
 
                         <div class="col-span-2">
-                            <label for="description"
-                                class="block mb-2 text-sm font-medium text-gray-900">
+                            <label for="description" class="block mb-2 text-sm font-medium text-gray-900">
                                 Deskripsi<span class="text-red-600">*</span>
                             </label>
                             <textarea id="description" rows="8" v-model="form.description" required
@@ -258,17 +256,14 @@ onMounted(() => {
                 </div>
                 <!-- Modal body -->
                 <div class="p-4 md:p-5 space-y-4">
-                    <DataTable 
-                        :data="dataDrafter" 
-                        :columns="[ { field: 'name', label: 'Nama', sortable: true },]" 
-                        :searchable="['name']" 
-                        :table-type="'check'" 
-                        v-model="form.drafter" />
+                    <DataTable :data="dataDrafter" :columns="[{ field: 'name', label: 'Nama', sortable: true },]"
+                        :searchable="['name']" :table-type="'check'" v-model="form.drafter" />
                 </div>
                 <!-- Modal footer -->
                 <div
                     class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                    <button :disabled="form.drafter.length == 0" @click="showDrafterModal = false, showDrafterWarning = false" type="button"
+                    <button :disabled="form.drafter.length == 0"
+                        @click="showDrafterModal = false, showDrafterWarning = false" type="button"
                         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">
                         Pilih
                     </button>

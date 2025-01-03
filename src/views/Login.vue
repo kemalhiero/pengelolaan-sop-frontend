@@ -46,7 +46,7 @@ const login = async () => {
 
             toast("Berhasil masuk!", {
                 "type": "success",
-                "autoClose": 3000,
+                "autoClose": 2000,
             });
 
             switch (decoded.role) {
@@ -54,13 +54,13 @@ const login = async () => {
                 case 'penyusun':
                     setTimeout(() => {
                         router.push('/')
-                    }, 3000);
+                    }, 2000);
                     break;
                 case 'pj':
                 case 'kaprodi':
                     setTimeout(() => {
                         router.push('/app')
-                    }, 3000);
+                    }, 2000);
                     break;
                 default:
                     router.push('/unauthorized')
