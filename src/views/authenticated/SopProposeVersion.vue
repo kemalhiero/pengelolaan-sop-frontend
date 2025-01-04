@@ -1,10 +1,10 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
 import { toast } from 'vue3-toastify';
-
 import { useRoute, useRouter } from 'vue-router';
-import { getDrafter } from '@/api/userApi';
-import { createDrafter } from '@/api/drafterApi';
+
+import { getOrg } from '@/api/orgApi';
+import { createDrafter, getAllDrafter } from '@/api/drafterApi';
 import { createSopDetail, getLatestSopInYear, getOneSop } from '@/api/sopApi';
 
 import PageTitle from '@/components/authenticated/PageTitle.vue';
@@ -12,7 +12,6 @@ import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import DataTable from '@/components/DataTable.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import WarningText from '@/components/validation/WarningText.vue';
-import { getOrg } from '@/api/orgApi';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -71,7 +70,7 @@ const fetchLatestSopInYear = async () => {
 const dataDrafter = ref([]);
 const fetchDrafter = async () => {
     try {
-        const result = await getDrafter();
+        const result = await getAllDrafter();
         dataDrafter.value = result.data;
     } catch (error) {
         console.error('Fetch error:', error);

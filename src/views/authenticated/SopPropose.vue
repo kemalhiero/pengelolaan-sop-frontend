@@ -1,16 +1,15 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 
 import { getOrg } from '@/api/orgApi';
-import { getDrafter } from '@/api/userApi';
-import { createDrafter } from '@/api/drafterApi';
+import { createDrafter, getAllDrafter } from '@/api/drafterApi';
 import { createSop, createSopDetail } from '@/api/sopApi';
-import { useRouter } from 'vue-router';
 
+import DataTable from '@/components/DataTable.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
-import DataTable from '@/components/DataTable.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import WarningText from '@/components/validation/WarningText.vue';
 
@@ -45,7 +44,6 @@ const form = ref({
 const fetchOrg = async () => {
     try {
         const result = await getOrg();
-        console.log(result)
         dataOrg.value = result.data;
     } catch (error) {
         console.error('Fetch error:', error);
@@ -55,7 +53,7 @@ const fetchOrg = async () => {
 // penugasan
 const fetchDrafter = async () => {
     try {
-        const result = await getDrafter();
+        const result = await getAllDrafter();
         dataDrafter.value = result.data;
     } catch (error) {
         console.error('Fetch error:', error);
@@ -103,8 +101,8 @@ const submitSop = async () => {
         console.log('sukses submit semua');
 
         toast("Data berhasil ditambahkan!", {
-            "type": "success",
-            "autoClose": 2000,
+            type: "success",
+            autoClose: 2000,
         });
 
         setTimeout(() => {

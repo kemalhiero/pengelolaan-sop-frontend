@@ -3,8 +3,10 @@ import { inject, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { registUser } from '@/api/userApi';
 import { toast } from "vue3-toastify";
+import ErrorText from '@/components/validation/ErrorText.vue';
 
 const router = useRouter();
+
 const isPasswordConfirmSimilar = ref(true);
 const isGenderPresent = ref(true);
 const isEntryDuplicate = ref({
@@ -30,9 +32,14 @@ const regist = async () => {
     try {
         if (!form.value.gender || (form.value.gender != 'pria' && form.value.gender != 'wanita')) {
             isGenderPresent.value = false;
-        }
+        } else {
+            isGenderPresent.value = true;
+        };
+
         if (form.value.password !== form.value.confirm_password) {
             isPasswordConfirmSimilar.value = false;
+        } else {
+            isPasswordConfirmSimilar.value = true;
         };
         // console.log(form.value);
 
@@ -49,17 +56,16 @@ const regist = async () => {
             }, 3000);
         } else {
             if (dataRegist.status == 409) {
-                switch (dataRegist.error.field) {
-                    case "identity_number":
-                        isEntryDuplicate.value.id_number = true
-                        isEntryDuplicate.value.email = false
-                        break;
-                    case "email":
-                        isEntryDuplicate.value.id_number = false
-                        isEntryDuplicate.value.email = true
-                        break;
-                    default:
-                        break;
+                
+                if (dataRegist.error.field == "identity_number") {
+                    isEntryDuplicate.value.id_number = true
+                    isEntryDuplicate.value.email = false
+                } else if (dataRegist.error.field == "email") {
+                    isEntryDuplicate.value.email = true
+                    isEntryDuplicate.value.id_number = false
+                } else {
+                    isEntryDuplicate.value.id_number = false
+                    isEntryDuplicate.value.email = false
                 }
             }
             // form.value.password = '';
@@ -101,8 +107,8 @@ const regist = async () => {
                         <input type="text" v-model="form.id_number" id="idname" minlength="10" maxlength="18"
                             class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                             placeholder="2011520000" autofocus required>
-                        <p v-show="isEntryDuplicate.id_number === true" class="mt-2 text-sm text-red-600"><span
-                                class="font-medium">Opss</span> NIM/NIP ini tidak dapat didaftarkan lagi!</p>
+                        <ErrorText v-show="isEntryDuplicate.id_number === true"
+                            text="NIM/NIP ini tidak dapat didaftarkan lagi!" />
                     </div>
                     <div>
                         <label class="block mb-2 text-sm font-medium text-gray-900">Jenis kelamin</label>
@@ -118,16 +124,15 @@ const regist = async () => {
                                 <label for="wanita" class="ms-2 text-sm font-medium text-gray-900">Wanita</label>
                             </div>
                         </div>
-                        <p v-show="isGenderPresent === false" class="mt-2 text-sm text-red-600"><span
-                                class="font-medium">Opss</span> Pilih jenis kelamin!</p>
+                        <ErrorText v-show="isGenderPresent === false" text="Pilih jenis kelamin!" />
                     </div>
                     <div>
                         <label for="email" class="block mb-2 text-sm font-medium text-gray-900">Email</label>
                         <input type="email" v-model="form.email" id="email"
                             class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                             placeholder="nama@student.unand.ac.id" autofocus required>
-                        <p v-show="isEntryDuplicate.email === true" class="mt-2 text-sm text-red-600"><span
-                                class="font-medium">Opss</span> Email ini tidak dapat didaftarkan lagi!</p>
+                        <ErrorText v-show="isEntryDuplicate.email === true"
+                            text="Email ini tidak dapat didaftarkan lagi!" />
                     </div>
                     <div>
                         <label for="password" class="block mb-2 text-sm font-medium text-gray-900">Sandi</label>
@@ -143,8 +148,7 @@ const regist = async () => {
                             placeholder="ketikkan sandi...." minlength="5"
                             class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                             required>
-                        <p v-show="isPasswordConfirmSimilar === false" class="mt-2 text-sm text-red-600"><span
-                                class="font-medium">Opss</span> Sandi tidak sesuai!</p>
+                        <ErrorText v-show="isPasswordConfirmSimilar === false" text="Sandi tidak sesuai!" />
                     </div>
                     <button type="submit"
                         class="w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Daftar</button>

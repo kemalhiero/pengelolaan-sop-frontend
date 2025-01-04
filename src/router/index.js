@@ -171,16 +171,6 @@ const router = createRouter({
         roles: ['pj', 'kaprodi']
       }
     },
-
-    // Test
-    {
-      path: '/test1',
-      component: () => import('@/views/test/Test1.vue')
-    },
-    {
-      path: '/test2',
-      component: () => import('@/views/test/Test2.vue')
-    },
   ]
 });
 

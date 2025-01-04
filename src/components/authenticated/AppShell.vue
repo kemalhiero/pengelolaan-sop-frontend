@@ -1,33 +1,33 @@
 <script setup>
 import { initCollapses, initDropdowns, initTooltips, initDrawers } from 'flowbite';
 import { onMounted } from 'vue';
-import { logoutUser } from '@/api/userApi';
-import { useAuthStore } from '@/stores/auth';
 import { toast } from 'vue3-toastify';
 import { useRouter } from 'vue-router';
 
+import { logoutUser } from '@/api/userApi';
+import { useAuthStore } from '@/stores/auth';
+import getToken from '@/utils/getToken';
+
 import NavbarNotification from './NavbarNotification.vue';
 // import SidebarSetting from './SidebarSetting.vue';
-
-// const routes = []
 
 // icon svg
 import PageIcon from '@/assets/icons/PageIcon.vue'
 import AngleDownIcon from '@/assets/icons/AngleDownIcon.vue';
 import DashboardIcon from '@/assets/icons/DashboardIcon.vue';
-// import SidebarNominalIndicator from '../indicator/SidebarNominalIndicator.vue';
-// import StackDocumentIcon from '@/assets/icons/StackDocumentIcon.vue';
-// import TaskIcon from '@/assets/icons/TaskIcon.vue';
 import HelpIcon from '@/assets/icons/HelpIcon.vue';
 import BuildingIcon from '../../assets/icons/BuildingIcon.vue';
 import ScaleBalanced from '@/assets/icons/ScaleBalanced.vue';
 import FeedbackIcon from '@/assets/icons/FeedbackIcon.vue';
+// import SidebarNominalIndicator from '../indicator/SidebarNominalIndicator.vue';
+// import StackDocumentIcon from '@/assets/icons/StackDocumentIcon.vue';
+// import TaskIcon from '@/assets/icons/TaskIcon.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
 
 const handleLogout = async () => {
-    await logoutUser(localStorage.getItem('token'))
+    await logoutUser(getToken());
     authStore.logout();
     toast("Berhasil keluar!", {
         "type": "success",

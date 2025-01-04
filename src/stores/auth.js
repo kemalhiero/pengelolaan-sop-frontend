@@ -1,6 +1,7 @@
-import { jwtDecode } from 'jwt-decode';
-import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
+import { defineStore } from 'pinia';
+import { jwtDecode } from 'jwt-decode';
+import getToken from '@/utils/getToken';
 
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -18,13 +19,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Mengambil data dari localStorage saat inisialisasi
   const initializeAuth = () => {
-    let savedToken;
-    if (rememberMe.value) {
-      savedToken = localStorage.getItem('token');
-    } else {
-      savedToken = sessionStorage.getItem('token');
-    }
-
+    const savedToken = getToken();
     if (savedToken) {
       try {
         token.value = savedToken;
@@ -71,7 +66,7 @@ export const useAuthStore = defineStore('auth', () => {
   const setRememberMe = (value) => {
     rememberMe.value = value
     localStorage.setItem('rememberMe', value.toString())
-  }
+  };
 
   return {
     isAuthenticated,

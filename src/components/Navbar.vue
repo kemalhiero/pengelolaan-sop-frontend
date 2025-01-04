@@ -1,14 +1,15 @@
 <script setup>
 import { initDrawers } from 'flowbite';
 import { onMounted } from 'vue';
+import { toast } from 'vue3-toastify';
 import { useAuthStore } from '@/stores/auth';
 import { logoutUser } from '@/api/userApi';
-import { toast } from 'vue3-toastify';
+import getToken from '@/utils/getToken';
 
 const authStore = useAuthStore();
 
 const handleLogout = async () => {
-  await logoutUser(localStorage.getItem('token'))
+  await logoutUser(getToken());
   authStore.logout();
   toast("Berhasil keluar!", {
     "type": "success",
