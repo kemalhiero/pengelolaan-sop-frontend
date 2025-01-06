@@ -50,7 +50,7 @@ onMounted(() => {
                         { field: 'org_name', label: 'Organisasi', sortable: true },
                     ]"
                     :status-columns="[
-                        { field: 'is_active', label: 'Status' }
+                        { field: 'is_approved', label: 'Status' }
                     ]"
                     :searchable="['name', 'creation_date', 'org_name']"
                     table-type="link"

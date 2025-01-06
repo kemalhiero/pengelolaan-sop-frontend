@@ -1,10 +1,11 @@
 <script setup>
 import { initDrawers } from 'flowbite';
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import { toast } from 'vue3-toastify';
 import { useAuthStore } from '@/stores/auth';
 import { logoutUser } from '@/api/userApi';
 import getToken from '@/utils/getToken';
+import { getAssignment } from '@/api/sopApi';
 
 const authStore = useAuthStore();
 
@@ -17,8 +18,20 @@ const handleLogout = async () => {
   });
 };
 
+const assignmentNumber = ref(0)
+const fetchData = async () => {
+    try {
+        const result = await getAssignment();
+        assignmentNumber.value = result.data.length;
+    } catch (error) {
+        assignmentNumber.value = null;
+        console.error(error);
+    }
+};
+
 onMounted(() => {
   initDrawers();
+  fetchData();
 })
 </script>
 
@@ -107,9 +120,9 @@ onMounted(() => {
               class="block py-2 px-3 md:p-0 rounded hover:bg-gray-100 md:hover:bg-transparent hover:text-blue-500">
               Penugasan
               <!-- Notifikasi -->
-              <span
+              <span v-show="assignmentNumber > 0"
                 class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full transform translate-x-1/2 -translate-y-2">
-                9
+                {{ assignmentNumber }}
               </span>
             </RouterLink>
 
