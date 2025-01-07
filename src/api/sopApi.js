@@ -10,6 +10,8 @@ const getLatestSopInYear = (year) => getRequest(`sop/latest/year?year=${year}`);
 const createSopDetail = (id, data) => postRequest(`sop/detail?id=${id}`, data, getToken());
 const updateSopDetail = (id, data) => patchRequest(`sop/detail?id=${id}`, data, getToken());
 
+const getManagedSop = () => getRequest(`sop/managed`, getToken());
+
 const getAssignment = () => getRequest(`sop/assignment`, getToken());
 const getAssignmentDetail = (id) => getRequest(`sop/assignment/${id}`, getToken());
 
@@ -22,6 +24,6 @@ const deleteSopStep = (id) => deleteRequest(`sop/step?id=${id}`, getToken());
 
 export {
     getAllSop, createSop, getOneSop,               //tabel sop
-    createSopDetail, updateSopDetail, getAssignment, getAssignmentDetail, getSectionandWarning, getLatestSopInYear,       //tabel detail sop
+    createSopDetail, updateSopDetail, getAssignment, getAssignmentDetail, getSectionandWarning, getLatestSopInYear, getManagedSop,      //tabel detail sop
     createSopStep, getSopStep, updateSopStep, deleteSopStep    //tabel sop step
 };

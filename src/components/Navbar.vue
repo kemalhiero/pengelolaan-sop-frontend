@@ -2,20 +2,28 @@
 import { initDrawers } from 'flowbite';
 import { onMounted, ref } from 'vue';
 import { toast } from 'vue3-toastify';
+import { useRouter } from 'vue-router';
+
+import getToken from '@/utils/getToken';
 import { useAuthStore } from '@/stores/auth';
 import { logoutUser } from '@/api/userApi';
-import getToken from '@/utils/getToken';
 import { getAssignment } from '@/api/sopApi';
 
 const authStore = useAuthStore();
+const router = useRouter();
 
 const handleLogout = async () => {
   await logoutUser(getToken());
   authStore.logout();
+
   toast("Berhasil keluar!", {
     "type": "success",
     "autoClose": 3000,
   });
+  
+  setTimeout(() => {
+      router.replace('/');
+  }, 3000);
 };
 
 const assignmentNumber = ref(0)

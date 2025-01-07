@@ -47,7 +47,7 @@ const router = createRouter({
       name: 'DownloadSop',
       component: () => import('@/views/sop/SopDownload.vue')
     },
-    
+
     // Authenticated
     {
       path: '/assignment',
@@ -67,7 +67,7 @@ const router = createRouter({
         roles: ['penyusun']
       }
     },
-    
+
     // App
     {
       path: '/app',
@@ -106,7 +106,11 @@ const router = createRouter({
       }
     },
     {
-      path: '/app/lawbasis',
+      path: '/app/law',
+      redirect: { name: 'SopLawBasis' }
+    },
+    {
+      path: '/app/law/basis',
       name: 'SopLawBasis',
       component: () => import('@/views/authenticated/SopLawBasis.vue'),
       meta: {
@@ -115,7 +119,7 @@ const router = createRouter({
       }
     },
     {
-      path: '/app/lawtype',
+      path: '/app/law/type',
       name: 'SopLawType',
       component: () => import('@/views/authenticated/SopLawType.vue'),
       meta: {
@@ -152,6 +156,37 @@ const router = createRouter({
       name: 'SopAgreement',
       component: () => import('@/views/authenticated/SopAgreement.vue'),
       // TODO lupa buat apa😔
+    },
+    {
+      path: '/app/role',
+      redirect: { name: 'KaprodiManagement' }
+    },
+    {
+      path: '/app/role/hod',
+      name: 'KaprodiManagement',
+      component: () => import('@/views/authenticated/roleManagement/DepartementHead.vue'),
+      meta: {
+        requiresAuth: true,
+        roles: ['kaprodi']
+      }
+    },
+    {
+      path: '/app/role/pic',
+      name: 'PicManagement',
+      component: () => import('@/views/authenticated/roleManagement/PiC.vue'),
+      meta: {
+        requiresAuth: true,
+        roles: ['kaprodi']
+      }
+    },
+    {
+      path: '/app/role/drafter',
+      name: 'DrafterManagement',
+      component: () => import('@/views/authenticated/roleManagement/Drafter.vue'),
+      meta: {
+        requiresAuth: true,
+        roles: ['kaprodi', 'pj']
+      }
     },
     {
       path: '/app/feedback',

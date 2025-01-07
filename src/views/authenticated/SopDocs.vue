@@ -1,6 +1,6 @@
 <script setup>
 import { inject, onMounted, ref } from "vue";
-import { getAllSop } from "@/api/sopApi";
+import { getManagedSop } from "@/api/sopApi";
 
 import CirclePlusIcon from "@/assets/icons/CirclePlusIcon.vue";
 import PageTitle from "@/components/authenticated/PageTitle.vue";
@@ -16,7 +16,7 @@ const data = ref([]);
 const fetchData = async () => {
     try {
         data.value = [];
-        const result = await getAllSop();
+        const result = await getManagedSop();
         data.value = result.data;
     } catch (error) {
         data.value = null;

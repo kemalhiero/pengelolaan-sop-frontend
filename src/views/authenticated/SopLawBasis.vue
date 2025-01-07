@@ -193,7 +193,61 @@ onMounted(() => {
             </div>
 
             <!-- Komponen AddDataModal -->
-            <AddDataModal modalTitle="Tambahkan peraturan baru" :showModal="showAddModal" :formFields="[
+            <AddDataModal 
+                modalTitle="Tambahkan peraturan baru" 
+                :showModal="showAddModal" 
+                :formFields="[
+                    {
+                        id: 'id_law_type',
+                        label: 'Jenis Peraturan',
+                        type: 'select',
+                        placeholder: 'Pilih jenis peraturan',
+                        required: true,
+                        options: tipePeraturan,
+                        optionValue: 'id',
+                        optionLabel: 'law_type'
+                    },
+                    { id: 'number', label: 'Nomor', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 95', required: true, min: 1, max: 999 },
+                    { id: 'year', label: 'Tahun', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 2022', required: true, min: 1945, max: new Date().getFullYear() },
+                    { id: 'about', label: 'Pembahasan', type: 'textarea', placeholder: 'Misal: Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas', required: true }
+                ]" 
+                :formData="form" 
+                :submitData="submitData" 
+                @update:showModal="showAddModal = $event" 
+            />
+
+            <template v-if="data">
+                <DataTable v-if="data.length > 0" 
+                    :data="data" 
+                    :columns="[
+                        { field: 'law_type', label: 'Jenis', sortable: true },
+                        { field: 'number', label: 'Nomor', sortable: true },
+                        { field: 'year', label: 'Tahun', sortable: true },
+                        { field: 'about', label: 'Tentang', sortable: false }
+                    ]" 
+                    :searchable="['law_type', 'number', 'year', 'about']" 
+                    @edit="openUpdateModal"
+                    @delete="openDeleteModal" 
+                    table-type="crud" 
+                />
+                <PulseLoading v-else-if="data.length == 0" />
+            </template>
+            <Error @click="fetchData" v-else />
+        </div>
+
+        <!-- Komponen DeleteDataModal -->
+        <DeleteDataModal 
+            :showModal="showModalDelete" 
+            :deleteData="deleteData" 
+            :selectedId="selectedDeleteId"
+            @update:showModal="showModalDelete = $event" 
+        />
+
+        <!-- modal edit -->
+        <EditDataModal 
+            modalTitle="Perbarui dasar hukum" 
+            :showModal="showModalUpdate" 
+            :formFields="[
                 {
                     id: 'id_law_type',
                     label: 'Jenis Peraturan',
@@ -207,42 +261,12 @@ onMounted(() => {
                 { id: 'number', label: 'Nomor', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 95', required: true, min: 1, max: 999 },
                 { id: 'year', label: 'Tahun', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 2022', required: true, min: 1945, max: new Date().getFullYear() },
                 { id: 'about', label: 'Pembahasan', type: 'textarea', placeholder: 'Misal: Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas', required: true }
-            ]" :formData="form" :submitData="submitData" @update:showModal="showAddModal = $event" />
-
-            <template v-if="data">
-                <DataTable v-if="data.length > 0" :data="data" :columns="[
-                    { field: 'law_type', label: 'Jenis', sortable: true },
-                    { field: 'number', label: 'Nomor', sortable: true },
-                    { field: 'year', label: 'Tahun', sortable: true },
-                    { field: 'about', label: 'Tentang', sortable: false }
-                ]" :searchable="['law_type', 'number', 'year', 'about']" @edit="openUpdateModal"
-                    @delete="openDeleteModal" table-type="crud" />
-                <PulseLoading v-else-if="data.length == 0" />
-            </template>
-            <Error @click="fetchData" v-else />
-        </div>
-
-        <!-- Komponen DeleteDataModal -->
-        <DeleteDataModal :showModal="showModalDelete" :deleteData="deleteData" :selectedId="selectedDeleteId"
-            @update:showModal="showModalDelete = $event" />
-
-        <!-- modal edit -->
-        <EditDataModal modalTitle="Perbarui dasar hukum" :showModal="showModalUpdate" :formFields="[
-            {
-                id: 'id_law_type',
-                label: 'Jenis Peraturan',
-                type: 'select',
-                placeholder: 'Pilih jenis peraturan',
-                required: true,
-                options: tipePeraturan,
-                optionValue: 'id',
-                optionLabel: 'law_type'
-            },
-            { id: 'number', label: 'Nomor', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 95', required: true, min: 1, max: 999 },
-            { id: 'year', label: 'Tahun', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 2022', required: true, min: 1945, max: new Date().getFullYear() },
-            { id: 'about', label: 'Pembahasan', type: 'textarea', placeholder: 'Misal: Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas', required: true }
-        ]" :formData="form" :updateData="updateData" :selectedId="selectedUpdateId"
-            @update:showModal="showModalUpdate = $event" />
+            ]" 
+            :formData="form" 
+            :updateData="updateData" 
+            :selectedId="selectedUpdateId"
+            @update:showModal="showModalUpdate = $event" 
+        />
 
     </main>
 </template>

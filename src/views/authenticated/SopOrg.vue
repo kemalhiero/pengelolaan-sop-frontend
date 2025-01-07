@@ -1,7 +1,7 @@
 <script setup>
-import { inject, onMounted, ref } from 'vue';
-import { initModals } from 'flowbite';
 import { toast } from 'vue3-toastify';
+import { inject, onMounted, ref } from 'vue';
+import { getAllDrafter } from '@/api/drafterApi';
 import { getOrg, createOrg, updateOrg, deleteOrg } from '@/api/orgApi.js';
 
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
@@ -18,26 +18,43 @@ const layoutType = inject('layoutType');
 layoutType.value = 'admin';
 
 const data = ref([]);
-const form = ref({
+const defaultFormState = {
     id_pic: '',
     name: '',
     level: '',
     about: '',
     id_org_parent: null
-});
+};
 
-const pic = [
-    { id: 'hk', name: 'Husnil Kamil' },
-    { id: 'ra', name: 'Ricky Akbar' },
-    { id: 'jr', name: 'Jefril Rahmadoni' },
-];
+// Gunakan ref dengan nilai awal defaultFormState
+const form = ref({ ...defaultFormState });
+
+// Fungsi untuk mereset form ke nilai default
+const resetForm = () => {
+    form.value = { ...defaultFormState };
+};
+
+const pic = ref([]);
+
+// Fungsi untuk fetch data dari API
+const fetchDataPic = async () => {
+    try {
+        pic.value = [];
+        const result = await getAllDrafter();
+        console.log('drafter', result)
+        pic.value = result.data;
+    } catch (error) {
+        data.value = null;
+        console.error('Fetch error:', error);
+    }
+};
 
 const level = [
     { id: 'laboratorium', name: 'Laboratorium' },
     { id: 'departemen', name: 'Departemen' },
 ]
 
-const fetchData = async () => {
+const fetchDataOrg = async () => {
     try {
         data.value = [];
         const result = await getOrg();
@@ -50,9 +67,14 @@ const fetchData = async () => {
 
 // tampil modal untuk tambah data
 const showAddModal = ref(false);
+const openAddModal = () => {
+    resetForm(); // Reset form sebelum membuka modal
+    showAddModal.value = true;
+};
 
 const addData = async () => {
     try {
+
         const newItem = {
             id_pic: form.value.id_pic || 'oyoyooy',
             name: form.value.name,
@@ -62,16 +84,10 @@ const addData = async () => {
         };
 
         await createOrg(newItem);
-        form.value = {
-            id_pic: '',
-            name: '',
-            level: '',
-            about: '',
-            id_org_parent: null
-        };
+        resetForm();
 
         showAddModal.value = false;
-        fetchData(); // refresh item list
+        fetchDataOrg(); // refresh item list
 
         toast("Data berhasil ditambahkan!", {
             "type": "success",
@@ -122,16 +138,24 @@ const showModalUpdate = ref(false);
 const selectedUpdateId = ref(null);
 let dataYangDitemukan;
 
+// Update fungsi openUpdateModal
 const openUpdateModal = (id) => {
-    console.log('id update', id);
-    selectedUpdateId.value = id; // Menyimpan ID yang dipilih
-    showModalUpdate.value = true; // Tampilkan modal
-
+    selectedUpdateId.value = id;
+    showModalUpdate.value = true;
+    
     dataYangDitemukan = data.value.find(item => item.id === id);
-    form.value = { ...dataYangDitemukan };
-
     if (dataYangDitemukan) {
-        console.log(dataYangDitemukan);
+        // console.log('Data yang ditemukan:', dataYangDitemukan);
+        // console.log('PIC data:', dataYangDitemukan.pic);
+        form.value = {
+            id_pic: dataYangDitemukan.pic.id,
+            name: dataYangDitemukan.name,
+            level: dataYangDitemukan.level,
+            about: dataYangDitemukan.about,
+            id_org_parent: dataYangDitemukan.id_org_parent
+        };
+        // console.log('Data form:', form.value);
+        // console.log('Form value setelah diset:', form.value);
     } else {
         console.log("Data tidak ditemukan");
     }
@@ -140,14 +164,7 @@ const openUpdateModal = (id) => {
 const closeUpdateModal = () => {
     showModalUpdate.value = false; // Sembunyikan modal
     selectedUpdateId.value = null; // Reset ID setelah modal ditutup
-
-    form.value = {
-        id_pic: '',
-        name: '',
-        level: '',
-        about: '',
-        id_org_parent: ''
-    };
+    resetForm();
 };
 
 const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan ID
@@ -164,7 +181,7 @@ const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan I
         console.log(response);
         console.log(`Data dengan ID ${id} berhasil diperbarui`);
 
-        fetchData();
+        fetchDataOrg();
         closeUpdateModal(); // Tutup modal setelah penghapusan
 
         toast("Data berhasil diperbarui!", {
@@ -178,8 +195,8 @@ const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan I
 };
 
 onMounted(() => {
-    initModals();
-    fetchData()
+    fetchDataOrg();
+    fetchDataPic();
 })
 
 </script>
@@ -193,34 +210,44 @@ onMounted(() => {
 
             <!-- modal tambah aturan -->
             <div class="flex justify-end mb-4">
-                <AddDataButton btnLabel="Input Organisasi Baru" @click="showAddModal = true" />
+                <AddDataButton btnLabel="Input Organisasi Baru" @click="openAddModal" />
             </div>
 
             <!-- Komponen AddDataModal -->
-            <AddDataModal modalTitle="Tambahkan organisasi baru" :showModal="showAddModal" :formFields="[
-                { id: 'name', label: 'Nama', type: 'text', placeholder: 'Mis. Laboratorium Aplikasi Perusahaan', required: true, minlength: 5, maxlength: 100 },
-                {
-                    id: 'id_pic',
-                    label: 'Penanggung Jawab',
-                    type: 'select',
-                    placeholder: 'Pilih PJ',
-                    required: false,         //sementara false, karena belum ada dari be
-                    options: pic,
-                    optionValue: 'id',
-                    optionLabel: 'name'
-                },
-                {
-                    id: 'level',
-                    label: 'Level',
-                    type: 'select',
-                    placeholder: 'Pilih level',
-                    required: true,
-                    options: level,
-                    optionValue: 'id',
-                    optionLabel: 'name'
-                },
-                { id: 'about', label: 'Keterangan', type: 'textarea', placeholder: 'ketikkan keterangan tambahan mengenai organisasi' }
-            ]" :formData="form" :submitData="addData" @update:showModal="showAddModal = $event" />
+            <AddDataModal 
+                modalTitle="Tambahkan organisasi baru" 
+                :showModal="showAddModal" 
+                :formFields="[
+                    { id: 'name', label: 'Nama', type: 'text', placeholder: 'Mis. Laboratorium Aplikasi Perusahaan', required: true, minlength: 5, maxlength: 100 },
+                    {
+                        id: 'id_pic',
+                        label: 'Penanggung Jawab',
+                        type: 'select',
+                        placeholder: 'Pilih PJ',
+                        required: false,         //sementara false, karena belum ada dari be
+                        options: pic,
+                        optionValue: 'id',
+                        optionLabel: 'name'
+                    },
+                    {
+                        id: 'level',
+                        label: 'Level',
+                        type: 'select',
+                        placeholder: 'Pilih level',
+                        required: true,
+                        options: level,
+                        optionValue: 'id',
+                        optionLabel: 'name'
+                    },
+                    { id: 'about', label: 'Keterangan', type: 'textarea', placeholder: 'ketikkan keterangan tambahan mengenai organisasi' }
+                ]" 
+                :formData="form" 
+                :submitData="addData" 
+                @update:showModal="(val) => {
+                    showAddModal = val;
+                    if (!val) resetForm();
+                }" 
+            />
 
             <template v-if="data">
                 <div v-if="data.length > 0" class="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -276,40 +303,51 @@ onMounted(() => {
                 </div>
                 <PulseLoading v-else-if="data.length == 0" />
             </template>
-            <Error @click="fetchData" v-else />
+            <Error @click="fetchDataOrg" v-else />
 
         </div>
 
         <!-- modal edit -->
-        <EditDataModal modalTitle="Perbarui data organisasi" :showModal="showModalUpdate" :formFields="[
-            { id: 'name', label: 'Nama', type: 'text', placeholder: 'Mis. Laboratorium Aplikasi Perusahaan', required: true, minlength: 5, maxlength: 100 },
-            {
-                id: 'id_pic',
-                label: 'Penanggung Jawab',
-                type: 'select',
-                placeholder: 'Pilih PJ',
-                required: false,         //sementara false, karena belum ada dari be
-                options: pic,
-                optionValue: 'id',
-                optionLabel: 'name'
-            },
-            {
-                id: 'level',
-                label: 'Level',
-                type: 'select',
-                placeholder: 'Pilih level',
-                required: true,
-                options: level,
-                optionValue: 'id',
-                optionLabel: 'name'
-            },
-            { id: 'about', label: 'Keterangan', type: 'textarea', placeholder: 'ketikkan keterangan tambahan mengenai organisasi' }
-        ]" :formData="form" :updateData="updateData" :selectedId="selectedUpdateId"
-            @update:showModal="showModalUpdate = $event" />
+        <EditDataModal
+            modalTitle="Perbarui data organisasi" 
+            :showModal="showModalUpdate" 
+            :formFields="[
+                { id: 'name', label: 'Nama', type: 'text', placeholder: 'Mis. Laboratorium Aplikasi Perusahaan', required: true, minlength: 5, maxlength: 100 },
+                {
+                    id: 'id_pic',
+                    label: 'Penanggung Jawab',
+                    type: 'select',
+                    placeholder: 'Pilih PJ',
+                    required: true,
+                    options: pic,
+                    optionValue: 'id',
+                    optionLabel: 'name'
+                },
+                {
+                    id: 'level',
+                    label: 'Level',
+                    type: 'select',
+                    placeholder: 'Pilih level',
+                    required: true,
+                    options: level,
+                    optionValue: 'id',
+                    optionLabel: 'name'
+                },
+                { id: 'about', label: 'Keterangan', type: 'textarea', placeholder: 'ketikkan keterangan tambahan mengenai organisasi' }
+            ]" 
+            :formData="form" 
+            :updateData="updateData" 
+            :selectedId="selectedUpdateId"
+            @update:showModal="showModalUpdate = $event" 
+        />
 
         <!-- Komponen DeleteDataModal -->
-        <DeleteDataModal :showModal="showModalDelete" :deleteData="deleteData" :selectedId="selectedDeleteId"
-            @update:showModal="showModalDelete = $event" />
+        <DeleteDataModal 
+            :showModal="showModalDelete"
+            :deleteData="deleteData" 
+            :selectedId="selectedDeleteId"
+            @update:showModal="showModalDelete = $event" 
+        />
 
     </main>
 </template>
