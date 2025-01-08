@@ -48,13 +48,20 @@ onMounted(() => {
             </div>
 
             <template v-if="data">
-                <DataTable v-if="data.length > 0" :data="data" :columns="[
-                    { field: 'name', label: 'Nama', sortable: true },
-                    { field: 'org_name', label: 'Organisasi', sortable: true },
-                ]" :status-columns="[
+                <DataTable v-if="data.length > 0" 
+                    :data="data" 
+                    :columns="[
+                        { field: 'name', label: 'Nama', sortable: true },
+                        { field: 'org_name', label: 'Organisasi', sortable: true },
+                    ]" 
+                    :status-columns="[
                         { field: 'is_active', label: 'Status' }
-                    ]" :searchable="['name', 'org_name']" table-type="link" detail-link="/app/docs"
-                    :badge-text="['Tidak Berlaku', 'Berlaku', 'Belum Berlaku']" />
+                    ]" 
+                    :searchable="['name', 'org_name']" 
+                    :link-column="true"
+                    detail-link="/app/docs"
+                    :badge-text="['Tidak Berlaku', 'Berlaku', 'Belum Berlaku']" 
+                />
                 <PulseLoading v-else-if="data.length == 0" />
             </template>
             <Error @click="fetchData" v-else />

@@ -1,8 +1,17 @@
 <script setup>
-import { inject } from 'vue';
+import EyeIcon from '@/assets/icons/EyeIcon.vue';
+import EyeSlashIcon from '@/assets/icons/EyeSlashIcon.vue';
+import { inject, ref } from 'vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = null;
+
+const showPw = ref({
+    password: false,
+    confirm_password: false
+});
+const togglePassword = () => { showPw.value.password = !showPw.value.password };
+const toggleConfirmPassword = () => { showPw.value.confirm_password = !showPw.value.confirm_password };
 </script>
 
 <template>
@@ -25,17 +34,32 @@ layoutType.value = null;
                     </div>
                     <div>
                         <label for="password" class="block mb-2 text-sm font-medium text-gray-900">Sandi baru</label>
-                        <input type="password" name="password" id="password" placeholder="ketikkan sandi"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                            required minlength="5">
+                        <div class="relative">
+                            <input :type="showPw.password ? 'text' : 'password'" name="password" id="password"
+                                placeholder="ketikkan sandi"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
+                                required minlength="5">
+                            <button type="button" @click="togglePassword"
+                                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                                <EyeIcon v-if="showPw.password" class="h-5 w-5" />
+                                <EyeSlashIcon v-else class="h-5 w-5" />
+                            </button>
+                        </div>
                     </div>
                     <div>
                         <label for="confirm-password" class="block mb-2 text-sm font-medium text-gray-900">Konfirmasi
                             sandi</label>
-                        <input type="password" name="confirm-password" id="confirm-password"
-                            placeholder="ketikkan sandi"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                            required minlength="5">
+                        <div class="relative">
+                            <input :type="showPw.confirm_password ? 'text' : 'password'" name="confirm-password"
+                                id="confirm-password" placeholder="ketikkan sandi"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
+                                required minlength="5">
+                            <button type="button" @click="toggleConfirmPassword"
+                                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                                <EyeIcon v-if="showPw.confirm_password" class="h-5 w-5" />
+                                <EyeSlashIcon v-else class="h-5 w-5" />
+                            </button>
+                        </div>
                     </div>
                     <!-- <div class="flex items-start">
                         <div class="flex items-center h-5">

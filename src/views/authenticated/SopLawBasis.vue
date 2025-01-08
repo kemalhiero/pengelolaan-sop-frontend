@@ -18,12 +18,17 @@ layoutType.value = 'admin';
 
 const tipePeraturan = ref([]);
 const data = ref([]);
-const form = ref({
+const defaultFormState = {
     id_law_type: '',
     number: null,
     year: null,
     about: ''
-});
+};
+const form = ref({ ...defaultFormState });
+
+const resetForm = () => {
+    form.value = { ...defaultFormState };
+};
 
 // Fetch data untuk tabel
 const fetchTipePeraturan = async () => {
@@ -48,18 +53,16 @@ const fetchData = async () => {
 
 // tampil modal tambah data
 const showAddModal = ref(false);
+const openAddModal = () => {
+    resetForm(); // Reset form sebelum membuka modal
+    showAddModal.value = true;
+};
 
 // submit data
 const submitData = async () => {
     try {
         await createLawBasis(form.value);
-
-        form.value = {
-            id_law_type: '',
-            number: '',
-            year: '',
-            about: ''
-        };
+        resetForm();
 
         showAddModal.value = false;
         fetchData();
@@ -141,13 +144,7 @@ const openUpdateModal = (id) => {
 const closeUpdateModal = () => {
     showModalUpdate.value = false; // Sembunyikan modal
     selectedUpdateId.value = null; // Reset ID setelah modal ditutup
-
-    form.value = {
-        id_law_type: '',
-        number: '',
-        year: '',
-        about: ''
-    };
+    resetForm();
 };
 
 const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan ID
@@ -189,7 +186,7 @@ onMounted(() => {
 
             <!-- modal tambah aturan -->
             <div class="flex justify-end mb-4">
-                <AddDataButton btnLabel="Input Peraturan Baru" @click="showAddModal = true" />
+                <AddDataButton btnLabel="Input Peraturan Baru" @click="openAddModal" />
             </div>
 
             <!-- Komponen AddDataModal -->
@@ -213,7 +210,10 @@ onMounted(() => {
                 ]" 
                 :formData="form" 
                 :submitData="submitData" 
-                @update:showModal="showAddModal = $event" 
+                @update:showModal="(val) => {
+                    showAddModal = val;
+                    if (!val) resetForm();
+                }" 
             />
 
             <template v-if="data">
@@ -228,7 +228,7 @@ onMounted(() => {
                     :searchable="['law_type', 'number', 'year', 'about']" 
                     @edit="openUpdateModal"
                     @delete="openDeleteModal" 
-                    table-type="crud" 
+                    :edit-delete-column="true"
                 />
                 <PulseLoading v-else-if="data.length == 0" />
             </template>

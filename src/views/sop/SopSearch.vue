@@ -67,7 +67,7 @@ onMounted(() => {
                     { field: 'is_active', label: 'Status' }
                 ]" 
                 :searchable="['name', 'creation_date', 'org_name']" 
-                table-type="other"
+                :other-column="true"
                 :badge-text="['Tidak Berlaku', 'Berlaku', 'Belum Berlaku']"
             >
                 <template #link>

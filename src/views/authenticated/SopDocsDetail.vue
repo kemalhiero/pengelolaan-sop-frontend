@@ -88,7 +88,7 @@ onMounted(() => {
           :status-columns="[
             { field: 'status', label: 'Status' }
           ]" 
-          table-type="detail" 
+          :detail-column="true"
           @click="handleRowClick"
           :badge-text="['Batal', 'Diterima', 'Sedang Proses']" 
         />

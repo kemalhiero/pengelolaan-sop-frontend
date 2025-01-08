@@ -17,20 +17,41 @@ const props = defineProps({
         type: Array,
         required: true
     },
+
+    // kolom tambahan
     statusColumns: {
         type: Array
     },
+    radioColumn: {
+        type: Array,
+    },
+    editDeleteColumn: {
+        type: Boolean,
+        default: false
+    },
+    checkColumn: {
+        type: Boolean,
+        default: false
+    },
+    detailColumn: {
+        type: Boolean,
+        default: false
+    },
+    linkColumn: {
+        type: Boolean,
+        default: false
+    },
+    otherColumn: {
+        type: Boolean,
+        default: false
+    },
+    // -------------------
     badgeText: {
         type: Array
     },
     searchable: {
         type: Array,
         required: true
-    },
-    tableType: {
-        type: String,
-        default: 'crud',
-        validator: (value) => ['crud', 'check', 'detail', 'link', 'other'].includes(value)
     },
     detailLink: {
         type: String,
@@ -73,7 +94,7 @@ const isItemSelected = (item) => {
 };
 
 // Tambahkan method helper untuk mengecek tipe tabel
-const isCrudTable = computed(() => props.tableType === 'crud');
+const isCrudTable = computed(() => props.editDeleteColumn === true);
 
 // Computed property untuk info pagination
 const paginationInfo = computed(() => {
@@ -247,12 +268,17 @@ const goToPage = (page) => {
                             {{ column.label }}
                         </div>
                     </th>
+                    <th v-for="column in radioColumn" :key="column.field" class="px-6 py-3" scope="col">
+                        <div class="flex items-center">
+                            {{ column.label }}
+                        </div>
+                    </th>
                     <!-- <th>Aksi</th> -->
                 </tr>
             </thead>
             <tbody>
                 <tr v-for="(item, index) in paginatedData" :key="index" class="bg-white border-b">
-                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">      <!-- nomor urut -->
                         {{ (currentPage - 1) * itemsPerPage + index + 1 }}
                     </th>
                     <td v-for="column in columns" :key="column.field" class="px-6 py-4 text-black">
@@ -263,13 +289,29 @@ const goToPage = (page) => {
                             -
                         </template>
                     </td>
+
+                    <!-- kolom kostum -->
                     <td v-for="column in statusColumns" :key="column.field" class="px-6 py-4 text-black">
                         <RedBadgeIndicator :teks="badgeText[0]" v-if="item[column.field] === 0"/>
                         <GreenBadgeIndicator :teks="badgeText[1]" v-else-if="item[column.field] === 1 " />
                         <YellowBadgeIndicator :teks="badgeText[2]" v-else-if="item[column.field] === 2" />
                     </td>
-                    <td class="px-6 py-4" :class="{ 'flex': props.tableType === 'crud' }">
-                        <template v-if="props.tableType === 'crud'">
+                    <td v-for="column in radioColumn" :key="column.field" class="px-6 py-4 text-black">
+                        <input 
+                        type="radio" 
+                        :value="item.id"
+                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
+                        >
+                    </td>
+                    <td v-if="props.checkColumn == true" class="px-6 py-4 text-black">
+                        <input 
+                            type="checkbox"
+                            :checked="isItemSelected(item)"
+                            @change="toggleItem(item)"
+                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                        >
+                    </td>
+                    <td class="px-6 py-4 flex" v-if="props.editDeleteColumn == true">
                             <button :title="`Edit item ${index + 1}`" v-if="isCrudTable" @click="$emit('edit', item.id)"
                                 class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
                                 <PenToSquareIcon class="fill-current w-4" />
@@ -278,34 +320,26 @@ const goToPage = (page) => {
                                 class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
                                 <TrashCanIcon class="fill-current w-4" />
                             </button>
-                        </template>
-                        <template v-else-if="props.tableType === 'check'">
-                            <input 
-                                type="checkbox"
-                                :checked="isItemSelected(item)"
-                                @change="toggleItem(item)"
-                                class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                            >
-                        </template>
-                        <template v-else-if="props.tableType === 'detail'">
-                            <button :title="`Detail item ${index + 1}`" @click="$emit('click', item.id)"
-                                class="bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 me-2 mb-2 focus:outline-none">
-                                <EyeIcon class="fill-white w-5" />
-                            </button>
-                        </template>
-                        <template v-else-if="props.tableType === 'link'">
-                            <router-link :to="`${detailLink}/${item.id}`">
-                                <button
-                                    class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center me-2 mb-2">
-                                    <EyeIcon class="w-5 mr-3 fill-current" />
-                                    Lihat
-                                </button>
-                            </router-link>
-                        </template>
-                        <template v-else-if="props.tableType === 'other'">
-                            <slot name="link"></slot>
-                        </template>
                     </td>
+                    <td class="px-6 py-4" v-if="props.detailColumn == true">
+                        <button :title="`Detail item ${index + 1}`" @click="$emit('click', item.id)"
+                            class="bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 me-2 mb-2 focus:outline-none">
+                            <EyeIcon class="fill-white w-5" />
+                        </button>
+                    </td>
+                    <td class="px-6 py-4" v-if="props.linkColumn == true">
+                        <router-link :to="`${detailLink}/${item.id}`">
+                            <button
+                                class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center me-2 mb-2">
+                                <EyeIcon class="w-5 mr-3 fill-current" />
+                                Lihat
+                            </button>
+                        </router-link>
+                    </td>
+                    <td class="px-6 py-4" v-if="props.otherColumn == true">
+                        <slot name="link"></slot>
+                    </td>
+                    <!-- ------------ -->
                 </tr>
             </tbody>
         </table>

@@ -53,7 +53,7 @@ onMounted(() => {
                         { field: 'is_approved', label: 'Status' }
                     ]"
                     :searchable="['name', 'creation_date', 'org_name']"
-                    table-type="link"
+                    :link-column="true"
                     detail-link="/assignment"
                     :badge-text="['Batal', 'Selesai', 'Belum Selesai']"
                 />

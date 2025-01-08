@@ -14,7 +14,7 @@ export const useAuthStore = defineStore('auth', () => {
   const rememberMe = ref(false);
   const initializeRememberMe = () => {
     // Mengambil nilai dari localStorage, defaultnya false
-    rememberMe.value = localStorage.getItem('rememberMe') === 'true'
+    rememberMe.value = localStorage.getItem('sipp-dsi-remember-me') === 'true'
   };
 
   // Mengambil data dari localStorage saat inisialisasi
@@ -56,16 +56,16 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null;
 
     if (rememberMe.value) {
-      localStorage.removeItem('token');
+      localStorage.removeItem('sipp-dsi-token');
     } else {
-      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('sipp-dsi-token');
     }
   };
 
   // Action untuk mengubah status rememberMe
   const setRememberMe = (value) => {
     rememberMe.value = value
-    localStorage.setItem('rememberMe', value.toString())
+    localStorage.setItem('sipp-dsi-remember-me', value.toString())
   };
 
   return {

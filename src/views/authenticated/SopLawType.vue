@@ -17,10 +17,14 @@ const layoutType = inject('layoutType');
 layoutType.value = 'admin';
 
 const data = ref([]);
-const form = ref({
+const defaultFormState = {
     law_type: '',
     description: ''
-});
+};
+const form = ref({...defaultFormState});
+const resetForm = () => {
+    form.value = { ...defaultFormState };
+};
 
 // Fungsi untuk fetch data dari API
 const fetchData = async () => {
@@ -36,30 +40,31 @@ const fetchData = async () => {
 
 // tampil modal tambah data
 const showAddModal = ref(false);
+const openAddModal = () => {
+    resetForm(); // Reset form sebelum membuka modal
+    showAddModal.value = true;
+};
 
 // Fungsi untuk mengirim data ke API dengan metode POST
 const submitData = async () => {
     try {
         await createLawType(form.value);
-        form.value = {
-            law_type: '',
-            description: ''
-        };
+        resetForm();
 
         showAddModal.value = false;
         fetchData();
 
         toast("Data berhasil ditambahkan!", {
-            "type": "success",
-            "autoClose": 3000,
+            type: "success",
+            autoClose: 3000,
         });
 
     } catch (error) {
         console.error('Error saat mengirim data:', error);
         toast(`Data gagal ditambahkan! <br> ${error} `, {
-            "type": "error",
-            "autoClose": 5000,
-            'dangerouslyHTMLString': true
+            type: "error",
+            autoClose: 5000,
+            dangerouslyHTMLString: true
         });
     }
 };
@@ -89,17 +94,17 @@ const deleteData = async (id) => {  // Fungsi untuk menghapus data berdasarkan I
         closeDeleteModal(); // Tutup modal setelah penghapusan
 
         toast("Data berhasil dihapus!", {
-            "type": "success",
-            "autoClose": 3000,
+            type: "success",
+            autoClose: 3000,
         });
 
         console.log(`Data dengan ID ${id} berhasil dihapus`);
     } catch (error) {
         console.error('Delete error:', error);
         toast(`Data gagal dihapus! <br> ${error} `, {
-            "type": "error",
-            "autoClose": 5000,
-            'dangerouslyHTMLString': true
+            type: "error",
+            autoClose: 5000,
+            dangerouslyHTMLString: true
         });
     }
 };
@@ -126,11 +131,7 @@ const openUpdateModal = (id) => {
 const closeUpdateModal = () => {
     showModalUpdate.value = false; // Sembunyikan modal
     selectedUpdateId.value = null; // Reset ID setelah modal ditutup
-
-    form.value = {
-        law_type: '',
-        description: ''
-    };
+    resetForm();
 };
 
 const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan ID
@@ -141,18 +142,17 @@ const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan I
 
         fetchData();
         closeUpdateModal(); // Tutup modal setelah penghapusan
-
         toast("Data berhasil diperbarui!", {
-            "type": "success",
-            "autoClose": 3000,
+            type: "success",
+            autoClose: 3000,
         });
 
     } catch (error) {
         console.error('Update error:', error);
         toast(`Data gagal diperbarui! <br> ${error} `, {
-            "type": "error",
-            "autoClose": 5000,
-            'dangerouslyHTMLString': true
+            type: "error",
+            autoClose: 5000,
+            dangerouslyHTMLString: true
         });
     }
 };
@@ -173,14 +173,24 @@ onMounted(() => {
 
             <!-- modal tambah tipe aturan -->
             <div class="flex justify-end mb-4">
-                <AddDataButton btnLabel="Input Jenis Peraturan Baru" @click="showAddModal = true" />
+                <AddDataButton btnLabel="Input Jenis Peraturan Baru" @click="openAddModal" />
             </div>
 
             <!-- Komponen AddDataModal -->
-            <AddDataModal modalTitle="Tambahkan jenis peraturan baru" :showModal="showAddModal" :formFields="[
-                { id: 'law_type', label: 'Jenis peraturan', type: 'text', placeholder: 'Mis. Peraturan Presiden', required: true, minlength: 5, maxlength: 100 },
-                { id: 'description', label: 'Deskripsi', type: 'textarea', placeholder: 'ketikkan deskripsi disini...' }
-            ]" :formData="form" :submitData="submitData" @update:showModal="showAddModal = $event" />
+            <AddDataModal
+                modalTitle="Tambahkan jenis peraturan baru" 
+                :showModal="showAddModal" 
+                :formFields="[
+                    { id: 'law_type', label: 'Jenis peraturan', type: 'text', placeholder: 'Mis. Peraturan Presiden', required: true, minlength: 5, maxlength: 100 },
+                    { id: 'description', label: 'Deskripsi', type: 'textarea', placeholder: 'ketikkan deskripsi disini...' }
+                ]" 
+                :formData="form" 
+                :submitData="submitData" 
+                @update:showModal="(val) => {
+                    showAddModal = val;
+                    if (!val) resetForm();
+                }" 
+            />
 
             <template v-if="data">
                 <div v-if="data.length > 0" class="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -233,15 +243,26 @@ onMounted(() => {
         </div>
 
         <!-- Komponen DeleteDataModal -->
-        <DeleteDataModal :showModal="showModalDelete" :deleteData="deleteData" :selectedId="selectedDeleteId"
-            @update:showModal="showModalDelete = $event" />
+        <DeleteDataModal 
+            :showModal="showModalDelete" 
+            :deleteData="deleteData" 
+            :selectedId="selectedDeleteId"
+            @update:showModal="showModalDelete = $event" 
+        />
 
         <!-- Komponen EditDataModal -->
-        <EditDataModal modalTitle="Perbarui jenis peraturan" :showModal="showModalUpdate" :formFields="[
-            { id: 'law_type', label: 'Jenis peraturan', type: 'text', colSpan: 'full', placeholder: 'Mis. Peraturan Presiden', required: true },
-            { id: 'description', label: 'Deskripsi', type: 'textarea', colSpan: 'full', placeholder: 'ketikkan deskripsi disini...' }
-        ]" :formData="form" :updateData="updateData" :selectedId="selectedUpdateId"
-            @update:showModal="showModalUpdate = $event" />
+        <EditDataModal 
+            modalTitle="Perbarui jenis peraturan" 
+            :showModal="showModalUpdate" 
+            :formFields="[
+                { id: 'law_type', label: 'Jenis peraturan', type: 'text', colSpan: 'full', placeholder: 'Mis. Peraturan Presiden', required: true },
+                { id: 'description', label: 'Deskripsi', type: 'textarea', colSpan: 'full', placeholder: 'ketikkan deskripsi disini...' }
+            ]" 
+            :formData="form" 
+            :updateData="updateData" 
+            :selectedId="selectedUpdateId"
+            @update:showModal="showModalUpdate = $event" 
+        />
 
     </main>
 </template>

@@ -112,9 +112,9 @@ const submitSop = async () => {
     } catch (error) {
         console.error('Error saat mengirim data:', error);
         toast(`Data gagal ditambahkan! <br> ${error} `, {
-            "type": "error",
-            "autoClose": 5000,
-            'dangerouslyHTMLString': true
+            type: "error",
+            autoClose: 5000,
+            dangerouslyHTMLString: true
         });
     }
 };
@@ -139,8 +139,7 @@ onMounted(() => {
                             <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
                                 Nama<span class="text-red-600">*</span>
                             </label>
-                            <input type="text" v-model="form.name" id="name" placeholder="ketik nama sop disini..."
-                                required
+                            <input type="text" v-model="form.name" id="name" placeholder="ketik nama sop disini..." required
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                                 title="Contoh : Pengusulan Kerja Praktik (langsung judul, tanpa perlu 'SOP' atau 'POS' di awal)">
                         </div>
@@ -254,8 +253,13 @@ onMounted(() => {
                 </div>
                 <!-- Modal body -->
                 <div class="p-4 md:p-5 space-y-4">
-                    <DataTable :data="dataDrafter" :columns="[{ field: 'name', label: 'Nama', sortable: true },]"
-                        :searchable="['name']" :table-type="'check'" v-model="form.drafter" />
+                    <DataTable 
+                        :data="dataDrafter" 
+                        :columns="[{ field: 'name', label: 'Nama', sortable: true },]"
+                        :searchable="['name']" 
+                        :check-column="true"
+                        v-model="form.drafter" 
+                    />
                 </div>
                 <!-- Modal footer -->
                 <div

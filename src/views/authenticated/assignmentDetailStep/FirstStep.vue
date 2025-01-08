@@ -419,7 +419,7 @@ onMounted(() => {
                         :data="legalBasisData" 
                         :columns="[{ field: 'legal', label: 'Peraturan', sortable: true }]" 
                         :searchable="['legal']" 
-                        :table-type="'check'" 
+                        :check-column="true"
                         v-model="formData.legalBasis" 
                     />
                     <PulseLoading v-else />
@@ -456,7 +456,7 @@ onMounted(() => {
                         :data="dataImplementer" 
                         :columns="[{ field: 'name', label: 'Nama', sortable: true }]" 
                         :searchable="['name']" 
-                        table-type="check" 
+                        :check-column="true"
                         v-model="formData.implementer"
                     />
                 </div>

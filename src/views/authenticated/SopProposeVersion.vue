@@ -272,8 +272,13 @@ onMounted(async() => {
                 </div>
                 <!-- Modal body -->
                 <div class="p-4 md:p-5 space-y-4">
-                    <DataTable :data="dataDrafter" :columns="[{ field: 'name', label: 'Nama', sortable: true },]"
-                        :searchable="['name']" :table-type="'check'" v-model="form.drafter" />
+                    <DataTable 
+                        :data="dataDrafter" 
+                        :columns="[{ field: 'name', label: 'Nama', sortable: true },]"
+                        :searchable="['name']" 
+                        :check-column="true"
+                        v-model="form.drafter" 
+                    />
                 </div>
                 <!-- Modal footer -->
                 <div
