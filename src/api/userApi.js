@@ -1,8 +1,19 @@
 import getToken from "@/utils/getToken";
 import { getRequest, postRequest, patchRequest, deleteRequest } from "./apiClient";
 
-const loginUser = (data) => postRequest('user/login', data);
-const registUser = (data) => postRequest('user/regist', data);
-const logoutUser = () => postRequest('user/logout', null, getToken());
+const getUserByRole = (role) => getRequest(`user?role=${role}`, getToken());
 
-export { loginUser, registUser, logoutUser };
+const getAllDrafter = () => getRequest('user/drafter', getToken());
+const getDrafterByIdDetail = (id) => getRequest(`user/drafter/sopdetail/${id}`);
+const createDrafter = (data) => postRequest('user/drafter', data, getToken());
+
+const addHod = (data) => postRequest('user/hod', data, getToken());
+const getHodCandidate = () => getRequest('user/hod/candidate', getToken());
+
+const getAllPic = () => getRequest('user/pic', getToken());
+
+export {
+    getAllDrafter, getDrafterByIdDetail, createDrafter,
+    getUserByRole, addHod, getHodCandidate,
+    getAllPic,
+};

@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 
 import { getOrg } from '@/api/orgApi';
-import { createDrafter, getAllDrafter } from '@/api/drafterApi';
+import { createDrafter, getUserByRole } from '@/api/userApi';
 import { createSop, createSopDetail } from '@/api/sopApi';
 
 import DataTable from '@/components/DataTable.vue';
@@ -53,7 +53,7 @@ const fetchOrg = async () => {
 // penugasan
 const fetchDrafter = async () => {
     try {
-        const result = await getAllDrafter();
+        const result = await getUserByRole('penyusun');
         dataDrafter.value = result.data;
     } catch (error) {
         console.error('Fetch error:', error);

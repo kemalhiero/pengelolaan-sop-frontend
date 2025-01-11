@@ -57,8 +57,11 @@ const props = defineProps({
         type: String,
     },
     modelValue: {
-        type: Array,
-        default: () => []
+        type: [Array, String, Number],
+        default: null
+    },
+    valueField: {
+        type: String
     }
 });
 
@@ -298,9 +301,12 @@ const goToPage = (page) => {
                     </td>
                     <td v-for="column in radioColumn" :key="column.field" class="px-6 py-4 text-black">
                         <input 
-                        type="radio" 
-                        :value="item.id"
-                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
+                            type="radio" 
+                            :name="column.field"
+                            :value="item[props.valueField]"
+                            :checked="modelValue === item[props.valueField]"
+                            @change="$emit('update:modelValue', item[props.valueField])"
+                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
                         >
                     </td>
                     <td v-if="props.checkColumn == true" class="px-6 py-4 text-black">
@@ -387,5 +393,4 @@ const goToPage = (page) => {
             </button>
         </div>
     </div>
-
 </template>

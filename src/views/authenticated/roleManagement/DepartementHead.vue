@@ -1,8 +1,8 @@
 <script setup>
-import { inject, onMounted, ref } from 'vue';
+import { inject, onMounted, ref, watch } from 'vue';
 import { toast } from 'vue3-toastify';
 
-import { getAllLecturer } from '@/api/drafterApi';
+import { addHod, getHodCandidate, getUserByRole } from '@/api/userApi';
 
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import DataTable from '@/components/DataTable.vue';
@@ -14,18 +14,25 @@ import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
 
-const data = [
-    { id_number: 198410062012121001n, name: 'Ricky Akbar' },
-    { id_number: 198201182008121002n, name: 'Husnil Kamil' },
-];
-const dataUser = ref([]);
-const selectedHod = ref();
+const dataHod = ref([]);
+const dataCandidate = ref([]);
+const selectedHod = ref(null);
 const showAddModal = ref(false);
 
-const fetchUser = async () => {
+const fetchCandidate = async () => {
     try {
-        const result = await getAllLecturer();
-        dataUser.value = result.data; // Menyimpan data yang di-fetch
+        const result = await getHodCandidate();
+        dataCandidate.value = result.data; // Menyimpan data yang di-fetch
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+};
+
+const fetchHod = async () => {
+    try {
+        dataHod.value = [];
+        const result = await getUserByRole('kadep');
+        dataHod.value = result.data; // Menyimpan data yang di-fetch
     } catch (error) {
         console.error('Fetch error:', error);
     }
@@ -33,7 +40,27 @@ const fetchUser = async () => {
 
 const submitHod = async () => {
     try {
+        if (!selectedHod.value) {
+            toast('Silakan pilih kepala departemen terlebih dahulu', {
+                type: "warning",
+                autoClose: 3000
+            });
+            return;
+        };
         
+        console.log('Mengirim data kepala departemen:', selectedHod.value);
+        // Tambahkan kode untuk mengirim ke API di sini
+        await addHod({
+            id: selectedHod.value
+        });
+        fetchHod();
+        fetchCandidate();
+
+        toast('Data kepala departemen berhasil diperbarui', {
+            type: "success",
+            autoClose: 3000
+        });
+        showAddModal.value = false; // Tutup modal setelah berhasil
     } catch (error) {
         console.error('Error saat mengirim data:', error);
         toast(`Data gagal ditambahkan! <br> ${error} `, {
@@ -44,8 +71,15 @@ const submitHod = async () => {
     }
 };
 
+watch(showAddModal, (newValue) => {
+    if (!newValue) {
+        selectedHod.value = ''; // Reset nilai saat modal ditutup
+    }
+});
+
 onMounted(() => {
-    fetchUser();
+    fetchHod();
+    fetchCandidate();
 });
 </script>
 
@@ -60,9 +94,9 @@ onMounted(() => {
                 <AddDataButton btnLabel="Perbarui Kadep" btn-title="perbarui kepala departemen" @click="showAddModal = true" />
             </div>
 
-            <template v-if="data">
-                <DataTable v-if="data.length > 0" 
-                    :data="data" 
+            <template v-if="dataHod">
+                <DataTable v-if="dataHod.length > 0" 
+                    :data="dataHod" 
                     :columns="[
                         { field: 'id_number', label: 'NIM/NIP', sortable: true },
                         { field: 'name', label: 'Nama', sortable: true },
@@ -71,9 +105,9 @@ onMounted(() => {
                     :detail-column="true" 
                     :badge-text="['Belum ada tugas', 'Sudah memiliki tugas']" 
                 />
-                <PulseLoading v-else-if="data.length == 0" />
+                <PulseLoading v-else-if="dataHod.length == 0" />
             </template>
-            <Error @click="" v-else />
+            <Error @click="fetchHod" v-else />
             
         </div>
         
@@ -95,25 +129,25 @@ onMounted(() => {
                         </button>
                     </div>
                     <!-- Modal body -->
-                    <form @submit.prevent="">
+                    <form @submit.prevent="submitHod">
                     <div class="p-4 md:p-5 space-y-4">
                         <DataTable 
-                            :data="dataUser" 
+                            :data="dataCandidate" 
                             :columns="[
                                 { field: 'id_number', label: 'NIP', sortable: true },
                                 { field: 'name', label: 'Nama', sortable: true },
                             ]"
                             :searchable="['id_number', 'name']"
                             :radio-column="[
-                                {field: '', label: 'Pilih'}
+                                {field: 'id', label: 'Pilih'}
                             ]"
+                            value-field="id"
                             v-model="selectedHod" 
                         />
                     </div>
                     <!-- Modal footer -->
-                    <div
-                        class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                            <button @click="showAddModal = false" type="submit"
+                    <div class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
+                            <button type="submit" :disabled="!selectedHod"
                                 class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">
                                 Pilih
                             </button>

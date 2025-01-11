@@ -1,7 +1,7 @@
 <script setup>
 import { inject, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { registUser } from '@/api/userApi';
+import { registUser } from '@/api/authApi';
 import { toast } from "vue3-toastify";
 import ErrorText from '@/components/validation/ErrorText.vue';
 import EyeIcon from '@/assets/icons/EyeIcon.vue';

@@ -4,7 +4,7 @@ import { toast } from 'vue3-toastify';
 import { jwtDecode } from 'jwt-decode';
 import { RouterLink, useRouter } from 'vue-router';
 
-import { loginUser } from '@/api/userApi';
+import { loginUser } from '@/api/authApi';
 import { useAuthStore } from '@/stores/auth';
 
 import EyeIcon from '@/assets/icons/EyeIcon.vue';

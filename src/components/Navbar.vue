@@ -2,11 +2,11 @@
 import { initDrawers } from 'flowbite';
 import { onMounted, ref } from 'vue';
 import { toast } from 'vue3-toastify';
-import { useRouter } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 
 import getToken from '@/utils/getToken';
 import { useAuthStore } from '@/stores/auth';
-import { logoutUser } from '@/api/userApi';
+import { logoutUser } from '@/api/authApi';
 import { getAssignment } from '@/api/sopApi';
 
 const authStore = useAuthStore();
@@ -71,6 +71,10 @@ onMounted(() => {
               <span class="block text-sm text-gray-500">{{ authStore.userRole }}</span>
             </div>
             <ul class="py-2" aria-labelledby="user-menu-button">
+              <li>
+                <RouterLink to="/app"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:cursor-pointer">App</RouterLink>
+              </li>
               <li>
                 <p @click="handleLogout"
                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:cursor-pointer">Keluar</p>

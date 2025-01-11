@@ -1,5 +1,7 @@
 <script setup>
-import { inject } from 'vue';
+import { inject, onMounted, ref } from 'vue';
+
+import { getAllPic } from '@/api/userApi';
 
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import DataTable from '@/components/DataTable.vue';
@@ -10,11 +12,21 @@ import AddDataButton from '@/components/modal/AddDataButton.vue';
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
 
-const data = [
-    {id_number: 2011522001, name: 'Kemal', org: 'Laboratory of Enterprise Application' },
-    {id_number: 2011522002, name: 'Muhammad', org: 'Laboratory of Enterprise Application' },
-    {id_number: 198201182008121002n, name: 'Hiero', org: 'Laboratory of Enterprise Application' },
-];
+const dataPic = ref([]);
+
+const fetchPic = async () => {
+    try {
+        dataPic.value = [];
+        const result = await getAllPic();
+        dataPic.value = result.data;
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+};
+
+onMounted(() => {
+    fetchPic();
+})
 </script>
 
 <template>
@@ -27,9 +39,9 @@ const data = [
                 <AddDataButton btnLabel="Tambah PJ Baru" btn-title="Tambah penanggung jawab baru" @click="" />
             </div>
 
-            <template v-if="data">
-                <DataTable v-if="data.length > 0" 
-                    :data="data" 
+            <template v-if="dataPic">
+                <DataTable v-if="dataPic.length > 0" 
+                    :data="dataPic" 
                     :columns="[
                         { field: 'id_number', label: 'NIM/NIP', sortable: true },
                         { field: 'name', label: 'Nama', sortable: true },
@@ -39,7 +51,7 @@ const data = [
                     :detail-column="true"
                     :badge-text="['Belum ada tugas', 'Sudah memiliki tugas']" 
                 />
-                <PulseLoading v-else-if="data.length == 0" />
+                <PulseLoading v-else-if="dataPic.length == 0" />
             </template>
             <Error @click="" v-else />
         </div>

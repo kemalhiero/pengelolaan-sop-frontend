@@ -4,7 +4,7 @@ import { toast } from 'vue3-toastify';
 import { useRoute, useRouter } from 'vue-router';
 
 import { getOrg } from '@/api/orgApi';
-import { createDrafter, getAllDrafter } from '@/api/drafterApi';
+import { createDrafter, getUserByRole } from '@/api/userApi';
 import { createSopDetail, getLatestSopInYear, getOneSop } from '@/api/sopApi';
 
 import PageTitle from '@/components/authenticated/PageTitle.vue';
@@ -70,7 +70,7 @@ const fetchLatestSopInYear = async () => {
 const dataDrafter = ref([]);
 const fetchDrafter = async () => {
     try {
-        const result = await getAllDrafter();
+        const result = await getUserByRole('penyusun');
         dataDrafter.value = result.data;
     } catch (error) {
         console.error('Fetch error:', error);

@@ -1,7 +1,7 @@
 <script setup>
 import { toast } from 'vue3-toastify';
 import { inject, onMounted, ref } from 'vue';
-import { getAllDrafter } from '@/api/drafterApi';
+import { getUserByRole } from '@/api/userApi';
 import { getOrg, createOrg, updateOrg, deleteOrg } from '@/api/orgApi.js';
 
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
@@ -40,8 +40,8 @@ const pic = ref([]);
 const fetchDataPic = async () => {
     try {
         pic.value = [];
-        const result = await getAllDrafter();
-        console.log('drafter', result)
+        // TODO ganti apinya ke get pic candidate, sekarang masih belum dibuat
+        const result = await getUserByRole('pj');
         pic.value = result.data;
     } catch (error) {
         data.value = null;
@@ -145,8 +145,6 @@ const openUpdateModal = (id) => {
     
     dataYangDitemukan = data.value.find(item => item.id === id);
     if (dataYangDitemukan) {
-        // console.log('Data yang ditemukan:', dataYangDitemukan);
-        // console.log('PIC data:', dataYangDitemukan.pic);
         form.value = {
             id_pic: dataYangDitemukan.pic.id,
             name: dataYangDitemukan.name,
@@ -154,8 +152,7 @@ const openUpdateModal = (id) => {
             about: dataYangDitemukan.about,
             id_org_parent: dataYangDitemukan.id_org_parent
         };
-        // console.log('Data form:', form.value);
-        // console.log('Form value setelah diset:', form.value);
+        console.log('Form value setelah diset:', form.value);
     } else {
         console.log("Data tidak ditemukan");
     }

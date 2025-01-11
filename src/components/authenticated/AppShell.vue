@@ -4,7 +4,7 @@ import { onMounted } from 'vue';
 import { toast } from 'vue3-toastify';
 import { useRouter } from 'vue-router';
 
-import { logoutUser } from '@/api/userApi';
+import { logoutUser } from '@/api/authApi';
 import { useAuthStore } from '@/stores/auth';
 import getToken from '@/utils/getToken';
 
@@ -100,11 +100,9 @@ onMounted(() => {
                         <li>
                             <a href="#" class="block py-2 px-4 text-sm hover:bg-gray-100">Profil Saya</a>
                         </li>
-                        <!-- <li>
-                            <a href="#"
-                                class="block py-2 px-4 text-sm hover:bg-gray-100">Account
-                                settings</a>
-                        </li> -->
+                        <li>
+                            <RouterLink to="/" class="block py-2 px-4 text-sm hover:bg-gray-100">Landing Page</RouterLink>
+                        </li>
                     </ul>
                     <ul class="py-1" aria-labelledby="dropdown">
                         <li @click="handleLogout" class="hover:cursor-pointer">
