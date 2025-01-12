@@ -65,7 +65,7 @@ const login = async () => {
                     }, 2000);
                     break;
                 case 'pj':
-                case 'kaprodi':
+                case 'kadep':
                     setTimeout(() => {
                         router.push('/app')
                     }, 2000);

@@ -4,7 +4,7 @@ import { toast } from 'vue3-toastify';
 import { useRoute, useRouter } from 'vue-router';
 
 import { getOrg } from '@/api/orgApi';
-import { createDrafter, getUserByRole } from '@/api/userApi';
+import { createSopDrafter, getUserByRole } from '@/api/userApi';
 import { createSopDetail, getLatestSopInYear, getOneSop } from '@/api/sopApi';
 
 import PageTitle from '@/components/authenticated/PageTitle.vue';
@@ -118,16 +118,16 @@ const submitSop = async () => {
         console.log(resultSopdetail);
 
         form.value.drafter.forEach(async (item) => {
-            await createDrafter({
+            await createSopDrafter({
                 id_user: item.id,
                 id_sop_detail: resultSopdetail.data.id_sop_detail,
             })
         });
 
         toast("Data berhasil ditambahkan!", {
-                "type": "success",
-                "autoClose": 3000,
-            });
+            "type": "success",
+            "autoClose": 3000,
+        });
         
         console.log('sukses submit semua');
         setTimeout(() => {

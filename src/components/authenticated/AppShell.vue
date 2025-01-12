@@ -151,7 +151,7 @@ onMounted(() => {
                         <AngleDownIcon />
                     </button>
                     <ul id="dropdown-roles" class="hidden py-2 space-y-2">
-                        <li v-if="authStore.userRole === 'kaprodi'">
+                        <li v-if="authStore.userRole === 'kadep'">
                             <RouterLink :to="{ name: 'KaprodiManagement' }" active-class="bg-gray-200"
                                 class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200">
                                 Kepala Departemen
@@ -171,7 +171,7 @@ onMounted(() => {
                         </li>
                     </ul>
                 </li>
-                <li v-if="authStore.userRole === 'kaprodi'">
+                <li v-if="authStore.userRole === 'kadep'">
                     <RouterLink :to="{ name: 'SopOrg' }" title="List Organisasi"
                         class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg hover:bg-gray-200 group"
                         active-class="bg-gray-200">

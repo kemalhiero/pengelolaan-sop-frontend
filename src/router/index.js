@@ -75,7 +75,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/Dashboard.vue'),
       meta: {
         requiresAuth: true,
-        roles: ['pj', 'kaprodi']
+        roles: ['pj', 'kadep']
       }
     },
     {
@@ -84,7 +84,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/SopDocs.vue'),
       meta: {
         requiresAuth: true,
-        roles: ['pj', 'kaprodi']
+        roles: ['pj', 'kadep']
       }
     },
     {
@@ -93,7 +93,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/SopDocsDetail.vue'),
       meta: {
         requiresAuth: true,
-        roles: ['pj', 'kaprodi']
+        roles: ['pj', 'kadep']
       }
     },
     {
@@ -102,7 +102,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/SopOrg.vue'),
       meta: {
         requiresAuth: true,
-        roles: ['kaprodi']
+        roles: ['kadep']
       }
     },
     {
@@ -115,7 +115,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/SopLawBasis.vue'),
       meta: {
         requiresAuth: true,
-        roles: ['pj', 'kaprodi']
+        roles: ['pj', 'kadep']
       }
     },
     {
@@ -124,7 +124,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/SopLawType.vue'),
       meta: {
         requiresAuth: true,
-        roles: ['pj', 'kaprodi']
+        roles: ['pj', 'kadep']
       }
     },
     {
@@ -133,7 +133,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/SopPropose.vue'),
       meta: {
         requiresAuth: true,
-        roles: ['pj', 'kaprodi']
+        roles: ['pj', 'kadep']
       }
     },
     {
@@ -142,7 +142,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/SopProposeVersion.vue'),
       meta: {
         requiresAuth: true,
-        roles: ['pj', 'kaprodi']
+        roles: ['pj', 'kadep']
       }
     },
     {
@@ -167,7 +167,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/roleManagement/DepartementHead.vue'),
       meta: {
         requiresAuth: true,
-        roles: ['kaprodi']
+        roles: ['kadep']
       }
     },
     {
@@ -176,7 +176,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/roleManagement/PiC.vue'),
       meta: {
         requiresAuth: true,
-        roles: ['kaprodi']
+        roles: ['kadep']
       }
     },
     {
@@ -185,7 +185,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/roleManagement/Drafter.vue'),
       meta: {
         requiresAuth: true,
-        roles: ['kaprodi', 'pj']
+        roles: ['kadep', 'pj']
       }
     },
     {
@@ -194,7 +194,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/SopFeedback.vue'),
       meta: {
         requiresAuth: true,
-        roles: ['pj', 'kaprodi']
+        roles: ['pj', 'kadep']
       }
     },
     {
@@ -203,7 +203,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/Guide.vue'),
       meta: {
         requiresAuth: true,
-        roles: ['pj', 'kaprodi']
+        roles: ['pj', 'kadep']
       }
     },
   ]

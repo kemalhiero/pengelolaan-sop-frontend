@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 
 import { getOrg } from '@/api/orgApi';
-import { createDrafter, getUserByRole } from '@/api/userApi';
+import { createSopDrafter, getUserByRole } from '@/api/userApi';
 import { createSop, createSopDetail } from '@/api/sopApi';
 
 import DataTable from '@/components/DataTable.vue';
@@ -92,7 +92,7 @@ const submitSop = async () => {
         console.log(resultSopdetail);
 
         form.value.drafter.forEach(async (item) => {
-            await createDrafter({
+            await createSopDrafter({
                 id_user: item.id,
                 id_sop_detail: resultSopdetail.data.id_sop_detail,
             })

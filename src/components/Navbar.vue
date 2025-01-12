@@ -20,21 +20,21 @@ const handleLogout = async () => {
     "type": "success",
     "autoClose": 3000,
   });
-  
+
   setTimeout(() => {
-      router.replace('/');
+    router.replace('/');
   }, 3000);
 };
 
 const assignmentNumber = ref(0)
 const fetchData = async () => {
-    try {
-        const result = await getAssignment();
-        assignmentNumber.value = result.data.length;
-    } catch (error) {
-        assignmentNumber.value = null;
-        console.error(error);
-    }
+  try {
+    const result = await getAssignment();
+    assignmentNumber.value = result.data.length;
+  } catch (error) {
+    assignmentNumber.value = null;
+    console.error(error);
+  }
 };
 
 onMounted(() => {
@@ -71,7 +71,7 @@ onMounted(() => {
               <span class="block text-sm text-gray-500">{{ authStore.userRole }}</span>
             </div>
             <ul class="py-2" aria-labelledby="user-menu-button">
-              <li>
+              <li v-if="authStore.userRole == 'kadep' || authStore.userRole == 'pj'">
                 <RouterLink to="/app"
                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:cursor-pointer">App</RouterLink>
               </li>

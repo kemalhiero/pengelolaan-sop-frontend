@@ -3,17 +3,19 @@ import { getRequest, postRequest, patchRequest, deleteRequest } from "./apiClien
 
 const getUserByRole = (role) => getRequest(`user?role=${role}`, getToken());
 
+const addDrafter = (data) => postRequest('user/drafter', data, getToken());
 const getAllDrafter = () => getRequest('user/drafter', getToken());
 const getDrafterByIdDetail = (id) => getRequest(`user/drafter/sopdetail/${id}`);
-const createDrafter = (data) => postRequest('user/drafter', data, getToken());
+const createSopDrafter = (data) => postRequest('user/drafter/sop', data, getToken());
 
 const addHod = (data) => postRequest('user/hod', data, getToken());
 const getHodCandidate = () => getRequest('user/hod/candidate', getToken());
 
+const addPic = (data) => postRequest('user/pic', data, getToken());
 const getAllPic = () => getRequest('user/pic', getToken());
 
 export {
-    getAllDrafter, getDrafterByIdDetail, createDrafter,
+    getAllDrafter, getDrafterByIdDetail, createSopDrafter, addDrafter,
     getUserByRole, addHod, getHodCandidate,
-    getAllPic,
+    getAllPic, addPic,
 };
