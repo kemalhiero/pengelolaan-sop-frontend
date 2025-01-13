@@ -26,19 +26,19 @@
                             <label :for="field.id" class="block mb-2 text-sm font-medium text-gray-900">{{ field.label
                                 }}</label>
                             <input v-if="field.type === 'text'" :type="field.type" :id="field.id"
-                                v-model="formData[field.id]"
+                                v-model="formData[field.id]" :disabled="field.disabled"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-yellow-300 focus:border-yellow-300 block w-full p-2.5"
                                 :placeholder="field.placeholder" :required="field.required">
                             <input v-else-if="field.type === 'number'" :type="field.type" :id="field.id"
-                                v-model="formData[field.id]"
+                                v-model="formData[field.id]" :disabled="field.disabled"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-yellow-300 focus:border-yellow-300 block w-full p-2.5"
                                 :placeholder="field.placeholder" :required="field.required" :min="field.min"
                                 :max="field.max">
                             <textarea v-else-if="field.type === 'textarea'" :id="field.id" rows="4"
-                                v-model="formData[field.id]"
+                                v-model="formData[field.id]" :disabled="field.disabled"
                                 class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-yellow-300 focus:border-yellow-300"
                                 :placeholder="field.placeholder"></textarea>
-                            <select v-else-if="field.type === 'select'" :id="field.id" v-model="formData[field.id]"
+                            <select v-else-if="field.type === 'select'" :id="field.id" v-model="formData[field.id]" :disabled="field.disabled"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-yellow-300 focus:border-yellow-300 block w-full p-2.5"
                                 :required="field.required">
                                 <option value="" disabled>{{ field.placeholder }}</option>

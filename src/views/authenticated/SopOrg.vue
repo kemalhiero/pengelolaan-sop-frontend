@@ -226,16 +226,17 @@ onMounted(() => {
                         optionValue: 'id',
                         optionLabel: 'name'
                     },
-                    {
-                        id: 'level',
-                        label: 'Level',
-                        type: 'select',
-                        placeholder: 'Pilih level',
-                        required: true,
-                        options: level,
-                        optionValue: 'id',
-                        optionLabel: 'name'
-                    },
+                    // {
+                    //     id: 'level',
+                    //     label: 'Level',
+                    //     type: 'select',
+                    //     placeholder: 'Pilih level',
+                    //     required: true,
+                    //     disabled: true,
+                    //     options: level,
+                    //     optionValue: 'id',
+                    //     optionLabel: 'name'
+                    // },
                     { id: 'about', label: 'Keterangan', type: 'textarea', placeholder: 'ketikkan keterangan tambahan mengenai organisasi' }
                 ]" 
                 :formData="form" 
@@ -282,17 +283,26 @@ onMounted(() => {
                                 <td class="px-6 py-4">
                                     {{ item.about }}
                                 </td>
-                                <td class="px-6 py-4 flex">
-                                    <!-- Edit -->
-                                    <button :title="`Edit organisasi ${index + 1}`" @click="openUpdateModal(item.id)"
+                                <td class="px-6 py-4 flex" :class="{ 'justify-center': item.level == 'departemen' }">
+                                    <template v-if="item.level == 'departemen'">
+                                        <button title="Edit data departemen" @click="openUpdateModal(item.id)"
+                                            class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
+                                            <PenToSquareIcon class="fill-current w-4 mr-3" />
+                                            <p class="font-medium">Edit</p>
+                                        </button>
+                                    </template>
+                                    <template v-else>
+                                        <!-- Edit -->
+                                        <button :title="`Edit organisasi ${index + 1}`" @click="openUpdateModal(item.id)"
                                         class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
-                                        <PenToSquareIcon class="fill-current w-4" />
-                                    </button>
-                                    <!-- Hapus -->
-                                    <button :title="`Hapus item ${index + 1}`" @click="openDeleteModal(item.id)"
-                                        class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
-                                        <TrashCanIcon class="fill-current w-4" />
-                                    </button>
+                                            <PenToSquareIcon class="fill-current w-4" />
+                                        </button>
+                                        <!-- Hapus -->
+                                        <button :title="`Hapus item ${index + 1}`" @click="openDeleteModal(item.id)" 
+                                            class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
+                                            <TrashCanIcon class="fill-current w-4" />
+                                        </button>
+                                    </template>
                                 </td>
                             </tr>
                         </tbody>
@@ -320,16 +330,17 @@ onMounted(() => {
                     optionValue: 'id',
                     optionLabel: 'name'
                 },
-                {
-                    id: 'level',
-                    label: 'Level',
-                    type: 'select',
-                    placeholder: 'Pilih level',
-                    required: true,
-                    options: level,
-                    optionValue: 'id',
-                    optionLabel: 'name'
-                },
+                // {
+                //     id: 'level',
+                //     label: 'Level',
+                //     type: 'select',
+                //     placeholder: 'Pilih level',
+                //     required: true,
+                //     disabled: true,
+                //     options: level,
+                //     optionValue: 'id',
+                //     optionLabel: 'name'
+                // },
                 { id: 'about', label: 'Keterangan', type: 'textarea', placeholder: 'ketikkan keterangan tambahan mengenai organisasi' }
             ]" 
             :formData="form" 

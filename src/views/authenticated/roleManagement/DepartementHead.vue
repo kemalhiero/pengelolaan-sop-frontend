@@ -2,7 +2,7 @@
 import { inject, onMounted, ref, watch } from 'vue';
 import { toast } from 'vue3-toastify';
 
-import { addHod, getHodCandidate, getUserByRole } from '@/api/userApi';
+import { addHod, getHod, getHodCandidate } from '@/api/userApi';
 
 import Error from '@/components/Error.vue';
 import DataTable from '@/components/DataTable.vue';
@@ -31,7 +31,7 @@ const fetchCandidate = async () => {
 const fetchHod = async () => {
     try {
         dataHod.value = [];
-        const result = await getUserByRole('kadep');
+        const result = await getHod();
         dataHod.value = result.data;
     } catch (error) {
         console.error('Fetch error:', error);
@@ -101,9 +101,12 @@ onMounted(() => {
                         { field: 'id_number', label: 'NIM/NIP', sortable: true },
                         { field: 'name', label: 'Nama', sortable: true },
                     ]"
+                    :status-columns="[
+                        { field: 'status', label: 'Status' }
+                    ]"
                     :searchable="['id_number','name']" 
                     :detail-column="true" 
-                    :badge-text="['Belum ada tugas', 'Sudah memiliki tugas']" 
+                    :badge-text="['Tidak menjabat', 'Sedang menjabat']" 
                 />
                 <PulseLoading v-else-if="dataHod.length == 0" />
             </template>

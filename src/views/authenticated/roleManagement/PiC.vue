@@ -2,7 +2,7 @@
 import { inject, onMounted, ref } from 'vue';
 import { toast } from 'vue3-toastify';
 
-import { addPic, getAllPic, getUserByRole } from '@/api/userApi';
+import { addPic, getAllPic, getPicCandidate } from '@/api/userApi';
 
 import Error from '@/components/Error.vue';
 import DataTable from '@/components/DataTable.vue';
@@ -32,7 +32,7 @@ const fetchPic = async () => {
 const fetchPicCandidate = async () => {
     try {
         dataCandidate.value = [];
-        const result = await getUserByRole('penyusun,sivitas-akademika');
+        const result = await getPicCandidate();
         dataCandidate.value = result.data;
     } catch (error) {
         console.error('Fetch error:', error);
@@ -123,28 +123,28 @@ onMounted(() => {
                     </button>
                 </div>
                 <!-- Modal body -->
-                <form @submit.prevent="submitPic">
-                    <div class="p-4 md:p-5 space-y-4">
-                        <DataTable 
-                            :data="dataCandidate" 
-                            :columns="[
-                                { field: 'id_number', label: 'NIP', sortable: true },
-                                { field: 'name', label: 'Nama', sortable: true },
-                            ]" 
-                            :searchable="['id_number', 'name']" 
-                            :check-column="true" 
-                            v-model="selectedPic" 
-                        />
-                    </div>
-                    <!-- Modal footer -->
-                    <div
-                        class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
+                
+                <div class="p-4 md:p-5 space-y-4">
+                    <DataTable 
+                        :data="dataCandidate" 
+                        :columns="[
+                            { field: 'id_number', label: 'NIP', sortable: true },
+                            { field: 'name', label: 'Nama', sortable: true },
+                        ]" 
+                        :searchable="['id_number', 'name']" 
+                        :check-column="true" 
+                        v-model="selectedPic" 
+                    />
+                </div>
+                <!-- Modal footer -->
+                <div class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
+                    <form @submit.prevent="submitPic">
                         <button type="submit" :disabled="selectedPic.length == 0"
                             class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">
                             Pilih
                         </button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
 

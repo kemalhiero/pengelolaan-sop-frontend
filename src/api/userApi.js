@@ -8,14 +8,17 @@ const getAllDrafter = () => getRequest('user/drafter', getToken());
 const getDrafterByIdDetail = (id) => getRequest(`user/drafter/sopdetail/${id}`);
 const createSopDrafter = (data) => postRequest('user/drafter/sop', data, getToken());
 
+const getHod = () => getRequest('user/hod', getToken());
 const addHod = (data) => postRequest('user/hod', data, getToken());
 const getHodCandidate = () => getRequest('user/hod/candidate', getToken());
 
 const addPic = (data) => postRequest('user/pic', data, getToken());
 const getAllPic = () => getRequest('user/pic', getToken());
+const getPicCandidate = () => getRequest('user/pic/candidate', getToken());
 
 export {
+    getUserByRole,
     getAllDrafter, getDrafterByIdDetail, createSopDrafter, addDrafter,
-    getUserByRole, addHod, getHodCandidate,
-    getAllPic, addPic,
+    addHod, getHodCandidate, getHod,
+    getAllPic, addPic, getPicCandidate,
 };
