@@ -2,7 +2,7 @@
 import { inject, onMounted, ref, watch } from 'vue';
 import { toast } from 'vue3-toastify';
 
-import { addHod, getHod, getHodCandidate } from '@/api/userApi';
+import { addHod, getHod, getHodCandidate, getUserByRole } from '@/api/userApi';
 
 import Error from '@/components/Error.vue';
 import DataTable from '@/components/DataTable.vue';
@@ -14,7 +14,7 @@ import AddDataButton from '@/components/modal/AddDataButton.vue';
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
 
-const dataHod = ref([]);
+const dataHod = ref('');
 const dataCandidate = ref([]);
 const selectedHod = ref(null);
 const showAddModal = ref(false);
@@ -30,8 +30,7 @@ const fetchCandidate = async () => {
 
 const fetchHod = async () => {
     try {
-        dataHod.value = [];
-        const result = await getHod();
+        const result = await getUserByRole('kadep');
         dataHod.value = result.data;
     } catch (error) {
         console.error('Fetch error:', error);
@@ -89,29 +88,12 @@ onMounted(() => {
         <PageTitle judul="Kelola Kepala Departemen" />
 
         <div class="container mx-auto p-8 lg:px-16">
-            
-            <div class="flex justify-end mb-4">
-                <AddDataButton btnLabel="Perbarui Kadep" btn-title="Perbarui kepala departemen" @click="showAddModal = true" />
-            </div>
-
-            <template v-if="dataHod">
-                <DataTable v-if="dataHod.length > 0" 
-                    :data="dataHod" 
-                    :columns="[
-                        { field: 'id_number', label: 'NIM/NIP', sortable: true },
-                        { field: 'name', label: 'Nama', sortable: true },
-                    ]"
-                    :status-columns="[
-                        { field: 'status', label: 'Status' }
-                    ]"
-                    :searchable="['id_number','name']" 
-                    :detail-column="true" 
-                    :badge-text="['Tidak menjabat', 'Sedang menjabat']" 
-                />
-                <PulseLoading v-else-if="dataHod.length == 0" />
-            </template>
-            <Error @click="fetchHod" v-else />
-            
+                        
+            <h2 v-if="dataHod.length > 0" class="text-center text-xl">Kepala Departemen saat ini adalah {{ dataHod[0].name }}</h2>
+            <p class="text-center text-lg mt-4">Anda ingin mengganti?</p>
+            <center class="my-8">
+                <AddDataButton btnLabel="Perbarui Kadep" btn-title="Perbarui kepala departemen" @click="showAddModal = true"/>
+            </center>
         </div>
         
     </main>

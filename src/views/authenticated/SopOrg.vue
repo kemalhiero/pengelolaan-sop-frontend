@@ -7,23 +7,23 @@ import { getOrg, createOrg, updateOrg, deleteOrg } from '@/api/orgApi.js';
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
-import AddDataModal from '@/components/modal/AddDataModal.vue';
-import EditDataModal from '@/components/modal/EditDataModal.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import AddDataButton from '@/components/modal/AddDataButton.vue';
 import PulseLoading from '@/components/PulseLoading.vue';
 import Error from '@/components/Error.vue';
+import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
+import DataTable from '@/components/DataTable.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
 
+const sopModalStep = ref(1);
+
 const data = ref([]);
 const defaultFormState = {
-    id_pic: '',
+    pic: [],
     name: '',
-    level: '',
     about: '',
-    id_org_parent: null
 };
 
 // Gunakan ref dengan nilai awal defaultFormState
@@ -34,25 +34,18 @@ const resetForm = () => {
     form.value = { ...defaultFormState };
 };
 
-const pic = ref([]);
-
-// Fungsi untuk fetch data dari API
+const dataPic = ref([]);
 const fetchDataPic = async () => {
     try {
-        pic.value = [];
+        dataPic.value = [];
         // TODO ganti apinya ke get pic candidate, sekarang masih belum dibuat
         const result = await getUserByRole('pj');
-        pic.value = result.data;
+        dataPic.value = result.data;
     } catch (error) {
         data.value = null;
         console.error('Fetch error:', error);
     }
 };
-
-const level = [
-    { id: 'laboratorium', name: 'Laboratorium' },
-    { id: 'departemen', name: 'Departemen' },
-]
 
 const fetchDataOrg = async () => {
     try {
@@ -65,33 +58,41 @@ const fetchDataOrg = async () => {
     }
 };
 
-// tampil modal untuk tambah data
-const showAddModal = ref(false);
+const modalHeaderText = ref('');
+const modalType = ref('');
+
+const showModal = ref(false);
 const openAddModal = () => {
     resetForm(); // Reset form sebelum membuka modal
-    showAddModal.value = true;
+    modalHeaderText.value = 'Tambahkan organisasi baru';
+    modalType.value = 'add';
+    showModal.value = true;
+};
+const closeAddModal = () => {
+    showModal.value = false;
+    sopModalStep.value = 1
+    modalHeaderText.value = '';
 };
 
 const addData = async () => {
     try {
 
         const newItem = {
-            id_pic: form.value.id_pic || 'oyoyooy',
+            pic: form.value.pic,
             name: form.value.name,
-            level: form.value.level,
             about: form.value.about,
-            id_org_parent: form.value.id_org_parent,
         };
 
         await createOrg(newItem);
         resetForm();
 
-        showAddModal.value = false;
+        showModal.value = false;
         fetchDataOrg(); // refresh item list
+        sopModalStep.value == 1;
 
         toast("Data berhasil ditambahkan!", {
-            "type": "success",
-            "autoClose": 3000,
+            type: "success",
+            autoClose: 3000,
         });
 
     } catch (error) {
@@ -123,8 +124,8 @@ const deleteData = async (id) => {  // Fungsi untuk menghapus data berdasarkan I
         closeDeleteModal(); // Tutup modal setelah penghapusan
 
         toast("Data berhasil dihapus!", {
-            "type": "success",
-            "autoClose": 3000,
+            type: "success",
+            autoClose: 3000,
         });
 
         console.log(`Data dengan ID ${id} berhasil dihapus`);
@@ -133,57 +134,56 @@ const deleteData = async (id) => {  // Fungsi untuk menghapus data berdasarkan I
     }
 };
 
-// Fungsi untuk memperbarui data
-const showModalUpdate = ref(false);
 const selectedUpdateId = ref(null);
 let dataYangDitemukan;
 
 // Update fungsi openUpdateModal
 const openUpdateModal = (id) => {
     selectedUpdateId.value = id;
-    showModalUpdate.value = true;
+    modalHeaderText.value = 'Perbarui data organisasi';
+    modalType.value = 'edit';
+    showModal.value = true;
     
     dataYangDitemukan = data.value.find(item => item.id === id);
     if (dataYangDitemukan) {
         form.value = {
-            id_pic: dataYangDitemukan.pic.id,
+            pic: dataYangDitemukan.pic,
             name: dataYangDitemukan.name,
-            level: dataYangDitemukan.level,
             about: dataYangDitemukan.about,
-            id_org_parent: dataYangDitemukan.id_org_parent
         };
         console.log('Form value setelah diset:', form.value);
     } else {
         console.log("Data tidak ditemukan");
     }
+    sopModalStep.value == 1;
 };
 
 const closeUpdateModal = () => {
-    showModalUpdate.value = false; // Sembunyikan modal
-    selectedUpdateId.value = null; // Reset ID setelah modal ditutup
+    showModal.value = false;
+    selectedUpdateId.value = null;
+    modalHeaderText.value = '';
+    sopModalStep.value = 1
     resetForm();
 };
 
-const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan ID
+const updateData = async () => {  // Fungsi untuk menghapus data berdasarkan ID
     try {
         const newItem = {
-            id_pic: form.value.id_pic || 'oyoyooy',
+            pic: form.value.pic,
             name: form.value.name,
-            level: form.value.level,
             about: form.value.about,
-            id_org_parent: form.value.id_org_parent,
         };
 
-        const response = await updateOrg(id, newItem);
+        const response = await updateOrg(selectedUpdateId.value, newItem);
         console.log(response);
-        console.log(`Data dengan ID ${id} berhasil diperbarui`);
+        console.log(`Data dengan ID ${selectedUpdateId.value} berhasil diperbarui`);
 
         fetchDataOrg();
-        closeUpdateModal(); // Tutup modal setelah penghapusan
+        closeUpdateModal();
 
         toast("Data berhasil diperbarui!", {
-            "type": "success",
-            "autoClose": 3000,
+            type: "success",
+            autoClose: 3000,
         });
 
     } catch (error) {
@@ -194,8 +194,7 @@ const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan I
 onMounted(() => {
     fetchDataOrg();
     fetchDataPic();
-})
-
+});
 </script>
 
 <template>
@@ -210,43 +209,6 @@ onMounted(() => {
                 <AddDataButton btnLabel="Input Organisasi Baru" @click="openAddModal" />
             </div>
 
-            <!-- Komponen AddDataModal -->
-            <AddDataModal 
-                modalTitle="Tambahkan organisasi baru" 
-                :showModal="showAddModal" 
-                :formFields="[
-                    { id: 'name', label: 'Nama', type: 'text', placeholder: 'Mis. Laboratorium Aplikasi Perusahaan', required: true, minlength: 5, maxlength: 100 },
-                    {
-                        id: 'id_pic',
-                        label: 'Penanggung Jawab',
-                        type: 'select',
-                        placeholder: 'Pilih PJ',
-                        required: false,         //sementara false, karena belum ada dari be
-                        options: pic,
-                        optionValue: 'id',
-                        optionLabel: 'name'
-                    },
-                    // {
-                    //     id: 'level',
-                    //     label: 'Level',
-                    //     type: 'select',
-                    //     placeholder: 'Pilih level',
-                    //     required: true,
-                    //     disabled: true,
-                    //     options: level,
-                    //     optionValue: 'id',
-                    //     optionLabel: 'name'
-                    // },
-                    { id: 'about', label: 'Keterangan', type: 'textarea', placeholder: 'ketikkan keterangan tambahan mengenai organisasi' }
-                ]" 
-                :formData="form" 
-                :submitData="addData" 
-                @update:showModal="(val) => {
-                    showAddModal = val;
-                    if (!val) resetForm();
-                }" 
-            />
-
             <template v-if="data">
                 <div v-if="data.length > 0" class="relative overflow-x-auto shadow-md sm:rounded-lg">
                     <table class="w-full text-sm text-left text-gray-500">
@@ -257,9 +219,6 @@ onMounted(() => {
                                 </th>
                                 <th scope="col" class="px-6 py-3">
                                     Penanggung Jawab
-                                </th>
-                                <th scope="col" class="px-6 py-3">
-                                    Level
                                 </th>
                                 <th scope="col" class="px-6 py-3">
                                     Keterangan
@@ -275,34 +234,23 @@ onMounted(() => {
                                     {{ item.name }}
                                 </th>
                                 <td class="px-6 py-4">
-                                    {{ item.pic.name }}
-                                </td>
-                                <td class="px-6 py-4">
-                                    {{ item.level }}
+                                    <ul v-if="item.pic.length > 0" class="list-disc">
+                                        <li v-for="itempic in item.pic">{{ itempic.name }}</li>
+                                    </ul>
+                                    <p v-else>-</p>
                                 </td>
                                 <td class="px-6 py-4">
                                     {{ item.about }}
                                 </td>
-                                <td class="px-6 py-4 flex" :class="{ 'justify-center': item.level == 'departemen' }">
-                                    <template v-if="item.level == 'departemen'">
-                                        <button title="Edit data departemen" @click="openUpdateModal(item.id)"
-                                            class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
-                                            <PenToSquareIcon class="fill-current w-4 mr-3" />
-                                            <p class="font-medium">Edit</p>
-                                        </button>
-                                    </template>
-                                    <template v-else>
-                                        <!-- Edit -->
-                                        <button :title="`Edit organisasi ${index + 1}`" @click="openUpdateModal(item.id)"
-                                        class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
-                                            <PenToSquareIcon class="fill-current w-4" />
-                                        </button>
-                                        <!-- Hapus -->
-                                        <button :title="`Hapus item ${index + 1}`" @click="openDeleteModal(item.id)" 
-                                            class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
-                                            <TrashCanIcon class="fill-current w-4" />
-                                        </button>
-                                    </template>
+                                <td class="px-6 py-4 flex">
+                                    <button :title="`Edit organisasi ${index + 1}`" @click="openUpdateModal(item.id)"
+                                    class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
+                                        <PenToSquareIcon class="fill-current w-4" />
+                                    </button>
+                                    <button :title="`Hapus item ${index + 1}`" @click="openDeleteModal(item.id)" 
+                                        class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
+                                        <TrashCanIcon class="fill-current w-4" />
+                                    </button>
                                 </td>
                             </tr>
                         </tbody>
@@ -314,42 +262,6 @@ onMounted(() => {
 
         </div>
 
-        <!-- modal edit -->
-        <EditDataModal
-            modalTitle="Perbarui data organisasi" 
-            :showModal="showModalUpdate" 
-            :formFields="[
-                { id: 'name', label: 'Nama', type: 'text', placeholder: 'Mis. Laboratorium Aplikasi Perusahaan', required: true, minlength: 5, maxlength: 100 },
-                {
-                    id: 'id_pic',
-                    label: 'Penanggung Jawab',
-                    type: 'select',
-                    placeholder: 'Pilih PJ',
-                    required: true,
-                    options: pic,
-                    optionValue: 'id',
-                    optionLabel: 'name'
-                },
-                // {
-                //     id: 'level',
-                //     label: 'Level',
-                //     type: 'select',
-                //     placeholder: 'Pilih level',
-                //     required: true,
-                //     disabled: true,
-                //     options: level,
-                //     optionValue: 'id',
-                //     optionLabel: 'name'
-                // },
-                { id: 'about', label: 'Keterangan', type: 'textarea', placeholder: 'ketikkan keterangan tambahan mengenai organisasi' }
-            ]" 
-            :formData="form" 
-            :updateData="updateData" 
-            :selectedId="selectedUpdateId"
-            @update:showModal="showModalUpdate = $event" 
-        />
-
-        <!-- Komponen DeleteDataModal -->
         <DeleteDataModal 
             :showModal="showModalDelete"
             :deleteData="deleteData" 
@@ -358,4 +270,109 @@ onMounted(() => {
         />
 
     </main>
+
+    <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
+        <!-- Overlay gelap -->
+        <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="closeAddModal"></div>
+
+        <!-- Modal content -->
+        <div class="relative p-4 max-w-2xl max-h-full z-10">
+            <div class="relative bg-white rounded-lg shadow">
+                <!-- Modal header -->
+                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        {{ modalHeaderText }}
+                    </h3>
+                    <button
+                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+                        type="button" @click="closeAddModal">
+                        <XMarkCloseIcon class="w-3 h-3" />
+                        <span class="sr-only">Tutup modal</span>
+                    </button>
+                </div>
+                 
+                <ol class="flex items-center w-full px-3 pt-2 space-x-2 text-sm font-medium text-center text-gray-500 sm:text-base sm:px-4 sm:space-x-4 justify-center">
+                    <li class="flex items-center" :class="{'text-blue-600' : modalType == 'add', 'text-yellow-400' : modalType == 'edit'}">
+                        <span class="flex items-center justify-center w-5 h-5 me-2 text-xs border border-blue-600 rounded-full shrink-0"
+                        :class="{'border-blue-600': modalType == 'add', 'border-yellow-400': modalType == 'edit'}">
+                            1
+                        </span>
+                        Isi Info
+                        <svg class="w-3 h-3 ms-2 sm:ms-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 12 10">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m7 9 4-4-4-4M1 9l4-4-4-4"/>
+                        </svg>
+                    </li>
+                    <li class="flex items-center" :class="{'text-blue-600': sopModalStep == 2 && modalType == 'add', 'text-yellow-400': sopModalStep == 2 && modalType == 'edit', }">
+                        <span class="flex items-center justify-center w-5 h-5 me-2 text-xs border rounded-full shrink-0" :class="{ 'border-gray-500':sopModalStep !=2, 'border-blue-600': sopModalStep == 2 && modalType == 'add', 'border-yellow-400': sopModalStep == 2 && modalType == 'edit'  }">
+                            2
+                        </span>
+                        Pilih PJ
+                    </li>
+                </ol>
+
+                <div class="p-4 md:p-5">
+                    <div v-show="sopModalStep == 1" class="mb-4 min-w-96">
+                        <div>
+                            <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Nama</label>
+                            <input
+                                type="text" 
+                                id="name"
+                                v-model="form.name" 
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
+                                placeholder="Mis. Laboratorium Aplikasi Perusahaan" 
+                                required
+                                minlength="5"
+                                maxlength="100"
+                            >
+                        </div>
+                        <div>
+                            <label for="about" class="block mb-2 text-sm font-medium text-gray-900">Keterangan</label>
+                            <textarea 
+                                id="about"
+                                rows="4"
+                                v-model="form.about" 
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
+                                placeholder="ketikkan keterangan tambahan mengenai organisasi"
+                            ></textarea>
+                        </div>
+                    </div>
+                    <div v-show="sopModalStep == 2" class="mb-5 min-w-96">
+                        <DataTable v-if="dataPic.length > 0"
+                            :data="dataPic" 
+                            :columns="[
+                                { field: 'id_number', label: 'NIM/NIP', sortable: true },
+                                { field: 'name', label: 'Nama', sortable: true },
+                            ]"
+                            :searchable="['id_number', 'name']" 
+                            :check-column="true"
+                            v-model="form.pic"
+                        />
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <button :disabled="sopModalStep == 1" @click="sopModalStep--"
+                            class="text-white inline-flex items-center focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:opacity-50 disabled:cursor-not-allowed"
+                            :class="{'bg-blue-700 hover:bg-blue-800 focus:ring-blue-300': modalType == 'add', 'bg-yellow-400 hover:bg-yellow-500 focus:ring-yellow-300': modalType == 'edit' }">
+                            Kembali
+                        </button>
+                        <button @click="sopModalStep++" :disabled="sopModalStep == 2" v-if="sopModalStep != 2"
+                            class="text-white inline-flex items-center focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:opacity-50 disabled:cursor-not-allowed"
+                            :class="{'bg-blue-700 hover:bg-blue-800 focus:ring-blue-300': modalType == 'add', 'bg-yellow-400 hover:bg-yellow-500 focus:ring-yellow-300': modalType == 'edit' }">
+                            Lanjut
+                        </button>
+                        <button v-else-if="modalType == 'add'" @click="addData"
+                            class="text-white inline-flex items-center  focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center bg-blue-700 hover:bg-blue-800 focus:ring-blue-300"
+                        >
+                            Submit
+                        </button>
+                        <button v-else-if="modalType == 'edit'" @click="updateData"
+                            class="text-white inline-flex items-center  focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center bg-yellow-400 hover:bg-yellow-500 focus:ring-yellow-300"
+                        >
+                            Perbarui
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
 </template>
