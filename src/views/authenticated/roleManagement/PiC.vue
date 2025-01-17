@@ -2,7 +2,7 @@
 import { inject, onMounted, ref } from 'vue';
 import { toast } from 'vue3-toastify';
 
-import { addPic, getAllPic, getPicCandidate } from '@/api/userApi';
+import { addPic, getAllPic, getUserByRole } from '@/api/userApi';
 
 import Error from '@/components/Error.vue';
 import DataTable from '@/components/DataTable.vue';
@@ -32,7 +32,7 @@ const fetchPic = async () => {
 const fetchPicCandidate = async () => {
     try {
         dataCandidate.value = [];
-        const result = await getPicCandidate();
+        const result = await getUserByRole('penyusun,sivitas-akademika');
         dataCandidate.value = result.data;
     } catch (error) {
         console.error('Fetch error:', error);

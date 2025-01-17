@@ -1,7 +1,7 @@
 <script setup>
 import { toast } from 'vue3-toastify';
 import { inject, onMounted, ref } from 'vue';
-import { getUserByRole } from '@/api/userApi';
+import { getUnassignedPic, getUserByRole } from '@/api/userApi';
 import { getOrg, createOrg, updateOrg, deleteOrg } from '@/api/orgApi.js';
 
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
@@ -13,6 +13,7 @@ import PulseLoading from '@/components/PulseLoading.vue';
 import Error from '@/components/Error.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import DataTable from '@/components/DataTable.vue';
+import WarningText from '@/components/validation/WarningText.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -34,13 +35,17 @@ const resetForm = () => {
     form.value = { ...defaultFormState };
 };
 
-const dataPic = ref([]);
+// TODO harusnya pilih user yang belum menjabat di organisasi manapun
+const dataUnassignedPic = ref([]);
+const dataAllPic = ref([]);
 const fetchDataPic = async () => {
     try {
-        dataPic.value = [];
-        // TODO ganti apinya ke get pic candidate, sekarang masih belum dibuat
-        const result = await getUserByRole('pj');
-        dataPic.value = result.data;
+        dataUnassignedPic.value = [];
+        let result = await getUnassignedPic();
+        dataUnassignedPic.value = result.data;
+        result = await getUserByRole('pj');
+        dataAllPic.value = result.data;
+        result = null;
     } catch (error) {
         data.value = null;
         console.error('Fetch error:', error);
@@ -66,16 +71,26 @@ const openAddModal = () => {
     resetForm(); // Reset form sebelum membuka modal
     modalHeaderText.value = 'Tambahkan organisasi baru';
     modalType.value = 'add';
+    sopModalStep.value = 1;
+    showWarningText.value.name = false
     showModal.value = true;
 };
-const closeAddModal = () => {
+
+const closeModal = () => {
+    resetForm();
     showModal.value = false;
-    sopModalStep.value = 1
+    sopModalStep.value = 1;
     modalHeaderText.value = '';
+    selectedUpdateId.value = null;
+    showWarningText.value = { ...defaultWarningTextState };
 };
 
 const addData = async () => {
     try {
+        if (form.value.pic.length == 0) {
+            showWarningText.value.pic = true;
+            return;
+        }
 
         const newItem = {
             pic: form.value.pic,
@@ -139,11 +154,13 @@ let dataYangDitemukan;
 
 // Update fungsi openUpdateModal
 const openUpdateModal = (id) => {
+    resetForm();
     selectedUpdateId.value = id;
     modalHeaderText.value = 'Perbarui data organisasi';
     modalType.value = 'edit';
     showModal.value = true;
-    
+    sopModalStep.value = 1;
+
     dataYangDitemukan = data.value.find(item => item.id === id);
     if (dataYangDitemukan) {
         form.value = {
@@ -158,28 +175,21 @@ const openUpdateModal = (id) => {
     sopModalStep.value == 1;
 };
 
-const closeUpdateModal = () => {
-    showModal.value = false;
-    selectedUpdateId.value = null;
-    modalHeaderText.value = '';
-    sopModalStep.value = 1
-    resetForm();
-};
-
 const updateData = async () => {  // Fungsi untuk menghapus data berdasarkan ID
     try {
+        if (form.value.pic.length == 0) {
+            showWarningText.value.pic = true;
+            return;
+        }
         const newItem = {
             pic: form.value.pic,
             name: form.value.name,
             about: form.value.about,
         };
 
-        const response = await updateOrg(selectedUpdateId.value, newItem);
-        console.log(response);
-        console.log(`Data dengan ID ${selectedUpdateId.value} berhasil diperbarui`);
-
+        await updateOrg(selectedUpdateId.value, newItem);
+        showModal.value = false;
         fetchDataOrg();
-        closeUpdateModal();
 
         toast("Data berhasil diperbarui!", {
             type: "success",
@@ -188,6 +198,25 @@ const updateData = async () => {  // Fungsi untuk menghapus data berdasarkan ID
 
     } catch (error) {
         console.error('Update error:', error);
+    }
+};
+const defaultWarningTextState = {
+    name: false,
+    pic: false,
+};
+const showWarningText = ref({...defaultWarningTextState});
+
+const nextStep = () => {
+    if (sopModalStep.value == 1) {
+        if (!form.value.name) {
+            showWarningText.value.name = true;
+        } else {
+            sopModalStep.value++;
+        }
+    } else if (sopModalStep.value == 2) {
+        // if (form.value.pic.length == 0) {
+        //     showWarningText.value.pic = true;
+        // }
     }
 };
 
@@ -244,10 +273,10 @@ onMounted(() => {
                                 </td>
                                 <td class="px-6 py-4 flex">
                                     <button :title="`Edit organisasi ${index + 1}`" @click="openUpdateModal(item.id)"
-                                    class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
+                                        class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
                                         <PenToSquareIcon class="fill-current w-4" />
                                     </button>
-                                    <button :title="`Hapus item ${index + 1}`" @click="openDeleteModal(item.id)" 
+                                    <button :title="`Hapus item ${index + 1}`" @click="openDeleteModal(item.id)"
                                         class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
                                         <TrashCanIcon class="fill-current w-4" />
                                     </button>
@@ -273,7 +302,7 @@ onMounted(() => {
 
     <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
         <!-- Overlay gelap -->
-        <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="closeAddModal"></div>
+        <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="closeModal"></div>
 
         <!-- Modal content -->
         <div class="relative p-4 max-w-2xl max-h-full z-10">
@@ -285,25 +314,32 @@ onMounted(() => {
                     </h3>
                     <button
                         class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
-                        type="button" @click="closeAddModal">
+                        type="button" @click="closeModal">
                         <XMarkCloseIcon class="w-3 h-3" />
                         <span class="sr-only">Tutup modal</span>
                     </button>
                 </div>
-                 
-                <ol class="flex items-center w-full px-3 pt-2 space-x-2 text-sm font-medium text-center text-gray-500 sm:text-base sm:px-4 sm:space-x-4 justify-center">
-                    <li class="flex items-center" :class="{'text-blue-600' : modalType == 'add', 'text-yellow-400' : modalType == 'edit'}">
-                        <span class="flex items-center justify-center w-5 h-5 me-2 text-xs border border-blue-600 rounded-full shrink-0"
-                        :class="{'border-blue-600': modalType == 'add', 'border-yellow-400': modalType == 'edit'}">
+
+                <ol
+                    class="flex items-center w-full px-3 pt-2 space-x-2 text-sm font-medium text-center text-gray-500 sm:text-base sm:px-4 sm:space-x-4 justify-center">
+                    <li class="flex items-center"
+                        :class="{ 'text-blue-600': modalType == 'add', 'text-yellow-400': modalType == 'edit' }">
+                        <span
+                            class="flex items-center justify-center w-5 h-5 me-2 text-xs border border-blue-600 rounded-full shrink-0"
+                            :class="{ 'border-blue-600': modalType == 'add', 'border-yellow-400': modalType == 'edit' }">
                             1
                         </span>
                         Isi Info
-                        <svg class="w-3 h-3 ms-2 sm:ms-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 12 10">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m7 9 4-4-4-4M1 9l4-4-4-4"/>
+                        <svg class="w-3 h-3 ms-2 sm:ms-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 12 10">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="m7 9 4-4-4-4M1 9l4-4-4-4" />
                         </svg>
                     </li>
-                    <li class="flex items-center" :class="{'text-blue-600': sopModalStep == 2 && modalType == 'add', 'text-yellow-400': sopModalStep == 2 && modalType == 'edit', }">
-                        <span class="flex items-center justify-center w-5 h-5 me-2 text-xs border rounded-full shrink-0" :class="{ 'border-gray-500':sopModalStep !=2, 'border-blue-600': sopModalStep == 2 && modalType == 'add', 'border-yellow-400': sopModalStep == 2 && modalType == 'edit'  }">
+                    <li class="flex items-center"
+                        :class="{ 'text-blue-600': sopModalStep == 2 && modalType == 'add', 'text-yellow-400': sopModalStep == 2 && modalType == 'edit', }">
+                        <span class="flex items-center justify-center w-5 h-5 me-2 text-xs border rounded-full shrink-0"
+                            :class="{ 'border-gray-500': sopModalStep != 2, 'border-blue-600': sopModalStep == 2 && modalType == 'add', 'border-yellow-400': sopModalStep == 2 && modalType == 'edit' }">
                             2
                         </span>
                         Pilih PJ
@@ -313,60 +349,67 @@ onMounted(() => {
                 <div class="p-4 md:p-5">
                     <div v-show="sopModalStep == 1" class="mb-4 min-w-96">
                         <div>
-                            <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Nama</label>
-                            <input
-                                type="text" 
-                                id="name"
-                                v-model="form.name" 
+                            <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Nama<span
+                                    class="text-red-600">*</span></label>
+                            <input type="text" 
+                                id="name" 
+                                v-model="form.name"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                placeholder="Mis. Laboratorium Aplikasi Perusahaan" 
-                                required
-                                minlength="5"
-                                maxlength="100"
-                            >
+                                placeholder="Mis. Laboratorium Aplikasi Perusahaan" required minlength="5"
+                                maxlength="100">
+                            <WarningText v-if="showWarningText.name" text="Harap isi data nama terlebih dahulu!" />
                         </div>
                         <div>
                             <label for="about" class="block mb-2 text-sm font-medium text-gray-900">Keterangan</label>
-                            <textarea 
-                                id="about"
-                                rows="4"
-                                v-model="form.about" 
+                            <textarea id="about" rows="4" v-model="form.about"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                placeholder="ketikkan keterangan tambahan mengenai organisasi"
-                            ></textarea>
+                                placeholder="ketikkan keterangan tambahan mengenai organisasi"></textarea>
                         </div>
                     </div>
                     <div v-show="sopModalStep == 2" class="mb-5 min-w-96">
-                        <DataTable v-if="dataPic.length > 0"
-                            :data="dataPic" 
-                            :columns="[
-                                { field: 'id_number', label: 'NIM/NIP', sortable: true },
-                                { field: 'name', label: 'Nama', sortable: true },
-                            ]"
-                            :searchable="['id_number', 'name']" 
-                            :check-column="true"
-                            v-model="form.pic"
-                        />
+                        <div v-if="modalType == 'add'">
+                            <DataTable
+                                :data="dataUnassignedPic" 
+                                :columns="[
+                                    { field: 'id_number', label: 'NIM/NIP', sortable: true },
+                                    { field: 'name', label: 'Nama', sortable: true },
+                                ]" 
+                                :searchable="['id_number', 'name']" 
+                                :check-column="true" 
+                                v-model="form.pic" 
+                            />
+                        </div>
+                        <div v-else-if="modalType == 'edit'">
+                            <DataTable
+                                :data="dataAllPic" 
+                                :columns="[
+                                    { field: 'id_number', label: 'NIM/NIP', sortable: true },
+                                    { field: 'name', label: 'Nama', sortable: true },
+                                ]" 
+                                :searchable="['id_number', 'name']" 
+                                :check-column="true" 
+                                v-model="form.pic" 
+                            />
+                        </div>
+                        <WarningText v-if="showWarningText.pic" text="Pilih penanggung jawab terlebih dahulu!" />
                     </div>
                     <div class="flex justify-between items-center">
                         <button :disabled="sopModalStep == 1" @click="sopModalStep--"
                             class="text-white inline-flex items-center focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:opacity-50 disabled:cursor-not-allowed"
-                            :class="{'bg-blue-700 hover:bg-blue-800 focus:ring-blue-300': modalType == 'add', 'bg-yellow-400 hover:bg-yellow-500 focus:ring-yellow-300': modalType == 'edit' }">
+                            :class="{ 'bg-blue-700 hover:bg-blue-800 focus:ring-blue-300': modalType == 'add', 'bg-yellow-400 hover:bg-yellow-500 focus:ring-yellow-300': modalType == 'edit' }">
                             Kembali
                         </button>
-                        <button @click="sopModalStep++" :disabled="sopModalStep == 2" v-if="sopModalStep != 2"
+                        <button @click="nextStep" :disabled="sopModalStep == 2" v-if="sopModalStep != 2"
                             class="text-white inline-flex items-center focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:opacity-50 disabled:cursor-not-allowed"
-                            :class="{'bg-blue-700 hover:bg-blue-800 focus:ring-blue-300': modalType == 'add', 'bg-yellow-400 hover:bg-yellow-500 focus:ring-yellow-300': modalType == 'edit' }">
+                            :class="{ 'bg-blue-700 hover:bg-blue-800 focus:ring-blue-300': modalType == 'add', 'bg-yellow-400 hover:bg-yellow-500 focus:ring-yellow-300': modalType == 'edit' }">
                             Lanjut
                         </button>
-                        <button v-else-if="modalType == 'add'" @click="addData"
-                            class="text-white inline-flex items-center  focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center bg-blue-700 hover:bg-blue-800 focus:ring-blue-300"
-                        >
+                        <button v-else-if="modalType == 'add'" @click="addData" type="button"
+                            class="text-white inline-flex items-center  focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center bg-blue-700 hover:bg-blue-800 focus:ring-blue-300">
                             Submit
                         </button>
-                        <button v-else-if="modalType == 'edit'" @click="updateData"
-                            class="text-white inline-flex items-center  focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center bg-yellow-400 hover:bg-yellow-500 focus:ring-yellow-300"
-                        >
+                        <button v-else-if="modalType == 'edit'" @click="updateData" type="button"
+                            class="text-white inline-flex items-center  focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center bg-yellow-400 hover:bg-yellow-500 focus:ring-yellow-300">
                             Perbarui
                         </button>
                     </div>

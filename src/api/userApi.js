@@ -14,11 +14,11 @@ const getHodCandidate = () => getRequest('user/hod/candidate', getToken());
 
 const addPic = (data) => postRequest('user/pic', data, getToken());
 const getAllPic = () => getRequest('user/pic', getToken());
-const getPicCandidate = () => getRequest('user/pic/candidate', getToken());
+const getUnassignedPic = () => getRequest('user/pic/unassigned', getToken());
 
 export {
     getUserByRole,
     getAllDrafter, getDrafterByIdDetail, createSopDrafter, addDrafter,
     addHod, getHodCandidate, getHod,
-    getAllPic, addPic, getPicCandidate,
+    getAllPic, addPic, getUnassignedPic
 };

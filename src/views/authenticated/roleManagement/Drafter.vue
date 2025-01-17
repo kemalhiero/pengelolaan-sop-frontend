@@ -82,9 +82,10 @@ onMounted(() => {
 
         <div class="container mx-auto p-8 lg:px-16">
             <div class="flex justify-end mb-4">
-                <AddDataButton btnLabel="Input Peraturan Baru" btn-title="Tambah penyusun sop baru" @click="showAddModal = true" />
+                <AddDataButton btnLabel="Tambah Penyusun Baru" btn-title="Tambah penyusun sop baru" @click="showAddModal = true" />
             </div>
             
+            <!-- TODO permasalahan saat ini kalau datanya memang tidak ada, justru tampilnya loading terus2an, padahal emg datanya yang ngga ada, bukan error -->
             <template v-if="dataDrafter">
                 <DataTable v-if="dataDrafter.length > 0" 
                     :data="dataDrafter" 

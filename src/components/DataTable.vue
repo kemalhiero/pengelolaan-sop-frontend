@@ -230,7 +230,7 @@ const goToPage = (page) => {
             v-model="searchQuery"
             type="text"
             placeholder="Cari..."
-            class="mb-4 p-2 border rounded-lg border-gray-300"
+            class="p-2 border rounded-lg border-gray-300"
         />
     
         <!-- Items per page selector di kanan atas -->
