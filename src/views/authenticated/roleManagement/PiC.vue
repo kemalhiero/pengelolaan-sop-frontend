@@ -6,10 +6,11 @@ import { addPic, getAllPic, getUserByRole } from '@/api/userApi';
 
 import Error from '@/components/Error.vue';
 import DataTable from '@/components/DataTable.vue';
-import PulseLoading from '@/components/PulseLoading.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import AddDataButton from '@/components/modal/AddDataButton.vue';
+import TableSkeleton from '@/components/TableSkeleton.vue';
+import EmptyState from '@/components/EmptyState.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -18,14 +19,30 @@ const dataPic = ref([]);
 const dataCandidate = ref([]);
 const showAddModal = ref(false);
 const selectedPic = ref([]);
+const isLoading = ref(true);
+const hasError = ref(false);
 
 const fetchPic = async () => {
     try {
+        isLoading.value = true;
+        hasError.value = false;
         dataPic.value = [];
+
         const result = await getAllPic();
-        dataPic.value = result.data;
+        if (!result.success) {
+            hasError.value = true;
+            console.error('API Error:', result.error);
+            return;
+        }
+
+        if (result?.data) {
+            dataPic.value = result.data;
+        }
     } catch (error) {
         console.error('Fetch error:', error);
+        hasError.value = true;
+    } finally {
+        isLoading.value = false;
     }
 };
 
@@ -85,21 +102,29 @@ onMounted(() => {
                 <AddDataButton btnLabel="Tambah PJ Baru" btn-title="Tambah penanggung jawab baru" @click="showAddModal = true" />
             </div>
 
-            <template v-if="dataPic">
-                <DataTable v-if="dataPic.length > 0" 
+            <div>
+                <TableSkeleton 
+                    v-if="isLoading"
+                    :columns="5"
+                    :rows="5"
+                />
+                <Error v-else-if="hasError" @click="fetchPic" />
+                <EmptyState 
+                    v-else-if="!hasError && dataPic.length === 0"
+                    title="Tidak ada data penanggung jawab!"
+                    message="Belum ada data penanggung jawab yang tersedia saat ini"
+                    @click="fetchPic"
+                />
+                <DataTable v-else
                     :data="dataPic" 
                     :columns="[
-                        { field: 'id_number', label: 'NIM/NIP', sortable: true },
-                        { field: 'name', label: 'Nama', sortable: true },
-                        { field: 'org', label: 'Organisasi', sortable: true },
+                        { field: 'id_number', label: 'NIM/NIP', sortable: true, searchable: true },
+                        { field: 'name', label: 'Nama', sortable: true, searchable: true },
+                        { field: 'org', label: 'Organisasi', sortable: true, searchable: true },
                     ]"
-                    :searchable="['id_number', 'name', 'org']" 
                     :detail-column="true"
-                    :badge-text="['Belum ada tugas', 'Sudah memiliki tugas']" 
                 />
-                <PulseLoading v-else-if="dataPic.length == 0" />
-            </template>
-            <Error @click="fetchPic" v-else />
+            </div>
         </div>
 
     </main>
@@ -128,10 +153,9 @@ onMounted(() => {
                     <DataTable 
                         :data="dataCandidate" 
                         :columns="[
-                            { field: 'id_number', label: 'NIP', sortable: true },
-                            { field: 'name', label: 'Nama', sortable: true },
+                            { field: 'id_number', label: 'NIP', sortable: true, searchable: true },
+                            { field: 'name', label: 'Nama', sortable: true, searchable: true },
                         ]" 
-                        :searchable="['id_number', 'name']" 
                         :check-column="true" 
                         v-model="selectedPic" 
                     />

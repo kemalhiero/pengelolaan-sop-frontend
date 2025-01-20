@@ -33,13 +33,6 @@ const form = ref({
     description: ''
 });
 
-// const formatNumber = () => {
-//     if (form.value.number) {
-//         // Pastikan angka menjadi tiga digit
-//         form.value.number = String(form.value.number).padStart(3, '0');
-//     }
-// };
-
 // organisasi
 const fetchOrg = async () => {
     try {
@@ -255,8 +248,7 @@ onMounted(() => {
                 <div class="p-4 md:p-5 space-y-4">
                     <DataTable 
                         :data="dataDrafter" 
-                        :columns="[{ field: 'name', label: 'Nama', sortable: true },]"
-                        :searchable="['name']" 
+                        :columns="[{ field: 'name', label: 'Nama', sortable: true, searchable: true },]"
                         :check-column="true"
                         v-model="form.drafter" 
                     />

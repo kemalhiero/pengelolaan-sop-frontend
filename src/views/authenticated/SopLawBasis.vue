@@ -5,13 +5,14 @@ import { getLawType } from "@/api/lawTypeApi";
 import { getLawBasis, createLawBasis, updateLawBasis, deleteLawBasis } from "@/api/lawBasisApi";
 
 import DataTable from "@/components/DataTable.vue";
-import PulseLoading from "@/components/PulseLoading.vue";
 import DeleteDataModal from "@/components/modal/DeleteDataModal.vue";
 import AddDataModal from "@/components/modal/AddDataModal.vue";
 import EditDataModal from "@/components/modal/EditDataModal.vue";
 import PageTitle from "@/components/authenticated/PageTitle.vue";
 import AddDataButton from "@/components/modal/AddDataButton.vue";
 import Error from "@/components/Error.vue";
+import TableSkeleton from "@/components/TableSkeleton.vue";
+import EmptyState from "@/components/EmptyState.vue";
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -25,6 +26,8 @@ const defaultFormState = {
     about: ''
 };
 const form = ref({ ...defaultFormState });
+const isLoading = ref(true);
+const hasError = ref(false);
 
 const resetForm = () => {
     form.value = { ...defaultFormState };
@@ -42,12 +45,25 @@ const fetchTipePeraturan = async () => {
 
 const fetchData = async () => {
     try {
+        isLoading.value = true;
+        hasError.value = false;
         data.value = [];
+
         const response = await getLawBasis();
-        data.value = response.data;
+        if (!response.success) {
+            hasError.value = true;
+            console.error('API Error:', response.error);
+            return;
+        }
+
+        if (response?.data) {
+            data.value = response.data;
+        }
     } catch (error) {
-        data.value = null;
         console.error('Fetch error:', error);
+        hasError.value = true;
+    } finally {
+        isLoading.value = false;
     }
 };
 
@@ -216,23 +232,32 @@ onMounted(() => {
                 }" 
             />
 
-            <template v-if="data">
-                <DataTable v-if="data.length > 0" 
+            <div>
+                <TableSkeleton 
+                    v-if="isLoading"
+                    :columns="5"
+                    :rows="5"
+                />
+                <Error v-else-if="hasError" @click="fetchData" />
+                <EmptyState 
+                    v-else-if="!hasError && data.length === 0"
+                    title="Tidak ada data penyusun!"
+                    message="Belum ada data penyusun yang tersedia saat ini"
+                    @click="fetchData"
+                />
+                <DataTable v-else
                     :data="data" 
                     :columns="[
-                        { field: 'law_type', label: 'Jenis', sortable: true },
-                        { field: 'number', label: 'Nomor', sortable: true },
-                        { field: 'year', label: 'Tahun', sortable: true },
-                        { field: 'about', label: 'Tentang', sortable: false }
+                        { field: 'law_type', label: 'Jenis', sortable: true, searchable: true },
+                        { field: 'number', label: 'Nomor', sortable: true, searchable: true },
+                        { field: 'year', label: 'Tahun', sortable: true, searchable: true },
+                        { field: 'about', label: 'Tentang', sortable: false, searchable: true }
                     ]" 
-                    :searchable="['law_type', 'number', 'year', 'about']" 
                     @edit="openUpdateModal"
                     @delete="openDeleteModal" 
                     :edit-delete-column="true"
                 />
-                <PulseLoading v-else-if="data.length == 0" />
-            </template>
-            <Error @click="fetchData" v-else />
+            </div>
         </div>
 
         <!-- Komponen DeleteDataModal -->

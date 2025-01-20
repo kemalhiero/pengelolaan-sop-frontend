@@ -6,7 +6,8 @@ import { addDrafter, getAllDrafter, getUserByRole } from '@/api/userApi';
 
 import Error from '@/components/Error.vue';
 import DataTable from '@/components/DataTable.vue';
-import PulseLoading from '@/components/PulseLoading.vue';
+import EmptyState from '@/components/EmptyState.vue';
+import TableSkeleton from '@/components/TableSkeleton.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import AddDataButton from '@/components/modal/AddDataButton.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
@@ -18,14 +19,30 @@ const dataDrafter = ref([]);
 const dataCandidate = ref([]);
 const showAddModal = ref(false);
 const selectedDrafter = ref([]);
+const isLoading = ref(true);
+const hasError = ref(false);
 
 const fetchDrafter = async () => {
     try {
+        isLoading.value = true;
+        hasError.value = false;
         dataDrafter.value = [];
+
         const result = await getAllDrafter();
-        dataDrafter.value = result.data; // Menyimpan data yang di-fetch
+        if (!result.success) {
+            hasError.value = true;
+            console.error('API Error:', result.error);
+            return;
+        }
+
+        if (result?.data) {
+            dataDrafter.value = result.data;
+        }
     } catch (error) {
         console.error('Fetch error:', error);
+        hasError.value = true;
+    } finally {
+        isLoading.value = false;
     }
 };
 
@@ -85,24 +102,32 @@ onMounted(() => {
                 <AddDataButton btnLabel="Tambah Penyusun Baru" btn-title="Tambah penyusun sop baru" @click="showAddModal = true" />
             </div>
             
-            <!-- TODO permasalahan saat ini kalau datanya memang tidak ada, justru tampilnya loading terus2an, padahal emg datanya yang ngga ada, bukan error -->
-            <template v-if="dataDrafter">
-                <DataTable v-if="dataDrafter.length > 0" 
+            <div>
+                <TableSkeleton 
+                    v-if="isLoading"
+                    :columns="5"
+                    :rows="5"
+                />
+                <Error v-else-if="hasError" @click="fetchDrafter" />
+                <EmptyState 
+                    v-else-if="!hasError && dataDrafter.length === 0"
+                    title="Tidak ada data penyusun!"
+                    message="Belum ada data penyusun yang tersedia saat ini"
+                    @click="fetchDrafter"
+                />
+                <DataTable v-else
                     :data="dataDrafter" 
                     :columns="[
-                        { field: 'id_number', label: 'NIM/NIP', sortable: true },
-                        { field: 'name', label: 'Nama', sortable: true },
+                        { field: 'id_number', label: 'NIM/NIP', sortable: true, searchable: true },
+                        { field: 'name', label: 'Nama', sortable: true, searchable: true },
                     ]"
                     :status-columns="[
                         { field: 'status', label: 'Status' }
                     ]" 
-                    :searchable="['id_number','name']" 
-                    :detail-column="true"
                     :badge-text="['Belum ada tugas', 'Sudah memiliki tugas']" 
+                    :detail-column="true"
                 />
-                <PulseLoading v-else-if="dataDrafter.length == 0" />
-            </template>
-            <Error @click="" v-else />
+            </div>
         </div>
 
     </main>
@@ -130,10 +155,9 @@ onMounted(() => {
                     <DataTable 
                         :data="dataCandidate" 
                         :columns="[
-                            { field: 'id_number', label: 'NIP', sortable: true },
-                            { field: 'name', label: 'Nama', sortable: true },
+                            { field: 'id_number', label: 'NIP', sortable: true, searchable: true },
+                            { field: 'name', label: 'Nama', sortable: true, searchable: true },
                         ]"
-                        :searchable="['id_number', 'name']"
                         :check-column="true"
                         v-model="selectedDrafter"
                     />

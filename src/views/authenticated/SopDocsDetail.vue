@@ -7,27 +7,44 @@ import getStatus from '@/utils/getStatus';
 import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import UpRightFromSquareIcon from '@/assets/icons/UpRightFromSquareIcon.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
-import PulseLoading from '@/components/PulseLoading.vue';
 import DataTable from '@/components/DataTable.vue';
 import Error from '@/components/Error.vue';
+import TableSkeleton from '@/components/TableSkeleton.vue';
+import EmptyState from '@/components/EmptyState.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
 
 const route = useRoute();
 const showDetailModal = ref(false);
+const sopData = ref({});
+const isLoading = ref(true);
+const hasError = ref(false);
+const selectedVersion = ref(null);
 
-const sopData = ref();
 const fetchData = async () => {
   try {
-    const response = await getOneSop(route.params.id);
-    sopData.value = response.data;
+    isLoading.value = true;
+    hasError.value = false;
+    
+    const result = await getOneSop(route.params.id);
+    if (!result.success) {
+        hasError.value = true;
+        console.error('API Error:', result.error);
+        return;
+    }
+
+    if(result?.data) {
+      sopData.value = result.data;
+    }
   } catch (error) {
     console.error('Fetch error:', error);
+    hasError.value = true;
+  } finally {
+    isLoading.value = false;
   }
 };
 
-const selectedVersion = ref(null);
 const handleRowClick = (id) => {
   // Cari versi SOP yang sesuai dengan id_sop_detail
   const selectedData = sopData.value.version.find(
@@ -74,28 +91,37 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-if="sopData.version" class="my-8">
-        <DataTable 
-          v-if="sopData.version.length > 0" 
+      <div class="my-8">
+        <TableSkeleton 
+            v-if="isLoading"
+            :columns="5"
+            :rows="5"
+        />
+        <Error v-else-if="hasError" @click="fetchData" />
+        <EmptyState 
+            v-else-if="!hasError && sopData.version.length === 0"
+            title="Tidak ada data versi sop!"
+            message="Belum ada data versi sop yang tersedia saat ini"
+            @click="fetchData"
+        />
+        <DataTable v-else
           :data="sopData.version" 
           :columns="[
-            { field: 'number', label: 'Nomor POS', sortable: true },
-            { field: 'version', label: 'Versi', sortable: true },
-            { field: 'revision_date', label: 'Tanggal Revisi', sortable: true },
-            { field: 'effective_date', label: 'Tanggal Efektif', sortable: true },
+            { field: 'number', label: 'Nomor POS', sortable: true, searchable: true },
+            { field: 'version', label: 'Versi', sortable: true, searchable: true },
+            { field: 'revision_date', label: 'Tanggal Revisi', sortable: true, searchable: true },
+            { field: 'effective_date', label: 'Tanggal Efektif', sortable: true, searchable: true },
           ]" 
-          :searchable="['number', 'version', 'revision_date', 'effective_date']" 
           :status-columns="[
             { field: 'status', label: 'Status' }
           ]" 
+          :badge-text="['Batal', 'Diterima', 'Sedang Proses']" 
           :detail-column="true"
           @click="handleRowClick"
-          :badge-text="['Batal', 'Diterima', 'Sedang Proses']" 
         />
-        <PulseLoading v-else-if="sopData.version.length == 0" />
       </div>
     </template>
-    <PulseLoading v-else />
+    <Error v-else @click="fetchData"/>
 
     <div class="flex justify-center mb-8">
       <router-link :to="`/app/propose-version/${route.params.id}`">

@@ -121,10 +121,9 @@ onMounted(() => {
                     <DataTable 
                         :data="dataCandidate" 
                         :columns="[
-                            { field: 'id_number', label: 'NIP', sortable: true },
-                            { field: 'name', label: 'Nama', sortable: true },
+                            { field: 'id_number', label: 'NIP', sortable: true, searchable: true },
+                            { field: 'name', label: 'Nama', sortable: true, searchable: true },
                         ]"
-                        :searchable="['id_number', 'name']"
                         :radio-column="[
                             {field: 'id', label: 'Pilih'}
                         ]"

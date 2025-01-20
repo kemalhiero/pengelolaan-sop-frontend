@@ -149,7 +149,7 @@ onMounted(() => {
                     <label for="sop-assignment-time" class="block mb-2 text-sm font-medium ">
                         Waktu Penugasan
                     </label>
-                    <input type="text" id="sop-assignment-time"
+                    <input type="datetime" id="sop-assignment-time"
                         class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                         :value="picInfo.creation_date" readonly />
                 </div>
@@ -162,12 +162,12 @@ onMounted(() => {
                         :value="picInfo.organization" readonly />
                 </div>
                 <div>
-                    <label for="sop-pic" class="block mb-2 text-sm font-medium ">
-                        Penanggung Jawab
+                    <label for="sop-last-update-date" class="block mb-2 text-sm font-medium ">
+                        Terakhir diperbarui
                     </label>
-                    <input type="text" id="sop-pic"
+                    <input type="datetime" id="sop-last-update-date"
                         class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                        :value="`${picInfo.pic.number} - ${picInfo.pic.name}`" readonly />
+                        :value="picInfo.last_update_date ? picInfo.last_update_date : '-'" readonly />
                 </div>
             </div>
     
@@ -179,11 +179,17 @@ onMounted(() => {
                     class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 h-48">{{ picInfo.description }}</textarea>
             </div>
     
-            <div class="text-black">
-                <div class="mb-5">
-                    <h2 class="mb-2 text-sm font-semibold dark:text-white">User yang ditugaskan:</h2>
-                    <ul class="space-y-1 list-disc list-inside text-sm columns-2">
+            <div class="text-black flex flex-row">
+                <div class="w-1/2">
+                    <h2 class="mb-2 text-sm font-semibold">User yang ditugaskan:</h2>
+                    <ul class="space-y-1 list-disc list-inside text-sm">
                         <li v-for="(item, index) in picInfo.drafter" :key="index">({{ item.id_number }}) {{ item.name }}</li>
+                    </ul>
+                </div>
+                <div class="w-1/2">
+                    <h2 class="mb-2 text-sm font-semibold">Penanggung Jawab:</h2>
+                    <ul class="space-y-1 list-disc list-inside text-sm">
+                        <li v-for="(item, index) in picInfo.pic" :key="index">({{ item.id_number }}) {{ item.name }}</li>
                     </ul>
                 </div>
             </div>
@@ -417,8 +423,7 @@ onMounted(() => {
 
                     <DataTable v-if="legalBasisData"
                         :data="legalBasisData" 
-                        :columns="[{ field: 'legal', label: 'Peraturan', sortable: true }]" 
-                        :searchable="['legal']" 
+                        :columns="[{ field: 'legal', label: 'Peraturan', sortable: true, searchable: true }]" 
                         :check-column="true"
                         v-model="formData.legalBasis" 
                     />
@@ -454,8 +459,7 @@ onMounted(() => {
                 <div class="p-4 md:p-5 space-y-4">
                     <DataTable
                         :data="dataImplementer" 
-                        :columns="[{ field: 'name', label: 'Nama', sortable: true }]" 
-                        :searchable="['name']" 
+                        :columns="[{ field: 'name', label: 'Nama', sortable: true, searchable: true }]" 
                         :check-column="true"
                         v-model="formData.implementer"
                     />

@@ -4,40 +4,51 @@ import { inject, onMounted, ref } from 'vue';
 import { getUnassignedPic, getUserByRole } from '@/api/userApi';
 import { getOrg, createOrg, updateOrg, deleteOrg } from '@/api/orgApi.js';
 
-import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
-import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
+import WarningText from '@/components/validation/WarningText.vue';
+import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import AddDataButton from '@/components/modal/AddDataButton.vue';
-import PulseLoading from '@/components/PulseLoading.vue';
-import Error from '@/components/Error.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
+import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import DataTable from '@/components/DataTable.vue';
-import WarningText from '@/components/validation/WarningText.vue';
+import Error from '@/components/Error.vue';
+import TableSkeleton from '@/components/TableSkeleton.vue';
+import EmptyState from '@/components/EmptyState.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
 
 const sopModalStep = ref(1);
-
 const data = ref([]);
 const defaultFormState = {
     pic: [],
     name: '',
     about: '',
 };
-
-// Gunakan ref dengan nilai awal defaultFormState
 const form = ref({ ...defaultFormState });
+const dataUnassignedPic = ref([]);      //untuk tambah data
+const dataAllPic = ref([]);             //untuk perbarui data
+const modalHeaderText = ref('');
+const modalType = ref('');
+const showModalDelete = ref(false);
+const selectedDeleteId = ref(null);
+const showModal = ref(false);
+const selectedUpdateId = ref(null);
+const defaultWarningTextState = {
+    name: false,
+    pic: false,
+};
+const showWarningText = ref({...defaultWarningTextState});
+let dataYangDitemukan;
+const isLoading = ref(true);
+const hasError = ref(false);
 
 // Fungsi untuk mereset form ke nilai default
 const resetForm = () => {
     form.value = { ...defaultFormState };
 };
 
-// TODO harusnya pilih user yang belum menjabat di organisasi manapun
-const dataUnassignedPic = ref([]);
-const dataAllPic = ref([]);
 const fetchDataPic = async () => {
     try {
         dataUnassignedPic.value = [];
@@ -54,19 +65,27 @@ const fetchDataPic = async () => {
 
 const fetchDataOrg = async () => {
     try {
+        isLoading.value = true;
+        hasError.value = false;
         data.value = [];
+
         const result = await getOrg();
-        data.value = result.data;
+        if (!result.success) {
+            hasError.value = true;
+            console.error('API Error:', result.error);
+            return;
+        }
+        if (result?.data) {
+            data.value = result.data;
+        }
     } catch (error) {
-        data.value = null;
         console.error('Error fetching items:', error);
+        hasError.value = true;
+    } finally {
+        isLoading.value = false;
     }
 };
 
-const modalHeaderText = ref('');
-const modalType = ref('');
-
-const showModal = ref(false);
 const openAddModal = () => {
     resetForm(); // Reset form sebelum membuka modal
     modalHeaderText.value = 'Tambahkan organisasi baru';
@@ -103,6 +122,7 @@ const addData = async () => {
 
         showModal.value = false;
         fetchDataOrg(); // refresh item list
+        fetchDataPic();
         sopModalStep.value == 1;
 
         toast("Data berhasil ditambahkan!", {
@@ -116,9 +136,6 @@ const addData = async () => {
 };
 
 // hapus data
-const showModalDelete = ref(false);
-const selectedDeleteId = ref(null);
-
 const openDeleteModal = (id) => {
     selectedDeleteId.value = id; // Menyimpan ID yang dipilih
     showModalDelete.value = true; // Tampilkan modal
@@ -148,9 +165,6 @@ const deleteData = async (id) => {  // Fungsi untuk menghapus data berdasarkan I
         console.error('Delete error:', error);
     }
 };
-
-const selectedUpdateId = ref(null);
-let dataYangDitemukan;
 
 // Update fungsi openUpdateModal
 const openUpdateModal = (id) => {
@@ -200,11 +214,6 @@ const updateData = async () => {  // Fungsi untuk menghapus data berdasarkan ID
         console.error('Update error:', error);
     }
 };
-const defaultWarningTextState = {
-    name: false,
-    pic: false,
-};
-const showWarningText = ref({...defaultWarningTextState});
 
 const nextStep = () => {
     if (sopModalStep.value == 1) {
@@ -232,14 +241,24 @@ onMounted(() => {
         <PageTitle judul="Daftar Organisasi yang Dikelola" />
 
         <div class="container mx-auto p-8 lg:px-16">
-
-            <!-- modal tambah aturan -->
             <div class="flex justify-end mb-4">
                 <AddDataButton btnLabel="Input Organisasi Baru" @click="openAddModal" />
             </div>
 
-            <template v-if="data">
-                <div v-if="data.length > 0" class="relative overflow-x-auto shadow-md sm:rounded-lg">
+            <div>
+                <TableSkeleton 
+                    v-if="isLoading"
+                    :columns="4"
+                    :rows="4"
+                />
+                <Error v-else-if="hasError" @click="fetchDataOrg" />
+                <EmptyState 
+                    v-else-if="!hasError && data.length === 0"
+                    title="Tidak ada data organisasi!"
+                    message="Belum ada data organisasi yang tersedia saat ini"
+                    @click="fetchDataOrg"
+                />
+                <div v-else class="relative overflow-x-auto shadow-md sm:rounded-lg">
                     <table class="w-full text-sm text-left text-gray-500">
                         <thead class="text-xs text-gray-900 uppercase bg-gray-50">
                             <tr>
@@ -285,10 +304,7 @@ onMounted(() => {
                         </tbody>
                     </table>
                 </div>
-                <PulseLoading v-else-if="data.length == 0" />
-            </template>
-            <Error @click="fetchDataOrg" v-else />
-
+            </div>
         </div>
 
         <DeleteDataModal 
@@ -371,10 +387,9 @@ onMounted(() => {
                             <DataTable
                                 :data="dataUnassignedPic" 
                                 :columns="[
-                                    { field: 'id_number', label: 'NIM/NIP', sortable: true },
-                                    { field: 'name', label: 'Nama', sortable: true },
+                                    { field: 'id_number', label: 'NIM/NIP', sortable: true, searchable: true },
+                                    { field: 'name', label: 'Nama', sortable: true, searchable: true },
                                 ]" 
-                                :searchable="['id_number', 'name']" 
                                 :check-column="true" 
                                 v-model="form.pic" 
                             />
@@ -383,10 +398,9 @@ onMounted(() => {
                             <DataTable
                                 :data="dataAllPic" 
                                 :columns="[
-                                    { field: 'id_number', label: 'NIM/NIP', sortable: true },
-                                    { field: 'name', label: 'Nama', sortable: true },
+                                    { field: 'id_number', label: 'NIM/NIP', sortable: true, searchable: true },
+                                    { field: 'name', label: 'Nama', sortable: true, searchable: true },
                                 ]" 
-                                :searchable="['id_number', 'name']" 
                                 :check-column="true" 
                                 v-model="form.pic" 
                             />

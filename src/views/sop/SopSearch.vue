@@ -2,25 +2,41 @@
 import { inject, onMounted, ref } from 'vue';
 import { getAllSop } from '@/api/sopApi';
 
+import Error from '@/components/Error.vue';
 import EyeIcon from '@/assets/icons/EyeIcon.vue';
 import DataTable from '@/components/DataTable.vue';
-import PulseLoading from '@/components/PulseLoading.vue';
+import EmptyState from '@/components/EmptyState.vue';
 import IconDownload from '@/assets/icons/DownloadIcon.vue';
-import Error from '@/components/Error.vue';
+import TableSkeleton from '@/components/TableSkeleton.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';
 
 const data = ref([]);
+const isLoading = ref(true);
+const hasError = ref(false);
 
 const fetchData = async () => {
     try {
+        isLoading.value = true;
+        hasError.value = false;
         data.value = [];
+
         const result = await getAllSop();
-        data.value = result.data;
+        if (!result.success) {
+            hasError.value = true;
+            console.error('API Error:', result.error);
+            return;
+        }
+
+        if (result?.data) {
+            data.value = result.data;
+        }
     } catch (error) {
-        data.value = null;
-        console.error(error);
+        console.error('Fetch data error', error);
+        hasError.value = true;
+    } finally {
+        isLoading.value = false;
     }
 };
 
@@ -53,20 +69,30 @@ onMounted(() => {
         </div>
     </form> -->
     <!-- TODO creation date ubah jadi effective date kalau udah ada di api -->
-    <!-- TODO data yang tampil hanya yang statusnya sudah berlaku -->
     <div class="container mx-auto p-8 lg:px-32">
-        <template v-if="data">
-            <DataTable v-if="data.length > 0" 
+        <div>
+            <TableSkeleton 
+                v-if="isLoading"
+                :columns="5"
+                :rows="5"
+            />
+            <Error v-else-if="hasError" @click="fetchData" />
+            <EmptyState 
+                v-else-if="!hasError && data.length === 0"
+                title="Tidak ada data sop!"
+                message="Belum ada data sop yang tersedia saat ini"
+                @click="fetchData"
+            />
+            <DataTable v-else
                 :data="data" 
                 :columns="[
-                    { field: 'name', label: 'Nama', sortable: true },
-                    { field: 'creation_date', label: 'Tanggal Efektif', sortable: true },
-                    { field: 'org_name', label: 'Organisasi', sortable: true },
+                    { field: 'name', label: 'Nama', sortable: true, searchable: true },
+                    { field: 'creation_date', label: 'Tanggal Efektif', sortable: true, searchable: true },
+                    { field: 'org_name', label: 'Organisasi', sortable: true, searchable: true },
                 ]" 
                 :status-columns="[
                     { field: 'is_active', label: 'Status' }
                 ]" 
-                :searchable="['name', 'creation_date', 'org_name']" 
                 :other-column="true"
                 :badge-text="['Tidak Berlaku', 'Berlaku', 'Belum Berlaku']"
             >
@@ -91,9 +117,8 @@ onMounted(() => {
                     </router-link>
                 </template>
             </DataTable>
-            <PulseLoading v-else-if="data.length == 0" />
-        </template>
-        <Error @click="fetchData" v-else/>
+        </div>
+        
     </div>
 
 </template>

@@ -49,10 +49,6 @@ const props = defineProps({
     badgeText: {
         type: Array
     },
-    searchable: {
-        type: Array,
-        required: true
-    },
     detailLink: {
         type: String,
     },
@@ -65,6 +61,7 @@ const props = defineProps({
     }
 });
 
+const searchInput = ref('');
 const searchQuery = ref('');
 const currentPage = ref(1);
 const itemsPerPage = ref(5);
@@ -111,14 +108,37 @@ const paginationInfo = computed(() => {
     };
 });
 
+// Computed property to get searchable fields from columns
+const searchableFields = computed(() => {
+    return props.columns
+        .filter(column => column.searchable)
+        .map(column => column.field);
+});
+
+// Debounced search
+let searchTimeout = null;
+watch(searchInput, (newValue) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        searchQuery.value = newValue;
+    }, 300);
+});
+
 // Computed property untuk filtering, sorting, dan pagination
 const filteredAndSortedData = computed(() => {
-    // Filter data terlebih dahulu
-    let result = props.data.filter(item => {
-        return props.searchable.some(field => {
-            return String(item[field]).toLowerCase().includes(searchQuery.value.toLowerCase());
+    let result = props.data;
+    
+    // Apply search filter if there's a search query and searchable fields
+    if (searchQuery.value && searchableFields.value.length > 0) {
+        result = result.filter(item => {
+            return searchableFields.value.some(field => {
+                const value = item[field];
+                return value && String(value)
+                    .toLowerCase()
+                    .includes(searchQuery.value.toLowerCase());
+            });
         });
-    });
+    }
 
     // Sort data jika ada field yang dipilih
     if (sortField.value) {
@@ -227,7 +247,7 @@ const goToPage = (page) => {
 <template>
     <div class="flex justify-between items-center mb-4">
         <input 
-            v-model="searchQuery"
+            v-model="searchInput"
             type="text"
             placeholder="Cari..."
             class="p-2 border rounded-lg border-gray-300"

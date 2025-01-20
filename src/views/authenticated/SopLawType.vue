@@ -5,13 +5,14 @@ import { getLawType, createLawType, updateLawType, deleteLawType } from '@/api/l
 
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
-import PulseLoading from '@/components/PulseLoading.vue';
 import AddDataModal from '@/components/modal/AddDataModal.vue';
 import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
 import EditDataModal from '@/components/modal/EditDataModal.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import AddDataButton from '@/components/modal/AddDataButton.vue';
 import Error from '@/components/Error.vue';
+import TableSkeleton from '@/components/TableSkeleton.vue';
+import EmptyState from '@/components/EmptyState.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -25,16 +26,31 @@ const form = ref({...defaultFormState});
 const resetForm = () => {
     form.value = { ...defaultFormState };
 };
+const isLoading = ref(true);
+const hasError = ref(false);
 
 // Fungsi untuk fetch data dari API
 const fetchData = async () => {
     try {
+        isLoading.value = true;
+        hasError.value = false;
         data.value = [];
+
         const result = await getLawType();
-        data.value = result.data; // Menyimpan data yang di-fetch
+        if (!result.success) {
+            hasError.value = true;
+            console.error('API Error:', result.error);
+            return;
+        }
+
+        if (result?.data) {
+            data.value = result.data; // Menyimpan data yang di-fetch
+        }
     } catch (error) {
-        data.value = null;
         console.error('Fetch error:', error);
+        hasError.value = true
+    } finally {
+        isLoading.value = false;
     }
 };
 
@@ -192,8 +208,20 @@ onMounted(() => {
                 }" 
             />
 
-            <template v-if="data">
-                <div v-if="data.length > 0" class="relative overflow-x-auto shadow-md sm:rounded-lg">
+            <div>
+                <TableSkeleton 
+                    v-if="isLoading"
+                    :columns="5"
+                    :rows="5"
+                />
+                <Error v-else-if="hasError" @click="fetchData" />
+                <EmptyState 
+                    v-else-if="!hasError && data.length === 0"
+                    title="Tidak ada data jenis peraturan!"
+                    message="Belum ada data jenis peraturan yang tersedia saat ini"
+                    @click="fetchData"
+                />
+                <div v-else class="relative overflow-x-auto shadow-md sm:rounded-lg">
                     <table class="w-full text-sm text-left text-gray-500">
                         <thead class="text-xs text-gray-900 uppercase bg-gray-50">
                             <tr>
@@ -236,9 +264,8 @@ onMounted(() => {
                         </tbody>
                     </table>
                 </div>
-                <PulseLoading v-else-if="data.length == 0" />
-            </template>
-            <Error @click="fetchData" v-else />
+            </div>
+            
 
         </div>
 

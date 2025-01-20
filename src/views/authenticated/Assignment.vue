@@ -3,22 +3,38 @@ import { inject, onMounted, ref } from "vue";
 import { getAssignment } from "@/api/sopApi";
 
 import DataTable from "@/components/DataTable.vue";
-import PulseLoading from "@/components/PulseLoading.vue";
 import Error from "@/components/Error.vue";
+import TableSkeleton from "@/components/TableSkeleton.vue";
+import EmptyState from "@/components/EmptyState.vue";
 
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';
 
 const data = ref([]);
+const isLoading = ref(true);
+const hasError = ref(false);
 
 const fetchData = async () => {
     try {
+        isLoading.value = true;
+        hasError.value = false;
         data.value = [];
+
         const result = await getAssignment();
-        data.value = result.data;
+        if (!result.success) {
+            hasError.value = true;
+            console.error('API Error:', result.error);
+            return;
+        }
+
+        if (result?.data) {
+            data.value = result.data;
+        }
     } catch (error) {
-        data.value = null;
-        console.error(error);
+        console.error('Fetch error:', error);
+        hasError.value = true;
+    } finally {
+        isLoading.value = false;
     }
 };
 
@@ -41,25 +57,34 @@ onMounted(() => {
 
     <div class="container mx-auto p-8 lg:px-32">
 
-        <template v-if="data">
-                <DataTable v-if="data.length > 0"
-                    :data="data"
-                    :columns="[
-                        { field: 'name', label: 'Nama Sop', sortable: true },
-                        { field: 'creation_date', label: 'Tanggal Penugasan', sortable: true },
-                        { field: 'org_name', label: 'Organisasi', sortable: true },
-                    ]"
-                    :status-columns="[
-                        { field: 'is_approved', label: 'Status' }
-                    ]"
-                    :searchable="['name', 'creation_date', 'org_name']"
-                    :link-column="true"
-                    detail-link="/assignment"
-                    :badge-text="['Batal', 'Selesai', 'Belum Selesai']"
-                />
-                <PulseLoading v-else-if="data.length == 0" />
-            </template>
-            <Error @click="fetchData" v-else/>
+        <div>
+            <TableSkeleton 
+                v-if="isLoading"
+                :columns="5"
+                :rows="5"
+            />
+            <Error v-else-if="hasError" @click="fetchData"/>
+            <EmptyState 
+                v-else-if="!hasError && data.length === 0"
+                title="Tidak ada data tugas!"
+                message="Belum ada data tugas yang tersedia saat ini"
+                @click="fetchData"
+            />
+            <DataTable v-else
+                :data="data"
+                :columns="[
+                    { field: 'name', label: 'Nama Sop', sortable: true, searchable: true },
+                    { field: 'creation_date', label: 'Tanggal Penugasan', sortable: true, searchable: true },
+                    { field: 'org_name', label: 'Organisasi', sortable: true, searchable: true },
+                ]"
+                :status-columns="[
+                    { field: 'is_approved', label: 'Status' }
+                ]"
+                :badge-text="['Batal', 'Selesai', 'Belum Selesai']"
+                :link-column="true"
+                detail-link="/assignment"
+            />
+        </div>
     </div>
 
 </template>
