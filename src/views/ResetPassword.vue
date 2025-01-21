@@ -1,7 +1,11 @@
 <script setup>
+import { inject, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { resetPw } from '@/api/authApi';
+import { toast } from 'vue3-toastify';
+
 import EyeIcon from '@/assets/icons/EyeIcon.vue';
 import EyeSlashIcon from '@/assets/icons/EyeSlashIcon.vue';
-import { inject, ref } from 'vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = null;
@@ -12,6 +16,60 @@ const showPw = ref({
 });
 const togglePassword = () => { showPw.value.password = !showPw.value.password };
 const toggleConfirmPassword = () => { showPw.value.confirm_password = !showPw.value.confirm_password };
+const route = useRoute();
+const router = useRouter();
+
+if (!route.query.token) {
+    router.replace('/login')
+};
+
+const form = ref({
+    token: route.query.token,
+    password: '',
+    confirm_password: ''
+});
+
+const submitResetPw = () => {
+    toast.promise(
+        new Promise((resolve, reject) => {
+            resetPw(form.value)
+                .then(response => {
+                    if (!response.success) {
+                        // Jika success false, throw error dengan data dari response
+                        throw response;
+                    }
+                    resolve(response);
+                })
+                .catch(error => reject(error));
+        }),
+        {
+            pending: {
+                render() {
+                    return 'Sedang memproses data...'
+                },
+                icon: '🔄'
+            },
+            success: {
+                render() {
+                    setTimeout(() => {
+                        router.push('/login');
+                    }, 5000);
+                    return 'Sandi berhasil diperbarui! Anda akan diarahkan ke halaman login dalam 5 detik'
+                },
+                icon: '✅'
+            },
+            error: {
+                render({ data }) {
+                    return `Gagal: ${data.error?.message || 'Terjadi kesalahan'}`
+                },
+                icon: '❌'
+            }
+        },
+        {
+            closeButton: true,
+        }
+    );
+};
 </script>
 
 <template>
@@ -25,18 +83,12 @@ const toggleConfirmPassword = () => { showPw.value.confirm_password = !showPw.va
                 <h2 class="mb-1 text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl">
                     Ganti sandi
                 </h2>
-                <form class="mt-4 space-y-4 lg:mt-5 md:space-y-5" @submit.prevent="">
-                    <div>
-                        <label for="email" class="block mb-2 text-sm font-medium text-gray-900">Email anda</label>
-                        <input type="email" name="email" id="email"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                            placeholder="contoh: nama@student.unand.ac.id" required autofocus>
-                    </div>
+                <form class="mt-4 space-y-4 lg:mt-5 md:space-y-5" @submit.prevent="submitResetPw">
                     <div>
                         <label for="password" class="block mb-2 text-sm font-medium text-gray-900">Sandi baru</label>
                         <div class="relative">
-                            <input :type="showPw.password ? 'text' : 'password'" name="password" id="password"
-                                placeholder="ketikkan sandi"
+                            <input :type="showPw.password ? 'text' : 'password'" id="password"
+                                placeholder="ketikkan sandi" v-model="form.password"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                                 required minlength="5">
                             <button type="button" @click="togglePassword"
@@ -50,8 +102,8 @@ const toggleConfirmPassword = () => { showPw.value.confirm_password = !showPw.va
                         <label for="confirm-password" class="block mb-2 text-sm font-medium text-gray-900">Konfirmasi
                             sandi</label>
                         <div class="relative">
-                            <input :type="showPw.confirm_password ? 'text' : 'password'" name="confirm-password"
-                                id="confirm-password" placeholder="ketikkan sandi"
+                            <input :type="showPw.confirm_password ? 'text' : 'password'" id="confirm-password"
+                                placeholder="ketikkan sandi" v-model="form.confirm_password"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                                 required minlength="5">
                             <button type="button" @click="toggleConfirmPassword"
@@ -61,18 +113,6 @@ const toggleConfirmPassword = () => { showPw.value.confirm_password = !showPw.va
                             </button>
                         </div>
                     </div>
-                    <!-- <div class="flex items-start">
-                        <div class="flex items-center h-5">
-                            <input id="newsletter" aria-describedby="newsletter" type="checkbox"
-                                class="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-primary-300"
-                                required="">
-                        </div>
-                        <div class="ml-3 text-sm">
-                            <label for="newsletter" class="font-light text-gray-500">I accept the <a
-                                    class="font-medium text-primary-600 hover:underline"
-                                    href="#">Terms and Conditions</a></label>
-                        </div>
-                    </div> -->
                     <button type="submit"
                         class="w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
                         Atur ulang sandi

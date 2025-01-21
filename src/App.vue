@@ -11,7 +11,7 @@ import Navbar from '@/components/Navbar.vue';
 authStore.initializeRememberMe();
 authStore.initializeAuth();
 
-const layout = ref('guest');
+const layout = ref('');
 provide('layoutType', layout);
 </script>
 
@@ -20,6 +20,7 @@ provide('layoutType', layout);
   <template v-if="layout">
     <AppShell v-if="layout === 'admin'" />
     <Navbar v-else-if="layout === 'guest'" />
+    <div v-else></div>
   </template>
   <RouterView />
 

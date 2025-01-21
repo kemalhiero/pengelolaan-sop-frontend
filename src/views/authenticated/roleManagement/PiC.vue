@@ -2,7 +2,7 @@
 import { inject, onMounted, ref } from 'vue';
 import { toast } from 'vue3-toastify';
 
-import { addPic, getAllPic, getUserByRole } from '@/api/userApi';
+import { addPic, getAllPic, getPicCandidate } from '@/api/userApi';
 
 import Error from '@/components/Error.vue';
 import DataTable from '@/components/DataTable.vue';
@@ -49,7 +49,7 @@ const fetchPic = async () => {
 const fetchPicCandidate = async () => {
     try {
         dataCandidate.value = [];
-        const result = await getUserByRole('penyusun,sivitas-akademika');
+        const result = await getPicCandidate();
         dataCandidate.value = result.data;
     } catch (error) {
         console.error('Fetch error:', error);
@@ -112,7 +112,7 @@ onMounted(() => {
                 <EmptyState 
                     v-else-if="!hasError && dataPic.length === 0"
                     title="Tidak ada data penanggung jawab!"
-                    message="Belum ada data penanggung jawab yang tersedia saat ini"
+                    message="Belum ada data penanggung jawab yang tersedia atau anda belum terdaftar di organisasi yang ada."
                     @click="fetchPic"
                 />
                 <DataTable v-else
