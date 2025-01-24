@@ -296,6 +296,11 @@ const goToPage = (page) => {
                             {{ column.label }}
                         </div>
                     </th>
+                    <th v-if="detailColumn" class="px-6 py-3" scope="col">
+                        <div class="flex items-center">
+                            Detail
+                        </div>
+                    </th>
                     <!-- <th>Aksi</th> -->
                 </tr>
             </thead>

@@ -98,7 +98,7 @@ onMounted(() => {
                     </div>
                     <ul class="py-1" aria-labelledby="dropdown">
                         <li>
-                            <a href="#" class="block py-2 px-4 text-sm hover:bg-gray-100">Profil Saya</a>
+                            <RouterLink to="/profile" class="block py-2 px-4 text-sm hover:bg-gray-100">Profil Saya</RouterLink>
                         </li>
                         <li>
                             <RouterLink to="/" class="block py-2 px-4 text-sm hover:bg-gray-100">Landing Page</RouterLink>

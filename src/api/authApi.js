@@ -7,5 +7,6 @@ const logoutUser = () => postRequest('auth/logout', null, getToken());
 
 const forgetPw = (data) => postRequest('auth/forget-pw', data);
 const resetPw = (data) => postRequest('auth/reset-pw', data);
+const updatePw = (data) => postRequest('auth/update-pw', data, getToken());
 
-export { loginUser, registUser, logoutUser, forgetPw, resetPw };
+export { loginUser, registUser, logoutUser, forgetPw, resetPw, updatePw };

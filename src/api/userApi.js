@@ -2,6 +2,7 @@ import getToken from "@/utils/getToken";
 import { getRequest, postRequest, patchRequest, deleteRequest } from "./apiClient";
 
 const getUserByRole = (role) => getRequest(`user?role=${role}`, getToken());
+const getUserProfile = () => getRequest('user/profile', getToken());
 
 const addDrafter = (data) => postRequest('user/drafter', data, getToken());
 const getAllDrafter = () => getRequest('user/drafter', getToken());
@@ -20,7 +21,7 @@ const getUnassignedPic = () => getRequest('user/pic/unassigned', getToken());
 const getPicDetail = (id) => getRequest(`user/pic/${id}`, getToken());
 
 export {
-    getUserByRole,
+    getUserByRole, getUserProfile,
     getAllDrafter, getDrafterByIdDetail, createSopDrafter, addDrafter, getDrafterDetail,
     addHod, getHodCandidate, getHod,
     getAllPic, addPic, getUnassignedPic, getPicCandidate, getPicDetail
