@@ -269,6 +269,9 @@ onMounted(() => {
                                     Penanggung Jawab
                                 </th>
                                 <th scope="col" class="px-6 py-3">
+                                    Jumlah SOP
+                                </th>
+                                <th scope="col" class="px-6 py-3">
                                     Keterangan
                                 </th>
                                 <th scope="col" class="px-6 py-3">
@@ -288,14 +291,17 @@ onMounted(() => {
                                     <p v-else>-</p>
                                 </td>
                                 <td class="px-6 py-4">
+                                    {{ item.total_sop }}
+                                </td>
+                                <td class="px-6 py-4">
                                     {{ item.about }}
                                 </td>
-                                <td class="px-6 py-4 flex">
+                                <td class="px-6 py-4 flex justify-evenly">
                                     <button :title="`Edit organisasi ${index + 1}`" @click="openUpdateModal(item.id)"
                                         class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
                                         <PenToSquareIcon class="fill-current w-4" />
                                     </button>
-                                    <button :title="`Hapus item ${index + 1}`" @click="openDeleteModal(item.id)"
+                                    <button :title="`Hapus item ${index + 1}`" @click="openDeleteModal(item.id)" v-if="item.id != 0 && item.total_sop == 0"
                                         class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
                                         <TrashCanIcon class="fill-current w-4" />
                                     </button>

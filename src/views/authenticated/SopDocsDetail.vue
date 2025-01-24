@@ -53,6 +53,7 @@ const handleRowClick = (id) => {
   selectedVersion.value = selectedData;
   showDetailModal.value = true;
 };
+
 const closeModal = () => {
   showDetailModal.value = false;
   selectedVersion.value = null;
