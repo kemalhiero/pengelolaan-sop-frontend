@@ -87,7 +87,7 @@ onMounted(() => {
                     class="flex mx-3 text-sm bg-gray-800 rounded-full md:mr-0 focus:ring-4 focus:ring-gray-300"
                     id="user-menu-button" aria-expanded="false" data-dropdown-toggle="dropdown">
                     <span class="sr-only">Open user menu</span>
-                    <img class="w-8 h-8 rounded-full" src="/logo_unand_kecil.png" alt="user photo" />
+                    <img class="w-8 h-8 rounded-full" :src=" authStore.userPhoto || '/user-avatar.jpg'" alt="user photo" />
                 </button>
                 <!-- Dropdown menu -->
                 <div class="hidden z-50 my-4 w-56 text-base list-none bg-white divide-y divide-gray-100 shadow border border-gray-300 rounded-xl"

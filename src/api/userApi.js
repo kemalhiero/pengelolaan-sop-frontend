@@ -1,8 +1,11 @@
 import getToken from "@/utils/getToken";
 import { getRequest, postRequest, patchRequest, deleteRequest } from "./apiClient";
+import { uploadFile } from "./fileApi";
 
 const getUserByRole = (role) => getRequest(`user?role=${role}`, getToken());
 const getUserProfile = () => getRequest('user/profile', getToken());
+const addProfilePhoto = (data) => uploadFile('user/profile/photo', data, getToken());
+const deleteUserProfile = () => deleteRequest('user/profile/photo', getToken());
 
 const addDrafter = (data) => postRequest('user/drafter', data, getToken());
 const getAllDrafter = () => getRequest('user/drafter', getToken());
@@ -21,7 +24,7 @@ const getUnassignedPic = () => getRequest('user/pic/unassigned', getToken());
 const getPicDetail = (id) => getRequest(`user/pic/${id}`, getToken());
 
 export {
-    getUserByRole, getUserProfile,
+    getUserByRole, getUserProfile, addProfilePhoto, deleteUserProfile,
     getAllDrafter, getDrafterByIdDetail, createSopDrafter, addDrafter, getDrafterDetail,
     addHod, getHodCandidate, getHod,
     getAllPic, addPic, getUnassignedPic, getPicCandidate, getPicDetail

@@ -8,7 +8,8 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref(null);
   const user = ref({
     email: '',
-    role: ''
+    role: '',
+    photo: ''
   });
 
   const rememberMe = ref(false);
@@ -27,6 +28,7 @@ export const useAuthStore = defineStore('auth', () => {
 
         user.value.email = decoded.email;
         user.value.role = decoded.role;
+        user.value.photo = decoded.photo;
       } catch (error) {
         console.error('error saat inisialisasi sesi', error);
       }
@@ -39,6 +41,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!token.value);
   const userRole = computed(() => user.value?.role);
   const userEmail = computed(() => user.value?.email);
+  const userPhoto = computed(() => user.value?.photo);
   const hasRole = (roles) => computed(() => roles.includes(user.value?.role));
 
   // Actions
@@ -50,9 +53,14 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = newToken;
   };
 
+  const setPhoto = (newToken) => {
+    token.value = newToken;
+  };
+
   const logout = () => {
     user.value.email = null;
     user.value.role = null;
+    user.value.photo = null;
     token.value = null;
 
     if (rememberMe.value) {
@@ -72,10 +80,12 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     userRole,
     userEmail,
+    userPhoto,
     rememberMe,
     hasRole,
     setUser,
     setToken,
+    setPhoto,
     logout,
     setRememberMe,
     initializeRememberMe,

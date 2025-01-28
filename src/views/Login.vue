@@ -50,11 +50,12 @@ const login = async () => {
             authStore.setUser({
                 email: decoded.email,
                 role: decoded.role,
+                photo: decoded.photo,
             });
 
             toast("Berhasil masuk!", {
-                "type": "success",
-                "autoClose": 2000,
+                type: "success",
+                autoClose: 2000,
             });
 
             switch (decoded.role) {

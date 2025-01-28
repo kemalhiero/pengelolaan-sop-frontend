@@ -61,7 +61,7 @@ onMounted(() => {
             id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown"
             data-dropdown-placement="bottom">
             <span class="sr-only">Open user menu</span>
-            <img class="w-8 h-8 rounded-full" src="/logo_unand_kecil.png" alt="user photo">
+            <img class="w-8 h-8 rounded-full" :src=" authStore.userPhoto || '/user-avatar.jpg'" alt="user photo">
           </button>
           <!-- Dropdown menu -->
           <div class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-lg shadow"
@@ -71,6 +71,9 @@ onMounted(() => {
               <span class="block text-sm text-gray-500">{{ authStore.userRole }}</span>
             </div>
             <ul class="py-2" aria-labelledby="user-menu-button">
+              <li>
+                <RouterLink to="/profile" class="block py-2 px-4 text-sm hover:bg-gray-100 hover:cursor-pointer">Profil Saya</RouterLink>
+              </li>
               <li v-if="authStore.userRole == 'kadep' || authStore.userRole == 'pj'">
                 <RouterLink to="/app"
                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:cursor-pointer">App</RouterLink>

@@ -1,12 +1,16 @@
 <script setup>
 import { ref, reactive, inject, onMounted } from 'vue';
-import { getUserProfile } from '@/api/userApi';
+import { toast } from 'vue3-toastify';
+
+import { useAuthStore } from '@/stores/auth';
+import { updatePw } from '@/api/authApi';
+import { addProfilePhoto, deleteUserProfile, getUserProfile } from '@/api/userApi';
+
 import EyeIcon from '@/assets/icons/EyeIcon.vue';
 import EyeSlashIcon from '@/assets/icons/EyeSlashIcon.vue';
-import { updatePw } from '@/api/authApi';
-import { toast } from 'vue3-toastify';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 
+const authStore = useAuthStore();
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';
 
@@ -20,6 +24,11 @@ const fetchProfile = async () => {
     try {
         profileResult = await getUserProfile();
         userProfile.value = profileResult.data;
+
+        if (profileResult.data?.photo) {
+            profilePicture.value = profileResult.data.photo;
+        }
+        
     } catch (error) {
         console.error('Fetch error:', error);
     }
@@ -40,17 +49,17 @@ const toggleCurrentPassword = () => { showPw.value.current = !showPw.value.curre
 const toggleNewPassword = () => { showPw.value.new = !showPw.value.new };
 const toggleConfirmPassword = () => { showPw.value.confirm_new = !showPw.value.confirm_new };
 
-const isPhotoModalOpen = ref(false)
-const selectedImage = ref(null)
+const isPhotoModalOpen = ref(false);
+const selectedImage = ref('');
 
 const openPhotoModal = () => {
     isPhotoModalOpen.value = true
-}
+};
 
 const closePhotoModal = () => {
     isPhotoModalOpen.value = false
     selectedImage.value = null
-}
+};
 
 const onFileSelected = (event) => {
     const file = event.target.files[0]
@@ -61,19 +70,72 @@ const onFileSelected = (event) => {
         }
         reader.readAsDataURL(file)
     }
-}
+};
 
 const uploadPhoto = () => {
-    if (selectedImage.value) {
-        profilePicture.value = selectedImage.value
-        closePhotoModal()
-    }
-}
+    try {
+        toast.promise(
+            new Promise((resolve, reject) => {
+                addProfilePhoto( selectedImage.value )
+                    .then(response => {
+                        if (!response.success) {
+                            throw response;
+                        }
+                        resolve(response);
+                        closePhotoModal();
+                    })
+                    .catch(error => reject(error));
+            }),
+            {
+                pending: {
+                    render() {
+                        return 'Sedang memproses data...'
+                    },
+                    icon: '🔄'
+                },
+                success: {
+                    render() {
+                        return 'Sandi anda berhasil diubah!'
+                    },
+                    icon: '✅'
+                },
+                error: {
+                    render({ data }) {
+                        return `Gagal: ${data.error?.message || 'Terjadi kesalahan'}`
+                    },
+                    icon: '❌'
+                }
+            },
+            {
+                closeButton: true,
+            }
+        );
 
-const removePhoto = () => {
-    profilePicture.value = null
-    selectedImage.value = null
-    closePhotoModal()
+    } catch (error) {
+        console.error('Fetch error:', error);
+        toast(`Data gagal ditambahkan! <br> ${error} `, {
+            type: "error",
+            autoClose: 5000,
+            dangerouslyHTMLString: true
+        });
+    }
+};
+
+const removePhoto = async () => {
+    try {
+        await deleteUserProfile()
+        profilePicture.value = null;
+        selectedImage.value = null;
+        closePhotoModal();
+        authStore.setPhoto('');
+    } catch (error) {
+        console.error('Fetch error:', error);
+        toast(`Data gagal ditambahkan! <br> ${error} `, {
+            type: "error",
+            autoClose: 5000,
+            dangerouslyHTMLString: true
+        });
+    }
 }
 
 const updateProfile = () => {
@@ -155,7 +217,7 @@ onMounted(() => {
             <!-- Foto Profil -->
             <div class="lg:col-span-1 flex flex-col items-center my-auto">
                 <div class="relative mb-4">
-                    <img :src="profilePicture || '/logo_unand_kecil.png'" alt="Foto Profil"
+                    <img :src="profilePicture || '/user-avatar.jpg'" alt="Foto Profil"
                         class="w-48 lg:w-60 rounded-full object-cover border-4 border-gray-300 shadow-lg" />
                     <button @click="openPhotoModal"
                         class="absolute bottom-0 lg:bottom-2 right-0 lg:right-2 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors">
@@ -276,7 +338,7 @@ onMounted(() => {
             <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
                 <h3 class="text-xl font-semibold text-gray-900 mb-4">Kelola Foto Profil</h3>
                 <div class="mb-4">
-                    <input type="file" @change="onFileSelected" accept="image/*" class="hidden" ref="fileInput" />
+                    <input type="file" @change="onFileSelected" accept="image/png, image/jpeg, image/webp" class="hidden" ref="fileInput" />
                     <button @click="$refs.fileInput.click()"
                         class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                         Pilih Foto
