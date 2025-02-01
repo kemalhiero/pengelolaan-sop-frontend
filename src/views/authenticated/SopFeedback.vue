@@ -16,8 +16,6 @@ const data = [
     { nama: 'sepuh', umpan_balik: 'kelas king', tanggal: '2021/25/09', is_followed_up_yet: 'sudah'},
     { nama: 'donatur kampus', umpan_balik: 'kerja bagus', tanggal: '2024/25/09', is_followed_up_yet: 'belum' },
     { nama: 'kucing si', umpan_balik: 'kerja bagus', tanggal: '2024/02/09', is_followed_up_yet: 'belum' },
-    { nama: 'husnil kamil', umpan_balik: 'kelas king', tanggal: '2024/01/09', is_followed_up_yet: 'sudah' },
-    { nama: 'efa yonedi', umpan_balik: 'kelas king', tanggal: '2024/03/09', is_followed_up_yet: 'spam' },
     { nama: 'prabowo', umpan_balik: 'kelas king', tanggal: '2024/03/09', is_followed_up_yet: 'spam' },
 ]
 

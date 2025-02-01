@@ -7,7 +7,7 @@ export const useAuthStore = defineStore('auth', () => {
   // State
   const token = ref(null);
   const user = ref({
-    email: '',
+    idnumber: '',
     role: '',
     photo: ''
   });
@@ -26,7 +26,7 @@ export const useAuthStore = defineStore('auth', () => {
         token.value = savedToken;
         const decoded = jwtDecode(savedToken);
 
-        user.value.email = decoded.email;
+        user.value.idnumber = decoded.idnumber;
         user.value.role = decoded.role;
         user.value.photo = decoded.photo;
       } catch (error) {
@@ -40,9 +40,9 @@ export const useAuthStore = defineStore('auth', () => {
   // Getters
   const isAuthenticated = computed(() => !!token.value);
   const userRole = computed(() => user.value?.role);
-  const userEmail = computed(() => user.value?.email);
+  const userIdNumber = computed(() => user.value?.idnumber);
   const userPhoto = computed(() => user.value?.photo);
-  const hasRole = (roles) => computed(() => roles.includes(user.value?.role));
+  const hasRole = (roles) => roles.includes(user.value?.role);
 
   // Actions
   const setUser = (newUser) => {
@@ -58,7 +58,7 @@ export const useAuthStore = defineStore('auth', () => {
   };
 
   const logout = () => {
-    user.value.email = null;
+    user.value.idnumber = null;
     user.value.role = null;
     user.value.photo = null;
     token.value = null;
@@ -79,7 +79,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     isAuthenticated,
     userRole,
-    userEmail,
+    userIdNumber,
     userPhoto,
     rememberMe,
     hasRole,

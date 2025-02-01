@@ -7,7 +7,7 @@ const layoutType = inject('layoutType');
 layoutType.value = null;
 
 const form = ref({
-    email: ''
+    idnumber: ''
 });
 
 const submitForgetPw = () => {
@@ -64,16 +64,14 @@ const submitForgetPw = () => {
                     Lupa sandi?
                 </h1>
                 <p class="font-light text-gray-500 dark:text-gray-400">
-                    Jangan khawatir! Cukup ketik email Anda dan kami akan mengirimkan tautan untuk mereset kata sandi
-                    Anda!
-                    <!-- Ketikkan email anda disini! -->
+                    Jangan khawatir. Ketikkan NIM/NIP anda dan kami akan mengirimkan tautan ke email Anda!
                 </p>
                 <form class="mt-4 space-y-4 lg:mt-5 md:space-y-5" @submit.prevent="submitForgetPw">
                     <div>
-                        <label for="email" class="block mb-2 text-sm font-medium text-gray-900">Email anda</label>
-                        <input type="email" id="email" v-model="form.email"
+                        <label class="block mb-2 text-sm font-medium text-gray-900">NIM/NIP anda</label>
+                        <input type="text" v-model="form.idnumber"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                            placeholder="nama@student.unand.ac.id" required autofocus>
+                            placeholder="2011520000" required autofocus>
                     </div>
                     <button type="submit"
                         class="w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">

@@ -17,7 +17,7 @@ const layoutType = inject('layoutType');
 layoutType.value = null;
 
 const form = ref({
-    email: null,
+    idnumber: null,
     password: null
 });
 let rememberMe = ref(false);
@@ -25,15 +25,12 @@ rememberMe.value = authStore.rememberMe;
 
 const showPassword = ref(false);
 const togglePassword = () => {
-  showPassword.value = !showPassword.value
+    showPassword.value = !showPassword.value
 };
 
 const login = async () => {
     try {
-        const dataLogin = await loginUser({
-            email: form.value.email,
-            password: form.value.password
-        });
+        const dataLogin = await loginUser(form.value);
 
         if (dataLogin.success) {
 
@@ -48,7 +45,7 @@ const login = async () => {
 
             const decoded = jwtDecode(dataLogin.data.token);
             authStore.setUser({
-                email: decoded.email,
+                idnumber: decoded.idnumber,
                 role: decoded.role,
                 photo: decoded.photo,
             });
@@ -77,7 +74,7 @@ const login = async () => {
             }
 
         } else {
-            toast("Email atau password anda salah!", {
+            toast("NIM-NIP atau password anda salah!", {
                 "type": "error",
                 "autoClose": 5000,
             });
@@ -94,8 +91,7 @@ const login = async () => {
     <section class="bg-gray-200">
         <div class="flex flex-col items-center justify-center p-6 mx-auto md:h-screen lg:py-0">
             <RouterLink to="/" class="flex items-center mb-6 text-2xl font-semibold text-gray-900">
-                <img class="w-8 h-8 mr-2" src="/logo.svg"
-                    alt="logo">
+                <img class="w-8 h-8 mr-2" src="/logo.svg" alt="logo">
                 SIPP DSI
             </RouterLink>
             <div class="w-full bg-white rounded-lg shadow md:mt-0 sm:max-w-md xl:p-0">
@@ -105,28 +101,20 @@ const login = async () => {
                     </h1>
                     <form class="space-y-4 md:space-y-6" @submit.prevent="login">
                         <div>
-                            <label for="email" class="block mb-2 text-sm font-medium text-gray-900">Email</label>
-                            <input type="email" v-model="form.email" id="email"
+                            <label for="idnumber" class="block mb-2 text-sm font-medium text-gray-900">Nomor Identitas (NIM/NIP)</label>
+                            <input type="text" v-model="form.idnumber" id="idnumber"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                placeholder="contoh: nama@student.unand.ac.id" autofocus required>
+                                placeholder="2011520000" autofocus required>
                         </div>
                         <div>
                             <label for="password" class="block mb-2 text-sm font-medium text-gray-900">Sandi</label>
                             <div class="relative">
-                                <input
-                                    :type="showPassword ? 'text' : 'password'"
-                                    v-model="form.password"
-                                    id="password"
-                                    placeholder="ketikkan sandi...."
-                                    minlength="5"
+                                <input :type="showPassword ? 'text' : 'password'" v-model="form.password" id="password"
+                                    placeholder="ketikkan sandi...." minlength="5"
                                     class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                    required
-                                >
-                                <button
-                                    type="button"
-                                    @click="togglePassword"
-                                    class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                                >
+                                    required>
+                                <button type="button" @click="togglePassword"
+                                    class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
                                     <EyeIcon v-if="showPassword" class="h-5 w-5" />
                                     <EyeSlashIcon v-else class="h-5 w-5" />
                                 </button>

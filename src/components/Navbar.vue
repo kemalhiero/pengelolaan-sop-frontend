@@ -11,14 +11,15 @@ import { getAssignment } from '@/api/sopApi';
 
 const authStore = useAuthStore();
 const router = useRouter();
+const showDropdown = ref(false);
 
 const handleLogout = async () => {
   await logoutUser(getToken());
   authStore.logout();
 
   toast("Berhasil keluar!", {
-    "type": "success",
-    "autoClose": 3000,
+    type: "success",
+    autoClose: 3000,
   });
 
   setTimeout(() => {
@@ -46,33 +47,32 @@ onMounted(() => {
 <template>
   <nav class="bg-white border-gray-200">
     <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-      <RouterLink to="/" class="flex items-center space-x-3 rtl:space-x-reverse">
-        <img src="https://flowbite.com/docs/images/logo.svg" class="h-8" alt="Flowbite Logo" />
+      <RouterLink to="/" class="flex items-center space-x-3">
+        <img src="/logo.svg" class="h-8" alt="Flowbite Logo" />
         <span class="self-center text-2xl font-semibold whitespace-nowrap">SIPP DSI</span>
       </RouterLink>
 
-      <!-- <p class="text-black">{{ authStore }}</p> -->
-      <div class="flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
+      <div class="flex md:order-2 space-x-3 md:space-x-0">
 
         <!-- menu user apabila sudah login -->
-        <div v-if="authStore.isAuthenticated"
-          class="flex items-center md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
-          <button type="button" class="flex text-sm bg-gray-800 rounded-full md:me-0 focus:ring-4 focus:ring-gray-300"
-            id="user-menu-button" aria-expanded="false" data-dropdown-toggle="user-dropdown"
-            data-dropdown-placement="bottom">
+        <div v-if="authStore.isAuthenticated" class="relative flex items-center md:order-2 space-x-3 md:space-x-0">
+          <button type="button" class="flex text-sm bg-gray-800 rounded-full md:me-0 focus:ring-4 focus:ring-gray-300 relative" @click="showDropdown = !showDropdown">
             <span class="sr-only">Open user menu</span>
             <img class="w-8 h-8 rounded-full" :src=" authStore.userPhoto || '/user-avatar.jpg'" alt="user photo">
           </button>
+
+          <!-- Overlay transparan untuk menangkap klik luar -->
+          <div v-show="showDropdown" class="fixed inset-0" @click="showDropdown = false"></div>
+
           <!-- Dropdown menu -->
-          <div class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-lg shadow"
-            id="user-dropdown">
+          <div v-show="showDropdown" class="absolute right-0 top-6 z-50 my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-lg shadow-lg border-2">
             <div class="px-4 py-3">
-              <span class="block text-sm  text-gray-900 truncate">{{ authStore.userEmail }}</span>
+              <span class="block text-sm text-gray-900 truncate">{{ authStore.userIdNumber }}</span>
               <span class="block text-sm text-gray-500">{{ authStore.userRole }}</span>
             </div>
-            <ul class="py-2" aria-labelledby="user-menu-button">
+            <ul class="py-2">
               <li>
-                <RouterLink to="/profile" class="block py-2 px-4 text-sm hover:bg-gray-100 hover:cursor-pointer">Profil Saya</RouterLink>
+                <RouterLink to="/profile" class="block py-2 px-4 text-sm hover:bg-gray-100 hover:cursor-pointer" @click="showDropdown = false">Profil Saya</RouterLink>
               </li>
               <li v-if="authStore.userRole == 'kadep' || authStore.userRole == 'pj'">
                 <RouterLink to="/app"
@@ -84,6 +84,7 @@ onMounted(() => {
               </li>
             </ul>
           </div>
+
         </div>
 
         <!-- menu apa bila belum login -->
@@ -105,30 +106,25 @@ onMounted(() => {
         </button>
       </div>
       <div class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1" id="navbar-cta">
-        <ul
-          class="flex flex-col font-medium p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:space-x-8 md:flex-row md:mt-0 md:border-0 md:bg-white">
-
+        <ul class="flex flex-col font-medium p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:space-x-8 md:flex-row md:mt-0 md:border-0 md:bg-white">
           <li>
             <RouterLink to="/" activeClass="text-blue-500"
               class="block py-2 px-3 md:p-0 rounded hover:bg-gray-100 md:hover:bg-transparent hover:text-blue-500">
               Beranda
             </RouterLink>
           </li>
-
           <li>
             <RouterLink to="/sop" activeClass="text-blue-500"
               class="block py-2 px-3 md:p-0 rounded hover:bg-gray-100 md:hover:bg-transparent hover:text-blue-500">
               SOP
             </RouterLink>
           </li>
-
           <li>
             <RouterLink to="/faq" activeClass="text-blue-500"
               class="block py-2 px-3 md:p-0 rounded hover:bg-gray-100 md:hover:bg-transparent hover:text-blue-500">
               FAQ
             </RouterLink>
           </li>
-
           <li class="relative">
             <RouterLink to="/assignment" activeClass="text-blue-500"
               v-if="authStore.isAuthenticated && authStore.userRole == 'penyusun'"
@@ -140,10 +136,7 @@ onMounted(() => {
                 {{ assignmentNumber }}
               </span>
             </RouterLink>
-
-
           </li>
-
         </ul>
       </div>
     </div>

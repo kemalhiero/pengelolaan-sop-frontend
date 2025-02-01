@@ -44,14 +44,15 @@ layoutType.value = 'guest';
                 </div>
 
                 <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 md:p-10 max-w-2xl mx-auto">
-                    <h2 class="text-gray-900 text-3xl font-extrabold mb-2 text-center">Best react
-                        libraries around the web</h2>
+                    <h2 class="text-gray-900 text-3xl font-extrabold mb-2 text-center">
+                        Sop yang paling banyak dicari
+                    </h2>
                     <!-- <p class="text-lg font-normal text-gray-500 mb-4">Static websites are now used to bootstrap lots of websites and are becoming the basis for a variety of tools that even influence both web designers and developers.</p> -->
                     <SOPTable />
 
                     <RouterLink to="/sop">
                         <p class="text-blue-600 hover:underline font-medium text-lg inline-flex items-center mt-10">
-                            Read more
+                            Selengkapnya
                             <svg class="w-3.5 h-3.5 ms-2 rtl:rotate-180" aria-hidden="true"
                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"

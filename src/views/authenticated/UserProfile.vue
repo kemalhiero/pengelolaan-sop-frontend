@@ -3,43 +3,36 @@ import { ref, reactive, inject, onMounted } from 'vue';
 import { toast } from 'vue3-toastify';
 
 import { useAuthStore } from '@/stores/auth';
-import { updatePw } from '@/api/authApi';
+import { sendCode, updateEmail, updatePw, verifCode } from '@/api/authApi';
 import { addProfilePhoto, deleteUserProfile, getUserProfile } from '@/api/userApi';
 
 import EyeIcon from '@/assets/icons/EyeIcon.vue';
 import EyeSlashIcon from '@/assets/icons/EyeSlashIcon.vue';
-import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
+import LockedInputColumnIndicator from '@/components/indicator/LockedInputColumnIndicator.vue';
 
 const authStore = useAuthStore();
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';
 
-const profilePicture = ref(null);
-const showEmailConformationModal = ref(false);
+const showEmailConfirmationModal = ref(false);
 const emailConfirmationCode = ref('');
-
-const userProfile = ref({});
-let profileResult;
-const fetchProfile = async () => {
-    try {
-        profileResult = await getUserProfile();
-        userProfile.value = profileResult.data;
-
-        if (profileResult.data?.photo) {
-            profilePicture.value = profileResult.data.photo;
-        }
-        
-    } catch (error) {
-        console.error('Fetch error:', error);
-    }
-};
-
+const userProfile = ref({
+    name: '',
+    id_number: '',
+    email: '',
+    photo: '',
+    gender: '',
+    role: '',
+    org: ''
+});
+const originalEmail = ref('');
 const passwordChange = reactive({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
 });
-
+const isPhotoModalOpen = ref(false);
+const selectedImage = ref('');
 const showPw = ref({
     current: false,
     new: false,
@@ -49,8 +42,15 @@ const toggleCurrentPassword = () => { showPw.value.current = !showPw.value.curre
 const toggleNewPassword = () => { showPw.value.new = !showPw.value.new };
 const toggleConfirmPassword = () => { showPw.value.confirm_new = !showPw.value.confirm_new };
 
-const isPhotoModalOpen = ref(false);
-const selectedImage = ref('');
+const fetchProfile = async () => {
+    try {
+        const result = await getUserProfile();
+        userProfile.value = result.data;
+        originalEmail.value = result.data.email;
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+};
 
 const openPhotoModal = () => {
     isPhotoModalOpen.value = true
@@ -76,7 +76,7 @@ const uploadPhoto = () => {
     try {
         toast.promise(
             new Promise((resolve, reject) => {
-                addProfilePhoto( selectedImage.value )
+                addProfilePhoto(selectedImage.value)
                     .then(response => {
                         if (!response.success) {
                             throw response;
@@ -124,7 +124,7 @@ const uploadPhoto = () => {
 const removePhoto = async () => {
     try {
         await deleteUserProfile()
-        profilePicture.value = null;
+        userProfile.value.photo = null;
         selectedImage.value = null;
         closePhotoModal();
         authStore.setPhoto('');
@@ -137,22 +137,6 @@ const removePhoto = async () => {
         });
     }
 }
-
-const updateProfile = () => {
-    console.log('Memperbarui profil:', userProfile.value)
-    // Tambahkan logika update profil
-
-    try {
-        if (userProfile.value.email !== profileResult.data.email) {
-            // kasih peringatan bahwa kalau email harus konfirmasi dulu
-            // tampil modal masukin kode
-            console.info('emailnya beda!')
-            showEmailConformationModal.value = true
-        }
-    } catch (error) {
-        console.error('Fetch error:', error);
-    }
-};
 
 const changePassword = () => {
     try {
@@ -205,19 +189,128 @@ const changePassword = () => {
     }
 };
 
+const checkDataUpdate = () => {
+    try {
+        if (userProfile.value.email !== originalEmail.value) {
+            // Send verification code to the new email
+            toast.promise(
+                new Promise((resolve, reject) => {
+                    sendCode({
+                        newEmail: userProfile.value.email
+                    }).then(response => {
+                        if (!response.success) {
+                            throw response;
+                        }
+                        resolve(response);
+                        showEmailConfirmationModal.value = true;
+                    })
+                        .catch(error => reject(error));
+                }),
+                {
+                    pending: {
+                        render() {
+                            return 'Sedang mengirim kode..'
+                        },
+                        icon: '🔄'
+                    },
+                    success: {
+                        render() {
+                            return 'Kode berhasil dikirim! Silahkan cek email baru anda!'
+                        },
+                        icon: '✅'
+                    },
+                    error: {
+                        render({ data }) {
+                            return `Gagal: ${data.error?.message || 'Terjadi kesalahan'}`
+                        },
+                        icon: '❌'
+                    }
+                },
+                {
+                    closeButton: true,
+                }
+            );
+
+        } else {
+            console.log('email tidak berubah!')
+            // Update profile without verification
+            // await updateUserProfile(userProfile.value);
+        }
+    } catch (error) {
+        console.error('Error sending confirmation code:', error);
+    }
+};
+
+const verifyCode = async () => {        //verifikasi kode dan perbarui email
+    try {
+        const isValid = await verifCode({ code: emailConfirmationCode.value });
+        if (isValid.success) {
+            // if (userProfile.value.role !== 'kadep') {
+            toast.promise(
+                new Promise((resolve, reject) => {
+                    updateEmail({
+                        oldEmail: originalEmail.value,
+                        newEmail: userProfile.value.email
+                    }).then(response => {
+                        if (!response.success) {
+                            throw response;
+                        }
+                        resolve(response);
+                        showEmailConfirmationModal.value = false;
+                    })
+                        .catch(error => reject(error));
+                }),
+                {
+                    pending: {
+                        render() {
+                            return 'Sedang diproses...'
+                        },
+                        icon: '🔄'
+                    },
+                    success: {
+                        render() {
+                            return 'Email berhasil diperbarui!'
+                        },
+                        icon: '✅'
+                    },
+                    error: {
+                        render({ data }) {
+                            return `Gagal: ${data.error?.message || 'Terjadi kesalahan'}`
+                        },
+                        icon: '❌'
+                    }
+                },
+                {
+                    closeButton: true,
+                }
+            );
+            // }
+        } else {
+            toast(`Kode verifikasi tidak valid!<br> ${isValid.error}`, {
+                type: 'error',
+                autoClose: 5000,
+                dangerouslyHTMLString: true
+            });
+        }
+    } catch (error) {
+        console.error('Error verifying code:', error);
+    }
+};
+
 onMounted(() => {
     fetchProfile();
 });
 </script>
 
 <template>
+
     <div class="container mx-auto p-6">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             <!-- Foto Profil -->
             <div class="lg:col-span-1 flex flex-col items-center my-auto">
                 <div class="relative mb-4">
-                    <img :src="profilePicture || '/user-avatar.jpg'" alt="Foto Profil"
+                    <img :src="userProfile.photo || '/user-avatar.jpg'" alt="Foto Profil"
                         class="w-48 lg:w-60 rounded-full object-cover border-4 border-gray-300 shadow-lg" />
                     <button @click="openPhotoModal"
                         class="absolute bottom-0 lg:bottom-2 right-0 lg:right-2 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors">
@@ -232,47 +325,62 @@ onMounted(() => {
             <!-- Informasi Pribadi -->
             <div class="lg:col-span-2 p-6">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">Informasi Pribadi</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                        <label class="block text-sm font-medium text-gray-700">Nama</label>
-                        <input type="text" v-model="userProfile.name"
-                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" />
+                <form @submit.prevent="checkDataUpdate">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Nama</label>
+                            <div class="flex items-center border border-gray-300 rounded-lg shadow-sm">
+                                <input type="text" disabled v-model="userProfile.name"
+                                    class="w-full pl-3 py-2 border-none bg-transparent" />
+                                <LockedInputColumnIndicator />
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">NIM/NIP</label>
+                            <div class="flex items-center border border-gray-300 rounded-lg shadow-sm">
+                                <input type="text" disabled v-model="userProfile.id_number"
+                                    class="w-full pl-3 py-2 border-none bg-transparent" />
+                                <LockedInputColumnIndicator />
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Email</label>
+                            <input type="email" v-model="userProfile.email" required
+                                class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" />
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Gender</label>
+                            <div class="flex items-center border border-gray-300 rounded-lg shadow-sm">
+                                <input type="text" disabled v-model="userProfile.gender"
+                                    class="w-full pl-3 py-2 border-none bg-transparent" />
+                                <LockedInputColumnIndicator />
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Role</label>
+                            <div class="flex items-center border border-gray-300 rounded-lg shadow-sm">
+                                <input type="text" disabled v-model="userProfile.role"
+                                    class="w-full pl-3 py-2 border-none bg-transparent" />
+                                <LockedInputColumnIndicator />
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">Organisasi</label>
+                            <div class="flex items-center border border-gray-300 rounded-lg shadow-sm">
+                                <input type="text" disabled v-model="userProfile.org"
+                                    class="w-full pl-3 py-2 border-none bg-transparent" />
+                                <LockedInputColumnIndicator />
+                            </div>
+                        </div>
                     </div>
-                    <div class="space-y-2">
-                        <label class="block text-sm font-medium text-gray-700">NIM/NIP</label>
-                        <input type="text" v-model="userProfile.id_number"
-                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" />
+                    <div class="mt-6 flex justify-end">
+                        <button type="submit" :disabled="userProfile.email == originalEmail"
+                            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:cursor-not-allowed disabled:bg-opacity-60">
+                            Perbarui Data
+                        </button>
                     </div>
-                    <div class="space-y-2">
-                        <label class="block text-sm font-medium text-gray-700">Email</label>
-                        <input type="email" v-model="userProfile.email"
-                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" />
-                    </div>
-                    <div class="space-y-2">
-                        <label class="block text-sm font-medium text-gray-700">Gender</label>
-                        <select v-model="userProfile.gender"
-                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                            <option value="pria">Laki-laki</option>
-                            <option value="wanita">Perempuan</option>
-                        </select>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="block text-sm font-medium text-gray-700">Role</label>
-                        <input type="text" v-model="userProfile.role" readonly
-                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-gray-100" />
-                    </div>
-                    <div class="space-y-2">
-                        <label class="block text-sm font-medium text-gray-700">Organisasi</label>
-                        <input type="text" v-model="userProfile.org" readonly
-                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-gray-100" />
-                    </div>
-                </div>
-                <div class="mt-6 flex justify-end">
-                    <button @click="updateProfile"
-                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                        Perbarui Profil
-                    </button>
-                </div>
+                </form>
             </div>
 
             <div></div>
@@ -338,7 +446,8 @@ onMounted(() => {
             <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
                 <h3 class="text-xl font-semibold text-gray-900 mb-4">Kelola Foto Profil</h3>
                 <div class="mb-4">
-                    <input type="file" @change="onFileSelected" accept="image/png, image/jpeg, image/webp" class="hidden" ref="fileInput" />
+                    <input type="file" @change="onFileSelected" accept="image/png, image/jpeg, image/webp"
+                        class="hidden" ref="fileInput" />
                     <button @click="$refs.fileInput.click()"
                         class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                         Pilih Foto
@@ -367,9 +476,9 @@ onMounted(() => {
     </div>
 
     <!-- modal konfirmasi email -->
-    <div v-show="showEmailConformationModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
+    <div v-show="showEmailConfirmationModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
 
-        <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showEmailConformationModal = false"></div>
+        <div class="fixed inset-0 bg-gray-800 bg-opacity-30"></div>
 
         <div class="relative w-full max-w-2xl max-h-full">
             <div class="relative bg-white rounded-lg shadow">
@@ -379,18 +488,12 @@ onMounted(() => {
                     <h3 class="text-xl font-medium text-gray-900">
                         Masukkan kode yang telah dikirimkan ke email!
                     </h3>
-                    <button type="button"
-                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
-                        @click="showEmailConformationModal = false">
-                        <XMarkCloseIcon class="w-3 h-3" />
-                        <span class="sr-only">Tutup modal</span>
-                    </button>
                 </div>
 
                 <!-- Modal body -->
-                <form @submit.prevent="updateProfile">
+                <form @submit.prevent="verifyCode">
                     <div class="p-4 md:p-5 space-y-4 max-h-[620px] overflow-y-auto">
-                        <input type="text"
+                        <input type="text" maxlength="6"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                             v-model="emailConfirmationCode" required>
                     </div>
@@ -404,6 +507,7 @@ onMounted(() => {
                         </button>
                     </div>
                 </form>
+
             </div>
         </div>
 

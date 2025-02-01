@@ -1,11 +1,13 @@
 <script setup>
     const data = [
-        { nama : 'Apple MacBook Pro 17', tanggal: '15/09/2024', lembaga: 'Laptop' },
-        { nama : 'Microsoft Surface Pro', tanggal: '15/09/2024', lembaga: 'Laptop' },
-        { nama : 'Lenovo ThinkPad', tanggal: '15/09/2024', lembaga: 'Laptop' },
-        { nama : 'Intel NUC', tanggal: '15/09/2024', lembaga: 'Mini PC' },
-        { nama : 'Magic Mouse 2', tanggal: '15/09/2024', lembaga: 'Accecories' },
-        { nama : 'Keychron 2', tanggal: '15/09/2024', lembaga: 'Keyboard' },
+        { nama : 'Peminjaman Ruangan', tanggal: '15/09/2024', lembaga: 'LEA' },
+        { nama : 'Peminjaman Buku', tanggal: '15/09/2024', lembaga: 'LEA' },
+        { nama : 'Pendaftaran KP', tanggal: '15/09/2024', lembaga: 'DSI' },
+        { nama : 'Pendaftaran Asisten', tanggal: '15/09/2024', lembaga: 'LBI' },
+        { nama : 'Peminjaman Inventaris', tanggal: '15/09/2024', lembaga: 'LDKOM' },
+        { nama : 'Pendaftaran Seminar Hasil', tanggal: '15/09/2024', lembaga: 'DSI' },
+        { nama : 'Pendaftaran Wisuda', tanggal: '15/09/2024', lembaga: 'DSI' },
+        { nama : 'Pemeliharaan Inventaris', tanggal: '15/09/2024', lembaga: 'LABGIS' },
     ]
 </script>
 

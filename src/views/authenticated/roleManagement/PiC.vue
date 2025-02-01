@@ -6,11 +6,11 @@ import { addPic, getAllPic, getPicCandidate, getPicDetail } from '@/api/userApi'
 
 import Error from '@/components/Error.vue';
 import DataTable from '@/components/DataTable.vue';
+import EmptyState from '@/components/EmptyState.vue';
+import TableSkeleton from '@/components/TableSkeleton.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import AddDataButton from '@/components/modal/AddDataButton.vue';
-import TableSkeleton from '@/components/TableSkeleton.vue';
-import EmptyState from '@/components/EmptyState.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -170,10 +170,15 @@ onMounted(() => {
                 <!-- Modal body -->
 
                 <div class="p-4 md:p-5 space-y-4">
-                    <DataTable :data="dataCandidate" :columns="[
-                        { field: 'id_number', label: 'NIP', sortable: true, searchable: true },
-                        { field: 'name', label: 'Nama', sortable: true, searchable: true },
-                    ]" :check-column="true" v-model="selectedPic" />
+                    <DataTable 
+                        :data="dataCandidate" 
+                        :columns="[
+                            { field: 'id_number', label: 'NIP', sortable: true, searchable: true },
+                            { field: 'name', label: 'Nama', sortable: true, searchable: true },
+                        ]" 
+                        :check-column="true" 
+                        v-model="selectedPic" 
+                    />
                 </div>
                 <!-- Modal footer -->
                 <div

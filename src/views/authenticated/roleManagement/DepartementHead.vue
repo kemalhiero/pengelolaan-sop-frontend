@@ -85,11 +85,11 @@ onMounted(() => {
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
 
-        <PageTitle judul="Kelola Kepala Departemen" />
+        <PageTitle judul="Kelola Ketua Departemen" />
 
         <div class="container mx-auto p-8 lg:px-16">
                         
-            <h2 v-if="dataHod.length > 0" class="text-center text-xl">Kepala Departemen saat ini adalah {{ dataHod[0].name }}</h2>
+            <h2 v-if="dataHod.length > 0" class="text-center text-xl">Ketua Departemen saat ini adalah {{ dataHod[0].name }}</h2>
             <p class="text-center text-lg mt-4">Anda ingin mengganti?</p>
             <center class="my-8">
                 <AddDataButton btnLabel="Perbarui Kadep" btn-title="Perbarui kepala departemen" @click="showAddModal = true"/>

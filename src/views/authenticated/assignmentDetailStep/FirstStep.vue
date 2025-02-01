@@ -45,11 +45,11 @@ const validateFields = () => {
 
     // Validasi dengan satu fungsi
     const validations = {
-        section: () => !formData.value.section.trim(),
+        section: () => !formData.value.section,
         implementer: () => formData.value.implementer.length === 0,
         legalBasis: () => formData.value.legalBasis.length === 0,
         implementQualification: () => formData.value.implementQualification.length === 0,
-        warning: () => !formData.value.warning.trim(),
+        warning: () => !formData.value.warning,
         record: () => formData.value.record.length === 0
     };
 

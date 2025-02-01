@@ -301,7 +301,16 @@ const goToPage = (page) => {
                             Detail
                         </div>
                     </th>
-                    <!-- <th>Aksi</th> -->
+                    <th v-if="checkColumn || linkColumn" class="px-6 py-3" scope="col">
+                        <div class="flex items-center">
+                            Pilih
+                        </div>
+                    </th>
+                    <th v-if="editDeleteColumn || otherColumn" class="px-6 py-3" scope="col">
+                        <div class="flex items-center">
+                            Aksi
+                        </div>
+                    </th>
                 </tr>
             </thead>
             <tbody>

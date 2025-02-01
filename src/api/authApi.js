@@ -9,4 +9,12 @@ const forgetPw = (data) => postRequest('auth/forget-pw', data);
 const resetPw = (data) => postRequest('auth/reset-pw', data);
 const updatePw = (data) => postRequest('auth/update-pw', data, getToken());
 
-export { loginUser, registUser, logoutUser, forgetPw, resetPw, updatePw };
+const sendCode = (data) => postRequest('auth/send-code', data, getToken());
+const verifCode = (data) => postRequest('auth/verify-code', data, getToken());
+const updateEmail = (data) => postRequest('auth/update-email', data, getToken());
+
+export { 
+    loginUser, registUser, logoutUser, 
+    forgetPw, resetPw, updatePw,
+    sendCode, verifCode, updateEmail
+};

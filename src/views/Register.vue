@@ -109,7 +109,7 @@ const regist = async () => {
                         <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Nama</label>
                         <input type="text" v-model="form.name" id="name"
                             class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                            placeholder="budi arie" autofocus required minlength="3">
+                            placeholder="Contoh: Budi" autofocus required minlength="3">
                     </div>
                     <div>
                         <label for="idname" class="block mb-2 text-sm font-medium text-gray-900">NIM/NIP</label>

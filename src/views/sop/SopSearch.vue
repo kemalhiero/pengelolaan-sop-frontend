@@ -107,14 +107,14 @@ onMounted(() => {
                     </router-link>
                     <!-- TODO hanya bisa diunduh kalau statusnya sudah berlaku -->
                     <!-- TODO buat tombol ni langsung menugnduh dokumen pdf nya -->
-                    <router-link :to="{ name: 'DownloadSop' }" target="_blank">
+                    <!-- <router-link :to="{ name: 'DownloadSop' }" target="_blank">
                         <button
                             class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center me-2 mb-2"
                             title="Unduh dokumen">
                             <IconDownload class="w-5 mr-3 fill-current" />
                             Unduh
                         </button>
-                    </router-link>
+                    </router-link> -->
                 </template>
             </DataTable>
         </div>

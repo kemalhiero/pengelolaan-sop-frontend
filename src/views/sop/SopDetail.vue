@@ -69,51 +69,42 @@ const authStore = useAuthStore();
 
             <!-- Bagian Kanan: Form dengan Overlay Login -->
             <div class="w-full lg:w-2/3 relative">
-            <!-- Form Container -->
-            <form 
-                class="w-full bg-white p-6 space-y-5"
-                :class="{ 'blur-sm pointer-events-none': !authStore.isAuthenticated }"
-            >
-                <h2 class="text-lg font-semibold mb-4">Form Umpan Balik</h2>
-                <div>
-                <label for="nama" class="block mb-2 text-sm font-medium">Nama</label>
-                <input type="text" id="nama" 
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
-                    placeholder="Contoh: prabowo" required />
-                </div>
-                <div>
-                <label for="email" class="block mb-2 text-sm font-medium">Surat Elektronik</label>
-                <input type="email" id="email" 
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
-                    placeholder="Contoh: prabowo@email.com" required />
-                </div>
-                <div>
-                <label for="message" class="block mb-2 text-sm font-medium">Kritik/Saran</label>
-                <textarea id="message" rows="4" 
-                    class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" 
-                    placeholder="Ketikkan kritik atau saran Anda..."></textarea>
-                </div>
-                <button type="submit" 
-                class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5">
-                Submit
-                </button>
-            </form>
-
-            <!-- Overlay Login -->
-            <div 
-                v-if="!authStore.isAuthenticated"
-                class="absolute inset-0 flex items-center justify-center bg-gray-700/20 rounded-xl"
-            >
-                <div class="bg-white p-6 rounded-lg shadow-lg text-center">
-                <h3 class="text-lg font-semibold mb-4">Silakan Login</h3>
-                <p class="text-gray-600 mb-4">Anda harus login terlebih dahulu untuk memberikan umpan balik</p>
-                <RouterLink to="/login">
-                    <button class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-6 py-2.5">
-                        Login
+                <!-- Form Container -->
+                <form class="w-full bg-white p-6 space-y-5" :class="{ 'blur-sm pointer-events-none': !authStore.isAuthenticated }" >
+                    <h2 class="text-lg font-semibold mb-4">Form Umpan Balik</h2>
+                    <div>
+                        <label for="judul" class="block mb-2 text-sm font-medium">Judul</label>
+                        <input type="text" id="judul" 
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" 
+                            placeholder="Contoh: Saran Proses Pengajuan KP" required />
+                    </div>
+                    <div>
+                        <label for="message" class="block mb-2 text-sm font-medium">Kritik/Saran</label>
+                        <textarea id="message" rows="4" 
+                            class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" 
+                            placeholder="Ketikkan kritik atau saran Anda..."></textarea>
+                    </div>
+                    <button type="submit" 
+                    class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5">
+                    Submit
                     </button>
-                </RouterLink>
+                </form>
+
+                <!-- Overlay Login -->
+                <div 
+                    v-if="!authStore.isAuthenticated"
+                    class="absolute inset-0 flex items-center justify-center bg-gray-700/20 rounded-xl"
+                >
+                    <div class="bg-white p-6 rounded-lg shadow-lg text-center">
+                    <h3 class="text-lg font-semibold mb-4">Silakan Login</h3>
+                    <p class="text-gray-600 mb-4">Anda harus login terlebih dahulu untuk memberikan umpan balik</p>
+                    <RouterLink to="/login">
+                        <button class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-6 py-2.5">
+                            Login
+                        </button>
+                    </RouterLink>
+                    </div>
                 </div>
-            </div>
             </div>
         </div>
 

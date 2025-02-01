@@ -1,6 +1,6 @@
 <script setup>
-import { initCollapses, initDropdowns, initTooltips, initDrawers } from 'flowbite';
-import { onMounted } from 'vue';
+import { initCollapses } from 'flowbite';
+import { onMounted, ref } from 'vue';
 import { toast } from 'vue3-toastify';
 import { useRouter } from 'vue-router';
 
@@ -9,7 +9,6 @@ import { useAuthStore } from '@/stores/auth';
 import getToken from '@/utils/getToken';
 
 import NavbarNotification from './NavbarNotification.vue';
-// import SidebarSetting from './SidebarSetting.vue';
 
 // icon svg
 import PageIcon from '@/assets/icons/PageIcon.vue'
@@ -20,13 +19,11 @@ import BuildingIcon from '../../assets/icons/BuildingIcon.vue';
 import ScaleBalanced from '@/assets/icons/ScaleBalanced.vue';
 import FeedbackIcon from '@/assets/icons/FeedbackIcon.vue';
 import UserGearIcon from '@/assets/icons/UserGearIcon.vue';
-// import SidebarNominalIndicator from '../indicator/SidebarNominalIndicator.vue';
-// import StackDocumentIcon from '@/assets/icons/StackDocumentIcon.vue';
-// import TaskIcon from '@/assets/icons/TaskIcon.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
-
+const showDropdown = ref(false);
+const { isAuthenticated, hasRole } = useAuthStore();
 const handleLogout = async () => {
     await logoutUser(getToken());
     authStore.logout();
@@ -41,9 +38,6 @@ const handleLogout = async () => {
 
 onMounted(() => {
     initCollapses();
-    initDropdowns();
-    initTooltips();
-    initDrawers();
 })
 
 </script>
@@ -82,21 +76,23 @@ onMounted(() => {
                 <!-- Notifications -->
                 <NavbarNotification />
 
-                <!-- User -->
-                <button type="button"
-                    class="flex mx-3 text-sm bg-gray-800 rounded-full md:mr-0 focus:ring-4 focus:ring-gray-300"
-                    id="user-menu-button" aria-expanded="false" data-dropdown-toggle="dropdown">
+                <!-- Tombol User -->
+                <button type="button" @click="showDropdown = !showDropdown"
+                    class="flex mx-3 text-sm bg-gray-800 rounded-full md:mr-0 focus:ring-4 focus:ring-gray-300 relative">
                     <span class="sr-only">Open user menu</span>
-                    <img class="w-8 h-8 rounded-full" :src=" authStore.userPhoto || '/user-avatar.jpg'" alt="user photo" />
+                    <img class="w-8 h-8 rounded-full" :src="authStore.userPhoto || '/user-avatar.jpg'"
+                        alt="user photo" />
                 </button>
-                <!-- Dropdown menu -->
-                <div class="hidden z-50 my-4 w-56 text-base list-none bg-white divide-y divide-gray-100 shadow border border-gray-300 rounded-xl"
-                    id="dropdown">
+
+                <div v-show="showDropdown" class="fixed inset-0" @click="showDropdown = false"></div>
+                
+                <!-- Dropdown Menu -->
+                <div v-show="showDropdown"
+                    class="absolute right-2 top-11 z-50 mt-2 min-w-56 text-base list-none bg-white divide-y divide-gray-100 shadow border border-gray-300 rounded-xl">
                     <div class="py-3 px-4">
-                        <span class="block text-sm font-semibold text-gray-900">Nama user</span>
-                        <span class="block text-sm text-gray-900 truncate">{{ authStore.userEmail }}</span>
+                        <span class="block text-sm text-gray-900 font-semibold truncate">{{ authStore.userIdNumber }}</span>
                     </div>
-                    <ul class="py-1" aria-labelledby="dropdown">
+                    <ul class="py-1">
                         <li>
                             <RouterLink to="/profile" class="block py-2 px-4 text-sm hover:bg-gray-100">Profil Saya</RouterLink>
                         </li>
@@ -104,7 +100,7 @@ onMounted(() => {
                             <RouterLink to="/" class="block py-2 px-4 text-sm hover:bg-gray-100">Landing Page</RouterLink>
                         </li>
                     </ul>
-                    <ul class="py-1" aria-labelledby="dropdown">
+                    <ul class="py-1">
                         <li @click="handleLogout" class="hover:cursor-pointer">
                             <p class="block py-2 px-4 text-sm hover:bg-gray-100">Keluar</p>
                         </li>
@@ -154,7 +150,7 @@ onMounted(() => {
                         <li v-if="authStore.userRole === 'kadep'">
                             <RouterLink :to="{ name: 'KaprodiManagement' }" active-class="bg-gray-200"
                                 class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200">
-                                Kepala Departemen
+                                Ketua Departemen
                             </RouterLink>
                         </li>
                         <li>
