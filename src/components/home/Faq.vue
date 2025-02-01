@@ -1,5 +1,5 @@
 <script setup>
-import { inject, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { initAccordions } from 'flowbite';
 
 import IconAngle from '@/assets/icons/AngleIcon.vue';
@@ -23,9 +23,6 @@ const dataFaq = [
     },
 ];
 
-const layoutType = inject('layoutType');
-layoutType.value = 'guest';
-
 onMounted(() => {
     initAccordions();
 });
@@ -42,7 +39,7 @@ onMounted(() => {
         </p>
     </div>
 
-    <div id="accordion-faq" class="container mx-auto px-8 lg:px-36" data-accordion="collapse">
+    <div id="accordion-faq" class="container mx-auto px-8 lg:px-36 mb-16" data-accordion="collapse">
         <template v-for="(item, index) in dataFaq">
             <h2 :id="`accordion-faq-heading-${index}`">
                 <button type="button"

@@ -6,7 +6,6 @@ const authStore = useAuthStore();
 
 import AppShell from '@/components/authenticated/AppShell.vue';   // authenticated
 import Navbar from '@/components/Navbar.vue';
-// import Footer from '@/components/Footer.vue';
 
 authStore.initializeRememberMe();
 authStore.initializeAuth();
@@ -23,7 +22,5 @@ provide('layoutType', layout);
     <div v-else></div>
   </template>
   <RouterView />
-
-  <!-- <Footer/> -->
 
 </template>

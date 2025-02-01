@@ -3,6 +3,9 @@ import { inject } from 'vue';
 
 import Chart from '@/components/home/Chart.vue'
 import SOPTable from '@/components/home/HomeTable.vue';
+import SopSearch from '@/components/home/SopSearch.vue';
+import Footer from '@/components/Footer.vue';
+// import Faq from '@/components/home/Faq.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';
@@ -18,19 +21,23 @@ layoutType.value = 'guest';
                 Sistem Pengelolaan SOP Departemen Sistem Informasi Unand!</p>
 
             <div class="flex flex-col space-y-4 sm:flex-row sm:justify-center sm:space-y-0">
-                <RouterLink to="/sop"
+                <a href="#tabel-sop"
                     class="inline-flex justify-center items-center py-3 px-5 text-base font-medium text-center text-white rounded-lg bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300">
                     Cari SOP
-                    <svg class="w-3.5 h-3.5 ms-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    <svg class="w-3.5 h-3.5 ms-2 rotate-90" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
                         viewBox="0 0 14 10">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M1 5h12m0 0L9 1m4 4L9 9" />
                     </svg>
-                </RouterLink>
+                </a>
             </div>
 
         </div>
     </section>
+
+    <div id="tabel-sop">
+        <SopSearch />
+    </div>
 
     <!-- Grafik Statistik SOP -->
     <section class="bg-white">
@@ -53,7 +60,7 @@ layoutType.value = 'guest';
                     <RouterLink to="/sop">
                         <p class="text-blue-600 hover:underline font-medium text-lg inline-flex items-center mt-10">
                             Selengkapnya
-                            <svg class="w-3.5 h-3.5 ms-2 rtl:rotate-180" aria-hidden="true"
+                            <svg class="w-3.5 h-3.5 ms-2" aria-hidden="true"
                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
                                 <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
                                     stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9" />
@@ -68,5 +75,9 @@ layoutType.value = 'guest';
 
     <!-- TODO tambahkan tautan ke web-web yang ada di dsi (web dsi, web fti, web unand, web lea, ldkom, labgis, lbi) -->
     <section></section>
+
+    <!-- <Faq/> -->
+
+    <Footer/>
 
 </template>

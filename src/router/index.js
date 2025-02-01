@@ -10,10 +10,6 @@ const router = createRouter({
       component: HomeView,
     },
     {
-      path: '/faq',
-      component: () => import('@/views/Faq.vue')
-    },
-    {
       path: '/profile',
       component: () => import('@/views/authenticated/UserProfile.vue'),
       meta: {
@@ -39,10 +35,6 @@ const router = createRouter({
     {
       path: '/unauthorized',
       component: () => import('@/views/Unauthorized.vue')
-    },
-    {
-      path: '/sop',
-      component: () => import('@/views/sop/SopSearch.vue')
     },
     {
       path: '/sop/detail',
