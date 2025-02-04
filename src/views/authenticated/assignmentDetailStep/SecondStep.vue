@@ -3,7 +3,8 @@ import { inject } from 'vue';
 import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 
-const { sopStep } = inject('sopStep');
+// const { sopStep } = inject('sopStep');
+const sopStep = inject('sopStep');
 const { formData } = inject('sopFormData');
 
 // Function to add a new step (empty object)
@@ -49,8 +50,7 @@ const removeStep = (index) => {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="(step, index) in sopStep" :key="index"
-                        class="bg-white border-b">
+                    <tr v-for="(step, index) in sopStep" :key="index" class="bg-white border-b">
                         <th scope="row" class="px-2 py-3 font-medium whitespace-nowrap">
                             {{ index + 1 }}
                         </th>

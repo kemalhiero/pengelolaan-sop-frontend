@@ -18,7 +18,6 @@ import NumberThreeCircleIcon from '@/assets/icons/NumberThreeCircleIcon.vue';
 import CircleArrowRight from '@/assets/icons/CircleArrowRight.vue';
 import CircleArrowLeft from '@/assets/icons/CircleArrowLeft.vue';
 import FloppyDiskIcon from '@/assets/icons/FloppyDiskIcon.vue';
-import SpinnerIcon from '@/assets/icons/SpinnerIcon.vue';
 import CheckIcon from '@/assets/icons/CheckIcon.vue';
 
 import FirstStep from './assignmentDetailStep/FirstStep.vue';
@@ -123,25 +122,31 @@ const fetchInfoSop = async () => {
     }
 };
 
-const sopStep = ref([
-    {
-        id_step: '',
-        name: '',
-        type: 'terminator',
-        id_implementer: '',
-        fittings: '',
-        time: '',
-        time_unit: 'h',
-        output: '',
-        description: ''
-    }
-]);
-provide('sopStep', {
-    sopStep,
-    updateSopStep(newData) {
-        sopStep.value = { ...sopStep.value, ...newData }
-    }
-});
+const sopStep = ref([]);
+provide('sopStep', sopStep);
+
+watch(() => sopStep.value, 
+    (newValue) => {
+        if (!newValue || newValue.length === 0) {
+            sopStep.value = [{
+                id_step: null,
+                id_next_step_if_no: null,
+                id_next_step_if_yes: null,
+                seq_number: null,
+                name: '',
+                type: '',
+                id_implementer: '',
+                fittings: '',
+                time: '',
+                time_unit: 'h',
+                output: '',
+                description: ''
+            }];
+        }
+    },
+    { immediate: true }
+);
+
 let apiResponseStep;
 const fetchSopStep = async () => {
     try {
@@ -562,7 +567,6 @@ onMounted(() => {
 </script>
 
 <template>
-
     <h2 class="text-4xl text-center my-12 font-bold">Penyusunan Dokumen SOP</h2>
     <!-- stepper -->
     <ol

@@ -297,6 +297,27 @@ const verifyCode = async () => {        //verifikasi kode dan perbarui email
     }
 };
 
+const signaturePreview = ref(null);
+const signatureFile = ref(null);
+
+const onSignatureFileSelected = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        signatureFile.value = file;
+        signaturePreview.value = URL.createObjectURL(file);
+    } else {
+        signatureFile.value = null;
+        signaturePreview.value = null;
+    }
+};
+
+const uploadSignature = () => {
+    if (signatureFile.value) {
+        // Lakukan proses unggah tanda tangan di sini
+        console.log('Uploading signature:', signatureFile.value);
+    }
+};
+
 onMounted(() => {
     fetchProfile();
 });
@@ -378,6 +399,34 @@ onMounted(() => {
                         <button type="submit" :disabled="userProfile.email == originalEmail"
                             class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:cursor-not-allowed disabled:bg-opacity-60">
                             Perbarui Data
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div></div>
+
+            <!-- Tanda Tangan Digital -->
+            <div class="lg:col-span-2 p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Tanda Tangan Digital</h2>
+                <form @submit.prevent="uploadSignature" class="space-y-4">
+                    <div class="flex items-center">
+                        <input type="file" @change="onSignatureFileSelected" accept="image/png, image/jpeg, image/webp"
+                            ref="signatureInput" class="sr-only" />
+                        <button type="button" @click="$refs.signatureInput.click()"
+                            class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition">
+                            Pilih Tanda Tangan
+                        </button>
+                        <span v-if="signaturePreview" class="ml-4 text-gray-600">{{ signatureFile.name }}</span>
+                    </div>
+                    <div v-if="signaturePreview" class="flex justify-center">
+                        <img :src="signaturePreview" alt="Pratinjau Tanda Tangan"
+                            class="max-w-full max-h-32 rounded-md" />
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" :disabled="!signaturePreview"
+                            class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition disabled:cursor-not-allowed disabled:bg-opacity-60">
+                            Unggah Tanda Tangan
                         </button>
                     </div>
                 </form>

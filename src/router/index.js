@@ -63,7 +63,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/AssignmentDetail.vue'),
       meta: {
         requiresAuth: true,
-        roles: ['penyusun']
+        roles: ['penyusun', 'pj', 'kadep']
       }
     },
 

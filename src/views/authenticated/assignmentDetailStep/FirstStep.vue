@@ -31,8 +31,8 @@ const showWarningText = ref({
     implementQualification: false,
     // relatedSop: false,
     // equipment: false,
-    warning: false,
-    record: false
+    // warning: false,
+    // record: false
 });
 
 // Fungsi validasi untuk setiap field
@@ -49,8 +49,8 @@ const validateFields = () => {
         implementer: () => formData.value.implementer.length === 0,
         legalBasis: () => formData.value.legalBasis.length === 0,
         implementQualification: () => formData.value.implementQualification.length === 0,
-        warning: () => !formData.value.warning,
-        record: () => formData.value.record.length === 0
+        // warning: () => !formData.value.warning,
+        // record: () => formData.value.record.length === 0
     };
 
     Object.entries(validations).forEach(([key, validation]) => {
@@ -351,7 +351,8 @@ onMounted(() => {
 
         <div class="mb-4">
             <label for="sop-warning" class="mb-2 text-sm font-medium inline-flex">
-                Peringatan<span class="text-red-600">*</span>
+                Peringatan
+                <!-- <span class="text-red-600">*</span> -->
                 <Tooltip field="warning" text="Misal: Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses 
                     kerja praktik mahasiswa." />
             </label>
@@ -362,7 +363,8 @@ onMounted(() => {
 
         <div class="my-4">
             <label for="data-record-input" class="mb-2 text-sm font-medium inline-flex">
-                Pencatatan dan Pendataan<span class="text-red-600">*</span>
+                Pencatatan dan Pendataan
+                <!-- <span class="text-red-600">*</span> -->
                 <Tooltip field="data-record" text="Misal: Dokumen" />
             </label>
             <input type="text" id="data-record-input" v-model="record.newItem.value" @keyup.enter.prevent="record.addItem"

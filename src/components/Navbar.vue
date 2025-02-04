@@ -80,6 +80,10 @@ onMounted(() => {
               <span class="block text-sm text-gray-500">{{ authStore.userRole }}</span>
             </div>
             <ul class="py-2">
+              <li class="hover:bg-gray-100 hover:cursor-pointer">
+                <RouterLink to="/profile" class="block py-2 px-4 text-sm "
+                @click="showDropdown = false">Profil</RouterLink>
+              </li>
               <li v-if="authStore.userRole != 'sivitas-akademika'" class="flex hover:bg-gray-100 hover:cursor-pointer">
                 <RouterLink to="/assignment" class="block py-2 px-4 text-sm"
                   @click="showDropdown = false">Penugasan</RouterLink>
@@ -88,11 +92,7 @@ onMounted(() => {
                   {{ assignmentNumber }}
                 </span> -->
               </li>
-              <li class="hover:bg-gray-100 hover:cursor-pointer">
-                <RouterLink to="/profile" class="block py-2 px-4 text-sm "
-                  @click="showDropdown = false">Profil</RouterLink>
-              </li>
-              <li v-if="authStore.userRole == 'kadep' || authStore.userRole == 'pj'">
+              <li v-if="authStore.userRole == 'kadep' || authStore.userRole == 'pj'" class="hover:bg-gray-100 hover:cursor-pointer">
                 <RouterLink to="/app"
                   class="block px-4 py-2 text-sm">App</RouterLink>
               </li>

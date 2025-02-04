@@ -94,10 +94,10 @@ onMounted(() => {
                     </div>
                     <ul class="py-1">
                         <li>
-                            <RouterLink to="/profile" class="block py-2 px-4 text-sm hover:bg-gray-100">Profil Saya\</RouterLink>
+                            <RouterLink to="/profile" class="block py-2 px-4 text-sm hover:bg-gray-100">Profil Saya</RouterLink>
                         </li>
                         <li>
-                            <RouterLink to="/" class="block py-2 px-4 text-sm hover:bg-gray-100">Landing Page\</RouterLink>
+                            <RouterLink to="/" class="block py-2 px-4 text-sm hover:bg-gray-100">Landing Page</RouterLink>
                         </li>
                     </ul>
                     <ul class="py-1">
