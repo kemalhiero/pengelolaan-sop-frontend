@@ -187,6 +187,11 @@ const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan I
     }
 };
 
+// Fungsi untuk menampilkan tombol hapus
+const shouldShowDeleteButton = (item) => {
+  return item.sop_total == 0;
+};
+
 onMounted(() => {
     fetchTipePeraturan();
     fetchData(); // Ambil data tabel
@@ -235,8 +240,8 @@ onMounted(() => {
             <div>
                 <TableSkeleton 
                     v-if="isLoading"
-                    :columns="5"
-                    :rows="5"
+                    :columns="7"
+                    :rows="4"
                 />
                 <Error v-else-if="hasError" @click="fetchData" />
                 <EmptyState 
@@ -251,11 +256,13 @@ onMounted(() => {
                         { field: 'law_type', label: 'Jenis', sortable: true, searchable: true },
                         { field: 'number', label: 'Nomor', sortable: true, searchable: true },
                         { field: 'year', label: 'Tahun', sortable: true, searchable: true },
-                        { field: 'about', label: 'Tentang', sortable: false, searchable: true }
+                        { field: 'about', label: 'Tentang', sortable: false, searchable: true },
+                        { field: 'sop_total', label: 'Jumlah SOP', sortable: false, searchable: true }
                     ]" 
                     @edit="openUpdateModal"
                     @delete="openDeleteModal" 
                     :edit-delete-column="true"
+                    :show-delete-button="shouldShowDeleteButton"
                 />
             </div>
         </div>

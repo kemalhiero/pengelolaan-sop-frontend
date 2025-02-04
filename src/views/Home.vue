@@ -31,7 +31,6 @@ layoutType.value = 'guest';
                     </svg>
                 </a>
             </div>
-
         </div>
     </section>
 

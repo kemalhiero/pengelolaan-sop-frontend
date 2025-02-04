@@ -58,7 +58,11 @@ const props = defineProps({
     },
     valueField: {
         type: String
-    }
+    },
+    showDeleteButton: {
+    type: Function,
+    default: null,
+  },
 });
 
 const searchInput = ref('');
@@ -92,9 +96,6 @@ const toggleItem = (item) => {
 const isItemSelected = (item) => {
     return selectedItems.value.some(selected => selected.id === item.id);
 };
-
-// Tambahkan method helper untuk mengecek tipe tabel
-const isCrudTable = computed(() => props.editDeleteColumn === true);
 
 // Computed property untuk info pagination
 const paginationInfo = computed(() => {
@@ -351,12 +352,12 @@ const goToPage = (page) => {
                             class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                         >
                     </td>
-                    <td class="px-6 py-4 flex" v-if="props.editDeleteColumn == true">
-                            <button :title="`Edit item ${index + 1}`" v-if="isCrudTable" @click="$emit('edit', item.id)"
+                    <td class="px-6 py-4 flex justify-center" v-if="props.editDeleteColumn == true">
+                            <button :title="`Edit item ${index + 1}`" @click="$emit('edit', item.id)"
                                 class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
                                 <PenToSquareIcon class="fill-current w-4" />
                             </button>
-                            <button :title="`Hapus item ${index + 1}`" v-if="isCrudTable" @click="$emit('delete', item.id)"
+                            <button :title="`Hapus item ${index + 1}`" @click="$emit('delete', item.id)" v-if="showDeleteButton ? showDeleteButton(item) : true"
                                 class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
                                 <TrashCanIcon class="fill-current w-4" />
                             </button>

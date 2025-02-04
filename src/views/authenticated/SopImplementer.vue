@@ -1,25 +1,27 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
 import { toast } from 'vue3-toastify';
-import { getLawType, createLawType, updateLawType, deleteLawType } from '@/api/lawTypeApi';
 
-import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
-import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
-import AddDataModal from '@/components/modal/AddDataModal.vue';
+import { addImplementer, deleteImplementer, getImplementer, updateImplementer } from '@/api/implementerApi';
+
 import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
 import EditDataModal from '@/components/modal/EditDataModal.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
-import AddDataButton from '@/components/modal/AddDataButton.vue';
-import Error from '@/components/Error.vue';
+import AddDataModal from '@/components/modal/AddDataModal.vue';
 import TableSkeleton from '@/components/TableSkeleton.vue';
 import EmptyState from '@/components/EmptyState.vue';
+import Error from '@/components/Error.vue';
+
+import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
+import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
+import AddDataButton from '@/components/modal/AddDataButton.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
 
 const data = ref([]);
 const defaultFormState = {
-    law_type: '',
+    name: '',
     description: ''
 };
 const form = ref({...defaultFormState});
@@ -36,7 +38,7 @@ const fetchData = async () => {
         hasError.value = false;
         data.value = [];
 
-        const result = await getLawType();
+        const result = await getImplementer();
         if (!result.success) {
             hasError.value = true;
             console.error('API Error:', result.error);
@@ -64,7 +66,7 @@ const openAddModal = () => {
 // Fungsi untuk mengirim data ke API dengan metode POST
 const submitData = async () => {
     try {
-        await createLawType(form.value);
+        await addImplementer(form.value);
         resetForm();
 
         showAddModal.value = false;
@@ -102,7 +104,7 @@ const closeDeleteModal = () => {
 const deleteData = async (id) => {  // Fungsi untuk menghapus data berdasarkan ID
     try {
         console.log(id)
-        const response = await deleteLawType(id);
+        const response = await deleteImplementer(id);
         console.log(response);
 
         // Lakukan penghapusan item dari array data
@@ -152,7 +154,7 @@ const closeUpdateModal = () => {
 
 const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan ID
     try {
-        const response = await updateLawType(id, form.value);
+        const response = await updateImplementer(id, form.value);
         console.log(response);
         console.log(`Data dengan ID ${id} berhasil diperbarui`);
 
@@ -183,21 +185,21 @@ onMounted(() => {
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
 
-        <PageTitle judul="Daftar Jenis Peraturan" />
+        <PageTitle judul="Daftar Pelaksana SOP" />
 
         <div class="container mx-auto p-8 lg:px-16">
 
             <!-- modal tambah tipe aturan -->
             <div class="flex justify-end mb-4">
-                <AddDataButton btnLabel="Input Jenis Peraturan Baru" @click="openAddModal" />
+                <AddDataButton btnLabel="Input Pelaksana SOP Baru" @click="openAddModal" />
             </div>
 
             <!-- Komponen AddDataModal -->
             <AddDataModal
-                modalTitle="Tambahkan jenis peraturan baru" 
+                modalTitle="Tambahkan pelaksana baru" 
                 :showModal="showAddModal" 
                 :formFields="[
-                    { id: 'law_type', label: 'Jenis peraturan', type: 'text', placeholder: 'Mis. Peraturan Presiden', required: true, minlength: 5, maxlength: 100 },
+                    { id: 'name', label: 'Nama', type: 'text', placeholder: 'Mis. Fakultas', required: true, minlength: 5, maxlength: 100 },
                     { id: 'description', label: 'Deskripsi', type: 'textarea', placeholder: 'ketikkan deskripsi disini...' }
                 ]" 
                 :formData="form" 
@@ -211,14 +213,14 @@ onMounted(() => {
             <div>
                 <TableSkeleton 
                     v-if="isLoading"
-                    :columns="5"
+                    :columns="4"
                     :rows="5"
                 />
                 <Error v-else-if="hasError" @click="fetchData" />
                 <EmptyState 
                     v-else-if="!hasError && data.length === 0"
-                    title="Tidak ada data jenis peraturan!"
-                    message="Belum ada data jenis peraturan yang tersedia saat ini"
+                    title="Tidak ada data pelaksana SOP!"
+                    message="Belum ada data pelaksana SOP yang tersedia saat ini"
                     @click="fetchData"
                 />
                 <div v-else class="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -229,13 +231,13 @@ onMounted(() => {
                                     No.
                                 </th>
                                 <th scope="col" class="px-6 py-3">
-                                    Jenis Peraturan
+                                    Nama
                                 </th>
                                 <th scope="col" class="px-6 py-3">
                                     Deskripsi
                                 </th>
-                                <th scope="col" class="px-6 py-3" title="Jumlah peraturan terdaftar dengan jenis yang ada">
-                                    Jumlah Peraturan
+                                <th scope="col" class="px-6 py-3" title="Jumlah SOP yang memiliki pelaksana berikut">
+                                    Jumlah SOP
                                 </th>
                                 <th scope="col" class="px-6 py-3">
                                     <span class="sr-only">Edit</span>
@@ -248,20 +250,20 @@ onMounted(() => {
                                     {{ index + 1 }}
                                 </th>
                                 <td class="px-6 py-4 text-black font-semibold">
-                                    {{ item.law_type }}
+                                    {{ item.name }}
                                 </td>
                                 <td class="px-6 py-4 text-black">
                                     {{ item.description }}
                                 </td>
                                 <td class="px-6 py-4 text-black">
-                                    {{ item.law_total }}
+                                    {{ item.sop_total }}
                                 </td>
                                 <td class="px-6 py-4 flex justify-center">
                                     <button :title="`Edit item ${index + 1}`" @click="openUpdateModal(item.id)"
                                         class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
                                         <PenToSquareIcon class="fill-current w-4" />
                                     </button>
-                                    <button v-if="item.law_total == 0" :title="`Hapus item ${index + 1}`" @click="openDeleteModal(item.id)"
+                                    <button v-if="item.sop_total == 0" :title="`Hapus item ${index + 1}`" @click="openDeleteModal(item.id)"
                                         class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
                                         <TrashCanIcon class="fill-current w-4" />
                                     </button>
@@ -288,7 +290,7 @@ onMounted(() => {
             modalTitle="Perbarui jenis peraturan" 
             :showModal="showModalUpdate" 
             :formFields="[
-                { id: 'law_type', label: 'Jenis peraturan', type: 'text', colSpan: 'full', placeholder: 'Mis. Peraturan Presiden', required: true },
+                { id: 'name', label: 'Nama', type: 'text', colSpan: 'full', placeholder: 'Mis. Fakultas', required: true },
                 { id: 'description', label: 'Deskripsi', type: 'textarea', colSpan: 'full', placeholder: 'ketikkan deskripsi disini...' }
             ]" 
             :formData="form" 

@@ -3,8 +3,9 @@ import { inject, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 
+import { useAuthStore } from '@/stores/auth';
 import { getOrg } from '@/api/orgApi';
-import { createSopDrafter, getUserByRole } from '@/api/userApi';
+import { createSopDrafter, getUserByRole, getUserProfile } from '@/api/userApi';
 import { createSop, createSopDetail } from '@/api/sopApi';
 
 import DataTable from '@/components/DataTable.vue';
@@ -19,12 +20,9 @@ layoutType.value = 'admin';
 const router = useRouter();
 const showDrafterModal = ref(false);
 const currentYear = new Date().getFullYear();
-
-// data dari api
 const dataOrg = ref([]);
 const dataDrafter = ref([]);
-
-// data form
+const showDrafterWarning = ref(false);
 const form = ref({
     name: '',
     number: '',
@@ -32,8 +30,8 @@ const form = ref({
     drafter: [],
     description: ''
 });
+const authStore = useAuthStore();
 
-// organisasi
 const fetchOrg = async () => {
     try {
         const result = await getOrg();
@@ -43,7 +41,6 @@ const fetchOrg = async () => {
     }
 };
 
-// penugasan
 const fetchDrafter = async () => {
     try {
         const result = await getUserByRole('penyusun');
@@ -52,12 +49,11 @@ const fetchDrafter = async () => {
         console.error('Fetch error:', error);
     }
 };
+
 const removeDrafter = (index) => {
     form.value.drafter.splice(index, 1);
 };
-const showDrafterWarning = ref(false);
 
-// sop
 const submitSop = async () => {
     try {
         if (form.value.drafter.length == 0) {
@@ -112,9 +108,24 @@ const submitSop = async () => {
     }
 };
 
+const fetchProfile = async () => {
+    try {
+        const result = await getUserProfile();
+        const org = dataOrg.value.find(org => org.name === result.data.org);
+        if (org) {
+            dataOrg.value = [org];
+        }
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+};
+
 onMounted(() => {
     fetchOrg();
     fetchDrafter();
+    if (authStore.userRole == 'pj') {
+        fetchProfile();
+    }
 });
 
 </script>

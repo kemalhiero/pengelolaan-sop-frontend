@@ -57,9 +57,13 @@ const login = async () => {
 
             switch (decoded.role) {
                 case 'sivitas-akademika':
-                case 'penyusun':
                     setTimeout(() => {
                         router.push('/')
+                    }, 2000);
+                    break;
+                case 'penyusun':
+                    setTimeout(() => {
+                        router.push('/assignment')
                     }, 2000);
                     break;
                 case 'pj':

@@ -19,11 +19,12 @@ import BuildingIcon from '../../assets/icons/BuildingIcon.vue';
 import ScaleBalanced from '@/assets/icons/ScaleBalanced.vue';
 import FeedbackIcon from '@/assets/icons/FeedbackIcon.vue';
 import UserGearIcon from '@/assets/icons/UserGearIcon.vue';
+import PeopleGroupIcon from '@/assets/icons/PeopleGroupIcon.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
 const showDropdown = ref(false);
-const { isAuthenticated, hasRole } = useAuthStore();
+
 const handleLogout = async () => {
     await logoutUser(getToken());
     authStore.logout();
@@ -38,8 +39,7 @@ const handleLogout = async () => {
 
 onMounted(() => {
     initCollapses();
-})
-
+});
 </script>
 
 <template>
@@ -85,7 +85,7 @@ onMounted(() => {
                 </button>
 
                 <div v-show="showDropdown" class="fixed inset-0" @click="showDropdown = false"></div>
-                
+
                 <!-- Dropdown Menu -->
                 <div v-show="showDropdown"
                     class="absolute right-2 top-11 z-50 mt-2 min-w-56 text-base list-none bg-white divide-y divide-gray-100 shadow border border-gray-300 rounded-xl">
@@ -94,10 +94,10 @@ onMounted(() => {
                     </div>
                     <ul class="py-1">
                         <li>
-                            <RouterLink to="/profile" class="block py-2 px-4 text-sm hover:bg-gray-100">Profil Saya</RouterLink>
+                            <RouterLink to="/profile" class="block py-2 px-4 text-sm hover:bg-gray-100">Profil Saya\</RouterLink>
                         </li>
                         <li>
-                            <RouterLink to="/" class="block py-2 px-4 text-sm hover:bg-gray-100">Landing Page</RouterLink>
+                            <RouterLink to="/" class="block py-2 px-4 text-sm hover:bg-gray-100">Landing Page\</RouterLink>
                         </li>
                     </ul>
                     <ul class="py-1">
@@ -138,34 +138,13 @@ onMounted(() => {
                     </RouterLink>
                 </li>
                 <li>
-                    <button type="button"
-                        class="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200"
-                        aria-controls="dropdown-roles" data-collapse-toggle="dropdown-roles">
-                        <UserGearIcon
+                    <RouterLink :to="{ name: 'SopImplementer' }" title="List Pelaksana SOP"
+                        class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg hover:bg-gray-200 group"
+                        active-class="bg-gray-200">
+                        <PeopleGroupIcon
                             class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 fill-current" />
-                        <span class="flex-1 ml-3 text-left whitespace-nowrap">Role User</span>
-                        <AngleDownIcon />
-                    </button>
-                    <ul id="dropdown-roles" class="hidden py-2 space-y-2">
-                        <li v-if="authStore.userRole === 'kadep'">
-                            <RouterLink :to="{ name: 'KaprodiManagement' }" active-class="bg-gray-200"
-                                class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200">
-                                Ketua Departemen
-                            </RouterLink>
-                        </li>
-                        <li>
-                            <RouterLink :to="{ name: 'PicManagement' }" active-class="bg-gray-200"
-                                class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200">
-                                Penanggung Jawab
-                            </RouterLink>
-                        </li>
-                        <li>
-                            <RouterLink :to="{ name: 'DrafterManagement' }" active-class="bg-gray-200"
-                                class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200">
-                                Penyusun
-                            </RouterLink>
-                        </li>
-                    </ul>
+                        <span class="flex-1 ml-3 whitespace-nowrap">Pelaksana</span>
+                    </RouterLink>
                 </li>
                 <li v-if="authStore.userRole === 'kadep'">
                     <RouterLink :to="{ name: 'SopOrg' }" title="List Organisasi"
@@ -200,7 +179,36 @@ onMounted(() => {
                         </li>
                     </ul>
                 </li>
-
+                <li>
+                    <button type="button"
+                        class="flex items-center p-2 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200"
+                        aria-controls="dropdown-roles" data-collapse-toggle="dropdown-roles">
+                        <UserGearIcon
+                            class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 fill-current" />
+                        <span class="flex-1 ml-3 text-left whitespace-nowrap">Role User</span>
+                        <AngleDownIcon />
+                    </button>
+                    <ul id="dropdown-roles" class="hidden py-2 space-y-2">
+                        <li v-if="authStore.userRole === 'kadep'">
+                            <RouterLink :to="{ name: 'KaprodiManagement' }" active-class="bg-gray-200"
+                                class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200">
+                                Ketua Departemen
+                            </RouterLink>
+                        </li>
+                        <li>
+                            <RouterLink :to="{ name: 'PicManagement' }" active-class="bg-gray-200"
+                                class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200">
+                                Penanggung Jawab
+                            </RouterLink>
+                        </li>
+                        <li>
+                            <RouterLink :to="{ name: 'DrafterManagement' }" active-class="bg-gray-200"
+                                class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200">
+                                Penyusun
+                            </RouterLink>
+                        </li>
+                    </ul>
+                </li>
                 <li>
                     <RouterLink :to="{ name: 'SopFeedback' }" title="Komentar dan saran dari pengunjung terkait SOP"
                         class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg hover:bg-gray-200 group"

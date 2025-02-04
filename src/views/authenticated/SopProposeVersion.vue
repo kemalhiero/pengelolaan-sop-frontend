@@ -18,13 +18,8 @@ layoutType.value = 'admin';
 
 const route = useRoute();
 const router = useRouter();
-// tampil modal tambah data
 const showDrafterModal = ref(false);
-
 const currentYear = new Date().getFullYear();
-
-
-// data form
 const form = ref({
     name: '',
     number: '',
@@ -33,8 +28,11 @@ const form = ref({
     version: null,
     description: ''
 });
-
 let sopYear;
+const dataDrafter = ref([]);
+const showDrafterWarning = ref(false);
+const dataOrg = ref([]);
+
 const fetchData = async () => {
   try {
     const response = await getOneSop(route.params.id);
@@ -59,8 +57,6 @@ const fetchLatestSopInYear = async () => {
   }
 };
 
-// penugasan
-const dataDrafter = ref([]);
 const fetchDrafter = async () => {
     try {
         const result = await getUserByRole('penyusun');
@@ -69,14 +65,11 @@ const fetchDrafter = async () => {
         console.error('Fetch error:', error);
     }
 };
+
 const removeDrafter = (index) => {
     form.value.drafter.splice(index, 1);
 };
 
-const showDrafterWarning = ref(false);
-
-// organisasi
-const dataOrg = ref([]);
 const fetchOrg = async () => {
     try {
         const result = await getOrg();
@@ -88,7 +81,6 @@ const fetchOrg = async () => {
     }
 };
 
-// sop
 const submitSop = async () => {
     try {
         if (form.value.drafter.length == 0) {
@@ -137,13 +129,12 @@ const submitSop = async () => {
     }
 };
 
-onMounted(async() => {
-    await fetchData();
-    await fetchLatestSopInYear();
-    await fetchDrafter();
-    await fetchOrg();
+onMounted(() => {
+    fetchData();
+    fetchLatestSopInYear();
+    fetchDrafter();
+    fetchOrg();
 });
-
 </script>
 
 <template>

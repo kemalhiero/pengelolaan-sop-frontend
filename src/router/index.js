@@ -54,7 +54,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/Assignment.vue'),
       meta: {
         requiresAuth: true,
-        roles: ['penyusun']
+        roles: ['penyusun', 'pj', 'kadep']
       }
     },
     {
@@ -90,6 +90,15 @@ const router = createRouter({
       path: '/app/docs/:id',
       name: 'SopDocDetail',
       component: () => import('@/views/authenticated/SopDocsDetail.vue'),
+      meta: {
+        requiresAuth: true,
+        roles: ['pj', 'kadep']
+      }
+    },
+    {
+      path: '/app/implementer',
+      name: 'SopImplementer',
+      component: () => import('@/views/authenticated/SopImplementer.vue'),
       meta: {
         requiresAuth: true,
         roles: ['pj', 'kadep']
