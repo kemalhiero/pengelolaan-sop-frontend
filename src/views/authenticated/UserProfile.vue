@@ -1,10 +1,10 @@
 <script setup>
-import { ref, reactive, inject, onMounted } from 'vue';
+import { ref, reactive, inject, onMounted, computed } from 'vue';
 import { toast } from 'vue3-toastify';
 
 import { useAuthStore } from '@/stores/auth';
 import { sendCode, updateEmail, updatePw, verifCode } from '@/api/authApi';
-import { addProfilePhoto, deleteUserProfile, getUserProfile } from '@/api/userApi';
+import { addProfilePhoto, addSignatureFile, deleteUserProfile, getUserProfile } from '@/api/userApi';
 
 import EyeIcon from '@/assets/icons/EyeIcon.vue';
 import EyeSlashIcon from '@/assets/icons/EyeSlashIcon.vue';
@@ -41,12 +41,15 @@ const showPw = ref({
 const toggleCurrentPassword = () => { showPw.value.current = !showPw.value.current };
 const toggleNewPassword = () => { showPw.value.new = !showPw.value.new };
 const toggleConfirmPassword = () => { showPw.value.confirm_new = !showPw.value.confirm_new };
+const showSignatureForm = computed(() => ['pj', 'kadep'].includes(authStore.userRole));
 
 const fetchProfile = async () => {
     try {
         const result = await getUserProfile();
         userProfile.value = result.data;
         originalEmail.value = result.data.email;
+        signaturePreview.value = result.data.signature;
+        signatureFile.value = result.data.signature;
     } catch (error) {
         console.error('Fetch error:', error);
     }
@@ -64,11 +67,11 @@ const closePhotoModal = () => {
 const onFileSelected = (event) => {
     const file = event.target.files[0]
     if (file) {
-        const reader = new FileReader()
-        reader.onload = (e) => {
-            selectedImage.value = e.target.result
-        }
-        reader.readAsDataURL(file)
+        signatureFile.value = file;
+        signaturePreview.value = URL.createObjectURL(file);
+    } else {
+        signatureFile.value = null;
+        signaturePreview.value = null;
     }
 };
 
@@ -95,7 +98,7 @@ const uploadPhoto = () => {
                 },
                 success: {
                     render() {
-                        return 'Sandi anda berhasil diubah!'
+                        return 'Foto profil berhasil diunggah!'
                     },
                     icon: '✅'
                 },
@@ -311,12 +314,92 @@ const onSignatureFileSelected = (event) => {
     }
 };
 
+// Fungsi untuk mendapatkan nama file dari URL atau File object
+const getFileName = (file) => {
+    if (!file) return '';
+
+    // Jika file adalah File object (file baru dipilih)
+    if (file instanceof File) {
+        return file.name;
+    }
+
+    // Jika file adalah string URL (dari API)
+    if (typeof file === 'string') {
+        // Mengambil bagian terakhir dari URL (nama file)
+        const urlParts = file.split('/');
+        const fileName = urlParts[urlParts.length - 1];
+
+        // Menghapus ID yang ada di awal nama file (opsional)
+        const cleanFileName = fileName.replace(/^\d+-/, '');
+
+        return cleanFileName;
+    }
+
+    return '';
+};
+
 const uploadSignature = () => {
-    if (signatureFile.value) {
-        // Lakukan proses unggah tanda tangan di sini
-        console.log('Uploading signature:', signatureFile.value);
+    try {
+        if (signatureFile.value instanceof File) {
+            toast.promise(
+                new Promise((resolve, reject) => {
+                    addSignatureFile(signatureFile.value)
+                        .then(response => {
+                            if (!response.success) {
+                                throw response;
+                            }
+                            resolve(response);
+                        })
+                        .catch(error => reject(error));
+                }),
+                {
+                    pending: {
+                        render() {
+                            return 'Sedang memproses data...'
+                        },
+                        icon: '🔄'
+                    },
+                    success: {
+                        render() {
+                            return 'Tanda tangan berhasil diubah!'
+                        },
+                        icon: '✅'
+                    },
+                    error: {
+                        render({ data }) {
+                            return `Gagal: ${data.error?.message || 'Terjadi kesalahan'}`
+                        },
+                        icon: '❌'
+                    }
+                },
+                {
+                    closeButton: true,
+                    autoClose: 7000
+                }
+            );
+        } else if (typeof signatureFile.value === 'string') {
+            toast(`Pilih tanda tangan terbaru terlebih dahulu `, {
+                type: "warning",
+                autoClose: 7000,
+            });
+        } else {
+            console.log('ini jenis filenya', typeof signatureFile.value)
+            toast(`Jenis file ${typeof signatureFile.value} tidak sesuai!`, {
+                type: "error",
+                autoClose: 7000,
+                dangerouslyHTMLString: true
+            });
+        }
+    } catch (error) {
+        console.error('Fetch error:', error);
+        toast(`Data gagal ditambahkan! <br> ${error} `, {
+            type: "error",
+            autoClose: 5000,
+            dangerouslyHTMLString: true
+        });
     }
 };
+
 
 onMounted(() => {
     fetchProfile();
@@ -407,8 +490,9 @@ onMounted(() => {
             <div></div>
 
             <!-- Tanda Tangan Digital -->
-            <div class="lg:col-span-2 p-6">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Tanda Tangan Digital</h2>
+            <div class="lg:col-span-2 p-6" v-if="showSignatureForm">
+                <h2 class="text-2xl font-bold text-gray-800 mb-1">Tanda Tangan</h2>
+                <p class="text-sm mb-6">Unggah hasil pindai dari tanda tangan dan stempel jabatan anda. Pastikan latar belakangnya berwarna putih!</p>
                 <form @submit.prevent="uploadSignature" class="space-y-4">
                     <div class="flex items-center">
                         <input type="file" @change="onSignatureFileSelected" accept="image/png, image/jpeg, image/webp"
@@ -417,14 +501,14 @@ onMounted(() => {
                             class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition">
                             Pilih Tanda Tangan
                         </button>
-                        <span v-if="signaturePreview" class="ml-4 text-gray-600">{{ signatureFile.name }}</span>
+                        <span v-if="signaturePreview" class="ml-4 text-gray-600">{{ getFileName(signatureFile) }}</span>
                     </div>
                     <div v-if="signaturePreview" class="flex justify-center">
                         <img :src="signaturePreview" alt="Pratinjau Tanda Tangan"
                             class="max-w-full max-h-32 rounded-md" />
                     </div>
                     <div class="flex justify-end">
-                        <button type="submit" :disabled="!signaturePreview"
+                        <button type="submit" :disabled="!signaturePreview || typeof signatureFile == 'string'"
                             class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition disabled:cursor-not-allowed disabled:bg-opacity-60">
                             Unggah Tanda Tangan
                         </button>
@@ -432,7 +516,7 @@ onMounted(() => {
                 </form>
             </div>
 
-            <div></div>
+            <div v-if="showSignatureForm"></div>
 
             <!-- Ubah Password -->
             <div class="lg:col-span-2 p-6">

@@ -34,6 +34,7 @@ const modalType = ref('');
 const showModalDelete = ref(false);
 const selectedDeleteId = ref(null);
 const showModal = ref(false);
+const showModalEditDepartment = ref(false);
 const selectedUpdateId = ref(null);
 const defaultWarningTextState = {
     name: false,
@@ -186,7 +187,30 @@ const openUpdateModal = (id) => {
     } else {
         console.log("Data tidak ditemukan");
     }
-    sopModalStep.value == 1;
+};
+
+const openEditDepartementModal = () => {
+    selectedUpdateId.value = 0;
+    dataYangDitemukan = data.value.find(item => item.id === 0);
+    if (dataYangDitemukan) {
+        form.value = {
+            pic: dataYangDitemukan.pic,
+            name: dataYangDitemukan.name,
+            about: dataYangDitemukan.about,
+        };
+        console.log('Form value setelah diset:', form.value);
+    } else {
+        console.log("Data tidak ditemukan");
+    }
+
+    showModalEditDepartment.value = true;
+};
+
+const closeEditDepartemenModal = () => {
+    resetForm();
+    showModalEditDepartment.value = false;
+    selectedUpdateId.value = null;
+    showWarningText.value = { ...defaultWarningTextState };
 };
 
 const updateData = async () => {  // Fungsi untuk menghapus data berdasarkan ID
@@ -203,6 +227,7 @@ const updateData = async () => {  // Fungsi untuk menghapus data berdasarkan ID
 
         await updateOrg(selectedUpdateId.value, newItem);
         showModal.value = false;
+        showModalEditDepartment.value = false;
         fetchDataOrg();
 
         toast("Data berhasil diperbarui!", {
@@ -297,11 +322,15 @@ onMounted(() => {
                                     {{ item.about }}
                                 </td>
                                 <td class="px-6 py-4 flex justify-evenly">
-                                    <button :title="`Edit organisasi ${index + 1}`" @click="openUpdateModal(item.id)"
+                                    <button title="Edit data departemen" @click="openEditDepartementModal" v-if="item.id == 0"
                                         class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
                                         <PenToSquareIcon class="fill-current w-4" />
                                     </button>
-                                    <button :title="`Hapus item ${index + 1}`" @click="openDeleteModal(item.id)" v-if="item.id != 0 && item.total_sop == 0"
+                                    <button :title="`Edit organisasi ${item.name}`" @click="openUpdateModal(item.id)" v-else
+                                        class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
+                                        <PenToSquareIcon class="fill-current w-4" />
+                                    </button>
+                                    <button :title="`Hapus data ${item.name}`" @click="openDeleteModal(item.id)" v-if="item.id != 0 && item.total_sop == 0"
                                         class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
                                         <TrashCanIcon class="fill-current w-4" />
                                     </button>
@@ -322,6 +351,7 @@ onMounted(() => {
 
     </main>
 
+    <!-- TAMBAH/EDIT DATA ORGANISASI BIASA -->
     <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
         <!-- Overlay gelap -->
         <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="closeModal"></div>
@@ -429,6 +459,58 @@ onMounted(() => {
                             Submit
                         </button>
                         <button v-else-if="modalType == 'edit'" @click="updateData" type="button"
+                            class="text-white inline-flex items-center  focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center bg-yellow-400 hover:bg-yellow-500 focus:ring-yellow-300">
+                            Perbarui
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    
+    <!-- EDIT DATA DEPARTEMEN -->
+    <div v-if="showModalEditDepartment" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
+        <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="closeEditDepartemenModal"></div>
+
+        <div class="relative p-4 max-w-2xl max-h-full z-10">
+            <div class="relative bg-white rounded-lg shadow">
+                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        Perbarui Data Departemen
+                    </h3>
+                    <button
+                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+                        type="button" @click="closeEditDepartemenModal">
+                        <XMarkCloseIcon class="w-3 h-3" />
+                        <span class="sr-only">Tutup modal</span>
+                    </button>
+                </div>
+
+                <div class="p-4 md:p-5">
+                    <div class="mb-4 min-w-96">
+                        <div>
+                            <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
+                                Nama
+                                <span class="text-red-600">*</span>
+                            </label>
+                            <input type="text" 
+                                id="name" 
+                                v-model="form.name"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
+                                placeholder="Mis. Laboratorium Aplikasi Perusahaan" required minlength="5"
+                                maxlength="100">
+                            <WarningText v-if="showWarningText.name" text="Harap isi data nama terlebih dahulu!" />
+                        </div>
+                        <div>
+                            <label for="about" class="block mb-2 text-sm font-medium text-gray-900">Keterangan</label>
+                            <textarea id="about" rows="4" v-model="form.about"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
+                                placeholder="ketikkan keterangan tambahan mengenai organisasi"></textarea>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <button @click="updateData" type="button"
                             class="text-white inline-flex items-center  focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center bg-yellow-400 hover:bg-yellow-500 focus:ring-yellow-300">
                             Perbarui
                         </button>

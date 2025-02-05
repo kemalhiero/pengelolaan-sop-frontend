@@ -184,7 +184,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/roleManagement/PiC.vue'),
       meta: {
         requiresAuth: true,
-        roles: ['kadep']
+        roles: ['kadep', 'pj']
       }
     },
     {
