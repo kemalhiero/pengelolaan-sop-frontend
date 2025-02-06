@@ -1,13 +1,17 @@
 <script setup>
 import { inject, onMounted, ref, watch } from 'vue';
 import { toast } from 'vue3-toastify';
+import { useRouter } from 'vue-router';
 
-import { addHod, getCurrentHod, getHodCandidate } from '@/api/userApi';
+import { updateHod, getCurrentHod, getHodCandidate } from '@/api/userApi';
+import { useAuthStore } from '@/stores/auth';
+import { logoutUser } from '@/api/authApi';
+import getToken from '@/utils/getToken';
 
-import Error from '@/components/Error.vue';
 import DataTable from '@/components/DataTable.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
+import ExclamationMarkIcon from '@/assets/icons/ExclamationMarkIcon.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -16,6 +20,9 @@ const dataHod = ref('');
 const dataCandidate = ref([]);
 const selectedHod = ref(null);
 const showAddModal = ref(false);
+const changeHodStep = ref(1);
+const authStore = useAuthStore();
+const router = useRouter();
 
 const fetchCandidate = async () => {
     try {
@@ -38,7 +45,7 @@ const fetchHod = async () => {
 const submitHod = async () => {
     try {
         if (!selectedHod.value) {
-            toast('Silakan pilih kepala departemen terlebih dahulu', {
+            toast('Silakan pilih ketua departemen terlebih dahulu', {
                 type: "warning",
                 autoClose: 3000
             });
@@ -46,7 +53,7 @@ const submitHod = async () => {
         };
         toast.promise(
             new Promise((resolve, reject) => {
-                addHod({
+                updateHod({
                     oldHodId: dataHod.value.id,
                     newHodId: selectedHod.value
                 })
@@ -55,8 +62,15 @@ const submitHod = async () => {
                             throw response;
                         }
                         resolve(response);
-                        fetchHod();
-                        fetchCandidate();
+                        // fetchHod();
+                        // fetchCandidate();
+
+                        // handle logout
+                        logoutUser(getToken());
+                        authStore.logout();
+                        setTimeout(() => {
+                            router.push('/')
+                        }, 5000);
                     })
                     .catch(error => reject(error));
             }),
@@ -69,7 +83,7 @@ const submitHod = async () => {
                 },
                 success: {
                     render() {
-                        return 'Ketua Departemen berhasil diubah!'
+                        return 'Ketua Departemen berhasil diubah. Harap untuk login ulang terlebih dahulu!'
                     },
                     icon: '✅'
                 },
@@ -99,6 +113,7 @@ const submitHod = async () => {
 watch(showAddModal, (newValue) => {
     if (!newValue) {
         selectedHod.value = ''; // Reset nilai saat modal ditutup
+        changeHodStep.value = 1;
     }
 });
 
@@ -134,7 +149,7 @@ onMounted(() => {
                     </div>
                     <div class="space-y-2">
                         <label class="block text-sm font-medium text-gray-700">Email</label>
-                        <input type="email" v-model="dataHod.email" required
+                        <input type="email" disabled v-model="dataHod.email"
                             class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" />
                     </div>
                     <div class="space-y-2">
@@ -146,9 +161,9 @@ onMounted(() => {
                     </div>
                 </div>
                 <div class="mt-10 flex justify-end">
-                    <button type="button" @click="showAddModal = true" :disabled="dataHod.email == originalEmail"
+                    <button type="button" @click="showAddModal = true"
                         class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:cursor-not-allowed disabled:bg-opacity-60 flex">
-                        Perbarui kepala departemen?
+                        Perbarui ketua departemen?
                     </button>
                 </div>
             </div>
@@ -161,7 +176,7 @@ onMounted(() => {
         <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showAddModal = false"></div>
         <div class="relative w-full max-w-2xl max-h-full">
             <!-- Modal content -->
-            <div class="relative bg-white rounded-lg shadow">
+            <div v-show="changeHodStep == 1" class="relative bg-white rounded-lg shadow">
                 <!-- Modal header -->
                 <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
                     <h3 class="text-xl font-medium text-gray-900">
@@ -175,7 +190,7 @@ onMounted(() => {
                     </button>
                 </div>
                 <!-- Modal body -->
-                <form @submit.prevent="submitHod">
+                <form @submit.prevent="changeHodStep = 2">
                     <div class="p-4 md:p-5 space-y-4">
                         <DataTable :data="dataCandidate" :columns="[
                             { field: 'id_number', label: 'NIP', sortable: true, searchable: true },
@@ -194,6 +209,39 @@ onMounted(() => {
                     </div>
                 </form>
             </div>
+
+            <div v-show="changeHodStep == 2" class="relative bg-white rounded-lg shadow">
+                <button type="button" @click="showAddModal = false"
+                    class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center">
+                    <XMarkCloseIcon class="w-3 h-3" />
+                    <span class="sr-only">Tutup modal</span>
+                </button>
+                <div class="p-4 md:p-5 text-center">
+                    <ExclamationMarkIcon class="mx-auto mb-4 text-gray-400 w-12 h-12" />
+                    <h3 class="mb-2 text-xl font-normal text-gray-800">
+                        Anda yakin ingin mengganti ketua departemen?
+                    </h3>
+                    <p class="text-gray-500 mb-1">
+                        Role anda otomatis akan diubah menjadi penyusun di <span
+                            title="Departemen Sistem Informasi">DSI</span> dan anda tidak bisa lagi mengakses menu
+                        khusus ketua departemen!
+                    </p>
+                    <p class="text-gray-600 mb-5">
+                        <span class="text-red-600">*</span>
+                        Anda akan diminta untuk login ulang!
+                        <span class="text-red-600">*</span>
+                    </p>
+                    <button @click="submitHod"
+                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
+                        Yakin
+                    </button>
+                    <button @click="showAddModal = false"
+                        class="py-2.5 px-5 ms-3 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100">
+                        Batal
+                    </button>
+                </div>
+            </div>
+
         </div>
     </div>
 

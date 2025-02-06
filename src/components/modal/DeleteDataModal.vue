@@ -13,7 +13,7 @@
                 </button>
                 <div class="p-4 md:p-5 text-center">
                     <ExclamationMarkIcon class="mx-auto mb-4 text-gray-400 w-12 h-12" />
-                    <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+                    <h3 class="mb-5 text-lg font-normal text-gray-500">
                         Anda yakin ingin menghapus data ini?
                     </h3>
                     <button @click="handleDelete"

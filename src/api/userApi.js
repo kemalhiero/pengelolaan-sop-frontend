@@ -17,7 +17,7 @@ const createSopDrafter = (data) => postRequest('user/drafter/sop', data, getToke
 const getDrafterDetail = (id) => getRequest(`user/drafter/${id}`, getToken());
 
 const getHod = () => getRequest('user/hod', getToken());
-const addHod = (data) => postRequest('user/hod', data, getToken());
+const updateHod = (data) => patchRequest('user/hod', data, getToken());
 const getHodCandidate = () => getRequest('user/hod/candidate', getToken());
 const getCurrentHod = () => getRequest('user/hod/current', getToken());
 
@@ -32,6 +32,6 @@ export {
     addProfilePhoto, deleteUserProfile,
     addSignatureFile,
     getAllDrafter, getDrafterByIdDetail, createSopDrafter, addDrafter, getDrafterDetail,
-    addHod, getHodCandidate, getHod, getCurrentHod,
+    updateHod, getHodCandidate, getHod, getCurrentHod,
     getAllPic, addPic, getUnassignedPic, getPicCandidate, getPicDetail
 };

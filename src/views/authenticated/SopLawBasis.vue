@@ -84,16 +84,16 @@ const submitData = async () => {
         fetchData();
 
         toast("Data berhasil ditambahkan!", {
-            "type": "success",
-            "autoClose": 3000,
+            type: "success",
+            autoClose: 3000,
         });
 
     } catch (error) {
         console.error('Error saat mengirim data:', error);
         toast(`Data gagal ditambahkan! <br> ${error} `, {
-            "type": "error",
-            "autoClose": 5000,
-            'dangerouslyHTMLString': true
+            type: "error",
+            autoClose: 5000,
+            dangerouslyHTMLString: true
         });
     }
 };
@@ -123,17 +123,17 @@ const deleteData = async (id) => {  // Fungsi untuk menghapus data berdasarkan I
         closeDeleteModal(); // Tutup modal setelah penghapusan
 
         toast("Data berhasil dihapus!", {
-            "type": "success",
-            "autoClose": 3000,
+            type: "success",
+            autoClose: 3000,
         });
 
         console.log(`Data dengan ID ${id} berhasil dihapus`);
     } catch (error) {
         console.error('Delete error:', error);
         toast(`Data gagal dihapus! <br> ${error} `, {
-            "type": "error",
-            "autoClose": 5000,
-            'dangerouslyHTMLString': true
+            type: "error",
+            autoClose: 5000,
+            dangerouslyHTMLString: true
         });
     }
 };
@@ -173,16 +173,16 @@ const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan I
         closeUpdateModal(); // Tutup modal setelah penghapusan
 
         toast("Data berhasil diperbarui!", {
-            "type": "success",
-            "autoClose": 3000,
+            type: "success",
+            autoClose: 3000,
         });
 
     } catch (error) {
         console.error('Update error:', error);
         toast(`Data gagal diperbarui! <br> ${error} `, {
-            "type": "error",
-            "autoClose": 5000,
-            'dangerouslyHTMLString': true
+            type: "error",
+            autoClose: 5000,
+            dangerouslyHTMLString: true
         });
     }
 };
