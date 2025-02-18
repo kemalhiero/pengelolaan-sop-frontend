@@ -1,5 +1,5 @@
 <script setup>
-import { inject, ref } from 'vue';
+import { inject } from 'vue';
 import SopDocTemplate from './SopDocTemplate.vue';
 import IconDownload from '@/assets/icons/DownloadIcon.vue';
 import PrintIcon from '@/assets/icons/PrintIcon.vue';
@@ -9,6 +9,39 @@ const layoutType = inject('layoutType');
 layoutType.value = 'guest';
 
 const authStore = useAuthStore();
+
+const sopSteps = [
+  {
+    id: 1,
+    id_sop: 1,
+    id_next_step_if_no: null,
+    id_next_step_if_yes: 2,
+    sequential_number: 1,
+    activity: 'Mengisi formulir permohonan KP',
+    type: 'start-end',
+    implementer: 'Mahasiswa',
+    fittings: 'Formulir permohonan KP, transkrip nilai, proposal KP',
+    time: '5 menit',
+    output: 'Penyerahan kelengkapan ke pihak departemen',
+    description: 'hehehe'
+  },
+  {
+    id: 2,
+    id_sop: 1,
+    id_next_step_if_no: 1,
+    id_next_step_if_yes: 3,
+    sequential_number: 2,
+    activity: 'Peninjauan permohonan KP',
+    type: 'decision',
+    implementer: 'Departemen',
+    fittings: 'Formulir permohonan KP, transkrip nilai, proposal KP',
+    time: '1 hari',
+    output: 'Disposisi',
+    description: 'jajajajja'
+  },
+  // ... tahapan lainnya
+];
+
 </script>
 
 <template>
@@ -46,6 +79,10 @@ const authStore = useAuthStore();
             :record-data="[
                 'Dokumen', 'Pengarsipan', 'Surat/Disposisi'
             ]"
+            :implementer="[
+                'Mahasiswa', 'Departemen', 'Perusahaan'
+            ]"
+            :steps="sopSteps"
         />
 
         <div class="flex flex-col lg:flex-row max-w-screen-lg mx-auto my-10 space-y-6 lg:space-y-0 lg:space-x-8">

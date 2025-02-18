@@ -1,8 +1,12 @@
 <script setup>
+import { computed } from 'vue';
+
 import StartEnd from '@/assets/flowchart/StartEnd.vue';
 import Process from '@/assets/flowchart/Process.vue';
 import Decision from '@/assets/flowchart/Decision.vue';
 import OffPageConnector from '@/assets/flowchart/OffPageConnector.vue';
+
+import ArrowConnector from '@/assets/flowchart/ArrowConnector.vue';
 
 const props = defineProps({
     // sop info
@@ -36,10 +40,6 @@ const props = defineProps({
         type: String,
         required: true
     },
-    organization: {
-        type: String,
-        required: true
-    },
     lawBasis: {
         type: Array,
         required: true
@@ -63,15 +63,54 @@ const props = defineProps({
         type: Array,
         required: true
     },
+    implementer: {
+        type: Array,
+        required: true
+    },
+    steps: {
+        type: Array,
+        required: true,
+        default: () => []
+    }
 
-})
+});
+
+// Fungsi untuk mendapatkan komponen shape berdasarkan tipe
+const getShapeComponent = (type) => {
+    const shapeMap = {
+        'start-end': StartEnd,
+        'process': Process,
+        'decision': Decision,
+        'connector': OffPageConnector
+    };
+    return shapeMap[type] || Process;
+};
+
+// Computed property untuk koneksi
+const connections = computed(() => {
+    return props.steps.map((step, index) => {
+        // Jika bukan step terakhir, buat koneksi ke step berikutnya
+        if (index < props.steps.length - 1) {
+            return {
+                from: `step-${step.sequential_number}`,
+                to: `step-${props.steps[index + 1].sequential_number}`,
+                // Untuk decision, tambahkan label
+                ...(step.type === 'decision' && {
+                    label: 'Ya'
+                })
+            };
+        }
+        return null;
+    }).filter(Boolean); // Hapus null values
+});
+
 </script>
 
 <template>
-    <table class="w-11/12 mx-auto my-8">
+    <table class="w-11/12 mx-auto my-8 border-collapse border-2 border-black">
         <tbody>
             <tr>
-                <th rowspan="8" class="w-[47%]">
+                <th rowspan="8" class="w-[47%] border-2 py-0.5 px-2 border-black">
                     <img class="mx-auto h-36 my-4" src="/logo_unand_kecil.png"
                         alt="Logo Kementerian Pendidikan Kebudayaan, Riset dan Teknologi">
                     <h4>KEMENTERIAN PENDIDIKAN TINGGI, SAINS, DAN TEKNOLOGI</h4>
@@ -81,57 +120,57 @@ const props = defineProps({
                 </th>
             </tr>
             <tr>
-                <td class="font-bold">NOMOR POS</td>
-                <td>:</td>
-                <td v-if="props.number">{{ props.number }}</td>
-                <td v-else> - </td>
+                <td class="font-bold border-2 py-0.5 px-2 border-black">NOMOR POS</td>
+                <td class="border-2 py-0.5 px-2 border-black">:</td>
+                <td class="border-2 py-0.5 px-2 border-black" v-if="props.number">{{ props.number }}</td>
+                <td class="border-2 py-0.5 px-2 border-black" v-else> - </td>
             </tr>
             <tr>
-                <td class="font-bold">TANGGAL PEMBUATAN</td>
-                <td>:</td>
-                <td v-if="props.createdDate">{{ props.createdDate }}</td>
-                <td v-else> - </td>
+                <td class="font-bold border-2 py-0.5 px-2 border-black">TANGGAL PEMBUATAN</td>
+                <td class="border-2 py-0.5 px-2 border-black">:</td>
+                <td class="border-2 py-0.5 px-2 border-black" v-if="props.createdDate">{{ props.createdDate }}</td>
+                <td class="border-2 py-0.5 px-2 border-black" v-else> - </td>
             </tr>
             <tr>
-                <td class="font-bold">TANGGAL REVISI</td>
-                <td>:</td>
-                <td v-if="props.revisionDate">{{ props.revisionDate }}</td>
-                <td v-else> - </td>
+                <td class="font-bold border-2 py-0.5 px-2 border-black">TANGGAL REVISI</td>
+                <td class="border-2 py-0.5 px-2 border-black">:</td>
+                <td class="border-2 py-0.5 px-2 border-black" v-if="props.revisionDate">{{ props.revisionDate }}</td>
+                <td class="border-2 py-0.5 px-2 border-black" v-else> - </td>
             </tr>
             <tr>
-                <td class="font-bold">TANGGAL EFEKTIF</td>
-                <td>:</td>
-                <td v-if="props.effectiveDate">{{ props.effectiveDate }}</td>
-                <td v-else> - </td>
+                <td class="font-bold border-2 py-0.5 px-2 border-black">TANGGAL EFEKTIF</td>
+                <td class="border-2 py-0.5 px-2 border-black">:</td>
+                <td class="border-2 py-0.5 px-2 border-black" v-if="props.effectiveDate">{{ props.effectiveDate }}</td>
+                <td class="border-2 py-0.5 px-2 border-black" v-else> - </td>
             </tr>
             <tr>
-                <td class="font-bold align-top">DISAHKAN OLEH</td>
-                <td class="align-top">:</td>
-                <td class="text-center font-bold">
+                <td class="font-bold align-top border-2 py-0.5 px-2 border-black">DISAHKAN OLEH</td>
+                <td class="align-top border-2 py-0.5 px-2 border-black">:</td>
+                <td class="text-center font-bold border-2 py-0.5 px-2 border-black">
                     Ketua Departemen,<br><br><br><br>{{ props.picName }}<br>
                     NIP. {{ props.picNumber }}</td>
             </tr>
             <tr>
-                <td class="font-bold">NAMA POS</td>
-                <td>:</td>
-                <td v-if="props.name" class="font-bold">{{ props.name }}</td>
-                <td v-else> - </td>
+                <td class="font-bold border-2 py-0.5 px-2 border-black">NAMA POS</td>
+                <td class="border-2 py-0.5 px-2 border-black">:</td>
+                <td class="font-bold border-2 py-0.5 px-2 border-black" v-if="props.name">{{ props.name }}</td>
+                <td class="border-2 py-0.5 px-2 border-black" v-else> - </td>
             </tr>
             <tr>
-                <td class="font-bold align-top">SEKSI</td>
-                <td>:</td>
-                <td v-if="props.section">{{ props.section }}</td>
-                <td v-else> - </td>
+                <td class="font-bold align-top border-2 py-0.5 px-2 border-black">SEKSI</td>
+                <td class="border-2 py-0.5 px-2 border-black">:</td>
+                <td class="border-2 py-0.5 px-2 border-black" v-if="props.section">{{ props.section }}</td>
+                <td class="border-2 py-0.5 px-2 border-black" v-else> - </td>
             </tr>
             <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
             <tr>
-                <td class="font-bold">DASAR HUKUM</td>
-                <td colspan="3" class="font-bold">
+                <td class="font-bold border-2 py-0.5 px-2 border-black">DASAR HUKUM</td>
+                <td colspan="3" class="font-bold border-2 py-0.5 px-2 border-black">
                     KUALIFIKASI PELAKSANAAN
                 </td>
             </tr>
             <tr>
-                <td class="align-top">
+                <td class="align-top border-2 py-0.5 px-2 border-black">
                     <ol class="list-decimal list-outside ml-5">
                         <template v-if="props.lawBasis && props.lawBasis.length > 0">
                             <li v-for="(item, index) in props.lawBasis" :key="index">
@@ -141,7 +180,7 @@ const props = defineProps({
                         <p v-else> - </p>
                     </ol>
                 </td>
-                <td colspan="3" class="align-top">
+                <td colspan="3" class="align-top border-2 py-0.5 px-2 border-black">
                     <ol class="list-decimal list-outside ml-5">
                         <template v-if="props.implementQualification && props.implementQualification.length > 0">
                             <li v-for="(item, index) in props.implementQualification" :key="index">
@@ -153,13 +192,13 @@ const props = defineProps({
                 </td>
             </tr>
             <tr>
-                <td class="font-bold">KETERKAITAN DENGAN POS AP LAIN</td>
-                <td colspan="3" class="font-bold">
+                <td class="font-bold border-2 py-0.5 px-2 border-black">KETERKAITAN DENGAN POS AP LAIN</td>
+                <td colspan="3" class="font-bold border-2 py-0.5 px-2 border-black">
                     PERALATAN / PERLENGKAPAN
                 </td>
             </tr>
             <tr>
-                <td class="align-top">
+                <td class="align-top border-2 py-0.5 px-2 border-black">
                     <ol class="list-decimal list-outside ml-5">
                         <template v-if="props.relatedSop && props.relatedSop.length > 0">
                             <li v-for="(item, index) in props.relatedSop" :key="index">
@@ -169,7 +208,7 @@ const props = defineProps({
                         <p v-else> - </p>
                     </ol>
                 </td>
-                <td colspan="3" class="align-top">
+                <td colspan="3" class="align-top border-2 py-0.5 px-2 border-black">
                     <ol class="list-decimal list-outside ml-5 columns-3">
                         <template v-if="props.equipment && props.equipment.length > 0">
                             <li v-for="(item, index) in props.equipment" :key="index">
@@ -181,15 +220,15 @@ const props = defineProps({
                 </td>
             </tr>
             <tr>
-                <td class="font-bold">PERINGATAN</td>
-                <td class="font-bold" colspan="3">PENCATATAN DAN PENDATAAN</td>
+                <td class="font-bold border-2 py-0.5 px-2 border-black">PERINGATAN</td>
+                <td class="font-bold border-2 py-0.5 px-2 border-black" colspan="3">PENCATATAN DAN PENDATAAN</td>
             </tr>
             <tr>
-                <td v-if="props.warning" class="align-top">
+                <td v-if="props.warning" class="align-top border-2 py-0.5 px-2 border-black">
                     {{ props.warning }}
                 </td>
-                <td v-else> - </td>
-                <td colspan="3" class="align-top">
+                <td class="border-2 py-0.5 px-2 border-black" v-else> - </td>
+                <td colspan="3" class="align-top border-2 py-0.5 px-2 border-black">
                     <ol class="list-decimal list-outside ml-5 columns-3">
                         <template v-if="props.recordData && props.recordData.length > 0">
                             <li v-for="(item, index) in props.recordData" :key="index">
@@ -203,98 +242,42 @@ const props = defineProps({
         </tbody>
     </table>
 
-    <table class="w-11/12 mx-auto mb-10">
+    <table class="w-11/12 mx-auto mb-10 border-collapse border-2 border-black">
         <tbody>
-            <tr class="bg-[#D9D9D9]">
-                <th rowspan="2">NO</th>
-                <th rowspan="2">KEGIATAN</th>
-                <th colspan="3">PELAKSANA</th> <!-- jumlah colspan tergantung jumlah aktor -->
-                <th colspan="3">MUTU BAKU</th>
-                <th rowspan="2">KET</th>
+            <tr class="bg-[#D9D9D9] border-2 py-0.5 px-2 border-black">
+                <th rowspan="2" class="border-2 py-0.5 px-2 border-black">NO</th>
+                <th rowspan="2" class="border-2 py-0.5 px-2 border-black">KEGIATAN</th>
+                <th :colspan="implementer.length" class="border-2 py-0.5 px-2 border-black">PELAKSANA</th>
+                <th colspan="3" class="border-2 py-0.5 px-2 border-black">MUTU BAKU</th>
+                <th rowspan="2" class="border-2 py-0.5 px-2 border-black">KET</th>
             </tr>
-            <tr class="bg-[#D9D9D9]">
-                <th>MAHASISWA</th>
-                <th>DEPARTEMEN</th>
-                <th>PERUSAHAAN</th>
-                <th>KELENGKAPAN</th>
-                <th>WAKTU</th>
-                <th>OUTPUT</th>
+            <tr class="bg-[#D9D9D9] border-2 py-0.5 px-2 border-black">
+                <th v-for="impl in props.implementer" class="border-2 py-0.5 px-2 border-black">{{ impl.toUpperCase() }}</th>
+                <th class="border-2 py-0.5 px-2 border-black">KELENGKAPAN</th>
+                <th class="border-2 py-0.5 px-2 border-black">WAKTU</th>
+                <th class="border-2 py-0.5 px-2 border-black">OUTPUT</th>
             </tr>
-            <tr>
-                <td>1</td>
-                <td>Mengisi formulir permohonan KP</td>
-                <td>
-                    <StartEnd />
+            <tr v-for="step in steps" :key="step.id" class="border-2 py-0.5 px-2 border-black">
+                <td class="border-2 py-0.5 px-2 border-black">{{ step.sequential_number }}</td>
+                <td class="border-2 py-0.5 px-2 border-black">{{ step.activity }}</td>
+                <td v-for="impl in props.implementer" :key="impl" class="border-2 py-0.5 px-2 border-black">
+                    <div v-if="step.implementer === impl" :id="`step-${step.sequential_number}`">
+                        <component :is="getShapeComponent(step.type)" class="shape-container" />
+                    </div>
                 </td>
-                <td></td>
-                <td></td>
-                <td>Formulir permohonan KP, transkrip nilai, proposal KP</td>
-                <td>5 menit</td>
-                <td>Penyerahan kelengkapan ke pihak departemen</td>
-                <td></td>
-            </tr>
-            <tr>
-                <td>2</td>
-                <td>Peninjauan permohonan KP</td>
-                <td></td>
-                <td>
-                    <Decision />
-                </td>
-                <td></td>
-                <td>Formulir permohonan KP, transkrip nilai, proposal KP</td>
-                <td>1 hari</td>
-                <td>Disposisi</td>
-                <td></td>
-            </tr>
-            <tr>
-                <td>3</td>
-                <td>Surat permohonan KP</td>
-                <td></td>
-                <td></td>
-                <td>
-                    <Process />
-                </td>
-                <td>Disposisi</td>
-                <td>15 menit</td>
-                <td>Surat permohonan KP</td>
-                <td>Lorem ipsum dolor sit amet, consectetur adipisicing.</td>
-            </tr>
-            <tr>
-                <td>4</td>
-                <td>Konfirmasi surat permohonan KP oleh perusahaan</td>
-                <td></td>
-                <td>
-                    <OffPageConnector class="mx-auto" />
-                </td>
-                <td></td>
-                <td>Disposisi</td>
-                <td>3 Hari</td>
-                <td>Surat balasan dari perusahaan</td>
-                <td></td>
-            </tr>
-            <tr>
-                <td>5</td>
-                <td>Menerima surat konfirmasi permohonan KP </td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td>Surat balasan dari perusahaan</td>
-                <td>5 Menit</td>
-                <td>Disposisi</td>
-                <td></td>
+                <td class="border-2 py-0.5 px-2 border-black">{{ step.fittings }}</td>
+                <td class="border-2 py-0.5 px-2 border-black">{{ step.time }}</td>
+                <td class="border-2 py-0.5 px-2 border-black">{{ step.output }}</td>
+                <td class="border-2 py-0.5 px-2 border-black">{{ step.description }}</td>
             </tr>
         </tbody>
     </table>
 
+    <!-- SVG container untuk panah -->
+    <svg class="absolute top-0 left-0 w-full h-full pointer-events-none sop-container">
+        <arrow-connector v-for="connection in connections" :key="`${connection.from}-${connection.to}`"
+            :connection="connection" />
+    </svg>
+
 </template>
 
-<style scoped>
-th,
-td {
-    padding-top: 2px;
-    padding-bottom: 2px;
-    padding-left: 8px;
-    padding-right: 8px;
-    border: 2px solid black;
-}
-</style>
