@@ -18,7 +18,7 @@ const labelPosition = ref(null);
 // Fungsi untuk mendapatkan posisi elemen dengan pengecekan null
 const getElementPosition = (elementId) => {
   const element = document.getElementById(elementId);
-  const container = document.querySelector('.sop-container'); // Gunakan class sop-container
+  const container = document.querySelector('#sop-container');
 
   if (!element || !container) {
     console.info('element', element)
@@ -52,6 +52,11 @@ const calculatePath = async () => {
       return;
     }
 
+    // Tambahkan pengecekan apakah target adalah shape sebelumnya
+    const fromNumber = parseInt(props.connection.from.split('-')[1]);
+    const toNumber = parseInt(props.connection.to.split('-')[1]);
+    const isGoingBack = fromNumber > toNumber;
+
     // Tentukan arah dan posisi relatif
     const isToTheRight = toPos.left > fromPos.right;
     const isToTheLeft = toPos.right < fromPos.left;
@@ -63,7 +68,6 @@ const calculatePath = async () => {
     let start = {}, end = {}, path = '';
 
     if (isDirectlyBelow) {
-      // Panah vertikal ke bawah
       start = {
         x: fromPos.left + fromPos.width / 2,
         y: fromPos.bottom
@@ -75,7 +79,6 @@ const calculatePath = async () => {
       path = `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
     } 
     else if (isDirectlyAbove) {
-      // Panah vertikal ke atas
       start = {
         x: fromPos.left + fromPos.width / 2,
         y: fromPos.top
@@ -87,36 +90,49 @@ const calculatePath = async () => {
       path = `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
     }
     else if (isToTheRight) {
-      // Panah ke kanan + bawah
       start = {
         x: fromPos.right,
         y: fromPos.top + fromPos.height / 2
       };
       end = {
-        x: toPos.left + toPos.width / 2, // Titik tengah shape kedua
-        y: toPos.top
+        x: toPos.left + toPos.width / 2,
+        y: isGoingBack ? toPos.bottom : toPos.top
       };
-      
-      // Bergerak horizontal ke titik tengah shape kedua, lalu turun vertikal
       path = `M ${start.x} ${start.y}
               L ${end.x} ${start.y}
               L ${end.x} ${end.y}`;
     }
     else if (isToTheLeft) {
-      // Panah ke kiri + bawah
       start = {
         x: fromPos.left,
         y: fromPos.top + fromPos.height / 2
       };
       end = {
-        x: toPos.left + toPos.width / 2, // Titik tengah shape kedua
-        y: toPos.top
+        x: toPos.left + toPos.width / 2,
+        y: isGoingBack ? toPos.bottom : toPos.top
       };
-      
-      // Bergerak horizontal ke titik tengah shape kedua, lalu turun vertikal
       path = `M ${start.x} ${start.y}
               L ${end.x} ${start.y}
               L ${end.x} ${end.y}`;
+    }
+
+    // Sesuaikan posisi label
+    if (props.connection.label) {
+      const midX = (start.x + end.x) / 2;
+      const midY = (start.y + end.y) / 2;
+      const offset = 15;
+      
+      if (isDirectlyBelow || isDirectlyAbove) {
+        labelPosition.value = {
+          x: midX + offset,
+          y: midY
+        };
+      } else {
+        labelPosition.value = {
+          x: midX,
+          y: start.y - offset
+        };
+      }
     }
 
     pathData.value = path;
@@ -146,7 +162,6 @@ watch(() => props.connection, () => {
         refY="4"
         orient="auto"
       >
-        <!-- Ubah path untuk membuat panah lebih tumpul -->
         <path d="M0,0 L8,4 L0,8 L2,4 Z" fill="black" />
       </marker>
     </defs>
@@ -165,8 +180,9 @@ watch(() => props.connection, () => {
       v-if="labelPosition && props.connection.label"
       :x="labelPosition.x"
       :y="labelPosition.y"
+      class="text-sm font-medium fill-black"
       text-anchor="middle"
-      class="text-sm fill-black"
+      alignment-baseline="middle"
     >
       {{ props.connection.label }}
     </text>

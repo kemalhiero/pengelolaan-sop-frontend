@@ -63,6 +63,8 @@ const props = defineProps({
         type: Array,
         required: true
     },
+
+    // sop step
     implementer: {
         type: Array,
         required: true
@@ -96,20 +98,42 @@ const handleArrowMounted = () => {
 
 // Computed property untuk koneksi
 const connections = computed(() => {
-    return props.steps.map((step, index) => {
-        // Jika bukan step terakhir, buat koneksi ke step berikutnya
-        if (index < props.steps.length - 1) {
-            return {
-                from: `step-${step.sequential_number}`,
-                to: `step-${props.steps[index + 1].sequential_number}`,
-                // Untuk decision, tambahkan label
-                ...(step.type === 'decision' && {
-                    label: 'Ya'
-                })
-            };
+    const allConnections = [];
+    
+    props.steps.forEach((step) => {
+        if (step.type === 'decision') {
+            // Tambahkan koneksi untuk kondisi 'Yes'
+            if (step.id_next_step_if_yes) {
+                allConnections.push({
+                    from: `step-${step.sequential_number}`,
+                    to: `step-${props.steps.find(s => s.id === step.id_next_step_if_yes)?.sequential_number}`,
+                    label: 'Ya',
+                    condition: 'yes'
+                });
+            }
+            
+            // Tambahkan koneksi untuk kondisi 'No'
+            if (step.id_next_step_if_no) {
+                allConnections.push({
+                    from: `step-${step.sequential_number}`,
+                    to: `step-${props.steps.find(s => s.id === step.id_next_step_if_no)?.sequential_number}`,
+                    label: 'Tidak',
+                    condition: 'no'
+                });
+            }
+        } else {
+            // Untuk step non-decision, gunakan sequential berikutnya
+            const nextStep = props.steps.find(s => s.sequential_number === step.sequential_number + 1);
+            if (nextStep) {
+                allConnections.push({
+                    from: `step-${step.sequential_number}`,
+                    to: `step-${nextStep.sequential_number}`
+                });
+            }
         }
-        return null;
-    }).filter(Boolean); // Hapus null values
+    });
+
+    return allConnections;
 });
 
 </script>
@@ -253,8 +277,8 @@ const connections = computed(() => {
         </tbody>
     </table>
 
-    <!-- Ubah struktur table kedua dan SVG container -->
-    <div class="relative w-11/12 mx-auto mb-10 sop-container">
+    <!-- Tabel Kedua -->
+    <div class="relative w-11/12 mx-auto mb-10 min-h-[200px]" id="sop-container">
       <table class="w-full border-collapse border-2 border-black">
         <tbody>
             <tr class="bg-[#D9D9D9]">
@@ -276,7 +300,7 @@ const connections = computed(() => {
                 <td class="border-2 border-black py-0.5 px-2">{{ step.activity }}</td>
                 <td v-for="impl in props.implementer" :key="impl" class="border-2 border-black p-5"> <!-- Tambahkan padding di sini -->
                     <div v-if="step.implementer === impl" :id="`step-${step.sequential_number}`">
-                        <component :is="getShapeComponent(step.type)" class="shape-container" />
+                        <component :is="getShapeComponent(step.type)" class="relative z-10 flex justify-center items-center" />
                     </div>
                 </td>
                 <td class="border-2 border-black py-0.5 px-2">{{ step.fittings }}</td>
@@ -288,7 +312,7 @@ const connections = computed(() => {
       </table>
 
       <!-- Perbaiki SVG container -->
-      <svg class="absolute inset-0 w-full h-full pointer-events-none">
+      <svg class="absolute inset-0 w-full h-full pointer-events-none z-0">
         <arrow-connector
           v-for="connection in connections" 
           :key="`${connection.from}-${connection.to}`"
@@ -299,25 +323,3 @@ const connections = computed(() => {
     </div>
   </div>
 </template>
-
-<style scoped>
-/* Tambahkan CSS untuk memastikan shape container terlihat */
-.shape-container {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-/* Pastikan SVG berada di atas table tapi di bawah shapes */
-svg {
-  z-index: 0;
-}
-
-.sop-container {
-  position: relative;
-  min-height: 200px; /* Sesuaikan dengan kebutuhan */
-}
-</style>
-
