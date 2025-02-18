@@ -1,6 +1,6 @@
 <!-- ArrowConnector.vue -->
 <script setup>
-import { onMounted, ref, nextTick } from 'vue';
+import { onMounted, ref, nextTick, watch } from 'vue';
 
 const props = defineProps({
   connection: {
@@ -8,6 +8,8 @@ const props = defineProps({
     required: true
   }
 });
+
+const emit = defineEmits(['mounted']);
 
 // State untuk menyimpan path data
 const pathData = ref('');
@@ -38,43 +40,98 @@ const getElementPosition = (elementId) => {
   };
 };
 
-// Fungsi untuk menghitung path
-const calculatePath = () => {
-  nextTick(() => {
+const calculatePath = async () => {
+  await nextTick();
+  
+  setTimeout(() => {
     const fromPos = getElementPosition(props.connection.from);
     const toPos = getElementPosition(props.connection.to);
 
-    // Jika salah satu posisi tidak ditemukan, jangan render path
     if (!fromPos || !toPos) {
       pathData.value = '';
       return;
     }
 
-    // Hitung titik awal dan akhir
-    const start = {
-      x: fromPos.left + fromPos.width / 2,
-      y: fromPos.bottom
-    };
+    // Tentukan arah dan posisi relatif
+    const isToTheRight = toPos.left > fromPos.right;
+    const isToTheLeft = toPos.right < fromPos.left;
+    const isDirectlyBelow = toPos.top > fromPos.bottom && 
+      Math.abs((fromPos.left + fromPos.width/2) - (toPos.left + toPos.width/2)) < 20;
+    const isDirectlyAbove = toPos.bottom < fromPos.top &&
+      Math.abs((fromPos.left + fromPos.width/2) - (toPos.left + toPos.width/2)) < 20;
 
-    const end = {
-      x: toPos.left + toPos.width / 2,
-      y: toPos.top
-    };
+    let start = {}, end = {}, path = '';
 
-    // Hitung titik tengah untuk belokan
-    const midY = (start.y + end.y) / 2;
+    if (isDirectlyBelow) {
+      // Panah vertikal ke bawah
+      start = {
+        x: fromPos.left + fromPos.width / 2,
+        y: fromPos.bottom
+      };
+      end = {
+        x: toPos.left + toPos.width / 2,
+        y: toPos.top
+      };
+      path = `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
+    } 
+    else if (isDirectlyAbove) {
+      // Panah vertikal ke atas
+      start = {
+        x: fromPos.left + fromPos.width / 2,
+        y: fromPos.top
+      };
+      end = {
+        x: toPos.left + toPos.width / 2,
+        y: toPos.bottom
+      };
+      path = `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
+    }
+    else if (isToTheRight) {
+      // Panah ke kanan + bawah
+      start = {
+        x: fromPos.right,
+        y: fromPos.top + fromPos.height / 2
+      };
+      end = {
+        x: toPos.left + toPos.width / 2, // Titik tengah shape kedua
+        y: toPos.top
+      };
+      
+      // Bergerak horizontal ke titik tengah shape kedua, lalu turun vertikal
+      path = `M ${start.x} ${start.y}
+              L ${end.x} ${start.y}
+              L ${end.x} ${end.y}`;
+    }
+    else if (isToTheLeft) {
+      // Panah ke kiri + bawah
+      start = {
+        x: fromPos.left,
+        y: fromPos.top + fromPos.height / 2
+      };
+      end = {
+        x: toPos.left + toPos.width / 2, // Titik tengah shape kedua
+        y: toPos.top
+      };
+      
+      // Bergerak horizontal ke titik tengah shape kedua, lalu turun vertikal
+      path = `M ${start.x} ${start.y}
+              L ${end.x} ${start.y}
+              L ${end.x} ${end.y}`;
+    }
 
-    // Buat path
-    pathData.value = `M ${start.x} ${start.y} 
-                      L ${start.x} ${midY} 
-                      L ${end.x} ${midY} 
-                      L ${end.x} ${end.y}`;
-  });
+    pathData.value = path;
+    emit('mounted');
+  }, 100);
 };
 
 onMounted(() => {
   calculatePath();
 });
+
+// Tambahkan watch untuk connection
+watch(() => props.connection, () => {
+  calculatePath();
+}, { deep: true });
 </script>
 
 <template>
@@ -84,12 +141,13 @@ onMounted(() => {
       <marker
         id="arrowhead"
         markerWidth="10"
-        markerHeight="7"
-        refX="9"
-        refY="3.5"
+        markerHeight="8"
+        refX="7"
+        refY="4"
         orient="auto"
       >
-        <path d="M0,0 L10,3.5 L0,7 Z" fill="black" />
+        <!-- Ubah path untuk membuat panah lebih tumpul -->
+        <path d="M0,0 L8,4 L0,8 L2,4 Z" fill="black" />
       </marker>
     </defs>
 

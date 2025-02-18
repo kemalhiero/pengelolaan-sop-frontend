@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 import StartEnd from '@/assets/flowchart/StartEnd.vue';
 import Process from '@/assets/flowchart/Process.vue';
@@ -86,6 +86,14 @@ const getShapeComponent = (type) => {
     return shapeMap[type] || Process;
 };
 
+// Tambahkan reactive untuk track mounting status
+const arrowsMounted = ref(new Set());
+
+// Handler untuk mounted event dari arrow
+const handleArrowMounted = () => {
+  arrowsMounted.value.add(true);
+};
+
 // Computed property untuk koneksi
 const connections = computed(() => {
     return props.steps.map((step, index) => {
@@ -107,6 +115,9 @@ const connections = computed(() => {
 </script>
 
 <template>
+  <!-- Tambahkan wrapper dengan position relative -->
+  <div class="relative">
+    <!-- Table pertama -->
     <table class="w-11/12 mx-auto my-8 border-collapse border-2 border-black">
         <tbody>
             <tr>
@@ -242,42 +253,71 @@ const connections = computed(() => {
         </tbody>
     </table>
 
-    <table class="w-11/12 mx-auto mb-10 border-collapse border-2 border-black">
+    <!-- Ubah struktur table kedua dan SVG container -->
+    <div class="relative w-11/12 mx-auto mb-10 sop-container">
+      <table class="w-full border-collapse border-2 border-black">
         <tbody>
-            <tr class="bg-[#D9D9D9] border-2 py-0.5 px-2 border-black">
+            <tr class="bg-[#D9D9D9]">
                 <th rowspan="2" class="border-2 py-0.5 px-2 border-black">NO</th>
                 <th rowspan="2" class="border-2 py-0.5 px-2 border-black">KEGIATAN</th>
                 <th :colspan="implementer.length" class="border-2 py-0.5 px-2 border-black">PELAKSANA</th>
                 <th colspan="3" class="border-2 py-0.5 px-2 border-black">MUTU BAKU</th>
                 <th rowspan="2" class="border-2 py-0.5 px-2 border-black">KET</th>
             </tr>
-            <tr class="bg-[#D9D9D9] border-2 py-0.5 px-2 border-black">
+            <tr class="bg-[#D9D9D9]">
                 <th v-for="impl in props.implementer" class="border-2 py-0.5 px-2 border-black">{{ impl.toUpperCase() }}</th>
                 <th class="border-2 py-0.5 px-2 border-black">KELENGKAPAN</th>
                 <th class="border-2 py-0.5 px-2 border-black">WAKTU</th>
                 <th class="border-2 py-0.5 px-2 border-black">OUTPUT</th>
             </tr>
-            <tr v-for="step in steps" :key="step.id" class="border-2 py-0.5 px-2 border-black">
-                <td class="border-2 py-0.5 px-2 border-black">{{ step.sequential_number }}</td>
-                <td class="border-2 py-0.5 px-2 border-black">{{ step.activity }}</td>
-                <td v-for="impl in props.implementer" :key="impl" class="border-2 py-0.5 px-2 border-black">
+
+            <tr v-for="step in steps" :key="step.id"> 
+                <td class="border-2 border-black py-0.5 px-2">{{ step.sequential_number }}</td>
+                <td class="border-2 border-black py-0.5 px-2">{{ step.activity }}</td>
+                <td v-for="impl in props.implementer" :key="impl" class="border-2 border-black p-5"> <!-- Tambahkan padding di sini -->
                     <div v-if="step.implementer === impl" :id="`step-${step.sequential_number}`">
                         <component :is="getShapeComponent(step.type)" class="shape-container" />
                     </div>
                 </td>
-                <td class="border-2 py-0.5 px-2 border-black">{{ step.fittings }}</td>
-                <td class="border-2 py-0.5 px-2 border-black">{{ step.time }}</td>
-                <td class="border-2 py-0.5 px-2 border-black">{{ step.output }}</td>
-                <td class="border-2 py-0.5 px-2 border-black">{{ step.description }}</td>
+                <td class="border-2 border-black py-0.5 px-2">{{ step.fittings }}</td>
+                <td class="border-2 border-black py-0.5 px-2">{{ step.time }}</td>
+                <td class="border-2 border-black py-0.5 px-2">{{ step.output }}</td>
+                <td class="border-2 border-black py-0.5 px-2">{{ step.description }}</td>
             </tr>
         </tbody>
-    </table>
+      </table>
 
-    <!-- SVG container untuk panah -->
-    <svg class="absolute top-0 left-0 w-full h-full pointer-events-none sop-container">
-        <arrow-connector v-for="connection in connections" :key="`${connection.from}-${connection.to}`"
-            :connection="connection" />
-    </svg>
-
+      <!-- Perbaiki SVG container -->
+      <svg class="absolute inset-0 w-full h-full pointer-events-none">
+        <arrow-connector
+          v-for="connection in connections" 
+          :key="`${connection.from}-${connection.to}`"
+          :connection="connection"
+          @mounted="handleArrowMounted"
+        />
+      </svg>
+    </div>
+  </div>
 </template>
+
+<style scoped>
+/* Tambahkan CSS untuk memastikan shape container terlihat */
+.shape-container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Pastikan SVG berada di atas table tapi di bawah shapes */
+svg {
+  z-index: 0;
+}
+
+.sop-container {
+  position: relative;
+  min-height: 200px; /* Sesuaikan dengan kebutuhan */
+}
+</style>
 

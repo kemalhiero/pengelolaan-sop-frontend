@@ -15,7 +15,7 @@ const sopSteps = [
     id: 1,
     id_sop: 1,
     id_next_step_if_no: null,
-    id_next_step_if_yes: 2,
+    id_next_step_if_yes: 3,
     sequential_number: 1,
     activity: 'Mengisi formulir permohonan KP',
     type: 'start-end',
@@ -28,7 +28,7 @@ const sopSteps = [
   {
     id: 2,
     id_sop: 1,
-    id_next_step_if_no: 1,
+    id_next_step_if_no: null,
     id_next_step_if_yes: 3,
     sequential_number: 2,
     activity: 'Peninjauan permohonan KP',
@@ -38,6 +38,20 @@ const sopSteps = [
     time: '1 hari',
     output: 'Disposisi',
     description: 'jajajajja'
+  },
+  {
+    id: 3,
+    id_sop: 1,
+    id_next_step_if_no: null,
+    id_next_step_if_yes: null,
+    sequential_number: 2,
+    activity: 'Pelaksanaan KP',
+    type: 'process',
+    implementer: 'Perusahaan',
+    fittings: 'Absensi',
+    time: '40 hari',
+    output: 'Absensi',
+    description: 'kape'
   },
   // ... tahapan lainnya
 ];
@@ -122,8 +136,8 @@ const sopSteps = [
                             placeholder="Ketikkan kritik atau saran Anda..."></textarea>
                     </div>
                     <button type="submit" 
-                    class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5">
-                    Submit
+                        class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5">
+                        Submit
                     </button>
                 </form>
 
@@ -133,13 +147,13 @@ const sopSteps = [
                     class="absolute inset-0 flex items-center justify-center bg-gray-700/20 rounded-xl"
                 >
                     <div class="bg-white p-6 rounded-lg shadow-lg text-center">
-                    <h3 class="text-lg font-semibold mb-4">Silakan Login</h3>
-                    <p class="text-gray-600 mb-4">Anda harus login terlebih dahulu untuk memberikan umpan balik</p>
-                    <RouterLink to="/login">
-                        <button class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-6 py-2.5">
-                            Login
-                        </button>
-                    </RouterLink>
+                        <h3 class="text-lg font-semibold mb-4">Silakan Login</h3>
+                        <p class="text-gray-600 mb-4">Anda harus login terlebih dahulu untuk memberikan umpan balik</p>
+                        <RouterLink to="/login">
+                            <button class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-6 py-2.5">
+                                Login
+                            </button>
+                        </RouterLink>
                     </div>
                 </div>
             </div>
