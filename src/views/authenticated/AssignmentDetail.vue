@@ -448,9 +448,10 @@ const syncSopStep = async () => {
 
             // Proses update data
             for (const { id, data } of changes.toUpdate) {
+                const stepIndex = sopStep.value.findIndex(step => step.id_step === id);
                 await updateSopStep(id, {
                     id_sop_detail: idsopdetail,
-                    seq_number: data.seq_number,
+                    seq_number: stepIndex + 1, // Update sequence number based on array index
                     name: data.name,
                     type: data.type,
                     id_implementer: data.id_implementer,
@@ -462,12 +463,14 @@ const syncSopStep = async () => {
                 });
             }
 
-            // Proses penambahan data baru
+            // Add new steps and store their IDs
+            const newStepIds = [];
             for (let i = 0; i < changes.toAdd.length; i++) {
                 const item = changes.toAdd[i];
-                await createSopStep({
+                const stepIndex = sopStep.value.findIndex(step => !step.id_step);
+                const response = await createSopStep({
                     id_sop_detail: idsopdetail,
-                    seq_number: i + 1, // atau gunakan item.seq_number jika sudah tersedia
+                    seq_number: stepIndex + 1,
                     name: item.name,
                     type: item.type,
                     id_implementer: item.id_implementer,
@@ -477,13 +480,36 @@ const syncSopStep = async () => {
                     output: item.output,
                     description: item.description
                 });
+                // Store new step ID
+                newStepIds.push({ tempIndex: stepIndex, newId: response.data.id_step });
             }
 
-            console.log('Hasil sinkronisasi:', {
-                ditambahkan: changes.toAdd.length,
-                diupdate: changes.toUpdate.length,
-                dihapus: changes.toDelete.length
-            });
+            // Update decision steps with correct next step IDs
+            const decisionSteps = sopStep.value.filter(step => step.type === 'decision');
+            for (const step of decisionSteps) {
+                if (!step.id_step) continue;
+
+                const nextYes = sopStep.value.find(s => s === step.id_next_step_if_yes);
+                const nextNo = sopStep.value.find(s => s === step.id_next_step_if_no);
+
+                // Get correct IDs for next steps (either existing or new)
+                const nextYesId = nextYes ? 
+                    (nextYes.id_step || newStepIds.find(n => n.tempIndex === sopStep.value.indexOf(nextYes))?.newId) : 
+                    null;
+                const nextNoId = nextNo ? 
+                    (nextNo.id_step || newStepIds.find(n => n.tempIndex === sopStep.value.indexOf(nextNo))?.newId) : 
+                    null;
+
+                // Update decision step with correct next step IDs
+                await updateSopStep(step.id_step, {
+                    ...step,
+                    id_next_step_if_yes: nextYesId,
+                    id_next_step_if_no: nextNoId
+                });
+            }
+
+            // Fetch updated steps after all changes
+            await fetchSopStep();
 
             resolve(`Berhasil menambah ${changes.toAdd.length} data baru, memperbarui ${changes.toUpdate.length} data dan menghapus ${changes.toDelete.length} data`);
         } catch (error) {

@@ -12,48 +12,75 @@ const authStore = useAuthStore();
 
 const sopSteps = [
   {
-    id: 1,
-    id_sop: 1,
+    id_step: 1,
     id_next_step_if_no: null,
     id_next_step_if_yes: null,
-    sequential_number: 1,
-    activity: 'Mengisi formulir permohonan KP',
-    type: 'start-end',
-    implementer: 'Mahasiswa',
+    seq_number: 1,
+    name: 'Mengisi formulir permohonan KP',
+    type: 'terminator',
+    id_implementer: 1,
     fittings: 'Formulir permohonan KP, transkrip nilai, proposal KP',
-    time: '5 menit',
+    time: 5,
+    time_unit: "h",
     output: 'Penyerahan kelengkapan ke pihak departemen',
     description: 'hehehe'
   },
   {
-    id: 2,
-    id_sop: 1,
+    id_step: 2,
     id_next_step_if_no: 1,
     id_next_step_if_yes: 3,
-    sequential_number: 2,
-    activity: 'Peninjauan permohonan KP',
+    seq_number: 2,
+    name: 'Peninjauan permohonan KP',
     type: 'decision',
-    implementer: 'Departemen',
+    id_implementer: 2,
     fittings: 'Formulir permohonan KP, transkrip nilai, proposal KP',
-    time: '1 hari',
+    time: 1,
+    time_unit: "h",
     output: 'Disposisi',
     description: 'jajajajja'
   },
   {
-    id: 3,
-    id_sop: 1,
+    id_step: 3,
     id_next_step_if_no: null,
     id_next_step_if_yes: null,
-    sequential_number: 3,
-    activity: 'Pelaksanaan KP',
+    seq_number: 3,
+    name: 'Pelaksanaan KP',
     type: 'process',
-    implementer: 'Perusahaan',
+    id_implementer: 3,
     fittings: 'Absensi',
-    time: '40 hari',
+    time: 40,
+    time_unit: "h",
     output: 'Absensi',
     description: 'kape'
   },
   // ... tahapan lainnya
+];
+
+const implementer = [
+        {
+        "id": 1,
+        "name": "Mahasiswa",
+        "description": "orang yang belajar di perguruan tinggi",
+        "sop_total": 3
+    },
+    {
+        "id": 2,
+        "name": "Departemen",
+        "description": "hoho",
+        "sop_total": 1
+    },
+    {
+        "id": 3,
+        "name": "Perusahaan",
+        "description": "mantap",
+        "sop_total": 1
+    },
+    {
+        "id": 7,
+        "name": "m",
+        "description": "sa",
+        "sop_total": 0
+    }
 ];
 
 </script>
@@ -93,9 +120,7 @@ const sopSteps = [
             :record-data="[
                 'Dokumen', 'Pengarsipan', 'Surat/Disposisi'
             ]"
-            :implementer="[
-                'Mahasiswa', 'Departemen', 'Perusahaan'
-            ]"
+            :implementer="implementer"
             :steps="sopSteps"
         />
 

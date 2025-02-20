@@ -4,6 +4,7 @@ import SopDocTemplate from '@/views/sop/SopDocTemplate.vue';
 
 const picInfo = inject('picData');
 const { formData } = inject('sopFormData');
+const sopStep = inject('sopStep');
 </script>
 
 <template>
@@ -14,15 +15,17 @@ const { formData } = inject('sopFormData');
                 Periksa terlebih dahulu sebelum dikirim!
             </p>
         </div>
+
+        <!-- TODO pic ganti jadi kadep -->
         <SopDocTemplate 
             :name="picInfo.name"
             :number="picInfo.number"
             :created-date="picInfo.creation_date"
             revision-date=""
             effective-date=""
+            
             :pic-name="picInfo.pic.name"
             :pic-number="picInfo.pic.number"
-            :organization="picInfo.organization"
             :section="formData.section"
             
             :law-basis="formData.legalBasis.map(item => item.legal)"
@@ -31,6 +34,8 @@ const { formData } = inject('sopFormData');
             :equipment="formData.equipment"
             :warning="formData.warning"
             :record-data="formData.record"
+            :implementer="formData.implementer"
+            :steps="sopStep"
         />
     </div>
 </template>

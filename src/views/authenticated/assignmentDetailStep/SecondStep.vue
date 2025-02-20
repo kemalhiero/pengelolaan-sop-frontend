@@ -168,7 +168,7 @@ const removeStep = (index) => {
                             :key="idx" 
                             :value="step.id_step"
                             :disabled="idx === selectedStepIndex">
-                            {{ step.name || `Tahap ${idx + 1}` }}
+                            {{ `${idx + 1}. ${step.name}` }}
                         </option>
                     </select>
                 </div>
@@ -182,7 +182,7 @@ const removeStep = (index) => {
                             :key="idx" 
                             :value="step.id_step"
                             :disabled="idx === selectedStepIndex">
-                            {{ step.name || `Tahap ${idx + 1}` }}
+                            {{ `${idx + 1}. ${step.name}` }}
                         </option>
                     </select>
                 </div>

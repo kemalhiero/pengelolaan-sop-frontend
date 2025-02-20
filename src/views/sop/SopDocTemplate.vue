@@ -80,12 +80,25 @@ const props = defineProps({
 // Fungsi untuk mendapatkan komponen shape berdasarkan tipe
 const getShapeComponent = (type) => {
     const shapeMap = {
-        'start-end': StartEnd,
+        'terminator': StartEnd,
         'process': Process,
         'decision': Decision,
         'connector': OffPageConnector
     };
     return shapeMap[type] || Process;
+};
+
+// Add this function to transform time units
+const getFullTimeUnit = (unit) => {
+  const timeUnits = {
+    'h': 'Jam',
+    'm': 'Menit',
+    'd': 'Hari',
+    'w': 'Minggu',
+    'mo': 'Bulan',
+    'y': 'Tahun'
+  };
+  return timeUnits[unit] || unit;
 };
 
 // Tambahkan reactive untuk track mounting status
@@ -105,8 +118,8 @@ const connections = computed(() => {
             // Tambahkan koneksi untuk kondisi 'Yes'
             if (step.id_next_step_if_yes) {
                 allConnections.push({
-                    from: `step-${step.sequential_number}`,
-                    to: `step-${props.steps.find(s => s.id === step.id_next_step_if_yes)?.sequential_number}`,
+                    from: `step-${step.seq_number}`,
+                    to: `step-${props.steps.find(s => s.id_step === step.id_next_step_if_yes)?.seq_number}`,
                     label: 'Ya',
                     condition: 'yes'
                 });
@@ -115,19 +128,19 @@ const connections = computed(() => {
             // Tambahkan koneksi untuk kondisi 'No'
             if (step.id_next_step_if_no) {
                 allConnections.push({
-                    from: `step-${step.sequential_number}`,
-                    to: `step-${props.steps.find(s => s.id === step.id_next_step_if_no)?.sequential_number}`,
+                    from: `step-${step.seq_number}`,
+                    to: `step-${props.steps.find(s => s.id_step === step.id_next_step_if_no)?.seq_number}`,
                     label: 'Tidak',
                     condition: 'no'
                 });
             }
         } else {
             // Untuk step non-decision, gunakan sequential berikutnya
-            const nextStep = props.steps.find(s => s.sequential_number === step.sequential_number + 1);
+            const nextStep = props.steps.find(s => s.seq_number === step.seq_number + 1);
             if (nextStep) {
                 allConnections.push({
-                    from: `step-${step.sequential_number}`,
-                    to: `step-${nextStep.sequential_number}`
+                    from: `step-${step.seq_number}`,
+                    to: `step-${nextStep.seq_number}`
                 });
             }
         }
@@ -289,22 +302,29 @@ const connections = computed(() => {
                 <th rowspan="2" class="border-2 py-0.5 px-2 border-black">KET</th>
             </tr>
             <tr class="bg-[#D9D9D9]">
-                <th v-for="impl in props.implementer" class="border-2 py-0.5 px-2 border-black">{{ impl.toUpperCase() }}</th>
+                <th v-for="impl in props.implementer" 
+                    :key="impl.id" 
+                    class="border-2 py-0.5 px-2 border-black">
+                    {{ impl.name.toUpperCase() }}
+                </th>
                 <th class="border-2 py-0.5 px-2 border-black">KELENGKAPAN</th>
                 <th class="border-2 py-0.5 px-2 border-black">WAKTU</th>
                 <th class="border-2 py-0.5 px-2 border-black">OUTPUT</th>
             </tr>
 
-            <tr v-for="step in steps" :key="step.id"> 
-                <td class="border-2 border-black py-0.5 px-2">{{ step.sequential_number }}</td>
-                <td class="border-2 border-black py-0.5 px-2">{{ step.activity }}</td>
-                <td v-for="impl in props.implementer" :key="impl" class="border-2 border-black p-5"> <!-- Tambahkan padding di sini -->
-                    <div v-if="step.implementer === impl" :id="`step-${step.sequential_number}`">
-                        <component :is="getShapeComponent(step.type)" class="relative z-10 flex justify-center items-center" />
+            <tr v-for="step in steps" :key="step.id_step"> 
+                <td class="border-2 border-black py-0.5 px-2">{{ step.seq_number }}</td>
+                <td class="border-2 border-black py-0.5 px-2">{{ step.name }}</td>
+                <td v-for="impl in props.implementer" 
+                    :key="impl.id" 
+                    class="border-2 border-black p-0 text-center align-middle">
+                    <div v-if="step.id_implementer === impl.id" class="flex justify-center items-center p-5">
+                        <component :is="getShapeComponent(step.type)" :id="`step-${step.seq_number}`"
+                                  class="relative z-10" />
                     </div>
                 </td>
                 <td class="border-2 border-black py-0.5 px-2">{{ step.fittings }}</td>
-                <td class="border-2 border-black py-0.5 px-2">{{ step.time }}</td>
+                <td class="border-2 border-black py-0.5 px-2">{{ `${step.time} ${getFullTimeUnit(step.time_unit)}` }}</td>
                 <td class="border-2 border-black py-0.5 px-2">{{ step.output }}</td>
                 <td class="border-2 border-black py-0.5 px-2">{{ step.description }}</td>
             </tr>
