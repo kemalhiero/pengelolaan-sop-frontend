@@ -439,7 +439,7 @@ const compareSteps = (responseSteps, currentSteps) => {
 const syncSopStep = async () => {
     const syncPromise = new Promise(async (resolve, reject) => {
         try {
-            const changes = compareSteps(apiResponseStep, sopStep.value);     // membandingkan antara data dari api dengan data sekarang yang (kemungkinan) sudah diubah oleh user
+            const changes = compareSteps(apiResponseStep, sopStep.value);
 
             // Proses penghapusan data
             for (const id of changes.toDelete) {
@@ -448,10 +448,16 @@ const syncSopStep = async () => {
 
             // Proses update data
             for (const { id, data } of changes.toUpdate) {
+                console.log('Data being sent to update:', {
+                    id_next_step_if_yes: data.id_next_step_if_yes,
+                    id_next_step_if_no: data.id_next_step_if_no,
+                    type: data.type
+                });
+                
                 const stepIndex = sopStep.value.findIndex(step => step.id_step === id);
-                await updateSopStep(id, {
+                const updateData = {
                     id_sop_detail: idsopdetail,
-                    seq_number: stepIndex + 1, // Update sequence number based on array index
+                    seq_number: stepIndex + 1,
                     name: data.name,
                     type: data.type,
                     id_implementer: data.id_implementer,
@@ -460,15 +466,23 @@ const syncSopStep = async () => {
                     time_unit: data.time_unit,
                     output: data.output,
                     description: data.description
-                });
+                };
+
+                // Only add next step IDs if type is decision
+                if (data.type === 'decision') {
+                    updateData.id_next_step_if_yes = data.id_next_step_if_yes;
+                    updateData.id_next_step_if_no = data.id_next_step_if_no;
+                }
+
+                await updateSopStep(id, updateData);
             }
 
-            // Add new steps and store their IDs
-            const newStepIds = [];
+            // Add new steps
             for (let i = 0; i < changes.toAdd.length; i++) {
                 const item = changes.toAdd[i];
                 const stepIndex = sopStep.value.findIndex(step => !step.id_step);
-                const response = await createSopStep({
+                
+                const createData = {
                     id_sop_detail: idsopdetail,
                     seq_number: stepIndex + 1,
                     name: item.name,
@@ -479,33 +493,16 @@ const syncSopStep = async () => {
                     time_unit: item.time_unit,
                     output: item.output,
                     description: item.description
-                });
-                // Store new step ID
-                newStepIds.push({ tempIndex: stepIndex, newId: response.data.id_step });
-            }
+                };
 
-            // Update decision steps with correct next step IDs
-            const decisionSteps = sopStep.value.filter(step => step.type === 'decision');
-            for (const step of decisionSteps) {
-                if (!step.id_step) continue;
+                // Only add next step IDs if type is decision
+                if (item.type === 'decision') {
+                    createData.id_next_step_if_yes = item.id_next_step_if_yes;
+                    createData.id_next_step_if_no = item.id_next_step_if_no;
+                }
 
-                const nextYes = sopStep.value.find(s => s === step.id_next_step_if_yes);
-                const nextNo = sopStep.value.find(s => s === step.id_next_step_if_no);
-
-                // Get correct IDs for next steps (either existing or new)
-                const nextYesId = nextYes ? 
-                    (nextYes.id_step || newStepIds.find(n => n.tempIndex === sopStep.value.indexOf(nextYes))?.newId) : 
-                    null;
-                const nextNoId = nextNo ? 
-                    (nextNo.id_step || newStepIds.find(n => n.tempIndex === sopStep.value.indexOf(nextNo))?.newId) : 
-                    null;
-
-                // Update decision step with correct next step IDs
-                await updateSopStep(step.id_step, {
-                    ...step,
-                    id_next_step_if_yes: nextYesId,
-                    id_next_step_if_no: nextNoId
-                });
+                const response = await createSopStep(createData);
+                console.log('New step created:', response.data);
             }
 
             // Fetch updated steps after all changes
@@ -547,13 +544,27 @@ const syncSopStep = async () => {
     });
 };
 
+// Tambahkan fungsi validasi
+const validateLastStep = () => {
+    if (!sopStep.value.length) return true;
+    const lastStep = sopStep.value[sopStep.value.length - 1];
+    return lastStep.type === 'terminator';
+};
+
+// Modifikasi fungsi syncData
 const syncData = () => {
     switch (currentStep.value) {
         case 1:
             syncSopInfo();
             break;
         case 2:
-            // console.log(sopStep.value);
+            if (!validateLastStep()) {
+                toast.warning('Tahap terakhir harus bertipe End. Silakan ubah tipe tahap terakhir.', {
+                    autoClose: 7000,
+                    position: toast.POSITION.TOP_RIGHT
+                });
+                return;
+            }
             syncSopStep();
             break;
         default:
@@ -564,16 +575,21 @@ const syncData = () => {
 // Fungsi untuk ke langkah berikutnya
 const nextStep = () => {
     if (currentStep.value === 1) {
-        // Pastikan firstStepRef.value tidak null sebelum memanggil method
         if (firstStepRef.value && firstStepRef.value.validateFields) {
             const isValid = firstStepRef.value.validateFields();
-
             if (isValid) {
                 currentStep.value++;
             }
-        } else {
-            console.error('Referensi komponen tidak ditemukan');
         }
+    } else if (currentStep.value === 2) {
+        if (!validateLastStep()) {
+            toast.warning('Tahap terakhir harus bertipe End. Silakan ubah tipe tahap terakhir.', {
+                autoClose: 7000,
+                position: toast.POSITION.TOP_RIGHT
+            });
+            return;
+        }
+        currentStep.value++;
     } else if (currentStep.value < 3) {
         currentStep.value++;
     }

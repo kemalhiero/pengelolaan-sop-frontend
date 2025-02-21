@@ -1,5 +1,5 @@
 <script setup>
-import { inject, ref } from 'vue';
+import { inject, ref, watch } from 'vue';
 import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import GearIcon from '@/assets/icons/GearIcon.vue';
@@ -57,6 +57,17 @@ const removeStep = (index) => {
     sopStep.value.splice(index, 1)
 };
 
+// Watch for changes in step type
+watch(() => sopStep.value.map(step => step.type), (newTypes) => {
+    sopStep.value.forEach((step, index) => {
+        if (step.type !== 'decision') {
+            // Reset next step IDs if type is not decision
+            step.id_next_step_if_yes = null;
+            step.id_next_step_if_no = null;
+        }
+    });
+}, { deep: true });
+
 </script>
 
 <template>
@@ -93,9 +104,27 @@ const removeStep = (index) => {
                                 <template v-else>
                                     <option value="task">Task</option>
                                     <option value="decision">Decision</option>                                    
-                                    <option value="terminator">End</option>
+                                    <option v-if="index === sopStep.length - 1" value="terminator">End</option>
                                 </template>
                             </select>
+                            <!-- Tambahkan div untuk ringkasan cabang -->
+                            <div v-if="step.type === 'decision'" class="mt-2 text-xs text-gray-500">
+                                <template v-if="step.id_next_step_if_yes || step.id_next_step_if_no">
+                                    <div class="space-y-1">
+                                        <div v-if="step.id_next_step_if_yes" class="flex items-center">
+                                            <span class="text-green-600 mr-1">✓</span>
+                                            Benar → Tahap {{ sopStep.findIndex(s => s.id_step === step.id_next_step_if_yes) + 1 }}
+                                        </div>
+                                        <div v-if="step.id_next_step_if_no" class="flex items-center">
+                                            <span class="text-red-600 mr-1">✗</span>
+                                            Salah → Tahap {{ sopStep.findIndex(s => s.id_step === step.id_next_step_if_no) + 1 }}
+                                        </div>
+                                    </div>
+                                </template>
+                                <template v-else>
+                                    <span class="italic">Belum diatur</span>
+                                </template>
+                            </div>
                         </td>
                         <td class="px-2 py-3">
                             <select v-model="step.id_implementer" class="w-full p-2 border border-gray-300 rounded-md">
@@ -157,11 +186,11 @@ const removeStep = (index) => {
             class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
             @click="showBranchModal = false">
             <div class="bg-white p-6 rounded-lg w-96" @click.stop>
-                <h3 class="text-lg font-semibold mb-4">Atur Cabang Keputusan</h3>
-                
+                <h3 class="text-lg font-semibold mb-4">Atur Cabang Keputusan - Tahap {{ selectedStepIndex+1 }}</h3>
+
                 <div class="mb-4">
-                    <label class="block mb-2">Tahap Jika Benar:</label>
-                    <select v-model="tempBranchConfig.id_next_step_if_yes" 
+                    <label class="block mb-2">❌Tahap Jika Salah:</label>
+                    <select v-model="tempBranchConfig.id_next_step_if_no" 
                         class="w-full p-2 border border-gray-300 rounded-md">
                         <option value="">Pilih tahap</option>
                         <option v-for="(step, idx) in sopStep" 
@@ -172,10 +201,10 @@ const removeStep = (index) => {
                         </option>
                     </select>
                 </div>
-
+                
                 <div class="mb-4">
-                    <label class="block mb-2">Tahap Jika Salah:</label>
-                    <select v-model="tempBranchConfig.id_next_step_if_no" 
+                    <label class="block mb-2">✅Tahap Jika Benar:</label>
+                    <select v-model="tempBranchConfig.id_next_step_if_yes" 
                         class="w-full p-2 border border-gray-300 rounded-md">
                         <option value="">Pilih tahap</option>
                         <option v-for="(step, idx) in sopStep" 
