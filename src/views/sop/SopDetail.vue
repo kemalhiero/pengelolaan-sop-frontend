@@ -1,9 +1,12 @@
 <script setup>
 import { inject } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+
 import SopDocTemplate from './SopDocTemplate.vue';
 import IconDownload from '@/assets/icons/DownloadIcon.vue';
-import PrintIcon from '@/assets/icons/PrintIcon.vue';
-import { useAuthStore } from '@/stores/auth';
+// import PrintIcon from '@/assets/icons/PrintIcon.vue';
+import SopBpmnTemplate from './SopBpmnTemplate.vue';
+import Divider from '@/components/Divider.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';
@@ -57,7 +60,7 @@ const sopSteps = [
 ];
 
 const implementer = [
-        {
+    {
         "id": 1,
         "name": "Mahasiswa",
         "description": "orang yang belajar di perguruan tinggi",
@@ -74,12 +77,6 @@ const implementer = [
         "name": "Perusahaan",
         "description": "mantap",
         "sop_total": 1
-    },
-    {
-        "id": 7,
-        "name": "m",
-        "description": "sa",
-        "sop_total": 0
     }
 ];
 
@@ -124,20 +121,26 @@ const implementer = [
             :steps="sopSteps"
         />
 
+        <Divider/>
+
+        <h2 class="text-4xl text-center my-12 font-bold">BPMN Pendaftaran Kerja Praktik</h2>
+
+        <SopBpmnTemplate :steps="sopSteps" :implementer="implementer" />
+
         <div class="flex flex-col lg:flex-row max-w-screen-lg mx-auto my-10 space-y-6 lg:space-y-0 lg:space-x-8">
             <!-- Bagian Kiri: Tombol -->
             <div class="w-full lg:w-1/3 p-6 flex flex-col space-y-4">
-            <h2 class="text-lg font-semibold mb-4">Simpan SOP</h2>
-            <button
-                class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-base py-3 px-6 flex items-center justify-center">
-                <IconDownload class="w-5 mr-3 fill-current" />
-                Unduh SOP
-            </button>
-            <button
-                class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-base py-3 px-6 flex items-center justify-center">
-                <PrintIcon class="w-5 mr-3 fill-current" />
-                Cetak SOP
-            </button>
+                <h2 class="text-lg font-semibold mb-4">Simpan Dokumen</h2>
+                <button
+                    class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-base py-3 px-6 flex items-center justify-center">
+                    <IconDownload class="w-5 mr-3 fill-current" />
+                    Unduh SOP
+                </button>
+                <button
+                    class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-base py-3 px-6 flex items-center justify-center">
+                    <IconDownload class="w-5 mr-3 fill-current" />
+                    Unduh BPMN
+                </button>
             </div>
 
             <!-- Garis Pemisah -->

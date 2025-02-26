@@ -291,9 +291,9 @@ const connections = computed(() => {
     </table>
 
     <!-- Tabel Kedua -->
-    <div class="relative w-11/12 mx-auto mb-10 min-h-[200px]" id="sop-container">
-      <table class="w-full border-collapse border-2 border-black">
-        <tbody>
+    <div class="relative w-11/12 mx-auto mb-10 min-h-[200px]">
+      <table class="w-full border-collapse border-2 border-black" id="sop-container">
+        <thead>
             <tr class="bg-[#D9D9D9]">
                 <th rowspan="2" class="border-2 py-0.5 px-2 border-black">NO</th>
                 <th rowspan="2" class="border-2 py-0.5 px-2 border-black">KEGIATAN</th>
@@ -311,7 +311,8 @@ const connections = computed(() => {
                 <th class="border-2 py-0.5 px-2 border-black">WAKTU</th>
                 <th class="border-2 py-0.5 px-2 border-black">OUTPUT</th>
             </tr>
-
+        </thead>
+        <tbody>
             <tr v-for="step in steps" :key="step.id_step"> 
                 <td class="border-2 border-black py-0.5 px-2">{{ step.seq_number }}</td>
                 <td class="border-2 border-black py-0.5 px-2">{{ step.name }}</td>
@@ -319,8 +320,7 @@ const connections = computed(() => {
                     :key="impl.id" 
                     class="border-2 border-black p-0 text-center align-middle">
                     <div v-if="step.id_implementer === impl.id" class="flex justify-center items-center p-5">
-                        <component :is="getShapeComponent(step.type)" :id="`step-${step.seq_number}`"
-                                  class="relative z-10" />
+                        <component :is="getShapeComponent(step.type)" :id="`step-${step.seq_number}`" class="relative z-10" />
                     </div>
                 </td>
                 <td class="border-2 border-black py-0.5 px-2">{{ step.fittings }}</td>
@@ -331,10 +331,11 @@ const connections = computed(() => {
         </tbody>
       </table>
 
-      <!-- Perbaiki SVG container -->
+      <!-- Panah -->
       <svg class="absolute inset-0 w-full h-full pointer-events-none z-0">
         <arrow-connector
-          v-for="connection in connections" 
+          v-for="(connection, index) in connections" 
+          :idarrow="index"
           :key="`${connection.from}-${connection.to}`"
           :connection="connection"
           @mounted="handleArrowMounted"

@@ -1,10 +1,13 @@
-<!-- ArrowConnector.vue -->
 <script setup>
 import { onMounted, ref, nextTick, watch } from 'vue';
 
 const props = defineProps({
   connection: {
     type: Object,
+    required: true
+  },
+  idarrow: {
+    type: Number,
     required: true
   }
 });
@@ -43,7 +46,7 @@ const getElementPosition = (elementId) => {
 const calculatePath = async () => {
   await nextTick();
   
-  setTimeout(() => {
+  requestAnimationFrame(() => {
     const fromPos = getElementPosition(props.connection.from);
     const toPos = getElementPosition(props.connection.to);
 
@@ -137,7 +140,7 @@ const calculatePath = async () => {
 
     pathData.value = path;
     emit('mounted');
-  }, 100);
+  });
 };
 
 onMounted(() => {
@@ -155,7 +158,7 @@ watch(() => props.connection, () => {
     <!-- Definisi marker panah -->
     <defs>
       <marker
-        id="arrowhead"
+        :id="`arrowhead-${idarrow}`"
         markerWidth="10"
         markerHeight="8"
         refX="7"
@@ -172,7 +175,7 @@ watch(() => props.connection, () => {
       fill="none"
       stroke="black"
       stroke-width="2"
-      marker-end="url(#arrowhead)"
+      :marker-end="`url(#arrowhead-${idarrow})`"
     />
 
     <!-- Label -->

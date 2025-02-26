@@ -70,12 +70,6 @@ const implementer = [
         "name": "Perusahaan",
         "description": "mantap",
         "sop_total": 1
-    },
-    {
-        "id": 7,
-        "name": "m",
-        "description": "sa",
-        "sop_total": 0
     }
 ];
 
