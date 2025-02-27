@@ -1,12 +1,12 @@
 <script setup>
 import { computed, ref } from 'vue';
 
-import StartEnd from '@/assets/flowchart/StartEnd.vue';
-import Process from '@/assets/flowchart/Process.vue';
-import Decision from '@/assets/flowchart/Decision.vue';
-import OffPageConnector from '@/assets/flowchart/OffPageConnector.vue';
+import Process from '@/components/diagram/flowchart/Process.vue';
+import StartEnd from '@/components/diagram/flowchart/StartEnd.vue';
+import Decision from '@/components/diagram/flowchart/Decision.vue';
+import OffPageConnector from '@/components/diagram/flowchart/OffPageConnector.vue';
 
-import ArrowConnector from '@/assets/flowchart/ArrowConnector.vue';
+import ArrowConnector from '@/components/diagram/flowchart/ArrowConnector.vue';
 
 const props = defineProps({
     // sop info

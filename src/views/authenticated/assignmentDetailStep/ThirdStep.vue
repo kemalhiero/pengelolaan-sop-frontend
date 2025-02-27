@@ -1,6 +1,8 @@
 <script setup>
 import { inject } from 'vue';
 import SopDocTemplate from '@/views/sop/SopDocTemplate.vue';
+import SopBpmnTemplate from '@/views/sop/SopBpmnTemplate.vue';
+import Divider from '@/components/Divider.vue';
 
 const picInfo = inject('picData');
 const { formData } = inject('sopFormData');
@@ -36,6 +38,14 @@ const sopStep = inject('sopStep');
             :record-data="formData.record"
             :implementer="formData.implementer"
             :steps="sopStep"
+        />
+
+        <Divider/>
+
+        <SopBpmnTemplate 
+            :name="picInfo.name"
+            :steps="sopStep" 
+            :implementer="formData.implementer" 
         />
     </div>
 </template>

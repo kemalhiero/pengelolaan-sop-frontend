@@ -41,11 +41,6 @@ const router = createRouter({
       name: 'DetailSop',
       component: () => import('@/views/sop/SopDetail.vue')
     },
-    {
-      path: '/sop/download',
-      name: 'DownloadSop',
-      component: () => import('@/views/sop/SopDownload.vue')
-    },
 
     // Authenticated
     {

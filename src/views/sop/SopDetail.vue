@@ -48,7 +48,7 @@ const sopSteps = [
     id_next_step_if_yes: null,
     seq_number: 3,
     name: 'Pelaksanaan KP',
-    type: 'process',
+    type: 'task',
     id_implementer: 3,
     fittings: 'Absensi',
     time: 40,
@@ -125,7 +125,11 @@ const implementer = [
 
         <h2 class="text-4xl text-center my-12 font-bold">BPMN Pendaftaran Kerja Praktik</h2>
 
-        <SopBpmnTemplate :steps="sopSteps" :implementer="implementer" />
+        <SopBpmnTemplate 
+            name="Prosedur pendaftaran kerja praktik" 
+            :steps="sopSteps" 
+            :implementer="implementer" 
+        />
 
         <div class="flex flex-col lg:flex-row max-w-screen-lg mx-auto my-10 space-y-6 lg:space-y-0 lg:space-x-8">
             <!-- Bagian Kiri: Tombol -->

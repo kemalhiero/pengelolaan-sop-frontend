@@ -1,126 +1,128 @@
 <script setup>
-import { computed } from 'vue';
+import { onMounted, ref, computed } from 'vue';
+import BpmnLaneRow from '@/components/diagram/bpmn/BpmnLaneRow.vue';
+
+import capitalizeWords from '@/utils/capitalizeWord';
 
 const props = defineProps({
-  steps: { type: Array, required: true },
-  implementer: { type: Array, required: true },
+  name: {
+    type: String,
+    required: true
+  },
+  steps: {
+    type: Array,
+    required: true
+  },
+  implementer: {
+    type: Array,
+    required: true
+  }
 });
 
-// Mengelompokkan steps sesuai implementer
-const lanes = computed(() => {
-  return props.implementer.map((impl, laneIndex) => {
-    const laneSteps = props.steps
-      .filter(s => s.id_implementer === impl.id)
-      .sort((a, b) => a.seq_number - b.seq_number);
-    return {
-      ...impl,
-      laneIndex,
-      steps: laneSteps,
-    };
+const svgRefs = ref([]);
+const laneLayouts = ref([]);
+
+// Group steps by implementer
+const stepsByImplementer = computed(() => {
+  const result = {};
+  props.implementer.forEach(imp => {
+    result[imp.id] = props.steps.filter(step => step.id_implementer === imp.id);
+  });
+  return result;
+});
+
+onMounted(() => {
+  props.implementer.forEach((imp, index) => {
+    if (stepsByImplementer.value[imp.id] && stepsByImplementer.value[imp.id].length > 0) {
+      calculateLayout(imp.id, index);
+    }
   });
 });
 
-// Konstanta pengaturan layout BPMN
-const laneHeight = 120;
-const totalWidth = 1000;
-const stepSpacing = 150; // jarak horizontal antar shape
-const stepY = laneHeight / 2; // posisi vertikal (tengah lane)
+const calculateLayout = (impId, index) => {
+  const steps = stepsByImplementer.value[impId];
+  const layout = {
+    impId,
+    steps: [],
+    connections: []
+  };
+  
+  const height = 120;
+  const shapeWidth = 120;
+  const shapeHeight = 60;
+  const spacing = 80;
+  
+  let currentX = 80;
+  const currentY = height / 2;
+  
+  steps.forEach((step, i) => {
+    // Store step layout info
+    layout.steps.push({
+      id: step.id_step,
+      type: step.type,
+      x: currentX,
+      y: currentY,
+      width: shapeWidth,
+      height: shapeHeight,
+      name: step.name,
+      seq: step.seq_number
+    });
+    
+    // Store connection info
+    if (i > 0) {
+      const prevX = currentX - spacing - shapeWidth / 2;
+      layout.connections.push({
+        startX: prevX + shapeWidth,
+        startY: currentY,
+        endX: currentX - shapeWidth / 2,
+        endY: currentY
+      });
+    }
+    
+    currentX += spacing + shapeWidth;
+  });
+  
+  laneLayouts.value[index] = layout;
+};
 
-function computeDiamondPoints(cx, cy, size) {
-  // Menghasilkan titik untuk shape diamond (belah ketupat)
-  const top = `${cx},${cy - size}`;
-  const right = `${cx + size},${cy}`;
-  const bottom = `${cx},${cy + size}`;
-  const left = `${cx - size},${cy}`;
-  return [top, right, bottom, left].join(" ");
-}
+const setSvgRef = (el, index) => {
+  if (el) svgRefs.value[index] = el;
+};
 </script>
 
 <template>
-  <div class="overflow-auto border border-gray-300 p-2.5 w-11/12 mx-auto my-8 border-collapse">
-    <svg :width="totalWidth" :height="lanes.length * laneHeight + 50">
-      <defs>
-        <marker
-          id="arrow"
-          markerWidth="10"
-          markerHeight="10"
-          refX="10"
-          refY="3"
-          orient="auto"
-          markerUnits="strokeWidth"
-        >
-          <path d="M0,0 L0,6 L9,3 z" class="fill-black" />
-        </marker>
-      </defs>
-      <!-- Render tiap lane (aktor) -->
-      <g v-for="lane in lanes" :key="lane.id" :transform="`translate(0, ${lane.laneIndex * laneHeight})`">
-        <!-- Latar belakang lane -->
-        <rect x="0" y="0" :width="totalWidth" :height="laneHeight" class="fill-gray-50 stroke-gray-300" />
-        <!-- Label lane: nama implementer -->
-        <text x="10" y="20" class="text-base font-bold">{{ lane.name }}</text>
-        <!-- Render shape tiap step di lane -->
-        <g v-for="(step, index) in lane.steps" :key="step.id_step">
-          <template v-if="step.type === 'terminator'">
-            <!-- Terminator: lingkaran dengan tulisan 'mulai' -->
-            <circle :cx="50 + index * stepSpacing" :cy="stepY" r="20" class="fill-green-100 stroke-black" />
-            <text :x="50 + index * stepSpacing" :y="stepY" class="text-xs text-center" text-anchor="middle" alignment-baseline="middle">
-              mulai
-            </text>
-          </template>
-          <template v-else-if="step.type === 'process'">
-            <!-- Task: segi empat dengan nama tahapan -->
-            <rect :x="30 + index * stepSpacing" :y="stepY - 20" width="60" height="40" class="fill-blue-100 stroke-black" />
-            <text
-              :x="30 + index * stepSpacing + 30"
-              :y="stepY"
-              class="text-xs text-center"
-              text-anchor="middle"
-              alignment-baseline="middle"
-            >
-              {{ step.name }}
-            </text>
-          </template>
-          <template v-else-if="step.type === 'decision'">
-            <!-- Decision: belah ketupat dengan tulisan 'aktivitas' -->
-            <polygon
-              :points="computeDiamondPoints(50 + index * stepSpacing, stepY, 20)"
-              class="fill-red-100 stroke-black"
-            />
-            <text :x="50 + index * stepSpacing" :y="stepY" class="text-xs text-center" text-anchor="middle" alignment-baseline="middle">
-              aktivitas
-            </text>
-          </template>
-        </g>
-        <!-- Tambahkan shape 'selesai' di akhir lane -->
-        <g v-if="lane.steps.length">
-          <circle :cx="50 + lane.steps.length * stepSpacing" :cy="stepY" r="20" class="fill-yellow-100 stroke-black" />
-          <text :x="50 + lane.steps.length * stepSpacing" :y="stepY" class="text-xs text-center" text-anchor="middle" alignment-baseline="middle">
-            selesai
-          </text>
-        </g>
-        <!-- Gambar panah antar shape -->
-        <g>
-          <line
-            v-for="(step, index) in lane.steps"
-            v-if="index < lane.steps.length - 1"
-            :x1="50 + index * stepSpacing"
-            :y1="stepY"
-            :x2="50 + (index + 1) * stepSpacing - 30"
-            :y2="stepY"
-            class="stroke-black stroke-2"
-            marker-end="url(#arrow)"
+  <div class="bg-white w-11/12 mx-auto mt-8 mb-24">
+    <table class="w-full border-2 border-black">
+      <tbody>
+        <!-- First row with title -->
+        <tr>
+          <td v-if="props.name" class="border-2 border-black w-10" :rowspan="implementer.length">
+            <div class="flex justify-center w-10">
+              <p class="-rotate-90 origin-center whitespace-nowrap font-bold text-lg">
+                {{ capitalizeWords(props.name) }}
+              </p>
+            </div>
+          </td>
+          
+          <!-- First implementer row -->
+          <BpmnLaneRow
+            :implementer="implementer[0]"
+            :layout="laneLayouts[0]"
+            :svg-ref="setSvgRef"
+            :index="0"
           />
-          <line
-            v-if="lane.steps.length"
-            :x1="50 + (lane.steps.length - 1) * stepSpacing"
-            :y1="stepY"
-            :x2="50 + lane.steps.length * stepSpacing - 20"
-            :y2="stepY"
-            class="stroke-black stroke-2"
-            marker-end="url(#arrow)"
+        </tr>
+
+        <!-- Remaining rows (starting from index 1) -->
+        <tr v-for="(imp, index) in implementer.slice(1)" :key="imp.id">
+          <BpmnLaneRow
+            :implementer="imp"
+            :layout="laneLayouts[index + 1]"
+            :svg-ref="setSvgRef"
+            :index="index + 1"
           />
-        </g>
-      </g>
-    </svg>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
