@@ -23,7 +23,7 @@ defineProps({
 
 <template>
     <g>
-        <circle :cx="x" :cy="y" r="30" fill="white" stroke="#000" />
+        <circle :cx="x" :cy="y" r="40" fill="white" stroke="#000" />
         <text :x="x" :y="y" text-anchor="middle" dominant-baseline="middle">{{ text }}</text>
     </g>
 </template>

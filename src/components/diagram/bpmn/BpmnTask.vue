@@ -47,8 +47,12 @@ processText();
 <template>
     <g>
         <rect :x="x - width / 2" :y="y - height / 2" :width="width" :height="height" fill="white" stroke="#000" />
-        <text :x="x" :y="y" text-anchor="middle" dominant-baseline="middle" font-size="12">
-            <tspan v-for="(line, index) in textLines" :key="index" :x="x" :dy="index === 0 ? '-10' : '15'">
+        <text :x="x" :y="y" text-anchor="middle" font-size="13">
+            <tspan 
+                v-for="(line, index) in textLines" 
+                :key="index" 
+                :x="x" 
+                :dy="index === 0 ? (-(textLines.length - 1) * 7.5) : 15">
                 {{ line }}
             </tspan>
         </text>

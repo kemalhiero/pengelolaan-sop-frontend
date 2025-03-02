@@ -51,6 +51,7 @@ const calculateLayout = (impId, index) => {
   const shapeWidth = 120;
   const shapeHeight = 60;
   const spacing = 80;
+  const terminatorRadius = 40; // Radius lingkaran terminator
   
   let currentX = 80;
   const currentY = height / 2;
@@ -70,11 +71,40 @@ const calculateLayout = (impId, index) => {
     
     // Store connection info
     if (i > 0) {
-      const prevX = currentX - spacing - shapeWidth / 2;
+      const prevStep = layout.steps[i - 1]; // Ambil langkah sebelumnya
+      
+      // Tentukan titik awal dan akhir panah berdasarkan tipe shape
+      let startX, endX;
+      
+      // Titik awal panah (dari shape sebelumnya)
+      if (prevStep.type === 'terminator') {
+        // Untuk terminator (lingkaran), gunakan titik di tepi lingkaran 
+        // (terminatorRadius adalah jari-jari lingkaran)
+        startX = prevStep.x + terminatorRadius;
+      } else if (prevStep.type === 'decision') {
+        // Untuk decision (diamond), sesuaikan dengan bentuk diamond
+        startX = prevStep.x + 60; // Lebar setengah dari diamond
+      } else {
+        // Untuk shape lain (kotak), gunakan sisi kanan
+        startX = prevStep.x + (shapeWidth / 2);
+      }
+      
+      // Titik akhir panah (ke shape saat ini)
+      if (step.type === 'terminator') {
+        // Untuk terminator (lingkaran), gunakan titik di tepi lingkaran
+        endX = currentX - terminatorRadius;
+      } else if (step.type === 'decision') {
+        // Untuk decision (diamond), sesuaikan dengan bentuk diamond
+        endX = currentX - 60; // Lebar setengah dari diamond
+      } else {
+        // Untuk shape lain (kotak), gunakan sisi kiri
+        endX = currentX - (shapeWidth / 2);
+      }
+      
       layout.connections.push({
-        startX: prevX + shapeWidth,
+        startX: startX,
         startY: currentY,
-        endX: currentX - shapeWidth / 2,
+        endX: endX,
         endY: currentY
       });
     }
