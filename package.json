@@ -9,11 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vue-flow/core": "^1.42.1",
     "apexcharts": "^3.53.0",
     "bpmn-js": "^18.3.1",
     "flowbite": "^2.5.1",
     "jwt-decode": "^4.0.0",
-    "mermaid": "^11.2.1",
     "nanoid": "^5.1.0",
     "pinia": "^2.1.7",
     "vue": "^3.5.12",
