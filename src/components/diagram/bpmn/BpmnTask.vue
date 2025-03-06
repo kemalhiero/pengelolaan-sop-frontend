@@ -46,7 +46,7 @@ processText();
 
 <template>
     <g>
-        <rect :x="x - width / 2" :y="y - height / 2" :width="width" :height="height" fill="white" stroke="#000" />
+        <rect :x="x - width / 2" :y="y - height / 2" :width="width" :height="height" fill="white" stroke="#000" stroke-width="2" />
         <text :x="x" :y="y" text-anchor="middle" font-size="13">
             <tspan 
                 v-for="(line, index) in textLines" 

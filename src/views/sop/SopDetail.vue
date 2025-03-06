@@ -4,7 +4,6 @@ import { useAuthStore } from '@/stores/auth';
 
 import SopDocTemplate from './SopDocTemplate.vue';
 import IconDownload from '@/assets/icons/DownloadIcon.vue';
-// import PrintIcon from '@/assets/icons/PrintIcon.vue';
 import SopBpmnTemplate from './SopBpmnTemplate.vue';
 import Divider from '@/components/Divider.vue';
 

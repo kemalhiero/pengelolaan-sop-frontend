@@ -14,7 +14,7 @@ const diamondPath = computed(() => {
 
 <template>
     <g>
-        <path :d="diamondPath" fill="white" stroke="#000" />
+        <path :d="diamondPath" fill="white" stroke="#000" stroke-width="2" />
         <text :x="x" :y="y" text-anchor="middle" dominant-baseline="middle" font-size="12">
             {{ name }}
         </text>

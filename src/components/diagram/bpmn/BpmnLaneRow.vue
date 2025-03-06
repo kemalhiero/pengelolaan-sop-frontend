@@ -36,7 +36,7 @@ defineProps({
       <svg :ref="el => svgRef(el, index)" class="w-full h-full">
         <!-- Arrow marker definition -->
         <defs>
-          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+          <marker id="arrowhead-bpmn" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" fill="#000" />
           </marker>
         </defs>
@@ -50,7 +50,7 @@ defineProps({
             stroke="#000"
             stroke-width="2"
             fill="none"
-            marker-end="url(#arrowhead)"
+            marker-end="url(#arrowhead-bpmn)"
           />
         </template>
         
