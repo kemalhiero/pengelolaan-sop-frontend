@@ -85,11 +85,10 @@ const calculateGlobalLayout = () => {
   const sortedSteps = [...props.steps].sort((a, b) => a.seq_number - b.seq_number);
 
   // Konfigurasi diagram
-  const baseX = 120; // Increase base X for better visibility
+  const baseX = 80; // jarak x/horizontal untuk memulai shape tahapan bpmn-nya
   const shapeWidth = 120;
   const shapeHeight = 60;
-  const spacing = 100; // Increase spacing
-  const terminatorRadius = 40;
+  const spacing = 50; // sesuaikan jaraknya dengan banyak tahapan, makin banyak tahapan makin kecil jaraknya
   const rowHeight = 120;
   const rowSpacing = 100;
   const laneY = rowHeight + rowSpacing;
