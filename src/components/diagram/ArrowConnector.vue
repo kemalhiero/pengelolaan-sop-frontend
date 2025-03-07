@@ -9,6 +9,10 @@ const props = defineProps({
   idarrow: {
     type: Number,
     required: true
+  },
+  idcontainer: {
+    type: String,
+    required: true
   }
 });
 
@@ -21,7 +25,7 @@ const labelPosition = ref(null);
 // Fungsi untuk mendapatkan posisi elemen dengan pengecekan null
 const getElementPosition = (elementId) => {
   const element = document.getElementById(elementId);
-  const container = document.querySelector('#sop-container');
+  const container = document.querySelector(`#${props.idcontainer}`);
 
   if (!element || !container) {
     console.info('element', element)

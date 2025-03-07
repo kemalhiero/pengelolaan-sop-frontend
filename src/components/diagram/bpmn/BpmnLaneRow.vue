@@ -33,27 +33,7 @@ defineProps({
   </td>
   <td class="border-2 border-black p-0">
     <div class="relative overflow-x-auto min-h-[120px]">
-      <svg :ref="el => svgRef(el, index)" class="w-full h-full">
-        <!-- Arrow marker definition -->
-        <defs>
-          <marker id="arrowhead-bpmn" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" fill="#000" />
-          </marker>
-        </defs>
-        
-        <!-- Draw connections (arrows) first so they appear behind the shapes -->
-        <template v-if="layout && layout.connections">
-          <path
-            v-for="(conn, idx) in layout.connections"
-            :key="`conn-${idx}`"
-            :d="`M${conn.startX},${conn.startY} L${conn.endX},${conn.endY}`"
-            stroke="#000"
-            stroke-width="2"
-            fill="none"
-            marker-end="url(#arrowhead-bpmn)"
-          />
-        </template>
-        
+      <svg :ref="el => svgRef(el, index)" class="w-full h-full">        
         <!-- Draw shapes -->
         <template v-if="layout && layout.steps">
           <template v-for="step in layout.steps" :key="step.id">
@@ -62,6 +42,7 @@ defineProps({
               v-if="step.type === 'terminator'"
               :x="step.x"
               :y="step.y"
+              :id="`bpmn-step-${step.seq}`"
               :text="step.seq === 1 ? 'Mulai' : 'Selesai'"
             />
             
@@ -73,6 +54,7 @@ defineProps({
               :width="step.width"
               :height="step.height"
               :name="step.name"
+              :id="`bpmn-step-${step.seq}`"
             />
             
             <!-- Decision (diamond) -->
@@ -81,6 +63,7 @@ defineProps({
               :x="step.x"
               :y="step.y"
               :name="step.name"
+              :id="`bpmn-step-${step.seq}`"
             />
           </template>
         </template>

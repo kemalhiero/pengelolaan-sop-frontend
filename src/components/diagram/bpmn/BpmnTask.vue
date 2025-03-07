@@ -12,7 +12,8 @@ const props = defineProps({
         type: Number,
         default: 60
     },
-    name: String
+    name: String,
+    id: String
 });
 
 const textLines = ref([]);
@@ -45,7 +46,7 @@ processText();
 </script>
 
 <template>
-    <g>
+    <g :id="id">
         <rect :x="x - width / 2" :y="y - height / 2" :width="width" :height="height" fill="white" stroke="#000" stroke-width="2" />
         <text :x="x" :y="y" text-anchor="middle" font-size="13">
             <tspan 

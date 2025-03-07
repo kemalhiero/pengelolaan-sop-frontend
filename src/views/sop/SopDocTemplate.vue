@@ -6,7 +6,7 @@ import StartEnd from '@/components/diagram/flowchart/StartEnd.vue';
 import Decision from '@/components/diagram/flowchart/Decision.vue';
 import OffPageConnector from '@/components/diagram/flowchart/OffPageConnector.vue';
 
-import ArrowConnector from '@/components/diagram/flowchart/ArrowConnector.vue';
+import ArrowConnector from '@/components/diagram/ArrowConnector.vue';
 
 const props = defineProps({
     // sop info
@@ -118,8 +118,8 @@ const connections = computed(() => {
             // Tambahkan koneksi untuk kondisi 'Yes'
             if (step.id_next_step_if_yes) {
                 allConnections.push({
-                    from: `step-${step.seq_number}`,
-                    to: `step-${props.steps.find(s => s.id_step === step.id_next_step_if_yes)?.seq_number}`,
+                    from: `sop-step-${step.seq_number}`,
+                    to: `sop-step-${props.steps.find(s => s.id_step === step.id_next_step_if_yes)?.seq_number}`,
                     label: 'Ya',
                     condition: 'yes'
                 });
@@ -128,8 +128,8 @@ const connections = computed(() => {
             // Tambahkan koneksi untuk kondisi 'No'
             if (step.id_next_step_if_no) {
                 allConnections.push({
-                    from: `step-${step.seq_number}`,
-                    to: `step-${props.steps.find(s => s.id_step === step.id_next_step_if_no)?.seq_number}`,
+                    from: `sop-step-${step.seq_number}`,
+                    to: `sop-step-${props.steps.find(s => s.id_step === step.id_next_step_if_no)?.seq_number}`,
                     label: 'Tidak',
                     condition: 'no'
                 });
@@ -139,8 +139,8 @@ const connections = computed(() => {
             const nextStep = props.steps.find(s => s.seq_number === step.seq_number + 1);
             if (nextStep) {
                 allConnections.push({
-                    from: `step-${step.seq_number}`,
-                    to: `step-${nextStep.seq_number}`
+                    from: `sop-step-${step.seq_number}`,
+                    to: `sop-step-${nextStep.seq_number}`
                 });
             }
         }
@@ -320,7 +320,7 @@ const connections = computed(() => {
                     :key="impl.id" 
                     class="border-2 border-black p-0 text-center align-middle">
                     <div v-if="step.id_implementer === impl.id" class="flex justify-center items-center p-5">
-                        <component :is="getShapeComponent(step.type)" :id="`step-${step.seq_number}`" class="relative z-10" />
+                        <component :is="getShapeComponent(step.type)" :id="`sop-step-${step.seq_number}`" class="relative z-10" />
                     </div>
                 </td>
                 <td class="border-2 border-black py-0.5 px-2">{{ step.fittings }}</td>
@@ -336,6 +336,7 @@ const connections = computed(() => {
         <arrow-connector
           v-for="(connection, index) in connections" 
           :idarrow="index"
+          idcontainer="sop-container"
           :key="`${connection.from}-${connection.to}`"
           :connection="connection"
           @mounted="handleArrowMounted"

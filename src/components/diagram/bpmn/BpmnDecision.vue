@@ -4,7 +4,8 @@ import { computed } from 'vue';
 const props = defineProps({
     x: Number,
     y: Number,
-    name: String
+    name: String,
+    id: String
 });
 
 const diamondPath = computed(() => {
@@ -13,7 +14,7 @@ const diamondPath = computed(() => {
 </script>
 
 <template>
-    <g>
+    <g :id="id">
         <path :d="diamondPath" fill="white" stroke="#000" stroke-width="2" />
         <text :x="x" :y="y" text-anchor="middle" dominant-baseline="middle" font-size="12">
             {{ name }}
