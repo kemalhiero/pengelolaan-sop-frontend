@@ -28,8 +28,8 @@ const getElementPosition = (elementId) => {
   const container = document.querySelector(`#${props.idcontainer}`);
 
   if (!element || !container) {
-    console.info('element', element)
-    console.info('container', container)
+    console.info('element', element);
+    console.info('container', container);
     console.warn(`Element with id ${elementId} or container not found`);
     return null;
   }
@@ -37,7 +37,7 @@ const getElementPosition = (elementId) => {
   const rect = element.getBoundingClientRect();
   const containerRect = container.getBoundingClientRect();
 
-  return {
+  const position = {
     left: rect.left - containerRect.left,
     right: rect.right - containerRect.left,
     top: rect.top - containerRect.top,
@@ -45,11 +45,14 @@ const getElementPosition = (elementId) => {
     width: rect.width,
     height: rect.height
   };
+
+  // console.info(`Position for ${elementId}:`, position);
+  return position;
 };
 
 const calculatePath = async () => {
   await nextTick();
-  
+
   requestAnimationFrame(() => {
     const fromPos = getElementPosition(props.connection.from);
     const toPos = getElementPosition(props.connection.to);
@@ -60,17 +63,25 @@ const calculatePath = async () => {
     }
 
     // Tambahkan pengecekan apakah target adalah shape sebelumnya
-    const fromNumber = parseInt(props.connection.from.split('-')[1]);
-    const toNumber = parseInt(props.connection.to.split('-')[1]);
+    const fromNumber = parseInt(props.connection.from.split('-')[2]);
+    const toNumber = parseInt(props.connection.to.split('-')[2]);
     const isGoingBack = fromNumber > toNumber;
 
     // Tentukan arah dan posisi relatif
-    const isToTheRight = toPos.left > fromPos.right;
-    const isToTheLeft = toPos.right < fromPos.left;
-    const isDirectlyBelow = toPos.top > fromPos.bottom && 
-      Math.abs((fromPos.left + fromPos.width/2) - (toPos.left + toPos.width/2)) < 20;
+    const isToTheRight = toPos.left > fromPos.right; //ke kanan lalu belok ke atas atau bawah
+    const isToTheLeft = toPos.right < fromPos.left; //ke kiri lalu belok ke atas atau bawah
+
+    const alignmentTolerance = 20;  // Definisikan variabel toleransi untuk pengecekan apakah shape sejajar (piksel)
+
+    // Pengecekan apakah shape sejajar
+    const isDirectlyBelow = toPos.top > fromPos.bottom &&
+      Math.abs((fromPos.left + fromPos.width / 2) - (toPos.left + toPos.width / 2)) < alignmentTolerance;
     const isDirectlyAbove = toPos.bottom < fromPos.top &&
-      Math.abs((fromPos.left + fromPos.width/2) - (toPos.left + toPos.width/2)) < 20;
+      Math.abs((fromPos.left + fromPos.width / 2) - (toPos.left + toPos.width / 2)) < alignmentTolerance;
+    const isDirectlyRight = toPos.left > fromPos.right &&
+      Math.abs((fromPos.top + fromPos.height / 2) - (toPos.top + toPos.height / 2)) < alignmentTolerance;
+    const isDirectlyLeft = toPos.right < fromPos.left &&
+      Math.abs((fromPos.top + fromPos.height / 2) - (toPos.top + toPos.height / 2)) < alignmentTolerance;
 
     let start = {}, end = {}, path = '';
 
@@ -84,7 +95,7 @@ const calculatePath = async () => {
         y: toPos.top
       };
       path = `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
-    } 
+    }
     else if (isDirectlyAbove) {
       start = {
         x: fromPos.left + fromPos.width / 2,
@@ -96,6 +107,28 @@ const calculatePath = async () => {
       };
       path = `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
     }
+    else if (isDirectlyRight) {
+      start = {
+        x: fromPos.right,
+        y: fromPos.top + fromPos.height / 2
+      };
+      end = {
+        x: toPos.left,
+        y: toPos.top + toPos.height / 2
+      };
+      path = `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
+    }
+    else if (isDirectlyLeft) {
+      start = {
+        x: fromPos.left,
+        y: fromPos.top + fromPos.height / 2
+      };
+      end = {
+        x: toPos.right,
+        y: toPos.top + toPos.height / 2
+      };
+      path = `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
+    }
     else if (isToTheRight) {
       start = {
         x: fromPos.right,
@@ -103,7 +136,9 @@ const calculatePath = async () => {
       };
       end = {
         x: toPos.left + toPos.width / 2,
-        y: isGoingBack ? toPos.bottom : toPos.top
+        y: props.idcontainer === "sop-container" 
+           ? (isGoingBack ? toPos.bottom : toPos.top)
+           : (toPos.top > fromPos.top ? toPos.top : toPos.bottom)   //dilakukan pengecekan apakah sop atau bpmn
       };
       path = `M ${start.x} ${start.y}
               L ${end.x} ${start.y}
@@ -128,7 +163,7 @@ const calculatePath = async () => {
       const midX = (start.x + end.x) / 2;
       const midY = (start.y + end.y) / 2;
       const offset = 15;
-      
+
       if (isDirectlyBelow || isDirectlyAbove) {
         labelPosition.value = {
           x: midX + offset,
@@ -161,36 +196,17 @@ watch(() => props.connection, () => {
   <g v-if="pathData">
     <!-- Definisi marker panah -->
     <defs>
-      <marker
-        :id="`arrowhead-${idarrow}`"
-        markerWidth="10"
-        markerHeight="8"
-        refX="7"
-        refY="4"
-        orient="auto"
-      >
+      <marker :id="`arrowhead-${idarrow}`" markerWidth="10" markerHeight="8" refX="7" refY="4" orient="auto">
         <path d="M0,0 L8,4 L0,8 L2,4 Z" fill="black" />
       </marker>
     </defs>
 
     <!-- Path panah -->
-    <path
-      :d="pathData"
-      fill="none"
-      stroke="black"
-      stroke-width="2"
-      :marker-end="`url(#arrowhead-${idarrow})`"
-    />
+    <path :d="pathData" fill="none" stroke="black" stroke-width="2" :marker-end="`url(#arrowhead-${idarrow})`" />
 
     <!-- Label -->
-    <text
-      v-if="labelPosition && props.connection.label"
-      :x="labelPosition.x"
-      :y="labelPosition.y"
-      class="text-sm font-medium fill-black"
-      text-anchor="middle"
-      alignment-baseline="middle"
-    >
+    <text v-if="labelPosition && props.connection.label" :x="labelPosition.x" :y="labelPosition.y"
+      class="text-sm font-medium fill-black" text-anchor="middle" alignment-baseline="middle">
       {{ props.connection.label }}
     </text>
   </g>
