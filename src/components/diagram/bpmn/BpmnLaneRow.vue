@@ -43,12 +43,12 @@ defineProps({
               :x="step.x"
               :y="step.y"
               :id="`bpmn-step-${step.seq}`"
-              :text="step.seq === 1 ? 'Mulai' : 'Selesai'"
+              :text="step.seq === 0 ? 'Mulai' : 'Selesai'"
             />
             
             <!-- Task (process) -->
             <BpmnTask
-              v-else-if="step.type === 'task' || step.type === 'process'"
+              v-else-if="step.type === 'task'"
               :x="step.x"
               :y="step.y"
               :width="step.width"

@@ -77,11 +77,11 @@ watch(() => sopStep.value.map(step => step.type), (newTypes) => {
                 <thead class="text-xs uppercase bg-gray-50">
                     <tr>
                         <th scope="col" class="px-2 py-3">No</th>
-                        <th scope="col" class="px-2 py-3">Kegiatan</th>
-                        <th scope="col" class="px-2 py-3">Tipe Kegiatan</th>
-                        <th scope="col" class="px-2 py-3">Pelaksana</th>
+                        <th scope="col" class="px-2 py-3">Kegiatan<span class="text-red-600">*</span></th>
+                        <th scope="col" class="px-2 py-3">Tipe Kegiatan<span class="text-red-600">*</span></th>
+                        <th scope="col" class="px-2 py-3">Pelaksana<span class="text-red-600">*</span></th>
                         <th scope="col" class="px-2 py-3">Kelengkapan</th>
-                        <th scope="col" class="px-2 py-3">Waktu</th>
+                        <th scope="col" class="px-2 py-3">Waktu<span class="text-red-600">*</span></th>
                         <th scope="col" class="px-2 py-3">Output</th>
                         <th scope="col" class="px-2 py-3">Keterangan</th>
                         <th scope="col" class="px-2 py-3">Aksi</th>

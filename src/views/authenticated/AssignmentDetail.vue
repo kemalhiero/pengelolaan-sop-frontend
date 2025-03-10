@@ -125,7 +125,7 @@ const fetchInfoSop = async () => {
 const sopStep = ref([]);
 provide('sopStep', sopStep);
 
-watch(() => sopStep.value, 
+watch(() => sopStep.value,
     (newValue) => {
         if (!newValue || newValue.length === 0) {
             sopStep.value = [{
@@ -307,7 +307,6 @@ const syncSopInfo = async () => {
         }
     });
 
-    // Gunakan toast.promise
     toast.promise(syncPromise, {
         pending: {
             render() {
@@ -453,7 +452,7 @@ const syncSopStep = async () => {
                     id_next_step_if_no: data.id_next_step_if_no,
                     type: data.type
                 });
-                
+
                 const stepIndex = sopStep.value.findIndex(step => step.id_step === id);
                 const updateData = {
                     id_sop_detail: idsopdetail,
@@ -481,7 +480,7 @@ const syncSopStep = async () => {
             for (let i = 0; i < changes.toAdd.length; i++) {
                 const item = changes.toAdd[i];
                 const stepIndex = sopStep.value.findIndex(step => !step.id_step);
-                
+
                 const createData = {
                     id_sop_detail: idsopdetail,
                     seq_number: stepIndex + 1,
@@ -515,7 +514,6 @@ const syncSopStep = async () => {
         }
     });
 
-    // Gunakan toast.promise
     toast.promise(syncPromise, {
         pending: {
             render() {
@@ -551,6 +549,16 @@ const validateLastStep = () => {
     return lastStep.type === 'terminator';
 };
 
+const validateStepForm = (step) => {
+    if (!step.name || !step.type || !step.id_implementer || !step.time) {
+        return false;
+    }
+    if (step.type === 'decision' && (!step.id_next_step_if_yes || !step.id_next_step_if_no)) {
+        return false;
+    }
+    return true;
+};
+
 // Modifikasi fungsi syncData
 const syncData = () => {
     switch (currentStep.value) {
@@ -558,10 +566,21 @@ const syncData = () => {
             syncSopInfo();
             break;
         case 2:
-            if (!validateLastStep()) {
-                toast.warning('Tahap terakhir harus bertipe End. Silakan ubah tipe tahap terakhir.', {
+            // Check if there are enough steps
+            if (sopStep.value.length < 3) {
+                toast.warning('Silahkan tambahkan tahapan SOP, minimal 3.', {
                     autoClose: 7000,
                     position: toast.POSITION.TOP_RIGHT
+                });
+                return;
+            }
+
+            // Check if all steps are filled correctly
+            if (sopStep.value.some(step => !validateStepForm(step))) {
+                toast.warning('Silakan lengkapi data untuk semua kolom yang wajib diisi! (ditandai dengan <span class="text-red-600">*</span>)', {
+                    autoClose: 7000,
+                    position: toast.POSITION.TOP_RIGHT,
+                    dangerouslyHTMLString: true
                 });
                 return;
             }
@@ -582,6 +601,22 @@ const nextStep = () => {
             }
         }
     } else if (currentStep.value === 2) {
+        if (sopStep.value.length < 3) {
+            toast.warning('Silakan tambahkan tahapan SOP terlebih dahulu.', {
+                autoClose: 7000,
+                position: toast.POSITION.TOP_RIGHT
+            });
+            return;
+        }
+        // Check if all steps are filled correctly
+        if (sopStep.value.some(step => !validateStepForm(step))) {
+            toast.warning('Silakan lengkapi data untuk semua kolom yang wajib diisi! (ditandai dengan <span class="text-red-600">*</span>)', {
+                autoClose: 7000,
+                position: toast.POSITION.TOP_RIGHT,
+                dangerouslyHTMLString: true
+            });
+            return;
+        }
         if (!validateLastStep()) {
             toast.warning('Tahap terakhir harus bertipe End. Silakan ubah tipe tahap terakhir.', {
                 autoClose: 7000,
@@ -653,7 +688,9 @@ onMounted(() => {
             Sebelumnya
         </button>
 
-        <button type="button" title="Klik untuk menyimpan progres saat ini ke server" :disabled="currentStep == 3"
+        <button type="button"
+            :title="currentStep < 3 ? 'Klik untuk menyimpan progres saat ini ke server' : 'Untuk menyimpan progres, klik tombol kirim!'"
+            :disabled="currentStep == 3"
             class="w-[28%] text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             @click="syncData">
             <!-- <SpinnerIcon class="inline w-5 me-3 fill-current animate-spin" />

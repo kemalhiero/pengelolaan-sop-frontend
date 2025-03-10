@@ -152,26 +152,28 @@ const connections = computed(() => {
 </script>
 
 <template>
-  <!-- Tambahkan wrapper dengan position relative -->
-  <div class="relative">
-    <!-- Table pertama -->
-    <table class="w-11/12 mx-auto my-8 border-collapse border-2 border-black">
-        <tbody>
+  <!-- Wrapper dengan overflow auto untuk memungkinkan scroll horizontal -->
+  <div class="flex justify-center">
+    <div class="overflow-x-auto" style="margin: 0 auto;">
+      <!-- Table pertama (Informasi SOP) -->
+      <div class="w-[297mm] relative my-5 mx-10">
+        <table class="w-full border-collapse border-2 border-black mb-8">
+          <tbody>
             <tr>
-                <th rowspan="8" class="w-[47%] border-2 py-0.5 px-2 border-black">
-                    <img class="mx-auto h-36 my-4" src="/logo_unand_kecil.png"
-                        alt="Logo Kementerian Pendidikan Kebudayaan, Riset dan Teknologi">
-                    <h4>KEMENTERIAN PENDIDIKAN TINGGI, SAINS, DAN TEKNOLOGI</h4>
-                    <h4>UNIVERSITAS ANDALAS </h4>
-                    <h4>FAKULTAS TEKNOLOGI INFORMASI</h4>
-                    <h4 class="font-[450]">DEPARTEMEN SISTEM INFORMASI</h4>
-                </th>
+              <th rowspan="8" class="w-[47%] border-2 py-0.5 px-2 border-black">
+                <img class="mx-auto h-36 my-4" src="/logo_unand_kecil.png"
+                  alt="Logo Kementerian Pendidikan Kebudayaan, Riset dan Teknologi">
+                <h4>KEMENTERIAN PENDIDIKAN TINGGI, SAINS, DAN TEKNOLOGI</h4>
+                <h4>UNIVERSITAS ANDALAS </h4>
+                <h4>FAKULTAS TEKNOLOGI INFORMASI</h4>
+                <h4 class="font-[450]">DEPARTEMEN SISTEM INFORMASI</h4>
+              </th>
             </tr>
             <tr>
-                <td class="font-bold border-2 py-0.5 px-2 border-black">NOMOR POS</td>
-                <td class="border-2 py-0.5 px-2 border-black">:</td>
-                <td class="border-2 py-0.5 px-2 border-black" v-if="props.number">{{ props.number }}</td>
-                <td class="border-2 py-0.5 px-2 border-black" v-else> - </td>
+              <td class="font-bold border-2 py-0.5 px-2 border-black">NOMOR POS</td>
+              <td class="border-2 py-0.5 px-2 border-black">:</td>
+              <td class="border-2 py-0.5 px-2 border-black" v-if="props.number">{{ props.number }}</td>
+              <td class="border-2 py-0.5 px-2 border-black" v-else> - </td>
             </tr>
             <tr>
                 <td class="font-bold border-2 py-0.5 px-2 border-black">TANGGAL PEMBUATAN</td>
@@ -287,61 +289,63 @@ const connections = computed(() => {
                     </ol>
                 </td>
             </tr>
-        </tbody>
-    </table>
+          </tbody>
+        </table>
+      </div>
 
-    <!-- Tabel Kedua -->
-    <div class="relative w-11/12 mx-auto mb-10 min-h-[200px]">
-      <table class="w-full border-collapse border-2 border-black" id="sop-container">
-        <thead>
+      <!-- Tabel Kedua (Tahapan SOP) -->
+      <div class="w-[297mm] relative mb-10 mx-10">
+        <table class="w-full border-collapse border-2 border-black" id="sop-container">
+          <thead>
             <tr class="bg-[#D9D9D9]">
-                <th rowspan="2" class="border-2 py-0.5 px-2 border-black">NO</th>
-                <th rowspan="2" class="border-2 py-0.5 px-2 border-black">KEGIATAN</th>
-                <th :colspan="implementer.length" class="border-2 py-0.5 px-2 border-black">PELAKSANA</th>
-                <th colspan="3" class="border-2 py-0.5 px-2 border-black">MUTU BAKU</th>
-                <th rowspan="2" class="border-2 py-0.5 px-2 border-black">KET</th>
+              <th rowspan="2" class="border-2 py-0.5 px-2 border-black">NO</th>
+              <th rowspan="2" class="border-2 py-0.5 px-2 border-black">KEGIATAN</th>
+              <th :colspan="implementer.length" class="border-2 py-0.5 px-2 border-black">PELAKSANA</th>
+              <th colspan="3" class="border-2 py-0.5 px-2 border-black">MUTU BAKU</th>
+              <th rowspan="2" class="border-2 py-0.5 px-2 border-black">KET</th>
             </tr>
             <tr class="bg-[#D9D9D9]">
-                <th v-for="impl in props.implementer" 
-                    :key="impl.id" 
-                    class="border-2 py-0.5 px-2 border-black">
-                    {{ impl.name.toUpperCase() }}
-                </th>
-                <th class="border-2 py-0.5 px-2 border-black">KELENGKAPAN</th>
-                <th class="border-2 py-0.5 px-2 border-black">WAKTU</th>
-                <th class="border-2 py-0.5 px-2 border-black">OUTPUT</th>
+              <th v-for="impl in props.implementer" 
+                :key="impl.id" 
+                class="border-2 py-0.5 px-2 border-black">
+                {{ impl.name.toUpperCase() }}
+              </th>
+              <th class="border-2 py-0.5 px-2 border-black">KELENGKAPAN</th>
+              <th class="border-2 py-0.5 px-2 border-black">WAKTU</th>
+              <th class="border-2 py-0.5 px-2 border-black">OUTPUT</th>
             </tr>
-        </thead>
-        <tbody>
+          </thead>
+          <tbody>
             <tr v-for="step in steps" :key="step.id_step"> 
-                <td class="border-2 border-black py-0.5 px-2">{{ step.seq_number }}</td>
-                <td class="border-2 border-black py-0.5 px-2">{{ step.name }}</td>
-                <td v-for="impl in props.implementer" 
-                    :key="impl.id" 
-                    class="border-2 border-black p-0 text-center align-middle">
-                    <div v-if="step.id_implementer === impl.id" class="flex justify-center items-center p-5">
-                        <component :is="getShapeComponent(step.type)" :id="`sop-step-${step.seq_number}`" class="relative z-10" />
-                    </div>
-                </td>
-                <td class="border-2 border-black py-0.5 px-2">{{ step.fittings }}</td>
-                <td class="border-2 border-black py-0.5 px-2">{{ `${step.time} ${getFullTimeUnit(step.time_unit)}` }}</td>
-                <td class="border-2 border-black py-0.5 px-2">{{ step.output }}</td>
-                <td class="border-2 border-black py-0.5 px-2">{{ step.description }}</td>
+              <td class="border-2 border-black py-0.5 px-2">{{ step.seq_number }}</td>
+              <td class="border-2 border-black py-0.5 px-2">{{ step.name }}</td>
+              <td v-for="impl in props.implementer" 
+                :key="impl.id" 
+                class="border-2 border-black p-0 text-center align-middle">
+                <div v-if="step.id_implementer === impl.id" class="flex justify-center items-center p-5">
+                  <component :is="getShapeComponent(step.type)" :id="`sop-step-${step.seq_number}`" class="relative z-10" />
+                </div>
+              </td>
+              <td class="border-2 border-black py-0.5 px-2">{{ step.fittings }}</td>
+              <td class="border-2 border-black py-0.5 px-2">{{ `${step.time} ${getFullTimeUnit(step.time_unit)}` }}</td>
+              <td class="border-2 border-black py-0.5 px-2">{{ step.output }}</td>
+              <td class="border-2 border-black py-0.5 px-2">{{ step.description }}</td>
             </tr>
-        </tbody>
-      </table>
+          </tbody>
+        </table>
 
-      <!-- Panah -->
-      <svg class="absolute inset-0 w-full h-full pointer-events-none z-0">
-        <arrow-connector
-          v-for="(connection, index) in connections" 
-          :idarrow="index"
-          idcontainer="sop-container"
-          :key="`${connection.from}-${connection.to}`"
-          :connection="connection"
-          @mounted="handleArrowMounted"
-        />
-      </svg>
+        <!-- Panah -->
+        <svg class="absolute inset-0 w-full h-full pointer-events-none z-0">
+          <arrow-connector
+            v-for="(connection, index) in connections" 
+            :idarrow="index"
+            idcontainer="sop-container"
+            :key="`${connection.from}-${connection.to}`"
+            :connection="connection"
+            @mounted="handleArrowMounted"
+          />
+        </svg>
+      </div>
     </div>
   </div>
 </template>
