@@ -78,7 +78,7 @@ onMounted(() => {
                     { field: 'org_name', label: 'Organisasi', sortable: true, searchable: true },
                 ]"
                 :status-columns="[
-                    { field: 'is_approved', label: 'Status' }
+                    { field: 'status', label: 'Status' }
                 ]"
                 :badge-text="['Batal', 'Selesai', 'Belum Selesai']"
                 :link-column="true"

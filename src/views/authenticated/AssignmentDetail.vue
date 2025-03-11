@@ -1,6 +1,6 @@
 <script setup>
 import { ref, provide, onMounted, watch, inject } from 'vue';
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue3-toastify';
 import { validateText } from '@/utils/validation';
 
@@ -28,6 +28,7 @@ const layoutType = inject('layoutType');
 layoutType.value = 'guest';
 
 const route = useRoute();
+const router = useRouter();
 
 // State untuk mengatur langkah
 const currentStep = ref(1);  // Langkah sekarang
@@ -455,7 +456,7 @@ const syncSopStep = async () => {
 
                 const updateData = {
                     id_sop_detail: idsopdetail,
-                    seq_number:data.seq_number,
+                    seq_number: data.seq_number,
                     name: data.name,
                     type: data.type,
                     id_implementer: data.id_implementer,
@@ -581,7 +582,7 @@ const syncData = () => {
 };
 
 // Fungsi untuk ke langkah berikutnya
-const nextStep = () => {
+const nextStep = async () => {
     if (currentStep.value === 1) {
         if (firstStepRef.value && firstStepRef.value.validateFields) {
             const isValid = firstStepRef.value.validateFields();
@@ -614,8 +615,19 @@ const nextStep = () => {
             return;
         }
         currentStep.value++;
-    } else if (currentStep.value < 3) {
-        currentStep.value++;
+    } else if (currentStep.value === 3) {
+        syncSopInfo();
+        syncSopStep();
+        const apdetSopDetail = await updateSopDetail(picInfo.value.id, { status: 1 });     // Update status SOP kalau sekarang sudah dikirim untuk nantinya dicek oleh penanggung jawab atau kadep
+        console.log('apdetSopDetail', apdetSopDetail);
+        toast.success('Data berhasil dikirim!', {
+            autoClose: 7000,
+            position: toast.POSITION.TOP_RIGHT
+        });
+
+        setTimeout(() => {
+            router.push('/assignment')
+        }, 5000);
     }
 };
 
