@@ -1,12 +1,15 @@
 <script setup>
-import { inject } from 'vue';
+import { computed, inject } from 'vue';
 import SopDocTemplate from '@/views/sop/SopDocTemplate.vue';
 import SopBpmnTemplate from '@/views/sop/SopBpmnTemplate.vue';
 import Divider from '@/components/Divider.vue';
 
 const picInfo = inject('picData');
 const { formData } = inject('sopFormData');
-const sopStep = inject('sopStep');
+const sopStepRaw = inject('sopStep');
+const sopStep = computed(() =>
+    [...sopStepRaw.value].sort((a, b) => a.seq_number - b.seq_number)
+);
 </script>
 
 <template>

@@ -4,8 +4,17 @@ import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import GearIcon from '@/assets/icons/GearIcon.vue';
 
-const sopStep = inject('sopStep');
 const { formData } = inject('sopFormData');
+const sopStep = inject('sopStep');
+watch(
+    sopStep,
+    () => {
+        if (sopStep.value.length > 0) {
+            sopStep.value.sort((a, b) => a.seq_number - b.seq_number);
+        }
+    },
+    { deep: true, immediate: true }
+);
 
 // Modal state
 const showBranchModal = ref(false);
@@ -36,11 +45,13 @@ const saveBranchConfig = () => {
 
 // Function to add a new step (empty object)
 const addStep = () => {
+    // Set seq_number berdasarkan posisi dalam array
+    const newSeqNumber = sopStep.value.length + 1;
     sopStep.value.push({
         id_step: null,
         id_next_step_if_no: null,
         id_next_step_if_yes: null,
-        seq_number: null,
+        seq_number: newSeqNumber, // Tetapkan sequence number berdasarkan posisi
         name: '',
         type: '',
         id_implementer: '',
@@ -49,13 +60,27 @@ const addStep = () => {
         time_unit: 'h',
         output: '',
         description: ''
-    })
+    });
 };
 
 // Function to remove a step by index
 const removeStep = (index) => {
-    sopStep.value.splice(index, 1)
+    sopStep.value.splice(index, 1);
+    // Perbarui seq_number untuk semua langkah setelah penghapusan
+    updateSequenceNumbers();
 };
+
+// Function to update sequence numbers for all steps
+const updateSequenceNumbers = () => {
+    sopStep.value.forEach((step, index) => {
+        step.seq_number = index + 1;
+    });
+};
+
+// Watch for changes in step array to ensure sequence numbers are up to date
+watch(() => sopStep.value.length, () => {
+    updateSequenceNumbers();
+});
 
 // Watch for changes in step type
 watch(() => sopStep.value.map(step => step.type), (newTypes) => {
@@ -68,6 +93,8 @@ watch(() => sopStep.value.map(step => step.type), (newTypes) => {
     });
 }, { deep: true });
 
+// Initialize sequence numbers when component is loaded
+updateSequenceNumbers();
 </script>
 
 <template>
@@ -90,7 +117,7 @@ watch(() => sopStep.value.map(step => step.type), (newTypes) => {
                 <tbody>
                     <tr v-for="(step, index) in sopStep" :key="index" class="bg-white border-b">
                         <th scope="row" class="px-2 py-3 font-medium whitespace-nowrap">
-                            {{ index + 1 }}
+                            {{ step.seq_number || index + 1 }}
                         </th>
                         <td class="px-2 py-3">
                             <input type="hidden" v-model="step.id_step">
@@ -103,7 +130,7 @@ watch(() => sopStep.value.map(step => step.type), (newTypes) => {
                                 </template>
                                 <template v-else>
                                     <option value="task">Task</option>
-                                    <option value="decision">Decision</option>                                    
+                                    <option value="decision">Decision</option>
                                     <option v-if="index === sopStep.length - 1" value="terminator">End</option>
                                 </template>
                             </select>
@@ -113,11 +140,13 @@ watch(() => sopStep.value.map(step => step.type), (newTypes) => {
                                     <div class="space-y-1">
                                         <div v-if="step.id_next_step_if_no" class="flex items-center">
                                             <span class="text-red-600 mr-1">✗</span>
-                                            Salah → Tahap {{ sopStep.findIndex(s => s.id_step === step.id_next_step_if_no) + 1 }}
+                                            Salah → Tahap {{sopStep.findIndex(s => s.id_step ===
+                                            step.id_next_step_if_no) + 1 }}
                                         </div>
                                         <div v-if="step.id_next_step_if_yes" class="flex items-center">
                                             <span class="text-green-600 mr-1">✓</span>
-                                            Benar → Tahap {{ sopStep.findIndex(s => s.id_step === step.id_next_step_if_yes) + 1 }}
+                                            Benar → Tahap {{sopStep.findIndex(s => s.id_step ===
+                                            step.id_next_step_if_yes) + 1 }}
                                         </div>
                                     </div>
                                 </template>
@@ -128,7 +157,8 @@ watch(() => sopStep.value.map(step => step.type), (newTypes) => {
                         </td>
                         <td class="px-2 py-3">
                             <select v-model="step.id_implementer" class="w-full p-2 border border-gray-300 rounded-md">
-                                <option v-for="(item, index) in formData.implementer" :value="item.id" :key="index">{{ item.name }}</option>
+                                <option v-for="(item, index) in formData.implementer" :value="item.id" :key="index">{{
+                                    item.name }}</option>
                             </select>
                         </td>
                         <td class="px-2 py-3">
@@ -157,11 +187,13 @@ watch(() => sopStep.value.map(step => step.type), (newTypes) => {
                         </td>
                         <td class="px-2 py-3">
                             <div class="flex gap-2">
-                                <button @click="removeStep(index)" :title="`Hapus tahapan ${index + 1}`" :disabled="sopStep.length == 1"
+                                <button @click="removeStep(index)" :title="`Hapus tahapan ${index + 1}`"
+                                    :disabled="sopStep.length == 1"
                                     class="px-3 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex disabled:cursor-not-allowed">
                                     <TrashCanIcon class="fill-current w-4" />
                                 </button>
-                                <button v-if="step.type === 'decision'" @click="openBranchModal(index)" title="Konfigurasi Cabang Decision"
+                                <button v-if="step.type === 'decision'" @click="openBranchModal(index)"
+                                    title="Konfigurasi Cabang Decision"
                                     class="px-3 py-2 text-white bg-gray-600 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 inline-flex">
                                     <GearIcon class="fill-current w-4" />
                                 </button>
@@ -182,34 +214,29 @@ watch(() => sopStep.value.map(step => step.type), (newTypes) => {
         </div>
 
         <!-- Branch Configuration Modal -->
-        <div v-if="showBranchModal" 
-            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+        <div v-if="showBranchModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
             @click="showBranchModal = false">
             <div class="bg-white p-6 rounded-lg w-96" @click.stop>
-                <h3 class="text-lg font-semibold mb-4">Atur Cabang Keputusan - Tahap {{ selectedStepIndex+1 }}</h3>
+                <h3 class="text-lg font-semibold mb-4">Atur Cabang Keputusan - Tahap {{ selectedStepIndex + 1 }}</h3>
 
                 <div class="mb-4">
                     <label class="block mb-2">❌Tahap Jika Salah:</label>
-                    <select v-model="tempBranchConfig.id_next_step_if_no" 
+                    <select v-model="tempBranchConfig.id_next_step_if_no"
                         class="w-full p-2 border border-gray-300 rounded-md">
                         <option value="">Pilih tahap</option>
-                        <option v-for="(step, idx) in sopStep" 
-                            :key="idx" 
-                            :value="step.id_step"
+                        <option v-for="(step, idx) in sopStep" :key="idx" :value="step.id_step"
                             :disabled="idx === selectedStepIndex">
                             {{ `${idx + 1}. ${step.name}` }}
                         </option>
                     </select>
                 </div>
-                
+
                 <div class="mb-4">
                     <label class="block mb-2">✅Tahap Jika Benar:</label>
-                    <select v-model="tempBranchConfig.id_next_step_if_yes" 
+                    <select v-model="tempBranchConfig.id_next_step_if_yes"
                         class="w-full p-2 border border-gray-300 rounded-md">
                         <option value="">Pilih tahap</option>
-                        <option v-for="(step, idx) in sopStep" 
-                            :key="idx" 
-                            :value="step.id_step"
+                        <option v-for="(step, idx) in sopStep" :key="idx" :value="step.id_step"
                             :disabled="idx === selectedStepIndex">
                             {{ `${idx + 1}. ${step.name}` }}
                         </option>
