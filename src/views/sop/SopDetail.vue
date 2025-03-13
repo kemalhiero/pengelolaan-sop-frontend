@@ -2,9 +2,9 @@
 import { inject } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 
-import SopDocTemplate from './SopDocTemplate.vue';
+import SopDocTemplate from '@/components/sop/SopDocTemplate.vue';
+import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
 import IconDownload from '@/assets/icons/DownloadIcon.vue';
-import SopBpmnTemplate from './SopBpmnTemplate.vue';
 import Divider from '@/components/Divider.vue';
 
 const layoutType = inject('layoutType');
@@ -12,73 +12,9 @@ layoutType.value = 'guest';
 
 const authStore = useAuthStore();
 
-const sopSteps = [
-  {
-    id_step: 1,
-    id_next_step_if_no: null,
-    id_next_step_if_yes: null,
-    seq_number: 1,
-    name: 'Mengisi formulir permohonan KP',
-    type: 'terminator',
-    id_implementer: 1,
-    fittings: 'Formulir permohonan KP, transkrip nilai, proposal KP',
-    time: 5,
-    time_unit: "h",
-    output: 'Penyerahan kelengkapan ke pihak departemen',
-    description: 'hehehe'
-  },
-  {
-    id_step: 2,
-    id_next_step_if_no: 1,
-    id_next_step_if_yes: 3,
-    seq_number: 2,
-    name: 'Peninjauan permohonan KP',
-    type: 'decision',
-    id_implementer: 2,
-    fittings: 'Formulir permohonan KP, transkrip nilai, proposal KP',
-    time: 1,
-    time_unit: "h",
-    output: 'Disposisi',
-    description: 'jajajajja'
-  },
-  {
-    id_step: 3,
-    id_next_step_if_no: null,
-    id_next_step_if_yes: null,
-    seq_number: 3,
-    name: 'Pelaksanaan KP',
-    type: 'task',
-    id_implementer: 3,
-    fittings: 'Absensi',
-    time: 40,
-    time_unit: "h",
-    output: 'Absensi',
-    description: 'kape'
-  },
-  // ... tahapan lainnya
-];
-
-const implementer = [
-    {
-        "id": 1,
-        "name": "Mahasiswa",
-        "description": "orang yang belajar di perguruan tinggi",
-        "sop_total": 3
-    },
-    {
-        "id": 2,
-        "name": "Departemen",
-        "description": "hoho",
-        "sop_total": 1
-    },
-    {
-        "id": 3,
-        "name": "Perusahaan",
-        "description": "mantap",
-        "sop_total": 1
-    }
-];
-
+// Impor data dummy
+import sopSteps from '@/data/sopSteps.json';
+import implementer from '@/data/sopImplementer.json';
 </script>
 
 <template>

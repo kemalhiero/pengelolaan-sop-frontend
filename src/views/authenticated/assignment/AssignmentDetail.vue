@@ -20,9 +20,9 @@ import CircleArrowLeft from '@/assets/icons/CircleArrowLeft.vue';
 import FloppyDiskIcon from '@/assets/icons/FloppyDiskIcon.vue';
 import CheckIcon from '@/assets/icons/CheckIcon.vue';
 
-import FirstStep from './assignmentDetailStep/FirstStep.vue';
-import SecondStep from './assignmentDetailStep/SecondStep.vue';
-import ThirdStep from './assignmentDetailStep/ThirdStep.vue';
+import FirstStep from './step/FirstStep.vue';
+import SecondStep from './step/SecondStep.vue';
+import ThirdStep from './step/ThirdStep.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';

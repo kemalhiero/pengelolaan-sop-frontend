@@ -1,0 +1,20 @@
+[
+    {
+        "id": 1,
+        "name": "Mahasiswa",
+        "description": "orang yang belajar di perguruan tinggi",
+        "sop_total": 3
+    },
+    {
+        "id": 2,
+        "name": "Departemen",
+        "description": "hoho",
+        "sop_total": 1
+    },
+    {
+        "id": 3,
+        "name": "Perusahaan",
+        "description": "mantap",
+        "sop_total": 1
+    }
+]

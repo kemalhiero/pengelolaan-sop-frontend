@@ -1,7 +1,7 @@
 <script setup>
 import { computed, inject } from 'vue';
-import SopDocTemplate from '@/views/sop/SopDocTemplate.vue';
-import SopBpmnTemplate from '@/views/sop/SopBpmnTemplate.vue';
+import SopDocTemplate from '@/components/sop/SopDocTemplate.vue';
+import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
 import Divider from '@/components/Divider.vue';
 
 const picInfo = inject('picData');

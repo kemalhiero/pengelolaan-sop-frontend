@@ -46,7 +46,7 @@ const router = createRouter({
     {
       path: '/assignment',
       name: 'Assignment',
-      component: () => import('@/views/authenticated/Assignment.vue'),
+      component: () => import('@/views/authenticated/assignment/Assignment.vue'),
       meta: {
         requiresAuth: true,
         roles: ['penyusun', 'pj', 'kadep']
@@ -55,7 +55,7 @@ const router = createRouter({
     {
       path: '/assignment/:id',
       name: 'AssignmentDetail',
-      component: () => import('@/views/authenticated/AssignmentDetail.vue'),
+      component: () => import('@/views/authenticated/assignment/AssignmentDetail.vue'),
       meta: {
         requiresAuth: true,
         roles: ['penyusun', 'pj', 'kadep']
@@ -75,7 +75,7 @@ const router = createRouter({
     {
       path: '/app/docs',
       name: 'SopDocs',
-      component: () => import('@/views/authenticated/SopDocs.vue'),
+      component: () => import('@/views/authenticated/docs/SopDocs.vue'),
       meta: {
         requiresAuth: true,
         roles: ['pj', 'kadep']
@@ -84,7 +84,16 @@ const router = createRouter({
     {
       path: '/app/docs/:id',
       name: 'SopDocDetail',
-      component: () => import('@/views/authenticated/SopDocsDetail.vue'),
+      component: () => import('@/views/authenticated/docs/SopDocsDetail.vue'),
+      meta: {
+        requiresAuth: true,
+        roles: ['pj', 'kadep']
+      }
+    },
+    {
+      path: '/app/docs/draft/:id',
+      name: 'SopDraftDetail',
+      component: () => import('@/views/authenticated/docs/SopDraftDetail.vue'),
       meta: {
         requiresAuth: true,
         roles: ['pj', 'kadep']
@@ -115,7 +124,7 @@ const router = createRouter({
     {
       path: '/app/law/basis',
       name: 'SopLawBasis',
-      component: () => import('@/views/authenticated/SopLawBasis.vue'),
+      component: () => import('@/views/authenticated/law/SopLawBasis.vue'),
       meta: {
         requiresAuth: true,
         roles: ['pj', 'kadep']
@@ -124,7 +133,7 @@ const router = createRouter({
     {
       path: '/app/law/type',
       name: 'SopLawType',
-      component: () => import('@/views/authenticated/SopLawType.vue'),
+      component: () => import('@/views/authenticated/law/SopLawType.vue'),
       meta: {
         requiresAuth: true,
         roles: ['pj', 'kadep']
@@ -133,7 +142,7 @@ const router = createRouter({
     {
       path: '/app/propose',
       name: 'SopPropose',
-      component: () => import('@/views/authenticated/SopPropose.vue'),
+      component: () => import('@/views/authenticated/docs/SopPropose.vue'),
       meta: {
         requiresAuth: true,
         roles: ['pj', 'kadep']
@@ -142,23 +151,11 @@ const router = createRouter({
     {
       path: '/app/propose-version/:id',
       name: 'SopProposeVersion',
-      component: () => import('@/views/authenticated/SopProposeVersion.vue'),
+      component: () => import('@/views/authenticated/docs/SopProposeVersion.vue'),
       meta: {
         requiresAuth: true,
         roles: ['pj', 'kadep']
       }
-    },
-    {
-      path: '/app/review',
-      name: 'SopReview',
-      component: () => import('@/views/authenticated/SopReview.vue'),
-      // TODO lupa buat apa😔
-    },
-    {
-      path: '/app/agreement',
-      name: 'SopAgreement',
-      component: () => import('@/views/authenticated/SopAgreement.vue'),
-      // TODO lupa buat apa😔
     },
     {
       path: '/app/role',
@@ -167,7 +164,7 @@ const router = createRouter({
     {
       path: '/app/role/hod',
       name: 'KaprodiManagement',
-      component: () => import('@/views/authenticated/roleManagement/DepartementHead.vue'),
+      component: () => import('@/views/authenticated/role/DepartementHead.vue'),
       meta: {
         requiresAuth: true,
         roles: ['kadep']
@@ -176,7 +173,7 @@ const router = createRouter({
     {
       path: '/app/role/pic',
       name: 'PicManagement',
-      component: () => import('@/views/authenticated/roleManagement/PiC.vue'),
+      component: () => import('@/views/authenticated/role/PiC.vue'),
       meta: {
         requiresAuth: true,
         roles: ['kadep', 'pj']
@@ -185,7 +182,7 @@ const router = createRouter({
     {
       path: '/app/role/drafter',
       name: 'DrafterManagement',
-      component: () => import('@/views/authenticated/roleManagement/Drafter.vue'),
+      component: () => import('@/views/authenticated/role/Drafter.vue'),
       meta: {
         requiresAuth: true,
         roles: ['kadep', 'pj']
