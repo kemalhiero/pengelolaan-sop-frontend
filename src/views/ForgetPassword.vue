@@ -1,7 +1,7 @@
 <script setup>
 import { inject, ref } from 'vue';
-import { toast } from 'vue3-toastify';
 import { forgetPw } from '@/api/authApi';
+import { useToastPromise } from '@/utils/toastPromiseHandler';
 
 const layoutType = inject('layoutType');
 layoutType.value = null;
@@ -12,7 +12,7 @@ const form = ref({
 
 const submitForgetPw = () => {
     try {
-        toast.promise(
+        useToastPromise(
             new Promise((resolve, reject) => {
                 forgetPw(form.value)
                     .then(response => {
@@ -24,27 +24,11 @@ const submitForgetPw = () => {
                     .catch(error => reject(error));
             }),
             {
-                pending: {
-                    render() {
-                        return 'Sedang memproses data...'
-                    },
-                    icon: '🔄'
+                messages: {
+                    success: 'Tautan sudah dikirimkan. Silahkan periksa email Anda!',
                 },
-                success: {
-                    render() {
-                        return 'Tautan sudah dikirimkan. Silahkan periksa email anda!'
-                    },
-                    icon: '✅'
-                },
-                error: {
-                    render({ data }) {
-                        return `Gagal: ${data.error?.message || 'Terjadi kesalahan'}`
-                    },
-                    icon: '❌'
-                }
-            }, {
-            closeButton: true,
-        });
+            }
+        );
     } catch (error) {
         console.error('Fetch error:', error);
     }

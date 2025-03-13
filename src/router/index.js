@@ -100,6 +100,15 @@ const router = createRouter({
       }
     },
     {
+      path: '/app/docs/legal/:id',
+      name: 'SopLegalization',
+      component: () => import('@/views/authenticated/docs/SopLegalization.vue'),
+      meta: {
+        requiresAuth: true,
+        roles: ['pj', 'kadep']
+      }
+    },
+    {
       path: '/app/implementer',
       name: 'SopImplementer',
       component: () => import('@/views/authenticated/SopImplementer.vue'),

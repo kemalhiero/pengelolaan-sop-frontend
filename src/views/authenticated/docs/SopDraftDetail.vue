@@ -1,8 +1,12 @@
 <script setup>
 import { inject, ref } from 'vue';
-import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
-import SopDocTemplate from '@/components/sop/SopDocTemplate.vue';
+import { useRoute, useRouter } from 'vue-router';
 import Divider from '@/components/Divider.vue';
+import SopDocTemplate from '@/components/sop/SopDocTemplate.vue';
+import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
+
+const router = useRouter();
+const route = useRoute();
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -12,6 +16,14 @@ import sopSteps from '@/data/sopSteps.json';
 import implementer from '@/data/sopImplementer.json';
 
 const statusSop = ref('');
+
+const submitFeedback = () => {
+    if (statusSop.value == 1) {
+        router.push(`/app/docs/legal/${route.params.id}`)
+    } else if (statusSop.value == 2) {
+        router.push(`/app/docs/${route.params.id}`)
+    }
+};
 </script>
 
 <template>
@@ -97,11 +109,15 @@ const statusSop = ref('');
 
         <Divider />
 
-        <SopBpmnTemplate name="Prosedur pendaftaran kerja praktik" :steps="sopSteps" :implementer="implementer" />
+        <SopBpmnTemplate 
+            name="Prosedur pendaftaran kerja praktik" 
+            :steps="sopSteps" 
+            :implementer="implementer" 
+        />
         <!-- </template> -->
 
         <div class="w-full lg:w-2/3 flex justify-center mx-auto mt-5 mb-10">
-            <form class="w-full bg-white p-6 space-y-5" >
+            <form class="w-full bg-white p-6 space-y-5">
                 <h2 class="text-lg font-semibold mb-4">Form umpan balik</h2>
                 <div>
                     <label for="status" class="block mb-2 text-sm font-medium">Status<span class="text-red-600">*</span></label>
@@ -117,7 +133,7 @@ const statusSop = ref('');
                         class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" 
                         placeholder="Jelaskan umpan balik anda..."></textarea>
                 </div>
-                <button type="submit" :disabled="statusSop == ''"
+                <button type="button" :disabled="statusSop == ''" @click="submitFeedback"
                     class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 disabled:cursor-not-allowed disabled:bg-opacity-60">
                     <p v-if="statusSop == 1">Lanjut ke Pengesahan SOP</p>
                     <p v-else>Kirim Umpan Balik</p>

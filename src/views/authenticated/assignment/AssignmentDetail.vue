@@ -2,7 +2,6 @@
 import { ref, provide, onMounted, watch, inject } from 'vue';
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue3-toastify';
-import { validateText } from '@/utils/validation';
 
 import { createSopStep, getAssignmentDetail, getSectionandWarning, getSopStep, updateSopDetail, updateSopStep, deleteSopStep } from '@/api/sopApi';
 import { createSopLawBasis, getLawBasis, getSopLawBasis, deleteSopLawBasis } from '@/api/lawBasisApi';
@@ -11,6 +10,7 @@ import { createEquipment, getSopEquipment, deleteSopEquipment } from '@/api/equi
 import { createRelatedSop, getRelatedSop, deleteRelatedSop } from '@/api/relatedSopApi';
 import { createRecord, getSopRecord, deleteSopRecord } from '@/api/recordApi';
 import { createIQ, getIQ, deleteIQ } from '@/api/implementQualification';
+import { useToastPromise } from '@/utils/toastPromiseHandler';
 
 import NumberOneCircleIcon from '@/assets/icons/NumberOneCircleIcon.vue';
 import NumberTwoCircleIcon from '@/assets/icons/NumberTwoCircleIcon.vue';
@@ -308,31 +308,13 @@ const syncSopInfo = async () => {
         }
     });
 
-    toast.promise(syncPromise, {
-        pending: {
-            render() {
-                return "Sedang menyinkronkan data..."
-            },
-            icon: "🕐",
+    useToastPromise(syncPromise, {
+        messages: {
+            success: 'Berhasil menyimpan progres!',
         },
-        success: {
-            render({ data }) {
-                return `${data}`
-            },
-            icon: "✅",
+        toastOptions: {
+            autoClose: 3000,
         },
-        error: {
-            render({ data }) {
-                return `Gagal menyinkronkan data: ${data.message || 'Terjadi kesalahan'}`
-            },
-            icon: "❌",
-        }
-    }, {
-        autoClose: 3000,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        position: toast.POSITION.TOP_RIGHT,
     });
 };
 
@@ -513,31 +495,10 @@ const syncSopStep = async () => {
         }
     });
 
-    toast.promise(syncPromise, {
-        pending: {
-            render() {
-                return "Sedang menyinkronkan data..."
-            },
-            icon: "🕐",
+    useToastPromise(syncPromise, {
+        messages: {
+            success: 'Berhasil menyimpan progres!',
         },
-        success: {
-            render({ data }) {
-                return `${data}`
-            },
-            icon: "✅",
-        },
-        error: {
-            render({ data }) {
-                return `Gagal menyinkronkan data: ${data.message || 'Terjadi kesalahan'}`
-            },
-            icon: "❌",
-        }
-    }, {
-        autoClose: 3000,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        position: toast.POSITION.TOP_RIGHT,
     });
 };
 
@@ -569,7 +530,6 @@ const syncData = () => {
             if (sopStep.value.some(step => !validateStepForm(step))) {
                 toast.warning('Silakan lengkapi data untuk semua kolom yang wajib diisi! (ditandai dengan <span class="text-red-600">*</span>)', {
                     autoClose: 7000,
-                    position: toast.POSITION.TOP_RIGHT,
                     dangerouslyHTMLString: true
                 });
                 return;
@@ -594,7 +554,6 @@ const nextStep = async () => {
         if (sopStep.value.length < 3) {
             toast.warning('Silakan tambahkan tahapan SOP terlebih dahulu, minimal 3', {
                 autoClose: 7000,
-                position: toast.POSITION.TOP_RIGHT
             });
             return;
         }
@@ -602,7 +561,6 @@ const nextStep = async () => {
         if (sopStep.value.some(step => !validateStepForm(step))) {
             toast.warning('Silakan lengkapi data untuk semua kolom yang wajib diisi! (ditandai dengan <span class="text-red-600">*</span>)', {
                 autoClose: 7000,
-                position: toast.POSITION.TOP_RIGHT,
                 dangerouslyHTMLString: true
             });
             return;
@@ -610,7 +568,6 @@ const nextStep = async () => {
         if (!validateLastStep()) {
             toast.warning('Tahap terakhir harus bertipe End. Silakan ubah tipe tahap terakhir.', {
                 autoClose: 7000,
-                position: toast.POSITION.TOP_RIGHT
             });
             return;
         }
@@ -622,7 +579,6 @@ const nextStep = async () => {
         console.log('apdetSopDetail', apdetSopDetail);
         toast.success('Data berhasil dikirim!', {
             autoClose: 7000,
-            position: toast.POSITION.TOP_RIGHT
         });
 
         setTimeout(() => {

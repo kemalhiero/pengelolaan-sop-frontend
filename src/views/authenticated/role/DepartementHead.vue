@@ -4,6 +4,7 @@ import { toast } from 'vue3-toastify';
 import { useRouter } from 'vue-router';
 
 import { updateHod, getCurrentHod, getHodCandidate } from '@/api/userApi';
+import { useToastPromise } from '@/utils/toastPromiseHandler';
 import { useAuthStore } from '@/stores/auth';
 import { logoutUser } from '@/api/authApi';
 import getToken from '@/utils/getToken';
@@ -51,7 +52,7 @@ const submitHod = async () => {
             });
             return;
         };
-        toast.promise(
+        useToastPromise(
             new Promise((resolve, reject) => {
                 updateHod({
                     oldHodId: dataHod.value.id,
@@ -75,27 +76,10 @@ const submitHod = async () => {
                     .catch(error => reject(error));
             }),
             {
-                pending: {
-                    render() {
-                        return 'Sedang memproses data...'
-                    },
-                    icon: '🔄'
-                },
-                success: {
-                    render() {
-                        return 'Ketua Departemen berhasil diubah. Harap untuk login ulang terlebih dahulu!'
-                    },
-                    icon: '✅'
-                },
-                error: {
-                    render({ data }) {
-                        return `Gagal: ${data.error?.message || 'Terjadi kesalahan'}`
-                    },
-                    icon: '❌'
+                messages: {
+                    success: 'Ketua departemen berhasil diperbarui! Silakan login kembali untuk melanjutkan. <br> Anda akan diarahkan ke halaman login dalam 5 detik.',
+                    error: 'Ketua departemen gagal diperbarui! Silakan coba lagi.'
                 }
-            },
-            {
-                closeButton: true,
             }
         );
 
@@ -162,7 +146,7 @@ onMounted(() => {
                 </div>
                 <div class="mt-10 flex justify-end">
                     <button type="button" @click="showAddModal = true"
-                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:cursor-not-allowed disabled:bg-opacity-60 flex">
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex">
                         Perbarui ketua departemen?
                     </button>
                 </div>

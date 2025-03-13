@@ -3,6 +3,7 @@ import { ref, reactive, inject, onMounted, computed } from 'vue';
 import { toast } from 'vue3-toastify';
 
 import { useAuthStore } from '@/stores/auth';
+import { useToastPromise } from '@/utils/toastPromiseHandler';
 import { sendCode, updateEmail, updatePw, verifCode } from '@/api/authApi';
 import { addProfilePhoto, addSignatureFile, deleteUserProfile, getUserProfile } from '@/api/userApi';
 
@@ -77,7 +78,7 @@ const onFileSelected = (event) => {
 
 const uploadPhoto = () => {
     try {
-        toast.promise(
+        useToastPromise(
             new Promise((resolve, reject) => {
                 addProfilePhoto(selectedImage.value)
                     .then(response => {
@@ -90,27 +91,9 @@ const uploadPhoto = () => {
                     .catch(error => reject(error));
             }),
             {
-                pending: {
-                    render() {
-                        return 'Sedang memproses data...'
-                    },
-                    icon: '🔄'
-                },
-                success: {
-                    render() {
-                        return 'Foto profil berhasil diunggah!'
-                    },
-                    icon: '✅'
-                },
-                error: {
-                    render({ data }) {
-                        return `Gagal: ${data.error?.message || 'Terjadi kesalahan'}`
-                    },
-                    icon: '❌'
+                messages: {
+                    success: 'Foto profil berhasil diunggah!'
                 }
-            },
-            {
-                closeButton: true,
             }
         );
 
@@ -148,7 +131,7 @@ const changePassword = () => {
             return
         }
 
-        toast.promise(
+        useToastPromise(
             new Promise((resolve, reject) => {
                 updatePw(passwordChange)
                     .then(response => {
@@ -163,27 +146,9 @@ const changePassword = () => {
                     .catch(error => reject(error));
             }),
             {
-                pending: {
-                    render() {
-                        return 'Sedang memproses data...'
-                    },
-                    icon: '🔄'
-                },
-                success: {
-                    render() {
-                        return 'Sandi anda berhasil diubah!'
-                    },
-                    icon: '✅'
-                },
-                error: {
-                    render({ data }) {
-                        return `Gagal: ${data.error?.message || 'Terjadi kesalahan'}`
-                    },
-                    icon: '❌'
+                messages: {
+                    success: 'Sandi anda berhasil diubah!'
                 }
-            },
-            {
-                closeButton: true,
             }
         );
 
@@ -196,7 +161,7 @@ const checkDataUpdate = () => {
     try {
         if (userProfile.value.email !== originalEmail.value) {
             // Send verification code to the new email
-            toast.promise(
+            useToastPromise(
                 new Promise((resolve, reject) => {
                     sendCode({
                         newEmail: userProfile.value.email
@@ -210,27 +175,10 @@ const checkDataUpdate = () => {
                         .catch(error => reject(error));
                 }),
                 {
-                    pending: {
-                        render() {
-                            return 'Sedang mengirim kode..'
-                        },
-                        icon: '🔄'
-                    },
-                    success: {
-                        render() {
-                            return 'Kode berhasil dikirim! Silahkan cek email baru anda!'
-                        },
-                        icon: '✅'
-                    },
-                    error: {
-                        render({ data }) {
-                            return `Gagal: ${data.error?.message || 'Terjadi kesalahan'}`
-                        },
-                        icon: '❌'
+                    messages: {
+                        success: 'Kode verifikasi telah dikirim ke email baru!',
+                        pending: 'Sedang mengirim kode verifikasi...'
                     }
-                },
-                {
-                    closeButton: true,
                 }
             );
 
@@ -249,7 +197,7 @@ const verifyCode = async () => {        //verifikasi kode dan perbarui email
         const isValid = await verifCode({ code: emailConfirmationCode.value });
         if (isValid.success) {
             // if (userProfile.value.role !== 'kadep') {
-            toast.promise(
+            useToastPromise(
                 new Promise((resolve, reject) => {
                     updateEmail({
                         oldEmail: originalEmail.value,
@@ -264,27 +212,10 @@ const verifyCode = async () => {        //verifikasi kode dan perbarui email
                         .catch(error => reject(error));
                 }),
                 {
-                    pending: {
-                        render() {
-                            return 'Sedang diproses...'
-                        },
-                        icon: '🔄'
-                    },
-                    success: {
-                        render() {
-                            return 'Email berhasil diperbarui!'
-                        },
-                        icon: '✅'
-                    },
-                    error: {
-                        render({ data }) {
-                            return `Gagal: ${data.error?.message || 'Terjadi kesalahan'}`
-                        },
-                        icon: '❌'
+                    messages: {
+                        success: 'Email berhasil diperbarui!',
+                        pending: 'Sedang memperbarui email...'
                     }
-                },
-                {
-                    closeButton: true,
                 }
             );
             // }
@@ -341,7 +272,7 @@ const getFileName = (file) => {
 const uploadSignature = () => {
     try {
         if (signatureFile.value instanceof File) {
-            toast.promise(
+            useToastPromise(
                 new Promise((resolve, reject) => {
                     addSignatureFile(signatureFile.value)
                         .then(response => {
@@ -353,28 +284,13 @@ const uploadSignature = () => {
                         .catch(error => reject(error));
                 }),
                 {
-                    pending: {
-                        render() {
-                            return 'Sedang memproses data...'
-                        },
-                        icon: '🔄'
+                    messages: {
+                        success: 'Tanda tangan berhasil diunggah!',
+                        pending: 'Sedang mengunggah tanda tangan...'
                     },
-                    success: {
-                        render() {
-                            return 'Tanda tangan berhasil diubah!'
-                        },
-                        icon: '✅'
-                    },
-                    error: {
-                        render({ data }) {
-                            return `Gagal: ${data.error?.message || 'Terjadi kesalahan'}`
-                        },
-                        icon: '❌'
+                    toastOptions: {
+                        autoClose: 7000
                     }
-                },
-                {
-                    closeButton: true,
-                    autoClose: 7000
                 }
             );
         } else if (typeof signatureFile.value === 'string') {
@@ -489,7 +405,7 @@ onMounted(() => {
 
             <div></div>
 
-            <!-- Tanda Tangan Digital -->
+            <!-- Tanda Tangan -->
             <div class="lg:col-span-2 p-6" v-if="showSignatureForm">
                 <h2 class="text-2xl font-bold text-gray-800 mb-1">Tanda Tangan</h2>
                 <p class="text-sm mb-6">Unggah hasil pindai dari tanda tangan dan stempel jabatan anda. Pastikan latar belakangnya berwarna putih!</p>
