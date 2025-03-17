@@ -79,6 +79,10 @@ const submitHod = async () => {
                 messages: {
                     success: 'Ketua departemen berhasil diperbarui! Silakan login kembali untuk melanjutkan. <br> Anda akan diarahkan ke halaman login dalam 5 detik.',
                     error: 'Ketua departemen gagal diperbarui! Silakan coba lagi.'
+                },
+                toastOptions: {
+                    autoClose: 7000,
+                    dangerouslyHTMLString: true
                 }
             }
         );

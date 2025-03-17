@@ -1,15 +1,19 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getSectionandWarning, getSopStep, getSopVersion } from '@/api/sopApi';
+
+import { getSectionandWarning, getSopStep, getSopVersion, updateSopDetail } from '@/api/sopApi';
+import { useToastPromise } from '@/utils/toastPromiseHandler';
 import { switchStatusSopDetail } from '@/utils/getStatus';
 import { getSopImplementer } from '@/api/implementerApi';
 import { getSopEquipment } from '@/api/equipmentApi';
 import { getIQ } from '@/api/implementQualification';
+import { addDraftFeedback } from '@/api/feedbackApi';
 import { getRelatedSop } from '@/api/relatedSopApi';
 import { getSopLawBasis } from '@/api/lawBasisApi';
 import { getSopRecord } from '@/api/recordApi';
 import { getCurrentHod } from '@/api/userApi';
+import { useAuthStore } from '@/stores/auth';
 
 import Divider from '@/components/Divider.vue';
 import SopDocTemplate from '@/components/sop/SopDocTemplate.vue';
@@ -17,13 +21,14 @@ import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
 
 const statusSop = ref('');
-const isLoading = ref(true);
-const hasError = ref(false);
+const feedback = ref('');
+
 const sopData = ref({
     id: '',
     name: '',
@@ -31,13 +36,13 @@ const sopData = ref({
     number: '',
     version: '',
     status: null,
-    is_approved: null,
     description: '',
     pic_position: '',
     revision_date: '',
     effective_date: '',
-    users: [],
     section: '',
+    users: [],
+    organization: {},
 
     implementer: [],
     legalBasis: [],
@@ -57,12 +62,8 @@ const hodData = ref({
 let idsopdetail;
 const fetchSopVersion = async () => {
     try {
-        isLoading.value = true;
-        hasError.value = false;
-
         const result = await getSopVersion(route.query.id, route.query.version);
         if (!result.success) {
-            hasError.value = true;
             console.error('API Error:', result.error);
             return;
         }
@@ -74,9 +75,6 @@ const fetchSopVersion = async () => {
 
     } catch (error) {
         console.error('Fetch error:', error);
-        hasError.value = true;
-    } finally {
-        isLoading.value = false;
     }
 };
 
@@ -134,11 +132,64 @@ const fetchCurrentHod = async () => {
     }
 };
 
-const submitFeedback = () => {
-    if (statusSop.value == 1) {
-        router.push(`/app/docs/legal/${route.params.id}`)
-    } else if (statusSop.value == 2) {
-        router.push(`/app/docs/${route.params.id}`)
+const submitFeedback = async () => {
+    const data = {
+        id_sop_detail: idsopdetail,
+        status: statusSop.value,
+        feedback: feedback.value,
+    };
+
+    useToastPromise(
+        new Promise((resolve, reject) => {
+            addDraftFeedback(data)
+                .then(response => {
+                    if (!response.success) {
+                        throw response;
+                    }
+                    resolve(response);
+                })
+                .catch(error => reject(error));
+        }),
+        {
+            messages: {
+                success: 'Umpan balik berhasil dikirim!',
+            }
+        }
+    );
+
+    if (statusSop.value == 1) {         // setuju
+        // cek dulu lingkup organisasinya apakah dsi atau tidak
+        if (sopData.value.organization.name === 'Departemen Sistem Informasi' || sopData.value.organization.id === 0) {
+            // jika iya, maka langsung ke pengesahan oleh kadep
+            // sop yang tampil di sini hanya bisa dilihat oleh kadep, sudah diatur di backend
+            await updateSopDetail(idsopdetail, { status: 7 });
+            setTimeout(() => {
+                router.push(`/app/docs/legal/${route.query.id}`)
+            }, 5000);
+            
+        } else {
+            // jika tidak, maka akan dicek dulu oleh pj, jika pj sudah setuju maka akan diteruskan ke kadep
+            if (authStore.userRole === 'kadep') {
+                await updateSopDetail(idsopdetail, { status: 7 });
+                setTimeout(() => {
+                    router.push(`/app/docs/legal/${route.query.id}`)
+                }, 5000);
+            } else if (authStore.userRole === 'pj') {
+                await updateSopDetail(idsopdetail, { status: 5 });
+                setTimeout(() => {
+                    router.push(`/app/docs/${route.query.id}`)
+                }, 5000);
+            }
+        }
+    } else if (statusSop.value == 2) {  // perlu revisi
+        if (authStore.userRole === 'kadep') {
+            await updateSopDetail(idsopdetail, { status: 6 });
+        } else if (authStore.userRole === 'pj') {
+            await updateSopDetail(idsopdetail, { status: 4 });
+        }
+        setTimeout(() => {
+            router.push(`/app/docs/${route.query.id}`)
+        }, 5000);
     }
 };
 
@@ -152,7 +203,7 @@ onMounted(async () => {
 
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20 px-10">
-        <!-- <template> -->
+
         <h2 class="text-4xl text-center my-10 font-bold"> Pengecekan Draft SOP {{ sopData?.name }}</h2>
 
         <div class="grid grid-cols-2 lg:grid-cols-3 gap-5">
@@ -171,21 +222,15 @@ onMounted(async () => {
             <div class="bg-gray-200 p-5 rounded-xl shadow-md col-span-2 lg:col-span-1 lg:row-span-2">
                 <h4 class="mb-2.5 text-lg">Penyusun</h4>
                 <ul class="list-disc list-inside">
-                    <li class="text-xl font-bold" v-for="(user, index) in sopData?.users" :key="index">
+                    <li class="text-lg font-bold" v-for="(user, index) in sopData?.users" :key="index">
                         {{ user.identity_number }} - {{ user.name }}
                     </li>
                 </ul>
             </div>
-            <div class="bg-gray-200 p-5 rounded-xl shadow-md">
+            <div class="bg-gray-200 p-5 rounded-xl shadow-md col-span-2">
                 <h4 class="mb-2.5 text-lg">Deskripsi</h4>
-                <h5 class="text-xl font-bold">
+                <h5 class="text-base font-bold">
                     {{ sopData?.description }}
-                </h5>
-            </div>
-            <div class="bg-gray-200 p-5 rounded-xl shadow-md">
-                <h4 class="mb-2.5 text-lg">Jabatan Penanggung Jawab</h4>
-                <h5 class="text-xl font-bold">
-                    {{ sopData?.pic_position }}
                 </h5>
             </div>
         </div>
@@ -222,10 +267,9 @@ onMounted(async () => {
         <div v-else class="my-4 p-4 bg-gray-100 rounded text-center">
             Belum ada tahapan yang diinputkan oleh penyusun!
         </div>
-        <!-- </template> -->
 
-        <div class="w-full lg:w-2/3 flex justify-center mx-auto mt-5 mb-10">
-            <form class="w-full bg-white p-6 space-y-5">
+        <div class="w-full lg:w-2/3 flex justify-center mx-auto mt-5 mb-10" v-if="![2].includes(sopData.status)">
+            <form class="w-full bg-white p-6 space-y-5" @submit.prevent="submitFeedback">
                 <h2 class="text-lg font-semibold mb-4">Form umpan balik</h2>
                 <div>
                     <label for="status" class="block mb-2 text-sm font-medium">Status<span class="text-red-600">*</span></label>
@@ -236,12 +280,12 @@ onMounted(async () => {
                     </select>
                 </div>
                 <div>
-                    <label for="description" class="block mb-2 text-sm font-medium">Keterangan</label>
-                    <textarea id="description" rows="4" 
+                    <label for="description" class="block mb-2 text-sm font-medium">Keterangan<span class="text-red-600">*</span></label>
+                    <textarea id="description" rows="4" v-model="feedback" required minlength="5" maxLength="500"
                         class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" 
-                        placeholder="Jelaskan umpan balik anda..."></textarea>
+                        placeholder="Tuliskan umpan balik anda (minimal 5 karakter)"></textarea>
                 </div>
-                <button type="button" :disabled="statusSop == ''" @click="submitFeedback"
+                <button type="submit" :disabled="statusSop === '' || feedback.length < 5"
                     class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 disabled:cursor-not-allowed disabled:bg-opacity-60">
                     <p v-if="statusSop == 1">Lanjut ke Pengesahan SOP</p>
                     <p v-else>Kirim Umpan Balik</p>

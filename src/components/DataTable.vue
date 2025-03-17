@@ -332,7 +332,7 @@ const goToPage = (page) => {
                     <td v-for="column in statusColumns" :key="column.field" class="px-6 py-4 text-black">
                         <RedBadgeIndicator :teks="badgeText[0]" v-if="item[column.field] === 0"/>
                         <GreenBadgeIndicator :teks="badgeText[1]" v-else-if="item[column.field] === 1 " />
-                        <YellowBadgeIndicator :teks="badgeText[2]" v-else-if="item[column.field] === 2" />
+                        <YellowBadgeIndicator :teks="badgeText[2]" v-else" />
                     </td>
                     <td v-for="column in radioColumn" :key="column.field" class="px-6 py-4 text-black">
                         <input 

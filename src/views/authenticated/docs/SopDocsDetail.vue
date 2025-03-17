@@ -1,6 +1,6 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { getOneSop } from '@/api/sopApi';
 import { switchStatusIsActive } from '@/utils/getStatus';
 
@@ -15,11 +15,10 @@ const layoutType = inject('layoutType');
 layoutType.value = 'admin';
 
 const route = useRoute();
-const showDetailModal = ref(false);
+const router = useRouter();
 const sopData = ref({});
 const isLoading = ref(true);
 const hasError = ref(false);
-const selectedVersion = ref(null);
 
 const fetchData = async () => {
   try {
@@ -45,17 +44,18 @@ const fetchData = async () => {
 };
 
 const handleRowClick = (id) => {
-  // Cari versi SOP yang sesuai dengan id_sop_detail
   const selectedData = sopData.value.version.find(
     (version) => version.id === id
   );
-  selectedVersion.value = selectedData;
-  showDetailModal.value = true;
-};
 
-const closeModal = () => {
-  showDetailModal.value = false;
-  selectedVersion.value = null;
+  router.push({
+    name: 'SopDraftDetail',
+    query: { id: route.params.id, version: selectedData.version },
+  }).catch((err) => {
+    if (err.name !== 'NavigationDuplicated') {
+      console.error('Navigation error:', err);
+    }
+  });
 };
 
 onMounted(() => {
@@ -115,7 +115,11 @@ onMounted(() => {
           :status-columns="[
             { field: 'status', label: 'Status' }
           ]" 
-          :badge-text="['Batal', 'Diterima', 'Sedang Proses']" 
+          :badge-text="[
+            'Batal', 
+            'Diterima', 
+            'Sedang disusun/direview',
+          ]" 
           :detail-column="true"
           @click="handleRowClick"
         />
@@ -135,96 +139,4 @@ onMounted(() => {
 
   </main>
 
-  <div v-show="showDetailModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
-
-    <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="closeModal"></div>
-
-    <div class="relative w-full max-w-2xl max-h-full" v-if="selectedVersion">
-      <!-- Modal content -->
-      <div class="relative bg-white rounded-lg shadow">
-        <!-- Modal header -->
-        <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
-          <h3 class="text-xl font-medium text-gray-900">
-            Detail versi SOP
-          </h3>
-          <button type="button"
-            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
-            @click="closeModal">
-            <XMarkCloseIcon class="w-3 h-3" />
-            <span class="sr-only">Tutup modal</span>
-          </button>
-        </div>
-        
-        <!-- Modal body -->
-        <div class="p-4 md:p-5 space-y-4 max-h-[620px] overflow-y-auto">
-          <div class="grid gap-4 mb-4 grid-cols-2">
-            <div class="col-span-2">
-              <label for="warning" class="block mb-2 text-sm font-medium text-gray-900">Peringatan</label>
-              <textarea 
-                id="warning" 
-                rows="3"
-                class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                readonly
-                v-model="selectedVersion.warning"
-                placeholder="belum ada data"
-              ></textarea>
-            </div>
-            <div class="col-span-2">
-              <label for="section" class="block mb-2 text-sm font-medium text-gray-900">Seksi</label>
-              <input 
-                type="text" 
-                id="section"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                v-model="selectedVersion.section"
-                placeholder="belum ada data"
-                readonly
-              >
-            </div>
-            <div class="col-span-2">
-              <label for="description" class="block mb-2 text-sm font-medium text-gray-900">Deskripsi</label>
-              <textarea 
-                id="description" 
-                rows="4"
-                class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                readonly
-                v-model="selectedVersion.description"
-                placeholder="belum ada data"
-              ></textarea>
-            </div>
-            <div class="col-span-2">
-              <label class="block mb-2 text-sm font-medium text-gray-900">Penyusun</label>
-              <ul class="max-w-2xl space-y-1 list-disc list-inside columns-2">
-                <li v-if="selectedVersion.users.length > 0" v-for="drafter in selectedVersion.users" :key="drafter" class="text-sm">
-                  {{ drafter.identity_number }} - {{ drafter.name }}
-                </li>
-                <li v-else class="italic text-gray-400 text-sm"> belum ada data </li>
-              </ul>
-            </div>
-            <div class="col-span-2">
-              <label for="position" class="block mb-2 text-sm font-medium text-gray-900">Posisi Penanggung Jawab</label>
-              <input 
-                type="text" 
-                id="position"
-                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                v-model="selectedVersion.pic_position"
-                placeholder="belum ada data"
-                readonly
-              >
-            </div>
-          </div>
-        </div>
-        <!-- Modal footer -->
-        <div class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-          <RouterLink :to="`/app/docs/draft?id=${route.params.id}&version=${selectedVersion.version}`">
-            <button type="button"
-              class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-              <p v-if="selectedVersion.status === 1">Cek SOP yang sudah disusun</p>
-              <p v-else-if="selectedVersion.status === 2">Lihat Progres Terbaru</p>
-            </button>
-          </RouterLink>
-        </div>
-      </div>
-    </div>
-
-  </div>
 </template>

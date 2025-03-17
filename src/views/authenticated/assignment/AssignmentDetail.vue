@@ -576,14 +576,34 @@ const nextStep = async () => {
             return;
         }
         currentStep.value++;
-    } else if (currentStep.value === 3) {
+    } else if (currentStep.value === 3) {    
         syncSopInfo();
         syncSopStep();
-        const apdetSopDetail = await updateSopDetail(picInfo.value.id, { status: 1 });     // Update status SOP kalau sekarang sudah dikirim untuk nantinya dicek oleh penanggung jawab atau kadep
-        console.log('apdetSopDetail', apdetSopDetail);
-        toast.success('Data berhasil dikirim!', {
-            autoClose: 7000,
+
+        // Update status SOP kalau sekarang sudah dikirim untuk nantinya dicek oleh penanggung jawab atau kadep
+        // dicek dulu apakah organisasinya dsi atau tidak, jika dsi maka akan langsung di cek oleh kadep
+        // jika bukan dsi maka akan di cek oleh penanggung jawab
+        let promiseApdet;
+        promiseApdet = new Promise((resolve, reject) => {
+            // Set status 5 if organization is DSI, otherwise set status 3
+            const newStatus = picInfo.value.organization === 'Departemen Sistem Informasi' ? 5 : 3;
+            
+            updateSopDetail(picInfo.value.id, { status: newStatus })
+                .then(response => {
+                    if (!response.success) {
+                        throw response;
+                    }
+                    resolve(response);
+                })
+                .catch(error => reject(error));
         });
+
+        useToastPromise(promiseApdet, {
+            messages: {
+                success: 'Umpan balik berhasil dikirim!',
+            }
+        }
+    );
 
         setTimeout(() => {
             router.push('/assignment')
