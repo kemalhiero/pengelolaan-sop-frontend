@@ -7,9 +7,8 @@ import Divider from '@/components/Divider.vue';
 const picInfo = inject('picData');
 const { formData } = inject('sopFormData');
 const sopStepRaw = inject('sopStep');
-const sopStep = computed(() =>
-    [...sopStepRaw.value].sort((a, b) => a.seq_number - b.seq_number)
-);
+const sopStep = computed(() => [...sopStepRaw.value].sort((a, b) => a.seq_number - b.seq_number));
+const hodData = inject('hodData');
 </script>
 
 <template>
@@ -29,8 +28,8 @@ const sopStep = computed(() =>
             revision-date=""
             effective-date=""
             
-            :pic-name="picInfo.pic.name"
-            :pic-number="picInfo.pic.number"
+            :pic-name="hodData.name"
+            :pic-number="hodData.id_number"
             :section="formData.section"
             
             :law-basis="formData.legalBasis.map(item => item.legal)"

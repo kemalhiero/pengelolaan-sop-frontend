@@ -11,6 +11,7 @@ import { createRelatedSop, getRelatedSop, deleteRelatedSop } from '@/api/related
 import { createRecord, getSopRecord, deleteSopRecord } from '@/api/recordApi';
 import { createIQ, getIQ, deleteIQ } from '@/api/implementQualification';
 import { useToastPromise } from '@/utils/toastPromiseHandler';
+import { getCurrentHod } from '@/api/userApi';
 
 import NumberOneCircleIcon from '@/assets/icons/NumberOneCircleIcon.vue';
 import NumberTwoCircleIcon from '@/assets/icons/NumberTwoCircleIcon.vue';
@@ -154,25 +155,27 @@ const fetchSopStep = async () => {
         let response = await getSopStep(idsopdetail);
         apiResponseStep = response.data
 
-        sopStep.value = response.data.map(item => ({
-            id_step: item.id_step,
-            id_next_step_if_no: item.id_next_step_if_no,
-            id_next_step_if_yes: item.id_next_step_if_yes,
-            seq_number: item.seq_number,
-            name: item.name,
-            type: item.type,
-            id_implementer: item.id_implementer,
-            fittings: item.fittings,
-            time: item.time,
-            time_unit: item.time_unit,
-            output: item.output,
-            description: item.description
-        }));
+        sopStep.value = response.data.map(item => ({ ...item }));
 
     } catch (error) {
         console.error('Fetch tahapan sop error:', error);
     }
 };
+
+const hodData = ref({
+    id_number: '',
+    name: '',
+});
+const fetchCurrentHod = async () => {
+    try {
+        const response = await getCurrentHod();
+        hodData.value.id_number = response.data.id_number;
+        hodData.value.name = response.data.name;
+    } catch (error) {
+        console.error('Fetch data kadep error:', error);
+    }
+};
+provide('hodData', hodData);
 
 // sinkron data sop
 const syncSopInfo = async () => {
@@ -462,17 +465,18 @@ const syncSopStep = async () => {
             for (let i = 0; i < changes.toAdd.length; i++) {
                 const item = changes.toAdd[i];
 
+                const { seq_number, name, type, id_implementer, fittings, time, time_unit, output, description } = item;
                 const createData = {
                     id_sop_detail: idsopdetail,
-                    seq_number: item.seq_number,
-                    name: item.name,
-                    type: item.type,
-                    id_implementer: item.id_implementer,
-                    fittings: item.fittings,
-                    time: item.time,
-                    time_unit: item.time_unit,
-                    output: item.output,
-                    description: item.description
+                    seq_number,
+                    name,
+                    type,
+                    id_implementer,
+                    fittings,
+                    time,
+                    time_unit,
+                    output,
+                    description
                 };
 
                 // Only add next step IDs if type is decision
@@ -597,6 +601,7 @@ const prevStep = () => {
 onMounted(() => {
     fetchPicInfo();
     fetchLegalBasis();
+    fetchCurrentHod();
 });
 </script>
 

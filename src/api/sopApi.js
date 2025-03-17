@@ -5,6 +5,7 @@ const getAllSop = () => getRequest('sop');
 const createSop = (data) => postRequest('sop', data, getToken());
 
 const getOneSop = (idSop) => getRequest(`sop/${idSop}`);
+const getSopVersion = (id, version) => getRequest(`sop/version?id=${id}&version=${version}`);
 const getLatestSopInYear = (year) => getRequest(`sop/latest/year?year=${year}`);
 
 const createSopDetail = (id, data) => postRequest(`sop/detail?id=${id}`, data, getToken());
@@ -24,6 +25,6 @@ const deleteSopStep = (id) => deleteRequest(`sop/step?id=${id}`, getToken());
 
 export {
     getAllSop, createSop, getOneSop,               //tabel sop
-    createSopDetail, updateSopDetail, getAssignment, getAssignmentDetail, getSectionandWarning, getLatestSopInYear, getManagedSop,      //tabel detail sop
+    createSopDetail, updateSopDetail, getAssignment, getAssignmentDetail, getSectionandWarning, getLatestSopInYear, getManagedSop, getSopVersion,      //tabel detail sop
     createSopStep, getSopStep, updateSopStep, deleteSopStep    //tabel sop step
 };

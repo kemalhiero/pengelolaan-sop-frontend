@@ -91,7 +91,7 @@ const router = createRouter({
       }
     },
     {
-      path: '/app/docs/draft/:id',
+      path: '/app/docs/draft',
       name: 'SopDraftDetail',
       component: () => import('@/views/authenticated/docs/SopDraftDetail.vue'),
       meta: {

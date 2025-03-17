@@ -15,12 +15,10 @@ const props = defineProps({
         required: true
     },
     number: {
-        type: String,
-        required: true
+        type: String
     },
     createdDate: {
-        type: String,
-        required: true
+        type: String
     },
     revisionDate: {
         type: String
@@ -49,19 +47,20 @@ const props = defineProps({
         required: true
     },
     relatedSop: {
-        type: Array
+        type: Array,
+        default: []
     },
     equipment: {
         type: Array,
-        required: true
+        default: []
     },
     warning: {
         type: String,
-        required: true
+        default: '-'
     },
     recordData: {
         type: Array,
-        required: true
+        default: []
     },
 
     // sop step

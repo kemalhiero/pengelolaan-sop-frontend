@@ -56,23 +56,37 @@ const confirm = () => {
             </form>
         </div>
 
-        <SopDocTemplate class="mt-12" name="Prosedur Pendaftaran Kerja Praktik" number="T/__/UN16.17.02/OT.01.00/2023"
-            created-date="18 Agustus 2023" revision-date="" effective-date="23 Januari 2023" pic-name="Husnil Kamil, MT"
-            pic-number="198201182008121002" section="Semua Seksi di Lingkungan Departemen Sistem Informasi" :law-basis="[
+        <SopDocTemplate class="mt-12" 
+            name="Prosedur Pendaftaran Kerja Praktik" 
+            number="T/__/UN16.17.02/OT.01.00/2023"
+            created-date="18 Agustus 2023" 
+            revision-date="" 
+            effective-date="23 Januari 2023" 
+            pic-name="Husnil Kamil, MT"
+            pic-number="198201182008121002" 
+            section="Semua Seksi di Lingkungan Departemen Sistem Informasi" 
+            :law-basis="[
                 'Peraturan Pemerintah Nomor 95 Tahun 2021 tentang Perguruan Tinggi Negeri Badan Hukum Universitas Andalas',
                 'Peraturan Rektor Universitas Andalas Nomor 8 Tahun 2022 tentang Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas'
-            ]" :implement-qualification="[
+            ]" 
+            :implement-qualification="[
                 'Memiliki Kemampuan pengolahan data sederhana',
                 'Mengetahui tugas dan fungsi POS AP',
                 'Menguasai operasional komputer'
-            ]" :related-sop="[
+            ]" 
+            :related-sop="[
                 'POS Pelaksanaan KP', 'POS Pembatalan KP'
-            ]" :equipment="[
+            ]" 
+            :equipment="[
                 'Komputer', 'Printer', 'HDD Kesternal', 'Dokumen OTK'
-            ]" warning="Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses kerja praktik mahasiswa."
+            ]" 
+            warning="Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses kerja praktik mahasiswa."
             :record-data="[
                 'Dokumen', 'Pengarsipan', 'Surat/Disposisi'
-            ]" :implementer="implementer" :steps="sopSteps" />
+            ]" 
+            :implementer="implementer" 
+            :steps="sopSteps" 
+        />
 
         <Divider />
 
@@ -104,11 +118,11 @@ const confirm = () => {
                     </h3>
                     <p class="text-gray-500 mb-1">
                         SOP ini akan ditandatangani oleh anda dan akan menjadi SOP yang berlaku di
-                        Departemen Sistem Informasi Universitas Andalas.
+                        Departemen Sistem Informasi Universitas Andalas!
                     </p>
                     <p class="text-gray-600 mb-5">
                         <span class="text-red-600">*</span>
-                        SOP akan dipublikasikan dan dapat dilihat oleh semua orang.
+                        SOP akan dipublikasikan dan dapat dilihat oleh semua orang
                         <span class="text-red-600">*</span>
                     </p>
                     <button @click="confirm"

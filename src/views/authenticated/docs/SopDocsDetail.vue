@@ -2,7 +2,7 @@
 import { inject, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router'
 import { getOneSop } from '@/api/sopApi';
-import getStatus from '@/utils/getStatus';
+import { switchStatusIsActive } from '@/utils/getStatus';
 
 import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
@@ -86,7 +86,7 @@ onMounted(() => {
         <div class="bg-gray-200 p-5 rounded-xl shadow-md">
           <h4 class="mb-2.5 text-lg">Status</h4>
           <h5 class="text-xl font-bold">
-            {{ getStatus(sopData.is_active) }}
+            {{ switchStatusIsActive(sopData.is_active) }}
           </h5>
         </div>
       </div>
@@ -215,7 +215,7 @@ onMounted(() => {
         </div>
         <!-- Modal footer -->
         <div class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-          <RouterLink :to="`/app/docs/draft/${route.params.id}`">
+          <RouterLink :to="`/app/docs/draft?id=${route.params.id}&version=${selectedVersion.version}`">
             <button type="button"
               class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
               <p v-if="selectedVersion.status === 1">Cek SOP yang sudah disusun</p>
