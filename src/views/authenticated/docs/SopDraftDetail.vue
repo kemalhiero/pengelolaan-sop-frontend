@@ -3,16 +3,17 @@ import { inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { getSectionandWarning, getSopStep, getSopVersion, updateSopDetail } from '@/api/sopApi';
-import { useToastPromise } from '@/utils/toastPromiseHandler';
-import { switchStatusSopDetail } from '@/utils/getStatus';
+import { addDraftFeedback, getDraftFeedback } from '@/api/feedbackApi';
 import { getSopImplementer } from '@/api/implementerApi';
 import { getSopEquipment } from '@/api/equipmentApi';
 import { getIQ } from '@/api/implementQualification';
-import { addDraftFeedback } from '@/api/feedbackApi';
 import { getRelatedSop } from '@/api/relatedSopApi';
 import { getSopLawBasis } from '@/api/lawBasisApi';
 import { getSopRecord } from '@/api/recordApi';
 import { getCurrentHod } from '@/api/userApi';
+
+import { useToastPromise } from '@/utils/toastPromiseHandler';
+import { switchStatusSopDetail } from '@/utils/getStatus';
 import { useAuthStore } from '@/stores/auth';
 
 import Divider from '@/components/Divider.vue';
@@ -27,7 +28,8 @@ const layoutType = inject('layoutType');
 layoutType.value = 'admin';
 
 const statusSop = ref('');
-const feedback = ref('');
+const newFeedback = ref('');
+const draftFeedback = ref([]);
 
 const sopData = ref({
     id: '',
@@ -59,7 +61,8 @@ const hodData = ref({
     name: '',
 });
 
-let idsopdetail;
+const idsopdetail = ref(null);
+
 const fetchSopVersion = async () => {
     try {
         const result = await getSopVersion(route.query.id, route.query.version);
@@ -69,7 +72,7 @@ const fetchSopVersion = async () => {
         }
 
         if (result?.data) {
-            idsopdetail = result.data.id;
+            idsopdetail.value = result.data.id;
             sopData.value = { ...sopData.value, ...result.data };
         }
 
@@ -81,29 +84,29 @@ const fetchSopVersion = async () => {
 const fetchInfoSop = async () => {
     try {
 
-        let response = await getSectionandWarning(idsopdetail);
+        let response = await getSectionandWarning(idsopdetail.value);
         sopData.value.section = response.data.section;
         sopData.value.warning = response.data.warning;
 
-        response = await getSopImplementer(idsopdetail);
+        response = await getSopImplementer(idsopdetail.value);
         sopData.value.implementer = response.data;
 
-        response = await getSopLawBasis(idsopdetail);
+        response = await getSopLawBasis(idsopdetail.value);
         sopData.value.legalBasis = response.data.map(item => ({
             id: item.id,
             legal: `${item.law_type} Nomor ${item.number} Tahun ${item.year} tentang ${item.about}`
         }));;
 
-        response = await getIQ(idsopdetail);
+        response = await getIQ(idsopdetail.value);
         sopData.value.implementQualification = response.data.map(item => item.qualification);
 
-        response = await getRelatedSop(idsopdetail);
+        response = await getRelatedSop(idsopdetail.value);
         sopData.value.relatedSop = response.data.map(item => item.related_sop);
 
-        response = await getSopEquipment(idsopdetail);
+        response = await getSopEquipment(idsopdetail.value);
         sopData.value.equipment = response.data.map(item => item.equipment);
 
-        response = await getSopRecord(idsopdetail);
+        response = await getSopRecord(idsopdetail.value);
         sopData.value.record = response.data.map(item => item.data_record);
 
         response = null;
@@ -115,7 +118,7 @@ const fetchInfoSop = async () => {
 
 const fetchSopStep = async () => {
     try {
-        const response = await getSopStep(idsopdetail);
+        const response = await getSopStep(idsopdetail.value);
         sopData.value.steps = response.data.sort((a, b) => a.seq_number - b.seq_number);
     } catch (error) {
         console.error('Fetch tahapan sop error:', error);
@@ -132,11 +135,22 @@ const fetchCurrentHod = async () => {
     }
 };
 
+const fetchFeedback = async () => {
+    try {
+        const response = await getDraftFeedback(idsopdetail.value);
+        if (response.success) {
+            draftFeedback.value = response.data;
+        }
+    } catch (error) {
+        console.error('Fetch feedback error:', error);
+    }
+};
+
 const submitFeedback = async () => {
     const data = {
-        id_sop_detail: idsopdetail,
+        id_sop_detail: idsopdetail.value,
         status: statusSop.value,
-        feedback: feedback.value,
+        newFeedback: newFeedback.value,
     };
 
     useToastPromise(
@@ -162,7 +176,7 @@ const submitFeedback = async () => {
         if (sopData.value.organization.name === 'Departemen Sistem Informasi' || sopData.value.organization.id === 0) {
             // jika iya, maka langsung ke pengesahan oleh kadep
             // sop yang tampil di sini hanya bisa dilihat oleh kadep, sudah diatur di backend
-            await updateSopDetail(idsopdetail, { status: 7 });
+            await updateSopDetail(idsopdetail.value, { status: 7 });
             setTimeout(() => {
                 router.push(`/app/docs/legal/${route.query.id}`)
             }, 5000);
@@ -170,12 +184,12 @@ const submitFeedback = async () => {
         } else {
             // jika tidak, maka akan dicek dulu oleh pj, jika pj sudah setuju maka akan diteruskan ke kadep
             if (authStore.userRole === 'kadep') {
-                await updateSopDetail(idsopdetail, { status: 7 });
+                await updateSopDetail(idsopdetail.value, { status: 7 });
                 setTimeout(() => {
                     router.push(`/app/docs/legal/${route.query.id}`)
                 }, 5000);
             } else if (authStore.userRole === 'pj') {
-                await updateSopDetail(idsopdetail, { status: 5 });
+                await updateSopDetail(idsopdetail.value, { status: 5 });
                 setTimeout(() => {
                     router.push(`/app/docs/${route.query.id}`)
                 }, 5000);
@@ -183,9 +197,9 @@ const submitFeedback = async () => {
         }
     } else if (statusSop.value == 2) {  // perlu revisi
         if (authStore.userRole === 'kadep') {
-            await updateSopDetail(idsopdetail, { status: 6 });
+            await updateSopDetail(idsopdetail.value, { status: 6 });
         } else if (authStore.userRole === 'pj') {
-            await updateSopDetail(idsopdetail, { status: 4 });
+            await updateSopDetail(idsopdetail.value, { status: 4 });
         }
         setTimeout(() => {
             router.push(`/app/docs/${route.query.id}`)
@@ -198,6 +212,7 @@ onMounted(async () => {
     await fetchInfoSop();
     await fetchSopStep();
     await fetchCurrentHod();
+    await fetchFeedback();
 });
 </script>
 
@@ -268,9 +283,25 @@ onMounted(async () => {
             Belum ada tahapan yang diinputkan oleh penyusun!
         </div>
 
-        <div class="w-full lg:w-2/3 flex justify-center mx-auto mt-5 mb-10" v-if="![2].includes(sopData.status)">
-            <form class="w-full bg-white p-6 space-y-5" @submit.prevent="submitFeedback">
-                <h2 class="text-lg font-semibold mb-4">Form umpan balik</h2>
+        <div class="w-full lg:w-2/3 flex flex-col mx-auto mt-12 mb-5">
+            <h2 class="text-xl font-semibold mb-4">Umpan Balik Sebelumnya</h2>
+            <div v-if="draftFeedback && draftFeedback.length > 0" class="space-y-4">
+                <div v-for="(feedback, index) in draftFeedback" :key="index" class="bg-gray-200 p-4 rounded-lg shadow-md">
+                    <p>
+                        <span class="text-base font-bold">{{ feedback?.user?.name || 'User' }}</span> - 
+                        <span class="text-sm text-gray-600">{{ feedback?.createdAt || '-' }}</span>
+                    </p>
+                    <p class="text-lg mt-1">{{ feedback?.feedback || '-' }}</p>
+                </div>
+            </div>
+            <div v-else class="text-center text-gray-500">
+                Belum ada umpan balik yang diberikan.
+            </div>
+        </div>
+
+        <div class="w-full lg:w-2/3 flex justify-center mx-auto my-10" v-if="![2].includes(sopData.status)">
+            <form class="w-full bg-white space-y-5" @submit.prevent="submitFeedback">
+                <h2 class="text-xl font-semibold mb-4">Form Umpan Balik</h2>
                 <div>
                     <label for="status" class="block mb-2 text-sm font-medium">Status<span class="text-red-600">*</span></label>
                     <select type="text" id="status" v-model="statusSop" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required>
@@ -281,11 +312,11 @@ onMounted(async () => {
                 </div>
                 <div>
                     <label for="description" class="block mb-2 text-sm font-medium">Keterangan<span class="text-red-600">*</span></label>
-                    <textarea id="description" rows="4" v-model="feedback" required minlength="5" maxLength="500"
+                    <textarea id="description" rows="4" v-model="newFeedback" required minlength="5" maxLength="500"
                         class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" 
                         placeholder="Tuliskan umpan balik anda (minimal 5 karakter)"></textarea>
                 </div>
-                <button type="submit" :disabled="statusSop === '' || feedback.length < 5"
+                <button type="submit" :disabled="statusSop === '' || newFeedback.length < 5"
                     class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 disabled:cursor-not-allowed disabled:bg-opacity-60">
                     <p v-if="statusSop == 1">Lanjut ke Pengesahan SOP</p>
                     <p v-else>Kirim Umpan Balik</p>

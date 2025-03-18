@@ -221,6 +221,15 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const { isAuthenticated, hasRole } = useAuthStore();
 
+  // Prevent authenticated users from accessing login and register pages
+  if (to.path === '/login' || to.path === '/regist') {
+    if (isAuthenticated) {
+      next(from.path || '/app'); // Redirect to previous page or dashboard if already logged in
+      return;
+    }
+  }
+
+  // Protected routes check
   if (to.meta.requiresAuth) {
     if (!isAuthenticated) {
       next('/login');
@@ -231,7 +240,7 @@ router.beforeEach(async (to, from, next) => {
       next('/unauthorized');
       return;
     }
-  };
+  }
 
   next();
 });
