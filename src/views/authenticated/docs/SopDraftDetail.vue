@@ -19,6 +19,10 @@ import { useAuthStore } from '@/stores/auth';
 import Divider from '@/components/Divider.vue';
 import SopDocTemplate from '@/components/sop/SopDocTemplate.vue';
 import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
+import GreenBadgeIndicator from '@/components/indicator/GreenBadgeIndicator.vue';
+import YellowBadgeIndicator from '@/components/indicator/YellowBadgeIndicator.vue';
+import ExclamationMarkIcon from '@/assets/icons/ExclamationMarkIcon.vue';
+import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -30,6 +34,7 @@ layoutType.value = 'admin';
 const statusSop = ref('');
 const newFeedback = ref('');
 const draftFeedback = ref([]);
+const showConfirmationModal = ref(false);
 
 const sopData = ref({
     id: '',
@@ -147,15 +152,30 @@ const fetchFeedback = async () => {
 };
 
 const submitFeedback = async () => {
-    const data = {
+    // Data yang akan dikirim untuk umpan balik
+    const feedbackData = {
         id_sop_detail: idsopdetail.value,
-        status: statusSop.value,
-        newFeedback: newFeedback.value,
+        feedback: newFeedback.value,
+        type: statusSop.value,
     };
 
+    // Jika setuju dan user adalah kadep, tampilkan modal konfirmasi terlebih dahulu
+    if (statusSop.value == 1 && authStore.userRole === 'kadep') {
+        // Simpan data feedback untuk digunakan nanti
+        showConfirmationModal.value = true;
+        return; // Hentikan eksekusi fungsi di sini
+    }
+
+    // Untuk kasus lain (bukan kadep atau tidak setuju), lanjutkan normal
+    await processSubmitFeedback(feedbackData);
+};
+
+// Fungsi untuk memproses umpan balik dan status update
+const processSubmitFeedback = async (feedbackData) => {
+    // Kirim umpan balik
     useToastPromise(
         new Promise((resolve, reject) => {
-            addDraftFeedback(data)
+            addDraftFeedback(feedbackData)
                 .then(response => {
                     if (!response.success) {
                         throw response;
@@ -171,40 +191,47 @@ const submitFeedback = async () => {
         }
     );
 
-    if (statusSop.value == 1) {         // setuju
+    // Tentukan status baru dan redirect path berdasarkan pilihan dan role
+    let newStatus = null;
+    let redirectPath = `/app/docs/${route.query.id}`;
+
+    if (feedbackData.type == 1) {         // setuju
         // cek dulu lingkup organisasinya apakah dsi atau tidak
-        if (sopData.value.organization.name === 'Departemen Sistem Informasi' || sopData.value.organization.id === 0) {
-            // jika iya, maka langsung ke pengesahan oleh kadep
-            // sop yang tampil di sini hanya bisa dilihat oleh kadep, sudah diatur di backend
-            await updateSopDetail(idsopdetail.value, { status: 7 });
-            setTimeout(() => {
-                router.push(`/app/docs/legal/${route.query.id}`)
-            }, 5000);
-            
-        } else {
-            // jika tidak, maka akan dicek dulu oleh pj, jika pj sudah setuju maka akan diteruskan ke kadep
-            if (authStore.userRole === 'kadep') {
-                await updateSopDetail(idsopdetail.value, { status: 7 });
-                setTimeout(() => {
-                    router.push(`/app/docs/legal/${route.query.id}`)
-                }, 5000);
-            } else if (authStore.userRole === 'pj') {
-                await updateSopDetail(idsopdetail.value, { status: 5 });
-                setTimeout(() => {
-                    router.push(`/app/docs/${route.query.id}`)
-                }, 5000);
-            }
-        }
-    } else if (statusSop.value == 2) {  // perlu revisi
-        if (authStore.userRole === 'kadep') {
-            await updateSopDetail(idsopdetail.value, { status: 6 });
+        const isDSI = sopData.value.organization.name === 'Departemen Sistem Informasi' ||
+            sopData.value.organization.id === 0;
+
+        if (isDSI || authStore.userRole === 'kadep') {
+            newStatus = 7; // Sedang disahkan oleh Kadep
+            redirectPath = `/app/docs/legal/${idsopdetail.value}`;
         } else if (authStore.userRole === 'pj') {
-            await updateSopDetail(idsopdetail.value, { status: 4 });
+            newStatus = 5; // Sedang direview Kadep
         }
+    } else if (feedbackData.type == 2) {  // perlu revisi
+        newStatus = authStore.userRole === 'kadep' ? 6 : 4; // 6 for Kadep, 4 for PJ
+    }
+
+    // Update status dan redirect
+    if (newStatus !== null) {
+        await updateSopDetail(idsopdetail.value, { status: newStatus });
         setTimeout(() => {
-            router.push(`/app/docs/${route.query.id}`)
+            router.push(redirectPath);
         }, 5000);
     }
+};
+
+const confirmSop = async () => {
+    // Tutup modal
+    showConfirmationModal.value = false;
+
+    // Buat data feedback untuk diproses
+    const feedbackData = {
+        id_sop_detail: idsopdetail.value,
+        feedback: newFeedback.value,
+        type: statusSop.value,
+    };
+
+    // Proses feedback dan update status
+    await processSubmitFeedback(feedbackData);
 };
 
 onMounted(async () => {
@@ -250,47 +277,39 @@ onMounted(async () => {
             </div>
         </div>
 
-        <SopDocTemplate class="mt-8"
-            :name="sopData.name" 
-            :number="sopData.number"
-            created-date="-" 
-            :revision-date="sopData.revision_date" 
-            :effective-date="sopData.effective_date" 
-            :pic-name="hodData.name"
-            :pic-number="hodData.id_number" 
-            :section="sopData.section" 
-            :law-basis="sopData.legalBasis.map(item => item.legal)" 
-            :implement-qualification="sopData.implementQualification" 
-            :related-sop="sopData.relatedSop" 
-            :equipment="sopData.equipment" 
-            :warning="sopData.warning"
-            :record-data="sopData.record"
-
-            :implementer="sopData.implementer"
-            :steps="sopData.steps"
-        />
+        <SopDocTemplate class="mt-8" :name="sopData.name" :number="sopData.number" created-date="-"
+            :revision-date="sopData.revision_date" :effective-date="sopData.effective_date" :pic-name="hodData.name"
+            :pic-number="hodData.id_number" :section="sopData.section"
+            :law-basis="sopData.legalBasis.map(item => item.legal)"
+            :implement-qualification="sopData.implementQualification" :related-sop="sopData.relatedSop"
+            :equipment="sopData.equipment" :warning="sopData.warning" :record-data="sopData.record"
+            :implementer="sopData.implementer" :steps="sopData.steps" />
 
         <Divider />
 
         <!-- Only render when both steps and implementer arrays exist and have data -->
-        <SopBpmnTemplate 
+        <SopBpmnTemplate
             v-if="sopData.steps && sopData.steps.length > 0 && sopData.implementer && sopData.implementer.length > 0"
-            :name="sopData.name" 
-            :steps="sopData.steps || []" 
-            :implementer="sopData.implementer || []" 
-        />
+            :name="sopData.name" :steps="sopData.steps || []" :implementer="sopData.implementer || []" />
+
         <div v-else class="my-4 p-4 bg-gray-100 rounded text-center">
             Belum ada tahapan yang diinputkan oleh penyusun!
         </div>
 
-        <div class="w-full lg:w-2/3 flex flex-col mx-auto mt-12 mb-5">
+        <div class="w-full lg:w-2/3 flex flex-col mx-auto mt-12 mb-5" v-if="![2].includes(sopData.status)">
             <h2 class="text-xl font-semibold mb-4">Umpan Balik Sebelumnya</h2>
             <div v-if="draftFeedback && draftFeedback.length > 0" class="space-y-4">
-                <div v-for="(feedback, index) in draftFeedback" :key="index" class="bg-gray-200 p-4 rounded-lg shadow-md">
-                    <p>
-                        <span class="text-base font-bold">{{ feedback?.user?.name || 'User' }}</span> - 
-                        <span class="text-sm text-gray-600">{{ feedback?.createdAt || '-' }}</span>
-                    </p>
+                <div v-for="(feedback, index) in draftFeedback" :key="index"
+                    class="bg-gray-200 p-4 rounded-lg shadow-md">
+                    <div class="flex items-center">
+                        <span class="text-base font-bold">{{ feedback?.user?.name || 'User' }}</span>
+                        <span class="ml-1 mr-2">({{ feedback.user.role }})</span> |
+                        <span class="text-sm text-gray-600 mx-2">{{ feedback?.createdAt || '-' }}</span> |
+                        <span class="mx-2">
+                            <YellowBadgeIndicator v-if="feedback?.type == 'revisi'" teks="Perlu Revisi" />
+                            <GreenBadgeIndicator v-else-if="feedback?.type == 'setuju'" teks="Setuju" />
+                        </span>
+                    </div>
                     <p class="text-lg mt-1">{{ feedback?.feedback || '-' }}</p>
                 </div>
             </div>
@@ -299,21 +318,25 @@ onMounted(async () => {
             </div>
         </div>
 
-        <div class="w-full lg:w-2/3 flex justify-center mx-auto my-10" v-if="![2].includes(sopData.status)">
+        <div class="w-full lg:w-2/3 flex justify-center mx-auto my-10" v-if="![2, 7].includes(sopData.status)">
             <form class="w-full bg-white space-y-5" @submit.prevent="submitFeedback">
                 <h2 class="text-xl font-semibold mb-4">Form Umpan Balik</h2>
                 <div>
-                    <label for="status" class="block mb-2 text-sm font-medium">Status<span class="text-red-600">*</span></label>
-                    <select type="text" id="status" v-model="statusSop" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" required>
+                    <label for="status" class="block mb-2 text-sm font-medium">Status<span
+                            class="text-red-600">*</span></label>
+                    <select type="text" id="status" v-model="statusSop"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                        required>
                         <option selected disabled value="">Pilih status</option>
                         <option value="1">Setuju</option>
                         <option value="2">Perlu Revisi</option>
                     </select>
                 </div>
                 <div>
-                    <label for="description" class="block mb-2 text-sm font-medium">Keterangan<span class="text-red-600">*</span></label>
+                    <label for="description" class="block mb-2 text-sm font-medium">Keterangan<span
+                            class="text-red-600">*</span></label>
                     <textarea id="description" rows="4" v-model="newFeedback" required minlength="5" maxLength="500"
-                        class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500" 
+                        class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Tuliskan umpan balik anda (minimal 5 karakter)"></textarea>
                 </div>
                 <button type="submit" :disabled="statusSop === '' || newFeedback.length < 5"
@@ -324,5 +347,49 @@ onMounted(async () => {
             </form>
         </div>
 
+        <div class="flex justify-center mt-8 mb-12" v-if="sopData.status === 7">
+            <button type="button" @click="router.push(`/app/docs/legal/${route.query.id}`)"
+                class="w-2/5 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5">
+                <p>Lanjut ke Pengesahan SOP ==></p>
+            </button>
+        </div>
+
     </main>
+
+    <div v-show="showConfirmationModal"
+        class="fixed inset-0 z-50 flex items-center justify-center w-full h-full shadow-lg">
+        <div class="fixed inset-0 bg-gray-800 bg-opacity-50" @click="showConfirmationModal = false"></div>
+        <div class="relative w-full max-w-2xl max-h-full">
+            <div class="relative bg-white rounded-lg shadow">
+                <button type="button" @click="showConfirmationModal = false"
+                    class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center">
+                    <XMarkCloseIcon class="w-3 h-3" />
+                    <span class="sr-only">Tutup modal</span>
+                </button>
+                <div class="p-4 md:p-5 text-center">
+                    <ExclamationMarkIcon class="mx-auto mb-4 text-gray-400 w-12 h-12" />
+                    <h3 class="mb-2 text-xl font-normal text-gray-800">
+                        Anda yakin ingin menyetujui draft SOP dan BPMN ini?
+                    </h3>
+                    <p class="text-gray-500 mb-1">
+                        Draft SOP ini akan disetujui dan anda akan diarahkan ke halaman pengesahan.
+                    </p>
+                    <p class="text-gray-600 mb-5">
+                        <span class="text-red-600">*</span>
+                        Anda tidak dapat lagi mengubah status dan memberikan umpan balik pada draft ini!
+                        <span class="text-red-600">*</span>
+                    </p>
+                    <button @click="confirmSop"
+                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
+                        Yakin
+                    </button>
+                    <button @click="showConfirmationModal = false"
+                        class="py-2.5 px-5 ms-3 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </template>
