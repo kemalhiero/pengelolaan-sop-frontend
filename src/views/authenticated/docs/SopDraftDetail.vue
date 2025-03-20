@@ -37,7 +37,8 @@ const draftFeedback = ref([]);
 const showConfirmationModal = ref(false);
 
 const sopData = ref({
-    id: '',
+    id: null,
+    id_sop: null,
     name: '',
     is_active: null,
     number: '',
@@ -190,7 +191,7 @@ const processSubmitFeedback = async (feedbackData) => {
 
     // Tentukan status baru dan redirect path berdasarkan pilihan dan role
     let newStatus = null;
-    let redirectPath = `/app/docs/${route.query.id}`;
+    let redirectPath = `/app/docs/${sopData.value.id_sop}`;
 
     if (feedbackData.type == 1) {         // setuju
         // cek dulu lingkup organisasinya apakah dsi atau tidak
