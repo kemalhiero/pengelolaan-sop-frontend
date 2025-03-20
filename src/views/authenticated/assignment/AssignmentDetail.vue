@@ -46,16 +46,7 @@ const fetchPicInfo = async () => {
 };
 provide('picData', picInfo);
 
-let idsopdetail;
-watch(() => picInfo.value,
-    (newValue) => {
-        if (newValue) {
-            idsopdetail = newValue.id_sop_detail;
-            fetchInfoSop();
-            fetchSopStep();
-        }
-    }
-);
+let idsopdetail = route.params.id;
 
 const legalBasisData = ref();
 const fetchLegalBasis = async () => {
@@ -231,7 +222,7 @@ const syncSopInfo = async () => {
             ];
 
             // Update section dan warning
-            await updateSopDetail(picInfo.value.id, {
+            await updateSopDetail(idsopdetail, {
                 section: formData.value.section,
                 warning: formData.value.warning
             });
@@ -588,7 +579,7 @@ const nextStep = async () => {
             // Set status 5 if organization is DSI, otherwise set status 3
             const newStatus = picInfo.value.organization === 'Departemen Sistem Informasi' ? 5 : 3;
             
-            updateSopDetail(picInfo.value.id, { status: newStatus })
+            updateSopDetail(idsopdetail, { status: newStatus })
                 .then(response => {
                     if (!response.success) {
                         throw response;
@@ -620,6 +611,10 @@ const prevStep = () => {
 
 onMounted(() => {
     fetchPicInfo();
+
+    fetchInfoSop();
+    fetchSopStep();
+
     fetchLegalBasis();
     fetchCurrentHod();
 });

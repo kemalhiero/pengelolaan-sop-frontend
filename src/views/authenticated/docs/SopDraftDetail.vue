@@ -66,18 +66,15 @@ const hodData = ref({
     name: '',
 });
 
-const idsopdetail = ref(null);
-
 const fetchSopVersion = async () => {
     try {
-        const result = await getSopVersion(route.query.id, route.query.version);
+        const result = await getSopVersion(route.params.id);
         if (!result.success) {
             console.error('API Error:', result.error);
             return;
         }
 
         if (result?.data) {
-            idsopdetail.value = result.data.id;
             sopData.value = { ...sopData.value, ...result.data };
         }
 
@@ -89,29 +86,29 @@ const fetchSopVersion = async () => {
 const fetchInfoSop = async () => {
     try {
 
-        let response = await getSectionandWarning(idsopdetail.value);
+        let response = await getSectionandWarning(route.params.id);
         sopData.value.section = response.data.section;
         sopData.value.warning = response.data.warning;
 
-        response = await getSopImplementer(idsopdetail.value);
+        response = await getSopImplementer(route.params.id);
         sopData.value.implementer = response.data;
 
-        response = await getSopLawBasis(idsopdetail.value);
+        response = await getSopLawBasis(route.params.id);
         sopData.value.legalBasis = response.data.map(item => ({
             id: item.id,
             legal: `${item.law_type} Nomor ${item.number} Tahun ${item.year} tentang ${item.about}`
         }));;
 
-        response = await getIQ(idsopdetail.value);
+        response = await getIQ(route.params.id);
         sopData.value.implementQualification = response.data.map(item => item.qualification);
 
-        response = await getRelatedSop(idsopdetail.value);
+        response = await getRelatedSop(route.params.id);
         sopData.value.relatedSop = response.data.map(item => item.related_sop);
 
-        response = await getSopEquipment(idsopdetail.value);
+        response = await getSopEquipment(route.params.id);
         sopData.value.equipment = response.data.map(item => item.equipment);
 
-        response = await getSopRecord(idsopdetail.value);
+        response = await getSopRecord(route.params.id);
         sopData.value.record = response.data.map(item => item.data_record);
 
         response = null;
@@ -123,7 +120,7 @@ const fetchInfoSop = async () => {
 
 const fetchSopStep = async () => {
     try {
-        const response = await getSopStep(idsopdetail.value);
+        const response = await getSopStep(route.params.id);
         sopData.value.steps = response.data.sort((a, b) => a.seq_number - b.seq_number);
     } catch (error) {
         console.error('Fetch tahapan sop error:', error);
@@ -142,7 +139,7 @@ const fetchCurrentHod = async () => {
 
 const fetchFeedback = async () => {
     try {
-        const response = await getDraftFeedback(idsopdetail.value);
+        const response = await getDraftFeedback(route.params.id);
         if (response.success) {
             draftFeedback.value = response.data;
         }
@@ -154,7 +151,7 @@ const fetchFeedback = async () => {
 const submitFeedback = async () => {
     // Data yang akan dikirim untuk umpan balik
     const feedbackData = {
-        id_sop_detail: idsopdetail.value,
+        id_sop_detail: route.params.id,
         feedback: newFeedback.value,
         type: statusSop.value,
     };
@@ -202,7 +199,7 @@ const processSubmitFeedback = async (feedbackData) => {
 
         if (isDSI || authStore.userRole === 'kadep') {
             newStatus = 7; // Sedang disahkan oleh Kadep
-            redirectPath = `/app/docs/legal/${idsopdetail.value}`;
+            redirectPath = `/app/docs/legal/${route.params.id}`;
         } else if (authStore.userRole === 'pj') {
             newStatus = 5; // Sedang direview Kadep
         }
@@ -212,7 +209,7 @@ const processSubmitFeedback = async (feedbackData) => {
 
     // Update status dan redirect
     if (newStatus !== null) {
-        await updateSopDetail(idsopdetail.value, { status: newStatus });
+        await updateSopDetail(route.params.id, { status: newStatus });
         setTimeout(() => {
             router.push(redirectPath);
         }, 5000);
@@ -225,7 +222,7 @@ const confirmSop = async () => {
 
     // Buat data feedback untuk diproses
     const feedbackData = {
-        id_sop_detail: idsopdetail.value,
+        id_sop_detail: route.params.id,
         feedback: newFeedback.value,
         type: statusSop.value,
     };
@@ -348,7 +345,7 @@ onMounted(async () => {
         </div>
 
         <div class="flex justify-center mt-8 mb-12" v-if="sopData.status === 7">
-            <button type="button" @click="router.push(`/app/docs/legal/${route.query.id}`)"
+            <button type="button" @click="router.push(`/app/docs/legal/${route.params.id}`)"
                 class="w-2/5 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5">
                 <p>Lanjut ke Pengesahan SOP ==></p>
             </button>

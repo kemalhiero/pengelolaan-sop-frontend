@@ -44,13 +44,9 @@ const fetchData = async () => {
 };
 
 const handleRowClick = (id) => {
-  const selectedData = sopData.value.version.find(
-    (version) => version.id === id
-  );
-
   router.push({
     name: 'SopDraftDetail',
-    query: { id: route.params.id, version: selectedData.version },
+    params: { id },
   }).catch((err) => {
     if (err.name !== 'NavigationDuplicated') {
       console.error('Navigation error:', err);

@@ -56,7 +56,6 @@ onMounted(() => {
     </div>
 
     <div class="container mx-auto p-8 lg:px-32">
-
         <div>
             <TableSkeleton 
                 v-if="isLoading"
