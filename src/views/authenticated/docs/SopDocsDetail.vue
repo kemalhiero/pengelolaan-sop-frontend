@@ -5,11 +5,11 @@ import { getOneSop } from '@/api/sopApi';
 import { switchStatusIsActive } from '@/utils/getStatus';
 
 import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
-import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import DataTable from '@/components/DataTable.vue';
 import Error from '@/components/Error.vue';
 import TableSkeleton from '@/components/TableSkeleton.vue';
 import EmptyState from '@/components/EmptyState.vue';
+import PageTitle from '@/components/authenticated/PageTitle.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -64,8 +64,8 @@ onMounted(() => {
   <main class="p-4 md:ml-64 h-auto pt-20 px-10">
 
     <template v-if="sopData">
-      <h2 class="text-4xl text-center my-8 font-bold">SOP {{ sopData.name }}</h2>
-
+      <PageTitle :judul="`SOP ${sopData.name}`" class="my-8" />
+      
       <div class="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-5">
         <div class="bg-gray-200 p-5 rounded-xl shadow-md">
           <h4 class="mb-2.5 text-lg">Organisasi</h4>

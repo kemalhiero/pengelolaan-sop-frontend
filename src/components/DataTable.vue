@@ -297,11 +297,6 @@ const goToPage = (page) => {
                             {{ column.label }}
                         </div>
                     </th>
-                    <th v-if="detailColumn" class="px-6 py-3" scope="col">
-                        <div class="flex items-center">
-                            Detail
-                        </div>
-                    </th>
                     <th v-if="checkColumn || linkColumn" class="px-6 py-3" scope="col">
                         <div class="flex items-center">
                             Pilih
@@ -310,6 +305,11 @@ const goToPage = (page) => {
                     <th v-if="editDeleteColumn || otherColumn" class="px-6 py-3" scope="col">
                         <div class="flex items-center">
                             Aksi
+                        </div>
+                    </th>
+                    <th v-if="detailColumn" class="px-6 py-3" scope="col">
+                        <div class="flex items-center">
+                            Detail
                         </div>
                     </th>
                 </tr>

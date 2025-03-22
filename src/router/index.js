@@ -100,6 +100,15 @@ const router = createRouter({
       }
     },
     {
+      path: '/app/docs/edit-assignment/:id',
+      name: 'SopAssignmentUpdate',
+      component: () => import('@/views/authenticated/docs/SopAssignmentEdit.vue'),
+      meta: {
+        requiresAuth: true,
+        roles: ['pj', 'kadep']
+      }
+    },
+    {
       path: '/app/docs/legal/:id',
       name: 'SopLegalization',
       component: () => import('@/views/authenticated/docs/SopLegalization.vue'),

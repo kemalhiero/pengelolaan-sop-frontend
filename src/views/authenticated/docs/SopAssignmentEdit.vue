@@ -1,60 +1,44 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
-import { useRoute, useRouter } from 'vue-router';
 
+import { useAuthStore } from '@/stores/auth';
 import { getOrg } from '@/api/orgApi';
-import { createSopDrafter, getUserByRole } from '@/api/userApi';
-import { createSopDetail, getLatestSopInYear, getOneSop } from '@/api/sopApi';
+import { createSopDrafter, getUserByRole, getUserProfile } from '@/api/userApi';
+import { createSop, createSopDetail } from '@/api/sopApi';
 
+import DataTable from '@/components/DataTable.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
-import DataTable from '@/components/DataTable.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import WarningText from '@/components/validation/WarningText.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
 
-const route = useRoute();
 const router = useRouter();
 const showDrafterModal = ref(false);
 const currentYear = new Date().getFullYear();
+const dataOrg = ref([]);
+const dataDrafter = ref([]);
+const showDrafterWarning = ref(false);
 const form = ref({
     name: '',
     number: '',
-    org: null,
+    id_org: '',
     drafter: [],
-    version: null,
     description: ''
 });
-let sopYear;
-const dataDrafter = ref([]);
-const showDrafterWarning = ref(false);
-const dataOrg = ref([]);
+const authStore = useAuthStore();
 
-const fetchData = async () => {
-  try {
-    const response = await getOneSop(route.params.id);
-    form.value.name = response.data.name;
-    form.value.org = response.data.organization;
-    sopYear = parseInt(response.data.creation_date.split(' ')[0].split('/')[2]);
-    console.log(sopYear);
-  } catch (error) {
-    console.error('Fetch error:', error);
-  }
-};
-
-const fetchLatestSopInYear = async () => {
-  try {
-    const response = await getLatestSopInYear(sopYear);
-    const parts = response.data.number.split("/");
-    form.value.number = parseInt(parts[1]) + 1 ;
-    form.value.version = response.data.version;
-    console.log(form.value)
-  } catch (error) {
-    console.error('Fetch error:', error);
-  }
+const fetchOrg = async () => {
+    try {
+        const result = await getOrg();
+        dataOrg.value = result.data;
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
 };
 
 const fetchDrafter = async () => {
@@ -70,33 +54,27 @@ const removeDrafter = (index) => {
     form.value.drafter.splice(index, 1);
 };
 
-const fetchOrg = async () => {
-    try {
-        const result = await getOrg();
-        console.log('result org')
-        console.log(result)
-        dataOrg.value = result.data;
-    } catch (error) {
-        console.error('Fetch error:', error);
-    }
-};
-
 const submitSop = async () => {
     try {
         if (form.value.drafter.length == 0) {
             return showDrafterWarning.value = true
         }
-        console.log(form.value);
         showDrafterWarning.value = false;
 
-        const org = dataOrg.value.find(org => org.name === form.value.org);
+        const dataSop = await createSop({
+            id_org: form.value.id_org,
+            name: form.value.name
+        });
+        console.log(dataSop);
+
+        const org = dataOrg.value.find(org => org.id === form.value.id_org);   //cari objek org yang sesuai dengan yang dipilih user pada form
 
         const resultSopdetail = await createSopDetail(
-            route.params.id,
+            dataSop.data.id_sop,
             {
                 number: `T/${String(form.value.number).padStart(3, '0')}/UN16.17.02/OT.01.00/${currentYear}`,
                 description: form.value.description,
-                version: parseInt(form.value.version) + 1,
+                version: 1,
                 pic_position: org.pic.role
             }
         );
@@ -109,38 +87,53 @@ const submitSop = async () => {
             })
         });
 
-        toast("Data berhasil ditambahkan!", {
-            "type": "success",
-            "autoClose": 3000,
-        });
-        
         console.log('sukses submit semua');
+
+        toast("Data berhasil ditambahkan!", {
+            type: "success",
+            autoClose: 2000,
+        });
+
         setTimeout(() => {
-            router.push(`/app/docs/${route.params.id}`)
+            router.push('/app/docs')
         }, 2000) // Delay 2 detik
 
     } catch (error) {
         console.error('Error saat mengirim data:', error);
         toast(`Data gagal ditambahkan! <br> ${error} `, {
-            "type": "error",
-            "autoClose": 5000,
-            'dangerouslyHTMLString': true
+            type: "error",
+            autoClose: 5000,
+            dangerouslyHTMLString: true
         });
     }
 };
 
+const fetchProfile = async () => {
+    try {
+        const result = await getUserProfile();
+        const org = dataOrg.value.find(org => org.name === result.data.org);
+        if (org) {
+            dataOrg.value = [org];
+        }
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+};
+
 onMounted(() => {
-    fetchData();
-    fetchLatestSopInYear();
-    fetchDrafter();
     fetchOrg();
+    fetchDrafter();
+    if (authStore.userRole == 'pj') {
+        fetchProfile();
+    }
 });
+
 </script>
 
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
 
-        <PageTitle judul="Perbarui SOP" class="mt-3 mb-7"/>
+        <PageTitle judul="Perbarui Data Penugasan SOP" />
 
         <section class="bg-white">
             <div class="py-8 px-4 mx-auto max-w-3xl">
@@ -148,44 +141,52 @@ onMounted(() => {
                     <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
                         <div class="col-span-2">
                             <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
-                                Nama
-                                <span class="text-gray-400 italic font-light text-xs">*tidak dapat diubah</span>
+                                Nama<span class="text-red-600">*</span>
                             </label>
-                            <input type="text" v-model="form.name" id="name" disabled
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5">
+                            <input type="text" v-model="form.name" id="name" placeholder="ketik nama sop disini..." required
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
+                                title="Contoh : Pengusulan Kerja Praktik (langsung judul, tanpa perlu 'SOP' atau 'POS' di awal)">
                         </div>
-                        
+
                         <div class="col-span-2 sm:col-span-1">
-                            <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
-                                Nomor
-                                <span class="text-red-600">*</span>
+                            <label for="num" class="block mb-2 text-sm font-medium text-gray-900">
+                                Nomor<span class="text-red-600">*</span>
                             </label>
                             <div class="flex items-center">
                                 <span
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg p-2.5">
                                     T/
                                 </span>
-                                <input type="number" :min="form.number" max="999" required v-model="form.number"
-                                @blur=""
+                                <input name="num" type="number" min="1" max="999" required v-model="form.number" @blur=""
                                     class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 min-w-12 w-full"
                                     title="Masukkan no urut sop">
-                                    <span
+                                <span
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5 w-fit whitespace-nowrap">
                                     /UN16.17.02/OT.01.00/{{ currentYear }}
                                 </span>
                             </div>
                         </div>
-                        
+
                         <div class="col-span-2 sm:col-span-1">
                             <label for="org" class="block mb-2 text-sm font-medium text-gray-900">
-                                Organisasi
-                                <span class="text-gray-400 italic font-light text-xs">*tidak dapat diubah</span>
+                                Organisasi<span class="text-red-600">*</span>
                             </label>
-                            <select id="org" v-model="form.org"
+                            <select id="org" v-model="form.id_org" required
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                                <option > {{ form.org }} </option>
+                                <option selected disabled value="">Pilih organisasi</option>
+                                <option v-for="(item, index) in dataOrg" :value="item.id" :key="`org-${index}`">{{
+                                    item.name }}</option>
                             </select>
                         </div>
+
+                        <!-- <div class="w-full">
+                            <label for="sop-date-make" class="block mb-2 text-sm font-medium text-gray-900">
+                                Tanggal Pembuatan
+                            </label>
+                            <input type="date" name="sop-date-make" id="sop-date-make"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
+                                placeholder="Masukkan tanggal">
+                        </div> -->
 
                         <div class="col-span-2">
                             <label class="block mb-2 text-sm font-medium">
@@ -221,20 +222,20 @@ onMounted(() => {
                             <label for="description" class="block mb-2 text-sm font-medium text-gray-900">
                                 Deskripsi<span class="text-red-600">*</span>
                             </label>
-                            <textarea id="description" rows="8" v-model="form.description" required minlength="15"
+                            <textarea id="description" rows="8" v-model="form.description" required
                                 class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500"
                                 placeholder="ketikkan deskripsi SOP disini..."></textarea>
                         </div>
                     </div>
                     <button type="submit"
                         class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-3 sm:mt-6 text-center">
-                        Mulai buat SOP versi terbaru
+                        Mulai buat SOP baru
                     </button>
                 </form>
             </div>
         </section>
     </main>
-    <!-- TODO ntar tampilin juga user yang sudah terpilih sebelumnya (sudah terceklis saat modal ditampilin) -->
+
     <div v-show="showDrafterModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
 
         <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showDrafterModal = false"></div>

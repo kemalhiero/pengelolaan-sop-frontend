@@ -48,7 +48,7 @@ onMounted(() => {
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
 
-        <PageTitle judul="Daftar Dokumen SOP yang Dikelola" />
+        <PageTitle judul="Daftar Dokumen SOP yang Dikelola" class="mt-3 mb-7" />
 
         <div class="container mx-auto p-8 lg:px-16">
 

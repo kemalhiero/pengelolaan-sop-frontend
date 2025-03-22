@@ -16,7 +16,7 @@ onMounted(() => {
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
 
-        <PageTitle judul="Panduan Penggunaan Aplikasi" />
+        <PageTitle judul="Panduan Penggunaan Aplikasi" class="mt-3 mb-7" />
 
         <div id="accordion-collapse" data-accordion="open" class="max-w-screen-lg mx-auto">
             <h2 id="accordion-collapse-heading-1">

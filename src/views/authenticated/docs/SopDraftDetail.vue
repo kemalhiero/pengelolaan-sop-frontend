@@ -23,6 +23,10 @@ import GreenBadgeIndicator from '@/components/indicator/GreenBadgeIndicator.vue'
 import YellowBadgeIndicator from '@/components/indicator/YellowBadgeIndicator.vue';
 import ExclamationMarkIcon from '@/assets/icons/ExclamationMarkIcon.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
+import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
+import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
+import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
+import PageTitle from '@/components/authenticated/PageTitle.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -34,7 +38,12 @@ layoutType.value = 'admin';
 const statusSop = ref('');
 const newFeedback = ref('');
 const draftFeedback = ref([]);
-const showConfirmationModal = ref(false);
+
+const showModal = ref({
+    approveSopDraft: false,
+    editAssignment: false,
+    deleteAssignment: false,
+});
 
 const sopData = ref({
     id: null,
@@ -160,7 +169,7 @@ const submitFeedback = async () => {
     // Jika setuju dan user adalah kadep, tampilkan modal konfirmasi terlebih dahulu
     if (statusSop.value == 1 && authStore.userRole === 'kadep') {
         // Simpan data feedback untuk digunakan nanti
-        showConfirmationModal.value = true;
+        showModal.value.approveSopDraft = true;
         return; // Hentikan eksekusi fungsi di sini
     }
 
@@ -219,7 +228,7 @@ const processSubmitFeedback = async (feedbackData) => {
 
 const confirmSop = async () => {
     // Tutup modal
-    showConfirmationModal.value = false;
+    showModal.value.approveSopDraft = false;
 
     // Buat data feedback untuk diproses
     const feedbackData = {
@@ -230,6 +239,22 @@ const confirmSop = async () => {
 
     // Proses feedback dan update status
     await processSubmitFeedback(feedbackData);
+};
+
+const redirectEditAssignment = () => {
+    router.push({
+        name: 'SopAssignmentUpdate',
+        params: { id: route.params.id },
+    }).catch((err) => {
+        if (err.name !== 'NavigationDuplicated') {
+            console.error('Navigation error:', err);
+        }
+    });
+};
+
+const deleteData = async (id) => {
+    // Implementasi penghapusan data
+    console.log('Menghapus data dengan ID:', id);
 };
 
 onMounted(async () => {
@@ -244,7 +269,19 @@ onMounted(async () => {
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20 px-10">
 
-        <h2 class="text-4xl text-center my-10 font-bold"> Pengecekan Draft SOP {{ sopData?.name }}</h2>
+        <div class="text-4xl my-10 font-bold flex justify-center items-center">
+            <PageTitle :judul="`Pengecekan Draft SOP ${sopData?.name}`" />
+            <div class="space-x-2 ml-3 flex justify-center items-center" v-if="[0, 2].includes(sopData.status)">
+                <button title="Edit data penugasan" @click="redirectEditAssignment"
+                    class="p-2 text-white w-8 h-8 bg-yellow-400 rounded-full hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50">
+                    <PenToSquareIcon class="fill-current" />
+                </button>
+                <button title="Hapus" @click="showModal.deleteAssignment = true"
+                    class="p-2 text-white w-8 h-8 bg-red-600 rounded-full hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center">
+                    <TrashCanIcon class="fill-current" />
+                </button>
+            </div>
+        </div>
 
         <div class="grid grid-cols-2 lg:grid-cols-3 gap-5">
             <div class="bg-gray-200 p-5 rounded-xl shadow-md">
@@ -354,12 +391,12 @@ onMounted(async () => {
 
     </main>
 
-    <div v-show="showConfirmationModal"
+    <div v-show="showModal.approveSopDraft"
         class="fixed inset-0 z-50 flex items-center justify-center w-full h-full shadow-lg">
-        <div class="fixed inset-0 bg-gray-800 bg-opacity-50" @click="showConfirmationModal = false"></div>
+        <div class="fixed inset-0 bg-gray-800 bg-opacity-50" @click="showModal.approveSopDraft = false"></div>
         <div class="relative w-full max-w-2xl max-h-full">
             <div class="relative bg-white rounded-lg shadow">
-                <button type="button" @click="showConfirmationModal = false"
+                <button type="button" @click="showModal.approveSopDraft = false"
                     class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center">
                     <XMarkCloseIcon class="w-3 h-3" />
                     <span class="sr-only">Tutup modal</span>
@@ -381,7 +418,7 @@ onMounted(async () => {
                         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
                         Yakin
                     </button>
-                    <button @click="showConfirmationModal = false"
+                    <button @click="showModal.approveSopDraft = false"
                         class="py-2.5 px-5 ms-3 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100">
                         Batal
                     </button>
@@ -389,5 +426,91 @@ onMounted(async () => {
             </div>
         </div>
     </div>
+
+    <!-- <div class="fixed inset-0 z-50 flex items-center justify-center w-full h-full" v-show="showModal.editAssignment">
+
+        <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showModal.editAssignment = false"></div>
+
+        <div class="relative w-full max-w-2xl max-h-full">
+            <div class="relative bg-white rounded-lg shadow">
+                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
+                    <h3 class="text-xl font-medium text-gray-900">
+                        Perbarui Data Penugasan
+                    </h3>
+                    <button type="button"
+                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+                        @click="showModal.editAssignment = false">
+                        <XMarkCloseIcon class="w-3 h-3" />
+                        <span class="sr-only">Tutup modal</span>
+                    </button>
+                </div>
+
+                <div class="p-4 md:p-5 space-y-4 max-h-[620px] overflow-y-auto">
+                    <div class="grid gap-4 mb-4 grid-cols-2">
+                        <div class="col-span-2">
+                            <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Nama</label>
+                            <input type="text" id="name"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
+                                placeholder="belum ada data" readonly>
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label for="num" class="block mb-2 text-sm font-medium text-gray-900">
+                                Nomor<span class="text-red-600">*</span>
+                            </label>
+                            <div class="flex items-center">
+                                <span
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg p-2.5">
+                                    T/
+                                </span>
+                                <input name="num" type="number" min="1" max="999" required @blur=""
+                                    class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 min-w-12 w-full"
+                                    title="Masukkan no urut sop">
+                                <span
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5 w-fit whitespace-nowrap">
+                                    /UN16.17.02/OT.01.00/{{ new Date().getFullYear() }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label for="org" class="block mb-2 text-sm font-medium text-gray-900">
+                                Organisasi<span class="text-red-600">*</span>
+                            </label>
+                            <select id="org" required
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+                                <option selected disabled value="">Pilih organisasi</option>
+                                <option value="2">Dua</option>
+                            </select>
+                        </div>
+
+                        <div class="col-span-2">
+                            <label for="description"
+                                class="block mb-2 text-sm font-medium text-gray-900">Deskripsi</label>
+                            <textarea id="description" rows="4"
+                                class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                                readonly placeholder="belum ada data"></textarea>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block mb-2 text-sm font-medium text-gray-900">Penyusun</label>
+                            <ul class="max-w-2xl space-y-1 list-disc list-inside columns-2">
+                                <li class="italic text-gray-400 text-sm"> belum ada data </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
+                    <button type="button"
+                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                        Perbarui data penugasan
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div> -->
+
+    <DeleteDataModal :showModal="showModal.deleteAssignment" :deleteData="deleteData" :selectedId="sopData.id"
+        @update:showModal="showModal.deleteAssignment = $event" text="Anda yakin ingin menghapus penugasan SOP ini?" />
 
 </template>

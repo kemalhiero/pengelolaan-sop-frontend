@@ -14,14 +14,14 @@
                 <div class="p-4 md:p-5 text-center">
                     <ExclamationMarkIcon class="mx-auto mb-4 text-gray-400 w-12 h-12" />
                     <h3 class="mb-5 text-lg font-normal text-gray-500">
-                        Anda yakin ingin menghapus data ini?
+                        {{props.text}}
                     </h3>
                     <button @click="handleDelete"
                         class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
                         Ya
                     </button>
                     <button @click="closeModal"
-                        class="py-2.5 px-5 ms-3 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100">
+                        class="py-2.5 px-5 ms-3 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-200 focus:z-10 focus:ring-4 focus:ring-gray-100">
                         Batal
                     </button>
                 </div>
@@ -47,6 +47,10 @@ const props = defineProps({
         type: Number,
         required: true
     },
+    text: {
+        type: String,
+        default: 'Anda yakin ingin menghapus data ini?'
+    }
 });
 
 const emit = defineEmits(['update:showModal']);

@@ -56,7 +56,10 @@ const confirm = () => {
             </form>
         </div>
 
-        <SopDocTemplate class="mt-12" 
+        
+        <h3 class="text-3xl text-center font-bold my-4">Pratinjau Dokumen SOP dan BPMN</h3>
+
+        <SopDocTemplate
             name="Prosedur Pendaftaran Kerja Praktik" 
             number="T/__/UN16.17.02/OT.01.00/2023"
             created-date="18 Agustus 2023" 
@@ -86,6 +89,8 @@ const confirm = () => {
             ]" 
             :implementer="implementer" 
             :steps="sopSteps" 
+
+            is-signed="true"
         />
 
         <Divider />

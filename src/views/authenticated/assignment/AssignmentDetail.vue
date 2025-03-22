@@ -24,6 +24,7 @@ import CheckIcon from '@/assets/icons/CheckIcon.vue';
 import FirstStep from './step/FirstStep.vue';
 import SecondStep from './step/SecondStep.vue';
 import ThirdStep from './step/ThirdStep.vue';
+import PageTitle from '@/components/authenticated/PageTitle.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';
@@ -621,7 +622,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <h2 class="text-4xl text-center my-12 font-bold">Penyusunan Dokumen SOP</h2>
+    <PageTitle judul="Penyusunan Dokumen SOP" class="my-12" />
     <!-- stepper -->
     <ol
         class="flex items-center justify-center w-full text-sm font-medium text-center text-gray-500 sm:text-base max-w-2xl mx-auto">

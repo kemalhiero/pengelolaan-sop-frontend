@@ -133,7 +133,7 @@ onMounted(() => {
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
 
-        <PageTitle judul="Usulkan POS baru" />
+        <PageTitle judul="Usulkan POS baru" class="mt-3 mb-7" />
 
         <section class="bg-white">
             <div class="py-8 px-4 mx-auto max-w-3xl">
@@ -149,7 +149,7 @@ onMounted(() => {
                         </div>
 
                         <div class="col-span-2 sm:col-span-1">
-                            <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
+                            <label for="num" class="block mb-2 text-sm font-medium text-gray-900">
                                 Nomor<span class="text-red-600">*</span>
                             </label>
                             <div class="flex items-center">
@@ -157,7 +157,7 @@ onMounted(() => {
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg p-2.5">
                                     T/
                                 </span>
-                                <input type="number" min="1" max="999" required v-model="form.number" @blur=""
+                                <input name="num" type="number" min="1" max="999" required v-model="form.number" @blur=""
                                     class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 min-w-12 w-full"
                                     title="Masukkan no urut sop">
                                 <span
