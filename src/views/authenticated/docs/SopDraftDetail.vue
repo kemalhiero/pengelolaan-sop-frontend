@@ -209,7 +209,7 @@ const processSubmitFeedback = async (feedbackData) => {
 
         if (isDSI || authStore.userRole === 'kadep') {
             newStatus = 7; // Sedang disahkan oleh Kadep
-            redirectPath = `/app/docs/legal/${route.params.id}`;
+            redirectPath = `/app/docs/draft/${route.params.id}/legal`;
         } else if (authStore.userRole === 'pj') {
             newStatus = 5; // Sedang direview Kadep
         }
@@ -383,7 +383,7 @@ onMounted(async () => {
         </div>
 
         <div class="flex justify-center mt-8 mb-12" v-if="sopData.status === 7">
-            <button type="button" @click="router.push(`/app/docs/legal/${route.params.id}`)"
+            <button type="button" @click="router.push({ name: 'SopLegalization', params: { id: route.params.id } })"
                 class="w-2/5 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5">
                 <p>Lanjut ke Pengesahan SOP ==></p>
             </button>

@@ -1,36 +1,39 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 
 import { useAuthStore } from '@/stores/auth';
 import { getOrg } from '@/api/orgApi';
 import { createSopDrafter, getUserByRole, getUserProfile } from '@/api/userApi';
-import { createSop, createSopDetail } from '@/api/sopApi';
+import { createSop, createSopDetail, getSopVersion, updateSopDetail } from '@/api/sopApi';
 
 import DataTable from '@/components/DataTable.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import WarningText from '@/components/validation/WarningText.vue';
+import LockedInputColumnIndicator from '@/components/indicator/LockedInputColumnIndicator.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
 
+const route = useRoute();
 const router = useRouter();
-const showDrafterModal = ref(false);
-const currentYear = new Date().getFullYear();
+const authStore = useAuthStore();
+
 const dataOrg = ref([]);
 const dataDrafter = ref([]);
+const showDrafterModal = ref(false);
 const showDrafterWarning = ref(false);
 const form = ref({
     name: '',
     number: '',
-    id_org: '',
+    year: null,
+    id_org: null,
     drafter: [],
     description: ''
 });
-const authStore = useAuthStore();
 
 const fetchOrg = async () => {
     try {
@@ -69,23 +72,27 @@ const submitSop = async () => {
 
         const org = dataOrg.value.find(org => org.id === form.value.id_org);   //cari objek org yang sesuai dengan yang dipilih user pada form
 
-        const resultSopdetail = await createSopDetail(
+        const resultSopdetail = await updateSopDetail(
             dataSop.data.id_sop,
             {
-                number: `T/${String(form.value.number).padStart(3, '0')}/UN16.17.02/OT.01.00/${currentYear}`,
+                number: `T/${String(form.value.number).padStart(3, '0')}/UN16.17.02/OT.01.00/${form.value.year}`,
                 description: form.value.description,
-                version: 1,
                 pic_position: org.pic.role
             }
         );
         console.log(resultSopdetail);
 
-        form.value.drafter.forEach(async (item) => {
-            await createSopDrafter({
-                id_user: item.id,
-                id_sop_detail: resultSopdetail.data.id_sop_detail,
-            })
-        });
+        // buat pengecekan terlebih dahulu apakah user sudah terdaftar sebagai drafter
+        // kalau udah terdaftar, jangan buat lagi, 
+        // kalau belum buat baru, 
+        // kalau diganti, hapus yang lama, buat yang baru
+
+        // form.value.drafter.forEach(async (item) => {
+        //     await createSopDrafter({
+        //         id_user: item.id,
+        //         id_sop_detail: resultSopdetail.data.id_sop_detail,
+        //     })
+        // });
 
         console.log('sukses submit semua');
 
@@ -120,12 +127,29 @@ const fetchProfile = async () => {
     }
 };
 
+const fetchDraft = async () => {
+    try {
+        const result = await getSopVersion(route.params.id);
+        form.value = {
+            name: result.data.name,
+            number: result.data.number.split('/')[1],
+            year: result.data.number.split('/')[4],
+            id_org: result.data.organization.id,
+            drafter: result.data.users || [],
+            description: result.data.description
+        };
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+};
+
 onMounted(() => {
     fetchOrg();
     fetchDrafter();
     if (authStore.userRole == 'pj') {
         fetchProfile();
     }
+    fetchDraft();
 });
 
 </script>
@@ -141,11 +165,14 @@ onMounted(() => {
                     <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
                         <div class="col-span-2">
                             <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
-                                Nama<span class="text-red-600">*</span>
+                                Nama
                             </label>
-                            <input type="text" v-model="form.name" id="name" placeholder="ketik nama sop disini..." required
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                title="Contoh : Pengusulan Kerja Praktik (langsung judul, tanpa perlu 'SOP' atau 'POS' di awal)">
+                            <div class="relative">
+                                <input type="text" v-model="form.name" id="name" disabled
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 pr-10"
+                                    title="Ubah di halaman kelola SOP">
+                                <LockedInputColumnIndicator class="absolute inset-y-0 right-0 flex items-center pr-2" />
+                            </div>
                         </div>
 
                         <div class="col-span-2 sm:col-span-1">
@@ -162,7 +189,7 @@ onMounted(() => {
                                     title="Masukkan no urut sop">
                                 <span
                                     class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5 w-fit whitespace-nowrap">
-                                    /UN16.17.02/OT.01.00/{{ currentYear }}
+                                    /UN16.17.02/OT.01.00/{{ form.year }}
                                 </span>
                             </div>
                         </div>
@@ -174,23 +201,13 @@ onMounted(() => {
                             <select id="org" v-model="form.id_org" required
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
                                 <option selected disabled value="">Pilih organisasi</option>
-                                <option v-for="(item, index) in dataOrg" :value="item.id" :key="`org-${index}`">{{
-                                    item.name }}</option>
+                                <option v-for="(item, index) in dataOrg" :value="item.id" :key="`org-${index}`">{{ item.name }}</option>
                             </select>
                         </div>
 
-                        <!-- <div class="w-full">
-                            <label for="sop-date-make" class="block mb-2 text-sm font-medium text-gray-900">
-                                Tanggal Pembuatan
-                            </label>
-                            <input type="date" name="sop-date-make" id="sop-date-make"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                placeholder="Masukkan tanggal">
-                        </div> -->
-
                         <div class="col-span-2">
                             <label class="block mb-2 text-sm font-medium">
-                                Penugasan<span class="text-red-600">*</span>
+                                User Penyusun<span class="text-red-600">*</span>
                             </label>
 
                             <div v-if="form.drafter.length > 0" class="my-4">
@@ -208,9 +225,9 @@ onMounted(() => {
                             </div>
 
                             <button @click="showDrafterModal = true"
-                                class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center"
+                                class="block w-full md:w-auto text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-3 py-2 text-center"
                                 type="button">
-                                Tambahkan User
+                                Pilih User
                             </button>
 
                             <WarningText v-show="showDrafterWarning"
@@ -228,8 +245,8 @@ onMounted(() => {
                         </div>
                     </div>
                     <button type="submit"
-                        class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-3 sm:mt-6 text-center">
-                        Mulai buat SOP baru
+                        class="block w-full md:w-auto text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-3 py-3 sm:mt-6 text-center">
+                        Perbarui
                     </button>
                 </form>
             </div>

@@ -21,7 +21,7 @@ import implementer from '@/data/sopImplementer.json';
 const confirm = () => {
     // Logic to handle confirmation
     console.log('SOP and BPMN confirmed');
-    router.push('/app/docs');
+    router.push({ name: 'SopDocs' });
 };
 </script>
 
