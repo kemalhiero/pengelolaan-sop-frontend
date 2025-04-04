@@ -3,6 +3,7 @@ import { inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router'
 import { getOneSop } from '@/api/sopApi';
 import { switchStatusIsActive } from '@/utils/getStatus';
+import statusTexts from '@/data/statusTexts.json';
 
 import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import DataTable from '@/components/DataTable.vue';
@@ -111,11 +112,7 @@ onMounted(() => {
           :status-columns="[
             { field: 'status', label: 'Status' }
           ]" 
-          :badge-text="[
-            'Batal', 
-            'Diterima', 
-            'Sedang disusun/direview',
-          ]" 
+          :badge-text="statusTexts.sopDetail" 
           :detail-column="true"
           @click="handleRowClick"
         />
