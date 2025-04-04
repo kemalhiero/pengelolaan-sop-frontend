@@ -1,5 +1,5 @@
 <script setup>
-import { inject, onMounted, ref } from 'vue';
+import { computed, inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router'
 import { getOneSop } from '@/api/sopApi';
 import { switchStatusIsActive } from '@/utils/getStatus';
@@ -43,6 +43,11 @@ const fetchData = async () => {
     isLoading.value = false;
   }
 };
+
+const isUpdateDisabled = computed(() => {
+  // Periksa apakah ada status 2, 3, 4, 5, 6, atau 7 di dalam array versi SOP
+  return sopData.value.version?.some(version => [2, 3, 4, 5, 6, 7].includes(version.status)) || false;
+});
 
 const handleRowClick = (id) => {
   router.push({
@@ -121,15 +126,17 @@ onMounted(() => {
     <Error v-else @click="fetchData"/>
 
     <div class="flex justify-center mb-8">
-      <router-link :to="`/app/propose-version/${route.params.id}`">
-        <button title="buat sop dengan versi terbaru"
-          class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center">
-          <CirclePlusIcon class="w-5 mr-3 fill-current" />
-          Perbarui versi SOP
+      <router-link
+        :to="isUpdateDisabled ? null : `/app/propose-version/${route.params.id}`">
+        <button
+          :disabled="isUpdateDisabled"
+          :title="isUpdateDisabled ? 'Tidak dapat memperbarui versi SOP karena ada versi yang sedang diproses' : 'Buat sop dengan versi terbaru'"
+          class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+            <CirclePlusIcon class="w-5 mr-3 fill-current" />
+            Perbarui versi SOP
         </button>
       </router-link>
     </div>
 
   </main>
-
 </template>

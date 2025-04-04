@@ -330,7 +330,6 @@ const goToPage = (page) => {
 
                     <!-- kolom kostum -->
                     <td v-for="column in statusColumns" :key="column.field" class="px-6 py-4 text-black">
-                      <template v-if="column.field === 'status'">
                         <GreenBadgeIndicator 
                           v-if="[1].includes(item[column.field])" 
                           :teks="badgeText[item[column.field]]" 
@@ -343,7 +342,6 @@ const goToPage = (page) => {
                           v-else 
                           :teks="badgeText[item[column.field]]" 
                         />
-                      </template>
                     </td>
                     <td v-for="column in radioColumn" :key="column.field" class="px-6 py-4 text-black">
                         <input 

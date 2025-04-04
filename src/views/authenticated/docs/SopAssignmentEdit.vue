@@ -3,9 +3,7 @@ import { inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 
-import { useAuthStore } from '@/stores/auth';
-import { getOrg } from '@/api/orgApi';
-import { createSopDrafter, getUserByRole, getUserProfile } from '@/api/userApi';
+import { createSopDrafter, getUserByRole } from '@/api/userApi';
 import { createSop, createSopDetail, getSopVersion, updateSopDetail } from '@/api/sopApi';
 
 import DataTable from '@/components/DataTable.vue';
@@ -13,16 +11,13 @@ import PageTitle from '@/components/authenticated/PageTitle.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import WarningText from '@/components/validation/WarningText.vue';
-import LockedInputColumnIndicator from '@/components/indicator/LockedInputColumnIndicator.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
 
 const route = useRoute();
 const router = useRouter();
-const authStore = useAuthStore();
 
-const dataOrg = ref([]);
 const dataDrafter = ref([]);
 const showDrafterModal = ref(false);
 const showDrafterWarning = ref(false);
@@ -34,15 +29,6 @@ const form = ref({
     drafter: [],
     description: ''
 });
-
-const fetchOrg = async () => {
-    try {
-        const result = await getOrg();
-        dataOrg.value = result.data;
-    } catch (error) {
-        console.error('Fetch error:', error);
-    }
-};
 
 const fetchDrafter = async () => {
     try {
@@ -68,9 +54,6 @@ const submitSop = async () => {
             id_org: form.value.id_org,
             name: form.value.name
         });
-        console.log(dataSop);
-
-        const org = dataOrg.value.find(org => org.id === form.value.id_org);   //cari objek org yang sesuai dengan yang dipilih user pada form
 
         const resultSopdetail = await updateSopDetail(
             dataSop.data.id_sop,
@@ -115,18 +98,6 @@ const submitSop = async () => {
     }
 };
 
-const fetchProfile = async () => {
-    try {
-        const result = await getUserProfile();
-        const org = dataOrg.value.find(org => org.name === result.data.org);
-        if (org) {
-            dataOrg.value = [org];
-        }
-    } catch (error) {
-        console.error('Fetch error:', error);
-    }
-};
-
 const fetchDraft = async () => {
     try {
         const result = await getSopVersion(route.params.id);
@@ -144,11 +115,7 @@ const fetchDraft = async () => {
 };
 
 onMounted(() => {
-    fetchOrg();
     fetchDrafter();
-    if (authStore.userRole == 'pj') {
-        fetchProfile();
-    }
     fetchDraft();
 });
 
@@ -163,46 +130,21 @@ onMounted(() => {
             <div class="py-8 px-4 mx-auto max-w-3xl">
                 <form @submit.prevent="submitSop">
                     <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
-                        <div class="col-span-2">
-                            <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
-                                Nama
-                            </label>
-                            <div class="relative">
-                                <input type="text" v-model="form.name" id="name" disabled
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 pr-10"
-                                    title="Ubah di halaman kelola SOP">
-                                <LockedInputColumnIndicator class="absolute inset-y-0 right-0 flex items-center pr-2" />
-                            </div>
-                        </div>
-
                         <div class="col-span-2 sm:col-span-1">
                             <label for="num" class="block mb-2 text-sm font-medium text-gray-900">
                                 Nomor<span class="text-red-600">*</span>
                             </label>
                             <div class="flex items-center">
-                                <span
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg p-2.5">
+                                <span class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg p-2.5">
                                     T/
                                 </span>
                                 <input name="num" type="number" min="1" max="999" required v-model="form.number" @blur=""
                                     class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 min-w-12 w-full"
                                     title="Masukkan no urut sop">
-                                <span
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5 w-fit whitespace-nowrap">
+                                <span class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5 w-fit whitespace-nowrap">
                                     /UN16.17.02/OT.01.00/{{ form.year }}
                                 </span>
                             </div>
-                        </div>
-
-                        <div class="col-span-2 sm:col-span-1">
-                            <label for="org" class="block mb-2 text-sm font-medium text-gray-900">
-                                Organisasi<span class="text-red-600">*</span>
-                            </label>
-                            <select id="org" v-model="form.id_org" required
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                                <option selected disabled value="">Pilih organisasi</option>
-                                <option v-for="(item, index) in dataOrg" :value="item.id" :key="`org-${index}`">{{ item.name }}</option>
-                            </select>
                         </div>
 
                         <div class="col-span-2">
@@ -245,7 +187,7 @@ onMounted(() => {
                         </div>
                     </div>
                     <button type="submit"
-                        class="block w-full md:w-auto text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-3 py-3 sm:mt-6 text-center">
+                        class="block w-full md:w-auto text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-8 py-3 sm:mt-6 text-center">
                         Perbarui
                     </button>
                 </form>
