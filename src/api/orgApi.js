@@ -3,7 +3,7 @@ import { getRequest, postRequest, patchRequest, deleteRequest } from "./apiClien
 
 const getOrg = () => getRequest('org', getToken());
 const createOrg = (data) => postRequest('org', data, getToken());
-const updateOrg = (id, data) => patchRequest(`org?id=${id}`, data, getToken());
-const deleteOrg = (id) => deleteRequest(`org?id=${id}`, getToken());
+const updateOrg = (id, data) => patchRequest(`org/${id}`, data, getToken());
+const deleteOrg = (id) => deleteRequest(`org/${id}`, getToken());
 
 export { getOrg, createOrg, updateOrg, deleteOrg };

@@ -7,10 +7,10 @@ const updateImplementer = (id, data) => patchRequest(`implementer/${id}`, data, 
 const deleteImplementer = (id) => deleteRequest(`implementer/${id}`, getToken());
 
 const createSopImplementer = (data) => postRequest('implementer/sop', data, getToken());
-const getSopImplementer = (id) => getRequest(`implementer/sop?id=${id}`, getToken());
-const deleteSopImplementer = (idsopdetail, idimplementer) => deleteRequest(`implementer/sop?id_sop_detail=${idsopdetail}&id_implementer=${idimplementer}`, getToken());
+const getSopImplementer = (id) => getRequest(`implementer/sop/${id}`, getToken());
+const deleteSopImplementer = (idsopdetail, idimplementer) => deleteRequest(`implementer/sop/${idsopdetail}/${idimplementer}`, getToken());
 
-export { 
+export {
     getImplementer, addImplementer, updateImplementer, deleteImplementer,
-    createSopImplementer, getSopImplementer, deleteSopImplementer 
+    createSopImplementer, getSopImplementer, deleteSopImplementer
 };

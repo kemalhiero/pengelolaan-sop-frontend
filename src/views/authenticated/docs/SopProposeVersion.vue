@@ -37,7 +37,7 @@ const fetchData = async () => {
   try {
     const response = await getOneSop(route.params.id);
     form.value.name = response.data.name;
-    form.value.org = response.data.organization;
+    form.value.org = response.data.organization.name;
     sopYear = parseInt(response.data.creation_date.split(' ')[0].split('/')[2]);
     console.log(sopYear);
   } catch (error) {

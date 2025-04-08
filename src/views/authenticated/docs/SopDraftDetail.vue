@@ -140,8 +140,7 @@ const fetchSopStep = async () => {
 const fetchCurrentHod = async () => {
     try {
         const response = await getCurrentHod();
-        hodData.value.id_number = response.data.id_number;
-        hodData.value.name = response.data.name;
+        hodData.value = response.data;
     } catch (error) {
         console.error('Fetch data kadep error:', error);
     }
@@ -269,7 +268,7 @@ onMounted(async () => {
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20 px-10">
 
-        <div class="text-4xl my-10 font-bold flex justify-center items-center">
+        <div class="my-10 flex justify-center items-center">
             <PageTitle :judul="`Pengecekan Draft SOP ${sopData?.name}`" />
             <div class="space-x-2 ml-3 flex justify-center items-center" v-if="[0, 2].includes(sopData.status)">
                 <button title="Edit data penugasan" @click="redirectEditAssignment"
@@ -357,19 +356,16 @@ onMounted(async () => {
             <form class="w-full bg-white space-y-5" @submit.prevent="submitFeedback">
                 <h2 class="text-xl font-semibold mb-4">Form Umpan Balik</h2>
                 <div>
-                    <label for="status" class="block mb-2 text-sm font-medium">Status<span
-                            class="text-red-600">*</span></label>
-                    <select type="text" id="status" v-model="statusSop"
-                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                        required>
+                    <label for="status" class="block mb-2 text-sm font-medium">Status<span class="text-red-600">*</span></label>
+                    <select type="text" id="status" v-model="statusSop" required
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                         <option selected disabled value="">Pilih status</option>
                         <option value="1">Setuju</option>
                         <option value="2">Perlu Revisi</option>
                     </select>
                 </div>
                 <div>
-                    <label for="description" class="block mb-2 text-sm font-medium">Keterangan<span
-                            class="text-red-600">*</span></label>
+                    <label for="description" class="block mb-2 text-sm font-medium">Keterangan<span class="text-red-600">*</span></label>
                     <textarea id="description" rows="4" v-model="newFeedback" required minlength="5" maxLength="500"
                         class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Tuliskan umpan balik anda (minimal 5 karakter)"></textarea>
@@ -427,90 +423,7 @@ onMounted(async () => {
         </div>
     </div>
 
-    <!-- <div class="fixed inset-0 z-50 flex items-center justify-center w-full h-full" v-show="showModal.editAssignment">
-
-        <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showModal.editAssignment = false"></div>
-
-        <div class="relative w-full max-w-2xl max-h-full">
-            <div class="relative bg-white rounded-lg shadow">
-                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
-                    <h3 class="text-xl font-medium text-gray-900">
-                        Perbarui Data Penugasan
-                    </h3>
-                    <button type="button"
-                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
-                        @click="showModal.editAssignment = false">
-                        <XMarkCloseIcon class="w-3 h-3" />
-                        <span class="sr-only">Tutup modal</span>
-                    </button>
-                </div>
-
-                <div class="p-4 md:p-5 space-y-4 max-h-[620px] overflow-y-auto">
-                    <div class="grid gap-4 mb-4 grid-cols-2">
-                        <div class="col-span-2">
-                            <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Nama</label>
-                            <input type="text" id="name"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                placeholder="belum ada data" readonly>
-                        </div>
-                        <div class="col-span-2 sm:col-span-1">
-                            <label for="num" class="block mb-2 text-sm font-medium text-gray-900">
-                                Nomor<span class="text-red-600">*</span>
-                            </label>
-                            <div class="flex items-center">
-                                <span
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg p-2.5">
-                                    T/
-                                </span>
-                                <input name="num" type="number" min="1" max="999" required @blur=""
-                                    class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 min-w-12 w-full"
-                                    title="Masukkan no urut sop">
-                                <span
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5 w-fit whitespace-nowrap">
-                                    /UN16.17.02/OT.01.00/{{ new Date().getFullYear() }}
-                                </span>
-                            </div>
-                        </div>
-                        <div class="col-span-2 sm:col-span-1">
-                            <label for="org" class="block mb-2 text-sm font-medium text-gray-900">
-                                Organisasi<span class="text-red-600">*</span>
-                            </label>
-                            <select id="org" required
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                                <option selected disabled value="">Pilih organisasi</option>
-                                <option value="2">Dua</option>
-                            </select>
-                        </div>
-
-                        <div class="col-span-2">
-                            <label for="description"
-                                class="block mb-2 text-sm font-medium text-gray-900">Deskripsi</label>
-                            <textarea id="description" rows="4"
-                                class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                                readonly placeholder="belum ada data"></textarea>
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block mb-2 text-sm font-medium text-gray-900">Penyusun</label>
-                            <ul class="max-w-2xl space-y-1 list-disc list-inside columns-2">
-                                <li class="italic text-gray-400 text-sm"> belum ada data </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div
-                    class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                    <button type="button"
-                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-                        Perbarui data penugasan
-                    </button>
-                </div>
-            </div>
-        </div>
-
-    </div> -->
-
     <DeleteDataModal :showModal="showModal.deleteAssignment" :deleteData="deleteData" :selectedId="sopData.id"
-        @update:showModal="showModal.deleteAssignment = $event" text="Anda yakin ingin menghapus penugasan SOP ini?" />
+        @update:showModal="showModal.deleteAssignment = $event" text="Anda yakin ingin menghapus penugasan SOP ini? Semua progres yang ada saat ini juga akan dihapus!" />
 
 </template>

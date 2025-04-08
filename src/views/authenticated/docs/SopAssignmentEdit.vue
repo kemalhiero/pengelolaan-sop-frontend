@@ -3,8 +3,8 @@ import { inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 
-import { createSopDrafter, getUserByRole } from '@/api/userApi';
-import { createSop, createSopDetail, getSopVersion, updateSopDetail } from '@/api/sopApi';
+import { createSopDrafter, getUserByRole, removeSopDrafter } from '@/api/userApi';
+import { getSopVersion, updateSopDetail } from '@/api/sopApi';
 
 import DataTable from '@/components/DataTable.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
@@ -29,6 +29,7 @@ const form = ref({
     drafter: [],
     description: ''
 });
+let oldDrafters;
 
 const fetchDrafter = async () => {
     try {
@@ -50,32 +51,44 @@ const submitSop = async () => {
         }
         showDrafterWarning.value = false;
 
-        const dataSop = await createSop({
-            id_org: form.value.id_org,
-            name: form.value.name
-        });
-
         const resultSopdetail = await updateSopDetail(
-            dataSop.data.id_sop,
+            route.params.id,
             {
                 number: `T/${String(form.value.number).padStart(3, '0')}/UN16.17.02/OT.01.00/${form.value.year}`,
                 description: form.value.description,
-                pic_position: org.pic.role
             }
-        );
-        console.log(resultSopdetail);
+        ).then(() => {
+            console.log('SOP detail berhasil diperbarui');
+        }).catch((error) => {
+            console.error('Gagal memperbarui SOP detail:', error);
+        });
 
-        // buat pengecekan terlebih dahulu apakah user sudah terdaftar sebagai drafter
-        // kalau udah terdaftar, jangan buat lagi, 
-        // kalau belum buat baru, 
-        // kalau diganti, hapus yang lama, buat yang baru
+        // Ambil data penyusun (drafter) lama dari hasil update, atau set ke array kosong jika tidak ada
+        const oldDrafterIds = oldDrafters.map(user => user.id);
+        const newDrafterIds = form.value.drafter.map(user => user.id);
 
-        // form.value.drafter.forEach(async (item) => {
-        //     await createSopDrafter({
-        //         id_user: item.id,
-        //         id_sop_detail: resultSopdetail.data.id_sop_detail,
-        //     })
-        // });
+        // Jika ada perubahan: hapus drafter yang sebelumnya terdaftar tapi tidak dipilih lagi
+        for (const oldUser of oldDrafters) {
+            if (!newDrafterIds.includes(oldUser.id)) {
+                // Asumsikan ada fungsi removeSopDrafter (tambahkan import sesuai kebutuhan)
+                await removeSopDrafter(oldUser.id, route.params.id).then(() => {
+                    console.log(`Drafter ${oldUser.name} berhasil dihapus`);
+                }).catch((error) => {
+                    console.error(`Gagal menghapus drafter ${oldUser.name}:`, error);
+                });
+            }
+        }
+
+        // Untuk setiap drafter yang dipilih, cek apakah sudah terdaftar,
+        // jika belum, buat baru
+        for (const newUser of form.value.drafter) {
+            if (!oldDrafterIds.includes(newUser.id)) {
+                await createSopDrafter({
+                    id_user: newUser.id,
+                    id_sop_detail: route.params.id,
+                });
+            }
+        }
 
         console.log('sukses submit semua');
 
@@ -85,7 +98,7 @@ const submitSop = async () => {
         });
 
         setTimeout(() => {
-            router.push('/app/docs')
+            router.push({name: 'SopDraftDetail', params: { id: route.params.id }});
         }, 2000) // Delay 2 detik
 
     } catch (error) {
@@ -109,6 +122,7 @@ const fetchDraft = async () => {
             drafter: result.data.users || [],
             description: result.data.description
         };
+        oldDrafters = JSON.parse(JSON.stringify(form.value.drafter));
     } catch (error) {
         console.error('Fetch error:', error);
     }

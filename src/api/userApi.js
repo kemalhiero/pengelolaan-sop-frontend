@@ -14,6 +14,7 @@ const addDrafter = (data) => postRequest('user/drafter', data, getToken());
 const getAllDrafter = () => getRequest('user/drafter', getToken());
 const getDrafterByIdDetail = (id) => getRequest(`user/drafter/sopdetail/${id}`);
 const createSopDrafter = (data) => postRequest('user/drafter/sop', data, getToken());
+const removeSopDrafter = (userId, sopDetailId) => deleteRequest(`user/drafter/sop/${userId}/${sopDetailId}`, getToken());
 const getDrafterDetail = (id) => getRequest(`user/drafter/${id}`, getToken());
 
 const getHod = () => getRequest('user/hod', getToken());
@@ -31,7 +32,7 @@ export {
     getUserByRole, getUserProfile, 
     addProfilePhoto, deleteUserProfile,
     addSignatureFile,
-    getAllDrafter, getDrafterByIdDetail, createSopDrafter, addDrafter, getDrafterDetail,
+    getAllDrafter, getDrafterByIdDetail, createSopDrafter, removeSopDrafter, addDrafter, getDrafterDetail,
     updateHod, getHodCandidate, getHod, getCurrentHod,
     getAllPic, addPic, getUnassignedPic, getPicCandidate, getPicDetail
 };

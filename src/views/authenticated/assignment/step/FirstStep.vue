@@ -106,9 +106,9 @@ const fetchImplementer = async () => {
     }
 };
 
+const implementQualification = createArrayHandler('implementQualification');
 const implementer = createArrayHandler('implementer');
 const legalBasis = createArrayHandler('legalBasis');
-const implementQualification = createArrayHandler('implementQualification');
 const relatedSop = createArrayHandler('relatedSop');
 const equipment = createArrayHandler('equipment');
 const record = createArrayHandler('record');

@@ -288,10 +288,8 @@ const syncSopInfo = async () => {
                 }
             };
 
-            console.log('allNewData')
-            console.log(allNewData)
-            console.log('allDeleteData')
-            console.log(allDeleteData)
+            console.log('allNewData', allNewData)
+            console.log('allDeleteData', allDeleteData)
             console.log('Berhasil sinkronisasi data SOP');
 
             // Resolve promise jika berhasil
@@ -568,7 +566,7 @@ const nextStep = async () => {
             return;
         }
         currentStep.value++;
-    } else if (currentStep.value === 3) {    
+    } else if (currentStep.value === 3) {
         syncSopInfo();
         syncSopStep();
 
@@ -579,7 +577,7 @@ const nextStep = async () => {
         promiseApdet = new Promise((resolve, reject) => {
             // Set status 5 if organization is DSI, otherwise set status 3
             const newStatus = picInfo.value.organization === 'Departemen Sistem Informasi' ? 5 : 3;
-            
+
             updateSopDetail(idsopdetail, { status: newStatus })
                 .then(response => {
                     if (!response.success) {
@@ -595,7 +593,7 @@ const nextStep = async () => {
                 success: 'Umpan balik berhasil dikirim!',
             }
         }
-    );
+        );
 
         setTimeout(() => {
             router.push('/assignment')
