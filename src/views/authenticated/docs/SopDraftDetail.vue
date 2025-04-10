@@ -2,15 +2,15 @@
 import { inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { getSectionandWarning, getSopStep, getSopVersion, updateSopDetail } from '@/api/sopApi';
+import { deleteSopDetail, getSectionandWarning, getSopStep, getSopVersion, updateSopDetail } from '@/api/sopApi';
 import { addDraftFeedback, getDraftFeedback } from '@/api/feedbackApi';
-import { getSopImplementer } from '@/api/implementerApi';
-import { getSopEquipment } from '@/api/equipmentApi';
-import { getIQ } from '@/api/implementQualification';
-import { getRelatedSop } from '@/api/relatedSopApi';
-import { getSopLawBasis } from '@/api/lawBasisApi';
-import { getSopRecord } from '@/api/recordApi';
-import { getCurrentHod } from '@/api/userApi';
+import { deleteSopImplementer, getSopImplementer } from '@/api/implementerApi';
+import { deleteSopEquipment, getSopEquipment } from '@/api/equipmentApi';
+import { deleteIQ, getIQ } from '@/api/implementQualification';
+import { deleteRelatedSop, getRelatedSop } from '@/api/relatedSopApi';
+import { deleteSopLawBasis, getSopLawBasis } from '@/api/lawBasisApi';
+import { deleteSopRecord, getSopRecord } from '@/api/recordApi';
+import { getCurrentHod, removeSopDrafter } from '@/api/userApi';
 
 import { useToastPromise } from '@/utils/toastPromiseHandler';
 import { switchStatusSopDetail } from '@/utils/getStatus';
@@ -110,16 +110,16 @@ const fetchInfoSop = async () => {
         }));;
 
         response = await getIQ(route.params.id);
-        sopData.value.implementQualification = response.data.map(item => item.qualification);
+        sopData.value.implementQualification = response.data;
 
         response = await getRelatedSop(route.params.id);
-        sopData.value.relatedSop = response.data.map(item => item.related_sop);
+        sopData.value.relatedSop = response.data;
 
         response = await getSopEquipment(route.params.id);
-        sopData.value.equipment = response.data.map(item => item.equipment);
+        sopData.value.equipment = response.data;
 
         response = await getSopRecord(route.params.id);
-        sopData.value.record = response.data.map(item => item.data_record);
+        sopData.value.record = response.data;
 
         response = null;
 
@@ -247,13 +247,54 @@ const redirectEditAssignment = () => {
     }).catch((err) => {
         if (err.name !== 'NavigationDuplicated') {
             console.error('Navigation error:', err);
+        } else {
+            console.error('error :', err);
         }
     });
 };
 
 const deleteData = async (id) => {
-    // Implementasi penghapusan data
     console.log('Menghapus data dengan ID:', id);
+    try {
+        await useToastPromise(
+            (async () => {
+                // Hapus data child SOP terlebih dahulu secara paralel
+                await Promise.all([
+                    // many to many
+                    ...sopData.value.implementer.map(item => deleteSopImplementer(id, item.id)),
+                    ...sopData.value.legalBasis.map(item => deleteSopLawBasis(id, item.id)),
+                    ...sopData.value.users.map(item => removeSopDrafter(id, item.id)),
+                    // one to many
+                    ...sopData.value.record.map(item => deleteSopRecord(item.id)),
+                    ...sopData.value.equipment.map(item => deleteSopEquipment(item.id)),
+                    ...sopData.value.relatedSop.map(item => deleteRelatedSop(item.id)),
+                    ...sopData.value.implementQualification.map(item => deleteIQ(item.id))
+                ]);
+                console.log('Child data SOP berhasil dihapus');
+
+                // Setelah itu, hapus data SOP detail
+                await deleteSopDetail(id);
+                console.log('SOP detail berhasil dihapus');
+            })(),
+            {
+                messages: {
+                    pending: 'Sedang menghapus data SOP...',
+                    success: 'SOP berhasil dihapus!',
+                    error: 'Gagal menghapus SOP'
+                }
+            }
+        );
+        
+        router.push({ name: 'SopDocDetail', params: { id: sopData.value.id_sop } }).catch((err) => {
+            if (err.name !== 'NavigationDuplicated') {
+                console.error('Navigation error:', err);
+            } else {
+                console.error('error :', err);
+            }
+        });
+    } catch (error) {
+        console.error('Error saat menghapus data SOP:', error);
+    }
 };
 
 onMounted(async () => {
@@ -297,11 +338,12 @@ onMounted(async () => {
             </div>
             <div class="bg-gray-200 p-5 rounded-xl shadow-md col-span-2 lg:col-span-1 lg:row-span-2">
                 <h4 class="mb-2.5 text-lg">Penyusun</h4>
-                <ul class="list-disc list-inside">
+                <ul class="list-disc list-inside" v-if="sopData?.users.length > 0">
                     <li class="text-lg font-bold" v-for="(user, index) in sopData?.users" :key="index">
                         {{ user.identity_number }} - {{ user.name }}
                     </li>
                 </ul>
+                <p class="italic text-slate-600" v-else>belum ada penyusun yang dipilih</p>
             </div>
             <div class="bg-gray-200 p-5 rounded-xl shadow-md col-span-2">
                 <h4 class="mb-2.5 text-lg">Deskripsi</h4>
@@ -311,12 +353,16 @@ onMounted(async () => {
             </div>
         </div>
 
-        <SopDocTemplate class="mt-8" :name="sopData.name" :number="sopData.number" created-date="-"
-            :revision-date="sopData.revision_date" :effective-date="sopData.effective_date" :pic-name="hodData.name"
-            :pic-number="hodData.id_number" :section="sopData.section"
+        <SopDocTemplate class="mt-8" 
+            :name="sopData.name" :number="sopData.number"
+            :pic-name="hodData.name" :pic-number="hodData.id_number"
+            created-date="-" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
+            :section="sopData.section" :warning="sopData.warning"
             :law-basis="sopData.legalBasis.map(item => item.legal)"
-            :implement-qualification="sopData.implementQualification" :related-sop="sopData.relatedSop"
-            :equipment="sopData.equipment" :warning="sopData.warning" :record-data="sopData.record"
+            :implement-qualification="sopData.implementQualification.map(item => item.qualification)" 
+            :related-sop="sopData.relatedSop.map(item => item.related_sop)"
+            :equipment="sopData.equipment.map(item => item.equipment)" 
+            :record-data="sopData.record.map(item => item.data_record)"
             :implementer="sopData.implementer" :steps="sopData.steps" />
 
         <Divider />

@@ -1,9 +1,8 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
-import { toast } from 'vue3-toastify';
 import { useRoute, useRouter } from 'vue-router';
+import { toast } from 'vue3-toastify';
 
-import { getOrg } from '@/api/orgApi';
 import { createSopDrafter, getUserByRole } from '@/api/userApi';
 import { createSopDetail, getLatestSopInYear, getOneSop } from '@/api/sopApi';
 
@@ -23,7 +22,6 @@ const currentYear = new Date().getFullYear();
 const form = ref({
     name: '',
     number: '',
-    org: null,
     drafter: [],
     version: null,
     description: ''
@@ -31,15 +29,12 @@ const form = ref({
 let sopYear;
 const dataDrafter = ref([]);
 const showDrafterWarning = ref(false);
-const dataOrg = ref([]);
 
 const fetchData = async () => {
   try {
     const response = await getOneSop(route.params.id);
     form.value.name = response.data.name;
-    form.value.org = response.data.organization.name;
     sopYear = parseInt(response.data.creation_date.split(' ')[0].split('/')[2]);
-    console.log(sopYear);
   } catch (error) {
     console.error('Fetch error:', error);
   }
@@ -51,7 +46,6 @@ const fetchLatestSopInYear = async () => {
     const parts = response.data.number.split("/");
     form.value.number = parseInt(parts[1]) + 1 ;
     form.value.version = response.data.version;
-    console.log(form.value)
   } catch (error) {
     console.error('Fetch error:', error);
   }
@@ -70,26 +64,12 @@ const removeDrafter = (index) => {
     form.value.drafter.splice(index, 1);
 };
 
-const fetchOrg = async () => {
-    try {
-        const result = await getOrg();
-        console.log('result org')
-        console.log(result)
-        dataOrg.value = result.data;
-    } catch (error) {
-        console.error('Fetch error:', error);
-    }
-};
-
 const submitSop = async () => {
     try {
         if (form.value.drafter.length == 0) {
             return showDrafterWarning.value = true
         }
-        console.log(form.value);
         showDrafterWarning.value = false;
-
-        const org = dataOrg.value.find(org => org.name === form.value.org);
 
         const resultSopdetail = await createSopDetail(
             route.params.id,
@@ -97,10 +77,9 @@ const submitSop = async () => {
                 number: `T/${String(form.value.number).padStart(3, '0')}/UN16.17.02/OT.01.00/${currentYear}`,
                 description: form.value.description,
                 version: parseInt(form.value.version) + 1,
-                pic_position: org.pic.role
+                signer: null, // ntar pikirin ini bagusya siapa
             }
         );
-        console.log(resultSopdetail);
 
         form.value.drafter.forEach(async (item) => {
             await createSopDrafter({
@@ -110,11 +89,10 @@ const submitSop = async () => {
         });
 
         toast("Data berhasil ditambahkan!", {
-            "type": "success",
-            "autoClose": 3000,
+            type: "success",
+            autoClose: 3000,
         });
-        
-        console.log('sukses submit semua');
+
         setTimeout(() => {
             router.push(`/app/docs/${route.params.id}`)
         }, 2000) // Delay 2 detik
@@ -129,31 +107,22 @@ const submitSop = async () => {
     }
 };
 
-onMounted(() => {
-    fetchData();
-    fetchLatestSopInYear();
-    fetchDrafter();
-    fetchOrg();
+onMounted( async() => {
+    await fetchData();
+    await fetchLatestSopInYear();
+    await fetchDrafter();
 });
 </script>
 
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20">
 
-        <PageTitle judul="Perbarui SOP" class="mt-3 mb-7"/>
+        <PageTitle :judul="`Perbarui SOP ${form.name}`" class="mt-3 mb-7"/>
 
         <section class="bg-white">
             <div class="py-8 px-4 mx-auto max-w-3xl">
                 <form @submit.prevent="submitSop">
                     <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
-                        <div class="col-span-2">
-                            <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
-                                Nama
-                                <span class="text-gray-400 italic font-light text-xs">*tidak dapat diubah</span>
-                            </label>
-                            <input type="text" v-model="form.name" id="name" disabled
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5">
-                        </div>
                         
                         <div class="col-span-2 sm:col-span-1">
                             <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
@@ -174,17 +143,6 @@ onMounted(() => {
                                     /UN16.17.02/OT.01.00/{{ currentYear }}
                                 </span>
                             </div>
-                        </div>
-                        
-                        <div class="col-span-2 sm:col-span-1">
-                            <label for="org" class="block mb-2 text-sm font-medium text-gray-900">
-                                Organisasi
-                                <span class="text-gray-400 italic font-light text-xs">*tidak dapat diubah</span>
-                            </label>
-                            <select id="org" v-model="form.org"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                                <option > {{ form.org }} </option>
-                            </select>
                         </div>
 
                         <div class="col-span-2">
@@ -212,8 +170,7 @@ onMounted(() => {
                                 Tambahkan User
                             </button>
 
-                            <WarningText v-show="showDrafterWarning"
-                                text="Jangan lupa untuk memilih user yang akan ditugaskan!" />
+                            <WarningText v-show="showDrafterWarning" text="Jangan lupa untuk memilih user yang akan ditugaskan!" />
 
                         </div>
 
@@ -221,7 +178,7 @@ onMounted(() => {
                             <label for="description" class="block mb-2 text-sm font-medium text-gray-900">
                                 Deskripsi<span class="text-red-600">*</span>
                             </label>
-                            <textarea id="description" rows="8" v-model="form.description" required minlength="15"
+                            <textarea id="description" rows="8" v-model="form.description" required minlength="10" maxlength="1000"
                                 class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500"
                                 placeholder="ketikkan deskripsi SOP disini..."></textarea>
                         </div>

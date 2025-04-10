@@ -158,7 +158,7 @@ const router = createRouter({
       }
     },
     {
-      path: '/app/propose',
+      path: '/app/docs/propose',
       name: 'SopPropose',
       component: () => import('@/views/authenticated/docs/SopPropose.vue'),
       meta: {
@@ -167,7 +167,7 @@ const router = createRouter({
       }
     },
     {
-      path: '/app/propose-version/:id',
+      path: '/app/docs/:id/propose',
       name: 'SopProposeVersion',
       component: () => import('@/views/authenticated/docs/SopProposeVersion.vue'),
       meta: {

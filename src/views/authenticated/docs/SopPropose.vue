@@ -65,17 +65,14 @@ const submitSop = async () => {
             id_org: form.value.id_org,
             name: form.value.name
         });
-        console.log(dataSop);
-
-        const org = dataOrg.value.find(org => org.id === form.value.id_org);   //cari objek org yang sesuai dengan yang dipilih user pada form
+        console.log('created data sop', dataSop);
 
         const resultSopdetail = await createSopDetail(
             dataSop.data.id_sop,
             {
                 number: `T/${String(form.value.number).padStart(3, '0')}/UN16.17.02/OT.01.00/${currentYear}`,
                 description: form.value.description,
-                version: 1,
-                pic_position: org.pic.role
+                version: 1
             }
         );
         console.log(resultSopdetail);
@@ -214,7 +211,7 @@ onMounted(() => {
                             <label for="description" class="block mb-2 text-sm font-medium text-gray-900">
                                 Deskripsi<span class="text-red-600">*</span>
                             </label>
-                            <textarea id="description" rows="8" v-model="form.description" required
+                            <textarea id="description" rows="8" v-model="form.description" required minlength="10" maxlength="1000"
                                 class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500"
                                 placeholder="ketikkan deskripsi SOP disini..."></textarea>
                         </div>

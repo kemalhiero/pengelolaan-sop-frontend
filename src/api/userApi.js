@@ -14,7 +14,7 @@ const addDrafter = (data) => postRequest('user/drafter', data, getToken());
 const getAllDrafter = () => getRequest('user/drafter', getToken());
 const getDrafterByIdDetail = (id) => getRequest(`user/drafter/sopdetail/${id}`);
 const createSopDrafter = (data) => postRequest('user/drafter/sop', data, getToken());
-const removeSopDrafter = (userId, sopDetailId) => deleteRequest(`user/drafter/sop/${userId}/${sopDetailId}`, getToken());
+const removeSopDrafter = (sopDetailId, userId) => deleteRequest(`user/drafter/sop/${userId}/${sopDetailId}`, getToken());
 const getDrafterDetail = (id) => getRequest(`user/drafter/${id}`, getToken());
 
 const getHod = () => getRequest('user/hod', getToken());

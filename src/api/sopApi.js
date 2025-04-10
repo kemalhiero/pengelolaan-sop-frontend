@@ -26,6 +26,7 @@ const deleteSopStep = (id) => deleteRequest(`sop/step/${id}`, getToken());
 
 export {
     getAllSop, createSop, getOneSop,               //tabel sop
-    createSopDetail, updateSopDetail, getAssignment, getAssignmentDetail, getSectionandWarning, getLatestSopInYear, getManagedSop, getSopVersion,      //tabel detail sop
+    createSopDetail, updateSopDetail, deleteSopDetail, getAssignment, getAssignmentDetail, 
+    getSectionandWarning, getLatestSopInYear, getManagedSop, getSopVersion,      //tabel detail sop
     createSopStep, getSopStep, updateSopStep, deleteSopStep    //tabel sop step
 };

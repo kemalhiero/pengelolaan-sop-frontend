@@ -81,6 +81,17 @@ const handleRowClick = (id) => {
   });
 };
 
+const redirectToProposeVersion = () => {
+  if (isUpdateDisabled.value === false) {
+    router.push({
+      name: 'SopProposeVersion',
+      params: { id: sopData.value.id },
+    }).catch((err) => {
+      console.error('Navigation error:', err);
+    });
+  }
+};
+
 const deleteData = async (id) => {
     // Implementasi penghapusan data
     console.log('Menghapus data dengan ID:', id);
@@ -165,16 +176,12 @@ onMounted(async () => {
     <Error v-else @click="fetchData"/>
 
     <div class="flex justify-center mb-8">
-      <router-link
-        :to="isUpdateDisabled ? null : `/app/propose-version/${route.params.id}`">
-        <button
-          :disabled="isUpdateDisabled"
+        <button :disabled="isUpdateDisabled" @click="redirectToProposeVersion"
           :title="isUpdateDisabled ? 'Tidak dapat memperbarui versi SOP karena ada versi yang sedang diproses' : 'Buat sop dengan versi terbaru'"
           class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
             <CirclePlusIcon class="w-5 mr-3 fill-current" />
             Perbarui versi SOP
         </button>
-      </router-link>
     </div>
 
   </main>

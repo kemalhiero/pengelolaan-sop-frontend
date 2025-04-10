@@ -51,7 +51,7 @@ const submitSop = async () => {
         }
         showDrafterWarning.value = false;
 
-        const resultSopdetail = await updateSopDetail(
+        await updateSopDetail(
             route.params.id,
             {
                 number: `T/${String(form.value.number).padStart(3, '0')}/UN16.17.02/OT.01.00/${form.value.year}`,
@@ -71,7 +71,7 @@ const submitSop = async () => {
         for (const oldUser of oldDrafters) {
             if (!newDrafterIds.includes(oldUser.id)) {
                 // Asumsikan ada fungsi removeSopDrafter (tambahkan import sesuai kebutuhan)
-                await removeSopDrafter(oldUser.id, route.params.id).then(() => {
+                await removeSopDrafter(route.params.id, oldUser.id).then(() => {
                     console.log(`Drafter ${oldUser.name} berhasil dihapus`);
                 }).catch((error) => {
                     console.error(`Gagal menghapus drafter ${oldUser.name}:`, error);
@@ -91,8 +91,7 @@ const submitSop = async () => {
         }
 
         console.log('sukses submit semua');
-
-        toast("Data berhasil ditambahkan!", {
+        toast("Data berhasil diperbarui!", {
             type: "success",
             autoClose: 2000,
         });
@@ -195,7 +194,7 @@ onMounted(() => {
                             <label for="description" class="block mb-2 text-sm font-medium text-gray-900">
                                 Deskripsi<span class="text-red-600">*</span>
                             </label>
-                            <textarea id="description" rows="8" v-model="form.description" required
+                            <textarea id="description" rows="8" v-model="form.description" required minlength="10" maxlength="1000"
                                 class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500"
                                 placeholder="ketikkan deskripsi SOP disini..."></textarea>
                         </div>
