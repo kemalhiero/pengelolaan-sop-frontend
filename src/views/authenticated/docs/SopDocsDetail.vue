@@ -1,21 +1,23 @@
 <script setup>
 import { computed, inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router'
-import { getOneSop } from '@/api/sopApi';
+import { toast } from 'vue3-toastify';
+
+import { deleteSop, getOneSop, updateSop } from '@/api/sopApi';
 import { getOrg } from '@/api/orgApi';
 import { switchStatusIsActive } from '@/utils/getStatus';
-import statusTexts from '@/data/statusTexts.json';
 import { useAuthStore } from '@/stores/auth';
+import statusTexts from '@/data/statusTexts.json';
 
-import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
-import DataTable from '@/components/DataTable.vue';
 import Error from '@/components/Error.vue';
-import TableSkeleton from '@/components/TableSkeleton.vue';
+import DataTable from '@/components/DataTable.vue';
 import EmptyState from '@/components/EmptyState.vue';
-import PageTitle from '@/components/authenticated/PageTitle.vue';
-import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
-import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
+import TableSkeleton from '@/components/TableSkeleton.vue';
+import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
+import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
+import PageTitle from '@/components/authenticated/PageTitle.vue';
+import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
 
 const layoutType = inject('layoutType');
@@ -92,9 +94,49 @@ const redirectToProposeVersion = () => {
   }
 };
 
+const updateData = async () => {
+  try {
+    const response = await updateSop(sopData.value.id, {
+      name: sopData.value.name,
+      id_org: sopData.value.organization.id,
+      is_active: sopData.value.is_active,
+    });
+
+    if (response.success) {
+      console.log('Data berhasil diperbarui:', response.data);
+      toast("Data berhasil diperbarui!", {
+          type: "success",
+          autoClose: 4000,
+      });
+      showModal.value.edit = false;
+      await fetchData();
+    } else {
+      console.error('Gagal memperbarui data:', response.error);
+    }
+  } catch (error) {
+    console.error('Error saat memperbarui data:', error);
+  }
+};
+
 const deleteData = async (id) => {
-    // Implementasi penghapusan data
-    console.log('Menghapus data dengan ID:', id);
+  await deleteSop(id).then((response) => {
+    if (response.success) {
+      console.log('Data berhasil dihapus:', response.data);
+      toast("Data berhasil dihapus!", {
+          type: "success",
+          autoClose: 2000,
+      });
+      showModal.value.delete = false;
+
+      setTimeout(() => {
+        router.push({ name: 'SopDocs' });
+      }, 2000);
+    } else {
+      console.error('Gagal menghapus data:', response.error);
+    }
+  }).catch((error) => {
+    console.error('Error saat menghapus data:', error);
+  });
 };
 
 onMounted(async () => {
@@ -115,7 +157,7 @@ onMounted(async () => {
                 class="p-2 text-white w-8 h-8 bg-yellow-400 rounded-full hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50">
                 <PenToSquareIcon class="fill-current" />
             </button>
-            <button title="Hapus" @click="showModal.delete = true" v-if="sopData.version.length <= 1"
+            <button title="Hapus" @click="showModal.delete = true" v-if="sopData.version.length === 0"
                 class="p-2 text-white w-8 h-8 bg-red-600 rounded-full hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center">
                 <TrashCanIcon class="fill-current" />
             </button>
@@ -202,46 +244,48 @@ onMounted(async () => {
                     <span class="sr-only">Tutup modal</span>
                 </button>
             </div>
-            <div class="p-4 md:p-5 space-y-4 max-h-[620px] overflow-y-auto">
-                <div class="grid gap-4 mb-4 grid-cols-2">
-                    <div class="col-span-2">
-                        <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Nama</label>
-                        <input type="text" id="name"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                            placeholder="belum ada data" v-model="sopData.name" required />
-                    </div>
-                    <div class="col-span-2 sm:col-span-1">
-                        <label for="org" class="block mb-2 text-sm font-medium text-gray-900">
-                            Organisasi
-                        </label>
-                        <select id="org" required :disabled="authStore.userRole !== 'kadep'" v-if="sopData.organization" v-model="sopData.organization.id"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                            <option selected disabled value="">Pilih organisasi</option>
-                            <option v-for="(item, index) in dataOrganization" :value="item.id" :key="`org-${index}`">
-                                {{ item.name }}
-                            </option>
-                        </select>
-                    </div>
-                    <div class="col-span-2 sm:col-span-1">
-                        <label for="org" class="block mb-2 text-sm font-medium text-gray-900">
-                            Status
-                        </label>
-                        <select id="org" required :disabled="sopData.is_active === 2" v-model="sopData.is_active"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                            <option selected disabled value="">Pilih Status</option>
-                            <option value="0">Tidak Berlaku (kadaluarsa)</option>
-                            <option value="1">Berlaku</option>
-                            <option value="2">Belum berlaku (masih disusun)</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <div class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                <button type="button"
-                    class="text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
-                    Perbarui
-                </button>
-            </div>
+            <form @submit.prevent="updateData">
+              <div class="p-4 md:p-5 space-y-4 max-h-[620px] overflow-y-auto">
+                  <div class="grid gap-4 mb-4 grid-cols-2">
+                      <div class="col-span-2">
+                          <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Nama</label>
+                          <input type="text" id="name" required minlength="3" maxlength="100"
+                              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
+                              placeholder="belum ada data" v-model="sopData.name"  />
+                      </div>
+                      <div class="col-span-2 sm:col-span-1">
+                          <label for="org" class="block mb-2 text-sm font-medium text-gray-900">
+                              Organisasi
+                          </label>
+                          <select id="org" required :disabled="authStore.userRole !== 'kadep'" v-if="sopData.organization" v-model="sopData.organization.id"
+                              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+                              <option selected disabled value="">Pilih organisasi</option>
+                              <option v-for="(item, index) in dataOrganization" :value="item.id" :key="`org-${index}`">
+                                  {{ item.name }}
+                              </option>
+                          </select>
+                      </div>
+                      <div class="col-span-2 sm:col-span-1">
+                          <label for="org" class="block mb-2 text-sm font-medium text-gray-900">
+                              Status
+                          </label>
+                          <select id="org" required :disabled="sopData.is_active === 2" v-model="sopData.is_active"
+                              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+                              <option selected disabled value="">Pilih Status</option>
+                              <option value="0">Tidak Berlaku (kadaluarsa)</option>
+                              <option value="1">Berlaku</option>
+                              <option value="2">Belum berlaku (masih disusun)</option>
+                          </select>
+                      </div>
+                  </div>
+              </div>
+              <div class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
+                  <button type="submit"
+                      class="text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+                      Perbarui
+                  </button>
+              </div>
+            </form>
         </div>
     </div>
   </div>

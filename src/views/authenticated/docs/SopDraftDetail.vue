@@ -281,6 +281,9 @@ const deleteData = async (id) => {
                     pending: 'Sedang menghapus data SOP...',
                     success: 'SOP berhasil dihapus!',
                     error: 'Gagal menghapus SOP'
+                },
+                toastOptions: {
+                    autoClose: 2000,
                 }
             }
         );

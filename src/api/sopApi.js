@@ -3,8 +3,10 @@ import { getRequest, postRequest, patchRequest, deleteRequest } from "./apiClien
 
 const getAllSop = () => getRequest('sop');
 const createSop = (data) => postRequest('sop', data, getToken());
-
 const getOneSop = (idSop) => getRequest(`sop/${idSop}`);
+const updateSop = (id, data) => patchRequest(`sop/${id}`, data, getToken());
+const deleteSop = (id) => deleteRequest(`sop/${id}`, getToken());
+
 const getSopVersion = (id) => getRequest(`sop/version/${id}`);
 const getLatestSopInYear = (year) => getRequest(`sop/latest/year/${year}`);
 
@@ -25,7 +27,7 @@ const updateSopStep = (id, data) => patchRequest(`sop/step/${id}`, data, getToke
 const deleteSopStep = (id) => deleteRequest(`sop/step/${id}`, getToken());
 
 export {
-    getAllSop, createSop, getOneSop,               //tabel sop
+    getAllSop, createSop, getOneSop, updateSop, deleteSop,             //tabel sop
     createSopDetail, updateSopDetail, deleteSopDetail, getAssignment, getAssignmentDetail, 
     getSectionandWarning, getLatestSopInYear, getManagedSop, getSopVersion,      //tabel detail sop
     createSopStep, getSopStep, updateSopStep, deleteSopStep    //tabel sop step
