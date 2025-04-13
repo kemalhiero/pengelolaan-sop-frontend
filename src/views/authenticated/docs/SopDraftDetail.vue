@@ -38,6 +38,7 @@ layoutType.value = 'admin';
 const statusSop = ref('');
 const newFeedback = ref('');
 const draftFeedback = ref([]);
+const activeTab = ref('document'); // 'document' or 'bpmn'
 
 const showModal = ref({
     approveSopDraft: false,
@@ -356,29 +357,55 @@ onMounted(async () => {
             </div>
         </div>
 
-        <SopDocTemplate class="mt-8" 
-            :name="sopData.name" :number="sopData.number"
-            :pic-name="hodData.name" :pic-number="hodData.id_number"
-            created-date="-" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
-            :section="sopData.section" :warning="sopData.warning"
-            :law-basis="sopData.legalBasis.map(item => item.legal)"
-            :implement-qualification="sopData.implementQualification.map(item => item.qualification)" 
-            :related-sop="sopData.relatedSop.map(item => item.related_sop)"
-            :equipment="sopData.equipment.map(item => item.equipment)" 
-            :record-data="sopData.record.map(item => item.data_record)"
-            :implementer="sopData.implementer" :steps="sopData.steps" />
-
-        <Divider />
-
-        <!-- Only render when both steps and implementer arrays exist and have data -->
-        <SopBpmnTemplate
-            v-if="sopData.steps && sopData.steps.length > 0 && sopData.implementer && sopData.implementer.length > 0"
-            :name="sopData.name" :steps="sopData.steps || []" :implementer="sopData.implementer || []" />
-
-        <div v-else class="my-4 p-4 bg-gray-100 rounded text-center">
-            Belum ada tahapan yang diinputkan oleh penyusun!
+        <div class="flex justify-center my-6">
+            <div class="inline-flex rounded-md shadow-sm" role="group">
+            <button 
+                @click="activeTab = 'document'" 
+                type="button" 
+                class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-l-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
+                :class="activeTab === 'document' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'"
+            >
+                Dokumen SOP
+            </button>
+            <button 
+                @click="activeTab = 'bpmn'" 
+                type="button" 
+                class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-r-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
+                :class="activeTab === 'bpmn' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'"
+            >
+                Diagram BPMN
+            </button>
+            </div>
         </div>
 
+        <div v-if="activeTab === 'document'">
+            <SopDocTemplate class="mt-8" 
+                :name="sopData.name" :number="sopData.number"
+                :pic-name="hodData.name" :pic-number="hodData.id_number"
+                created-date="-" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
+                :section="sopData.section" :warning="sopData.warning"
+                :law-basis="sopData.legalBasis.map(item => item.legal)"
+                :implement-qualification="sopData.implementQualification.map(item => item.qualification)" 
+                :related-sop="sopData.relatedSop.map(item => item.related_sop)"
+                :equipment="sopData.equipment.map(item => item.equipment)" 
+                :record-data="sopData.record.map(item => item.data_record)"
+                :implementer="sopData.implementer" :steps="sopData.steps" 
+            />
+        </div>
+
+        <div v-else-if="activeTab === 'bpmn'">
+            <SopBpmnTemplate
+                v-if="sopData.steps && sopData.steps.length > 0 && sopData.implementer && sopData.implementer.length > 0"
+                :name="sopData.name" 
+                :steps="sopData.steps || []" 
+                :implementer="sopData.implementer || []" 
+            />
+            <div v-else class="my-4 p-4 bg-gray-100 rounded text-center">
+                Belum ada tahapan yang diinputkan oleh penyusun!
+            </div>
+        </div>
+
+        <!-- Only render when both steps and implementer arrays exist and have data -->
         <div class="w-full lg:w-2/3 flex flex-col mx-auto mt-12 mb-5" v-if="![2].includes(sopData.status)">
             <h2 class="text-xl font-semibold mb-4">Umpan Balik Sebelumnya</h2>
             <div v-if="draftFeedback && draftFeedback.length > 0" class="space-y-4">
