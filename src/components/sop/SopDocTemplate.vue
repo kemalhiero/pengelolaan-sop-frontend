@@ -75,10 +75,6 @@ const props = defineProps({
     },
 
     // ttd
-    isSigned: {
-        type: Boolean,
-        default: false
-    },
     signature: {
         type: String,
         default: ''
@@ -207,7 +203,7 @@ const connections = computed(() => {
                             <td class="text-center font-bold border-2 py-0.5 px-2 border-black">
                                 <p>Ketua Departemen,</p>
                                 <div class="flex justify-center h-24">
-                                    <img src="/signature.webp" alt="Tanda Tangan" class="max-w-full" v-if="props.isSigned"/>
+                                    <img :src="signature" alt="Tanda Tangan" class="max-w-full" v-if="props.signature"/>
                                 </div>
                                 <p>{{ props.picName }}</p>
                                 <p>NIP. {{ props.picNumber }}</p>

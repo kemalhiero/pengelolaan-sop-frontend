@@ -2,7 +2,6 @@
 import { inject, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import Divider from '@/components/Divider.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import SopDocTemplate from '@/components/sop/SopDocTemplate.vue';
 import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
@@ -24,6 +23,40 @@ const confirm = () => {
     console.log('SOP and BPMN confirmed');
     router.push({ name: 'SopDocs' });
 };
+
+const signaturePreview = ref(''); // URL atau path pratinjau tanda tangan
+const signature = ref(''); // Placeholder untuk menyimpan tanda tangan yang diunggah
+const signatureUploaded = ref(false); // State untuk mengecek apakah tanda tangan sudah diunggah
+const signatureUsed = ref(false); // State untuk mengecek apakah tanda tangan sudah digunakan
+
+const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        // Simpan URL pratinjau tanda tangan
+        signaturePreview.value = URL.createObjectURL(file);
+        signatureUploaded.value = true;
+    }
+};
+
+const removeSignature = () => {
+    signaturePreview.value = '';
+    signature.value = ''; // Reset tanda tangan yang diunggah
+    signatureUploaded.value = false;
+    signatureUsed.value = false; // Reset status penggunaan tanda tangan
+    console.log('Tanda tangan dihapus');
+};
+
+const useSignature = () => {
+    if (signatureUploaded.value) {
+        signatureUsed.value = true; // Tandai bahwa tanda tangan telah digunakan
+        signature.value = signaturePreview.value; // Simpan tanda tangan yang digunakan
+        // Logika untuk menggunakan tanda tangan, misalnya menyimpannya ke server atau menambahkannya ke dokumen
+        console.log('Tanda tangan digunakan:', signaturePreview.value);
+        // Tambahkan logika lain, seperti menyimpan tanda tangan ke server
+    } else {
+        console.error('Tidak ada tanda tangan yang diunggah!');
+    }
+};
 </script>
 
 <template>
@@ -33,28 +66,57 @@ const confirm = () => {
         <!-- Tanda Tangan -->
         <div class="lg:col-span-2 p-6">
             <h2 class="text-2xl font-bold text-gray-800 mb-1">Tanda Tangan</h2>
-            <p class="text-sm mb-6">Unggah hasil pindai dari tanda tangan dan stempel jabatan anda. Pastikan latar
-                belakangnya berwarna putih!</p>
-            <form @submit.prevent="" class="space-y-4">
+            <p class="text-sm mb-6">
+                Unggah hasil pindai dari tanda tangan dan stempel jabatan Anda. Pastikan latar belakangnya berwarna putih!
+            </p>
+
+            <!-- Jika tanda tangan belum diunggah -->
+            <div v-if="!signatureUploaded" class="space-y-4">
                 <div class="flex items-center">
-                    <input type="file" @change="" accept="image/png, image/jpeg, image/webp" ref="signatureInput"
-                        class="sr-only" />
-                    <button type="button" @click=""
-                        class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition">
+                    <input
+                        type="file"
+                        @change="handleFileUpload"
+                        accept="image/png, image/jpeg, image/webp"
+                        class="sr-only"
+                        id="signatureInput"
+                    />
+                    <label
+                        for="signatureInput"
+                        class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition cursor-pointer"
+                    >
                         Pilih Tanda Tangan
-                    </button>
-                    <span class="ml-4 text-gray-600">ini itu.jepege</span>
+                    </label>
+                    <span class="ml-4 text-gray-600">Belum ada file yang dipilih</span>
                 </div>
+            </div>
+
+            <!-- Jika tanda tangan sudah diunggah -->
+            <div v-else class="space-y-4">
                 <div class="flex justify-center">
-                    <img src="/signature.webp" alt="Pratinjau Tanda Tangan" class="max-w-full max-h-32 rounded-md" />
+                    <img
+                        :src="signaturePreview"
+                        alt="Pratinjau Tanda Tangan"
+                        class="max-w-full max-h-32 rounded-md border border-gray-300"
+                    />
                 </div>
-                <div class="flex justify-end">
-                    <button type="submit" disabled
-                        class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition disabled:cursor-not-allowed disabled:bg-opacity-60">
-                        Unggah Tanda Tangan
+                <div class="flex justify-end space-x-4">
+                    <button
+                        @click="removeSignature"
+                        class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+                    >
+                        Hapus Tanda Tangan
+                    </button>
+                    <button
+                        type="button" @click="useSignature"
+                        class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition"
+                    >
+                        Gunakan Tanda Tangan
                     </button>
                 </div>
-            </form>
+                <div v-if="signatureUsed" class="flex justify-end mt-4">
+                    <p class="text-green-600 font-medium">Tanda tangan telah digunakan!</p>
+                </div>
+            </div>
         </div>
 
         
@@ -113,7 +175,7 @@ const confirm = () => {
                 :implementer="implementer" 
                 :steps="sopSteps" 
 
-                is-signed="true"
+                :signature="signature"
             />            
         </div>
 
@@ -121,11 +183,9 @@ const confirm = () => {
             <SopBpmnTemplate name="Prosedur pendaftaran kerja praktik" :steps="sopSteps" :implementer="implementer" />
         </div>
 
-        <Divider />
-
         <div class="my-10 flex justify-center">
-            <button type="button" @click="showConfirmationModal = true"
-                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-1/4">
+            <button type="button" @click="showConfirmationModal = true" :disabled="!signatureUsed"
+                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-1/4 disabled:cursor-not-allowed disabled:bg-opacity-60">
                 Sahkan SOP dan BPMN?
             </button>
         </div>

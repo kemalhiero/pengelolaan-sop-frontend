@@ -16,7 +16,6 @@ import { useToastPromise } from '@/utils/toastPromiseHandler';
 import { switchStatusSopDetail } from '@/utils/getStatus';
 import { useAuthStore } from '@/stores/auth';
 
-import Divider from '@/components/Divider.vue';
 import SopDocTemplate from '@/components/sop/SopDocTemplate.vue';
 import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
 import GreenBadgeIndicator from '@/components/indicator/GreenBadgeIndicator.vue';
