@@ -2,30 +2,31 @@
 import { inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { deleteSopDetail, getSectionandWarning, getSopStep, getSopVersion, updateSopDetail } from '@/api/sopApi';
 import { addDraftFeedback, getDraftFeedback } from '@/api/feedbackApi';
-import { deleteSopImplementer, getSopImplementer } from '@/api/implementerApi';
-import { deleteSopEquipment, getSopEquipment } from '@/api/equipmentApi';
-import { deleteIQ, getIQ } from '@/api/implementQualification';
-import { deleteRelatedSop, getRelatedSop } from '@/api/relatedSopApi';
-import { deleteSopLawBasis, getSopLawBasis } from '@/api/lawBasisApi';
-import { deleteSopRecord, getSopRecord } from '@/api/recordApi';
-import { getCurrentHod, removeSopDrafter } from '@/api/userApi';
+import { deleteSopDetail, updateSopDetail } from '@/api/sopApi';
+import { deleteSopImplementer } from '@/api/implementerApi';
+import { deleteIQ } from '@/api/implementQualificationApi';
+import { deleteSopEquipment } from '@/api/equipmentApi';
+import { deleteRelatedSop } from '@/api/relatedSopApi';
+import { deleteSopLawBasis } from '@/api/lawBasisApi';
+import { deleteSopRecord } from '@/api/recordApi';
+import { deleteSopDrafter } from '@/api/userApi';
 
 import { useToastPromise } from '@/utils/toastPromiseHandler';
 import { switchStatusSopDetail } from '@/utils/getStatus';
+import { useSopData } from '@/composables/useSopData';
 import { useAuthStore } from '@/stores/auth';
 
-import SopDocTemplate from '@/components/sop/SopDocTemplate.vue';
-import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
-import GreenBadgeIndicator from '@/components/indicator/GreenBadgeIndicator.vue';
 import YellowBadgeIndicator from '@/components/indicator/YellowBadgeIndicator.vue';
+import GreenBadgeIndicator from '@/components/indicator/GreenBadgeIndicator.vue';
 import ExclamationMarkIcon from '@/assets/icons/ExclamationMarkIcon.vue';
-import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
-import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
-import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
+import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
+import SopDocTemplate from '@/components/sop/SopDocTemplate.vue';
+import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
+import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
+import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -45,106 +46,7 @@ const showModal = ref({
     deleteAssignment: false,
 });
 
-const sopData = ref({
-    id: null,
-    id_sop: null,
-    name: '',
-    is_active: null,
-    number: '',
-    version: '',
-    status: null,
-    description: '',
-    pic_position: '',
-    revision_date: '',
-    effective_date: '',
-    section: '',
-    users: [],
-    organization: {},
-
-    implementer: [],
-    legalBasis: [],
-    implementQualification: [],
-    relatedSop: [],
-    equipment: [],
-    warning: '',
-    record: [],
-
-    steps: [],
-});
-const hodData = ref({
-    id_number: '',
-    name: '',
-});
-
-const fetchSopVersion = async () => {
-    try {
-        const result = await getSopVersion(route.params.id);
-        if (!result.success) {
-            console.error('API Error:', result.error);
-            return;
-        }
-
-        if (result?.data) {
-            sopData.value = { ...sopData.value, ...result.data };
-        }
-
-    } catch (error) {
-        console.error('Fetch error:', error);
-    }
-};
-
-const fetchInfoSop = async () => {
-    try {
-
-        let response = await getSectionandWarning(route.params.id);
-        sopData.value.section = response.data.section;
-        sopData.value.warning = response.data.warning;
-
-        response = await getSopImplementer(route.params.id);
-        sopData.value.implementer = response.data;
-
-        response = await getSopLawBasis(route.params.id);
-        sopData.value.legalBasis = response.data.map(item => ({
-            id: item.id,
-            legal: `${item.law_type} Nomor ${item.number} Tahun ${item.year} tentang ${item.about}`
-        }));;
-
-        response = await getIQ(route.params.id);
-        sopData.value.implementQualification = response.data;
-
-        response = await getRelatedSop(route.params.id);
-        sopData.value.relatedSop = response.data;
-
-        response = await getSopEquipment(route.params.id);
-        sopData.value.equipment = response.data;
-
-        response = await getSopRecord(route.params.id);
-        sopData.value.record = response.data;
-
-        response = null;
-
-    } catch (error) {
-        console.error('Fetch info sop error:', error);
-    }
-};
-
-const fetchSopStep = async () => {
-    try {
-        const response = await getSopStep(route.params.id);
-        sopData.value.steps = response.data.sort((a, b) => a.seq_number - b.seq_number);
-    } catch (error) {
-        console.error('Fetch tahapan sop error:', error);
-    }
-};
-
-const fetchCurrentHod = async () => {
-    try {
-        const response = await getCurrentHod();
-        hodData.value = response.data;
-    } catch (error) {
-        console.error('Fetch data kadep error:', error);
-    }
-};
+const { sopData, hodData, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchCurrentHod } = useSopData(route.params.id);
 
 const fetchFeedback = async () => {
     try {
@@ -263,7 +165,7 @@ const deleteData = async (id) => {
                     // many to many
                     ...sopData.value.implementer.map(item => deleteSopImplementer(id, item.id)),
                     ...sopData.value.legalBasis.map(item => deleteSopLawBasis(id, item.id)),
-                    ...sopData.value.users.map(item => removeSopDrafter(id, item.id)),
+                    ...sopData.value.users.map(item => deleteSopDrafter(id, item.id)),
                     // one to many
                     ...sopData.value.record.map(item => deleteSopRecord(item.id)),
                     ...sopData.value.equipment.map(item => deleteSopEquipment(item.id)),
@@ -377,8 +279,8 @@ onMounted(async () => {
             </div>
         </div>
 
-        <div v-if="activeTab === 'document'">
-            <SopDocTemplate class="mt-8" 
+        <div class="mt-8" v-if="activeTab === 'document'">
+            <SopDocTemplate
                 :name="sopData.name" :number="sopData.number"
                 :pic-name="hodData.name" :pic-number="hodData.id_number"
                 created-date="-" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"

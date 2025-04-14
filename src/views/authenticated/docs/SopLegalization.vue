@@ -1,7 +1,8 @@
 <script setup>
-import { inject, ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { inject, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
+import { useSopData } from '@/composables/useSopData';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import SopDocTemplate from '@/components/sop/SopDocTemplate.vue';
 import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
@@ -13,10 +14,9 @@ layoutType.value = 'admin';
 const showConfirmationModal = ref(false);
 const activeTab = ref('document');
 const router = useRouter();
+const route = useRoute();
 
-// data dummy
-import sopSteps from '@/data/sopSteps.json';
-import implementer from '@/data/sopImplementer.json';
+const { sopData, hodData, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchCurrentHod } = useSopData(route.params.id);
 
 const confirm = () => {
     // Logic to handle confirmation
@@ -57,6 +57,13 @@ const useSignature = () => {
         console.error('Tidak ada tanda tangan yang diunggah!');
     }
 };
+
+onMounted(async () => {
+    await fetchSopVersion();
+    await fetchInfoSop();
+    await fetchSopStep();
+    await fetchCurrentHod();
+});
 </script>
 
 <template>
@@ -144,43 +151,31 @@ const useSignature = () => {
         </div>
 
         <div v-if="activeTab === 'document'">
-            <SopDocTemplate
-                name="Prosedur Pendaftaran Kerja Praktik" 
-                number="T/__/UN16.17.02/OT.01.00/2023"
-                created-date="18 Agustus 2023" 
-                revision-date="" 
-                effective-date="23 Januari 2023" 
-                pic-name="Husnil Kamil, MT"
-                pic-number="198201182008121002" 
-                section="Semua Seksi di Lingkungan Departemen Sistem Informasi" 
-                :law-basis="[
-                    'Peraturan Pemerintah Nomor 95 Tahun 2021 tentang Perguruan Tinggi Negeri Badan Hukum Universitas Andalas',
-                    'Peraturan Rektor Universitas Andalas Nomor 8 Tahun 2022 tentang Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas'
-                ]" 
-                :implement-qualification="[
-                    'Memiliki Kemampuan pengolahan data sederhana',
-                    'Mengetahui tugas dan fungsi POS AP',
-                    'Menguasai operasional komputer'
-                ]" 
-                :related-sop="[
-                    'POS Pelaksanaan KP', 'POS Pembatalan KP'
-                ]" 
-                :equipment="[
-                    'Komputer', 'Printer', 'HDD Kesternal', 'Dokumen OTK'
-                ]" 
-                warning="Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses kerja praktik mahasiswa."
-                :record-data="[
-                    'Dokumen', 'Pengarsipan', 'Surat/Disposisi'
-                ]" 
-                :implementer="implementer" 
-                :steps="sopSteps" 
-
+            <SopDocTemplate 
+                :name="sopData.name" :number="sopData.number"
+                :pic-name="hodData.name" :pic-number="hodData.id_number"
+                created-date="-" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
+                :section="sopData.section" :warning="sopData.warning"
+                :law-basis="sopData.legalBasis.map(item => item.legal)"
+                :implement-qualification="sopData.implementQualification.map(item => item.qualification)" 
+                :related-sop="sopData.relatedSop.map(item => item.related_sop)"
+                :equipment="sopData.equipment.map(item => item.equipment)" 
+                :record-data="sopData.record.map(item => item.data_record)"
+                :implementer="sopData.implementer" :steps="sopData.steps" 
                 :signature="signature"
-            />            
+            />           
         </div>
 
         <div v-else-if="activeTab === 'bpmn'">
-            <SopBpmnTemplate name="Prosedur pendaftaran kerja praktik" :steps="sopSteps" :implementer="implementer" />
+            <SopBpmnTemplate
+                v-if="sopData.steps && sopData.steps.length > 0 && sopData.implementer && sopData.implementer.length > 0"
+                :name="sopData.name" 
+                :steps="sopData.steps || []" 
+                :implementer="sopData.implementer || []" 
+            />
+            <div v-else class="my-4 p-4 bg-gray-100 rounded text-center">
+                Belum ada tahapan yang diinputkan oleh penyusun!
+            </div>
         </div>
 
         <div class="my-10 flex justify-center">

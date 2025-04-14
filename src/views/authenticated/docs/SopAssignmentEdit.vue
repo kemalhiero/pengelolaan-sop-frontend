@@ -3,7 +3,7 @@ import { inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 
-import { createSopDrafter, getUserByRole, removeSopDrafter } from '@/api/userApi';
+import { createSopDrafter, getUserByRole, deleteSopDrafter } from '@/api/userApi';
 import { getSopVersion, updateSopDetail } from '@/api/sopApi';
 
 import DataTable from '@/components/DataTable.vue';
@@ -70,8 +70,8 @@ const submitSop = async () => {
         // Jika ada perubahan: hapus drafter yang sebelumnya terdaftar tapi tidak dipilih lagi
         for (const oldUser of oldDrafters) {
             if (!newDrafterIds.includes(oldUser.id)) {
-                // Asumsikan ada fungsi removeSopDrafter (tambahkan import sesuai kebutuhan)
-                await removeSopDrafter(route.params.id, oldUser.id).then(() => {
+                // Asumsikan ada fungsi deleteSopDrafter (tambahkan import sesuai kebutuhan)
+                await deleteSopDrafter(route.params.id, oldUser.id).then(() => {
                     console.log(`Drafter ${oldUser.name} berhasil dihapus`);
                 }).catch((error) => {
                     console.error(`Gagal menghapus drafter ${oldUser.name}:`, error);

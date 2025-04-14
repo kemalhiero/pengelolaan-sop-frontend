@@ -43,9 +43,9 @@
                         {{ item.lembaga }}
                     </td>
                     <td class="px-6 py-4 text-right">
-                        <RouterLink :to="{ name:'DetailSop' }">
+                        <!-- <RouterLink :to="{ name:'DetailSop' }"> -->
                             <p class="font-medium text-blue-600 dark:text-blue-500 hover:underline">Lihat</p>
-                        </RouterLink>
+                        <!-- </RouterLink> -->
                     </td>
                 </tr>
             </tbody>

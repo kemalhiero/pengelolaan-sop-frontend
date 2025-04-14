@@ -81,7 +81,7 @@ onMounted(() => {
                 ]"
                 :badge-text="['Batal', 'Selesai', 'Belum Selesai']"
                 :link-column="true"
-                detail-link="/assignment"
+                detail-link="AssignmentDetail"
             />
         </div>
     </div>

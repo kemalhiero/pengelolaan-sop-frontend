@@ -1,6 +1,6 @@
 <script setup>
 import { ref, provide, onMounted, watch, inject } from 'vue';
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 
 import { createSopStep, getAssignmentDetail, getSectionandWarning, getSopStep, updateSopDetail, updateSopStep, deleteSopStep } from '@/api/sopApi';
@@ -9,7 +9,7 @@ import { createSopImplementer, getSopImplementer, deleteSopImplementer } from '@
 import { createEquipment, getSopEquipment, deleteSopEquipment } from '@/api/equipmentApi';
 import { createRelatedSop, getRelatedSop, deleteRelatedSop } from '@/api/relatedSopApi';
 import { createRecord, getSopRecord, deleteSopRecord } from '@/api/recordApi';
-import { createIQ, getIQ, deleteIQ } from '@/api/implementQualification';
+import { createIQ, getIQ, deleteIQ } from '@/api/implementQualificationApi';
 import { useToastPromise } from '@/utils/toastPromiseHandler';
 import { getCurrentHod } from '@/api/userApi';
 

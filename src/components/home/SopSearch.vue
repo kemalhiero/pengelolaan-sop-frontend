@@ -3,7 +3,6 @@ import { onMounted, ref } from 'vue';
 import { getAllSop } from '@/api/sopApi';
 
 import Error from '@/components/Error.vue';
-import EyeIcon from '@/assets/icons/EyeIcon.vue';
 import DataTable from '@/components/DataTable.vue';
 import EmptyState from '@/components/EmptyState.vue';
 import TableSkeleton from '@/components/TableSkeleton.vue';
@@ -76,20 +75,10 @@ onMounted(() => {
                 :status-columns="[
                     { field: 'is_active', label: 'Status' }
                 ]" 
-                :other-column="true"
                 :badge-text="['Tidak Berlaku', 'Berlaku', 'Belum Berlaku']"
-            >
-                <template #link>
-                    <router-link :to="{ name: 'DetailSop' }">
-                        <button
-                            class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center me-2 mb-2"
-                            title="Lihat detail dokumen">
-                            <EyeIcon class="w-5 mr-3 fill-current" />
-                            Lihat
-                        </button>
-                    </router-link>
-                </template>
-            </DataTable>
+                :link-column="true"
+                detail-link="DetailSop" 
+            />
         </div>
         
     </div>

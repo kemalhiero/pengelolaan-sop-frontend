@@ -90,7 +90,7 @@ onMounted(() => {
                     ]" 
                     :badge-text="['Tidak Berlaku', 'Berlaku', 'Belum Berlaku']" 
                     :link-column="true"
-                    detail-link="/app/docs" 
+                    detail-link="SopDocDetail" 
                 />
             </div>
 

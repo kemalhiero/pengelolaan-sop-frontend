@@ -1,5 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
+import { useRouter } from 'vue-router';
+
 import SortIcon from '@/assets/icons/SortIcon.vue';
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
@@ -7,6 +9,8 @@ import GreenBadgeIndicator from './indicator/GreenBadgeIndicator.vue';
 import RedBadgeIndicator from './indicator/RedBadgeIndicator.vue';
 import YellowBadgeIndicator from './indicator/YellowBadgeIndicator.vue';
 import EyeIcon from '@/assets/icons/EyeIcon.vue';
+
+const router = useRouter();
 
 const props = defineProps({
     data: {
@@ -60,9 +64,9 @@ const props = defineProps({
         type: String
     },
     showDeleteButton: {
-    type: Function,
-    default: null,
-  },
+        type: Function,
+        default: null,
+    },
 });
 
 const searchInput = ref('');
@@ -128,7 +132,7 @@ watch(searchInput, (newValue) => {
 // Computed property untuk filtering, sorting, dan pagination
 const filteredAndSortedData = computed(() => {
     let result = props.data;
-    
+
     // Apply search filter if there's a search query and searchable fields
     if (searchQuery.value && searchableFields.value.length > 0) {
         result = result.filter(item => {
@@ -144,9 +148,9 @@ const filteredAndSortedData = computed(() => {
     // Sort data jika ada field yang dipilih
     if (sortField.value) {
         result = [...result].sort((a, b) => {
-            if (a[sortField.value] < b[sortField.value]) 
+            if (a[sortField.value] < b[sortField.value])
                 return sortDirection.value[sortField.value] === 'asc' ? -1 : 1;
-            if (a[sortField.value] > b[sortField.value]) 
+            if (a[sortField.value] > b[sortField.value])
                 return sortDirection.value[sortField.value] === 'asc' ? 1 : -1;
             return 0;
         });
@@ -161,7 +165,7 @@ const paginatedData = computed(() => {
     return filteredAndSortedData.value.slice(start, end);
 });
 
-const totalPages = computed(() => 
+const totalPages = computed(() =>
     Math.ceil(filteredAndSortedData.value.length / itemsPerPage.value)
 );
 
@@ -199,7 +203,7 @@ const displayedPages = computed(() => {
     const total = totalPages.value;
     const current = currentPage.value;
     const pages = [];
-    
+
     if (total <= 7) {
         // Jika total halaman <= 7, tampilkan semua
         for (let i = 1; i <= total; i++) {
@@ -208,7 +212,7 @@ const displayedPages = computed(() => {
     } else {
         // Selalu tampilkan halaman pertama
         pages.push(1);
-        
+
         if (current <= 3) {
             // Jika di awal, tampilkan 1-5
             for (let i = 2; i <= 5; i++) {
@@ -232,7 +236,7 @@ const displayedPages = computed(() => {
             pages.push(total);
         }
     }
-    
+
     return pages;
 });
 
@@ -247,23 +251,13 @@ const goToPage = (page) => {
 
 <template>
     <div class="flex justify-between items-center mb-4">
-        <input 
-            v-model="searchInput"
-            type="text"
-            placeholder="Cari..."
-            class="p-2 border rounded-lg border-gray-300"
-        />
-    
+        <input v-model="searchInput" type="text" placeholder="Cari..." class="p-2 border rounded-lg border-gray-300" />
+
         <!-- Items per page selector di kanan atas -->
         <div class="flex items-center">
-            <select 
-                v-model="itemsPerPage"
-                @change="handleItemsPerPageChange"
+            <select v-model="itemsPerPage" @change="handleItemsPerPageChange"
                 class="p-2 border rounded-lg border-gray-300">
-                <option 
-                    v-for="option in itemsPerPageOptions" 
-                    :key="option" 
-                    :value="option">
+                <option v-for="option in itemsPerPageOptions" :key="option" :value="option">
                     {{ option }}
                 </option>
             </select>
@@ -279,10 +273,7 @@ const goToPage = (page) => {
                     <th v-for="column in columns" :key="column.field" class="px-6 py-3" scope="col">
                         <div class="flex items-center">
                             {{ column.label }}
-                            <!-- Tambahkan container div dan event handler pada SortIcon -->
-                            <div v-if="column.sortable" 
-                                @click="sortData(column.field)"
-                                class="ml-2 cursor-pointer">
+                            <div v-if="column.sortable" @click="sortData(column.field)" class="ml-2 cursor-pointer">
                                 <SortIcon />
                             </div>
                         </div>
@@ -316,7 +307,7 @@ const goToPage = (page) => {
             </thead>
             <tbody>
                 <tr v-for="(item, index) in paginatedData" :key="index" class="bg-white border-b">
-                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">      <!-- nomor urut -->
+                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"> <!-- nomor urut -->
                         {{ (currentPage - 1) * itemsPerPage + index + 1 }}
                     </th>
                     <td v-for="column in columns" :key="column.field" class="px-6 py-4 text-black">
@@ -330,46 +321,32 @@ const goToPage = (page) => {
 
                     <!-- kolom kostum -->
                     <td v-for="column in statusColumns" :key="column.field" class="px-6 py-4 text-black">
-                        <GreenBadgeIndicator 
-                          v-if="[1].includes(item[column.field])" 
-                          :teks="badgeText[item[column.field]]" 
-                        />
-                        <YellowBadgeIndicator 
-                          v-else-if="[2, 3, 4, 5, 6, 7].includes(item[column.field])" 
-                          :teks="badgeText[item[column.field]]" 
-                        />
-                        <RedBadgeIndicator 
-                          v-else 
-                          :teks="badgeText[item[column.field]]" 
-                        />
+                        <GreenBadgeIndicator v-if="[1].includes(item[column.field])"
+                            :teks="badgeText[item[column.field]]" />
+                        <YellowBadgeIndicator v-else-if="[2, 3, 4, 5, 6, 7].includes(item[column.field])"
+                            :teks="badgeText[item[column.field]]" />
+                        <RedBadgeIndicator v-else :teks="badgeText[item[column.field]]" />
                     </td>
                     <td v-for="column in radioColumn" :key="column.field" class="px-6 py-4 text-black">
-                        <input 
-                            type="radio" 
-                            :name="column.field"
-                            :value="item[props.valueField]"
+                        <input type="radio" :name="column.field" :value="item[props.valueField]"
                             :checked="modelValue === item[props.valueField]"
                             @change="$emit('update:modelValue', item[props.valueField])"
-                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
-                        >
+                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500">
                     </td>
                     <td v-if="props.checkColumn == true" class="px-6 py-4 text-black">
-                        <input 
-                            type="checkbox"
-                            :checked="isItemSelected(item)"
-                            @change="toggleItem(item)"
-                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                        >
+                        <input type="checkbox" :checked="isItemSelected(item)" @change="toggleItem(item)"
+                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
                     </td>
                     <td class="px-6 py-4 flex justify-center" v-if="props.editDeleteColumn == true">
-                            <button :title="`Edit item ${index + 1}`" @click="$emit('edit', item.id)"
-                                class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
-                                <PenToSquareIcon class="fill-current w-4" />
-                            </button>
-                            <button :title="`Hapus item ${index + 1}`" @click="$emit('delete', item.id)" v-if="showDeleteButton ? showDeleteButton(item) : true"
-                                class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
-                                <TrashCanIcon class="fill-current w-4" />
-                            </button>
+                        <button :title="`Edit item ${index + 1}`" @click="$emit('edit', item.id)"
+                            class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
+                            <PenToSquareIcon class="fill-current w-4" />
+                        </button>
+                        <button :title="`Hapus item ${index + 1}`" @click="$emit('delete', item.id)"
+                            v-if="showDeleteButton ? showDeleteButton(item) : true"
+                            class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
+                            <TrashCanIcon class="fill-current w-4" />
+                        </button>
                     </td>
                     <td class="px-6 py-4" v-if="props.detailColumn == true">
                         <button :title="`Detail item ${index + 1}`" @click="$emit('click', item.id)"
@@ -378,13 +355,11 @@ const goToPage = (page) => {
                         </button>
                     </td>
                     <td class="px-6 py-4" v-if="props.linkColumn == true">
-                        <router-link :to="`${detailLink}/${item.id}`">
-                            <button
-                                class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center me-2 mb-2">
-                                <EyeIcon class="w-5 mr-3 fill-current" />
-                                Lihat
-                            </button>
-                        </router-link>
+                        <button @click="router.push({ name: detailLink, params: { id: item.id } })"
+                            class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center me-2 mb-2">
+                            <EyeIcon class="w-5 mr-3 fill-current" />
+                            Lihat
+                        </button>
                     </td>
                     <td class="px-6 py-4" v-if="props.otherColumn == true">
                         <slot name="link"></slot>
@@ -399,16 +374,14 @@ const goToPage = (page) => {
     <div class="mt-4 flex justify-between items-center">
         <!-- Info jumlah item di kiri -->
         <div class="text-sm text-gray-700">
-            Menampilkan {{ paginationInfo.start }} sampai {{ paginationInfo.end }} 
+            Menampilkan {{ paginationInfo.start }} sampai {{ paginationInfo.end }}
             dari {{ paginationInfo.total }} item
         </div>
 
         <!-- Navigasi pagination di kanan -->
         <div class="flex items-center gap-1">
             <!-- Tombol Previous -->
-            <button 
-                @click="prevPage"
-                :disabled="currentPage === 1"
+            <button @click="prevPage" :disabled="currentPage === 1"
                 class="px-3 py-1 border rounded-lg hover:bg-gray-100"
                 :class="{ 'opacity-50 cursor-not-allowed': currentPage === 1 }">
                 <span class="text-sm">&lt;</span>
@@ -416,21 +389,16 @@ const goToPage = (page) => {
 
             <!-- Tombol halaman -->
             <template v-for="pageNumber in displayedPages" :key="pageNumber">
-                <button 
-                    @click="goToPage(pageNumber)"
-                    class="px-3 py-1 border rounded-lg text-sm"
-                    :class="{
-                        'bg-blue-600 text-white': currentPage === pageNumber,
-                        'hover:bg-gray-100': currentPage !== pageNumber
-                    }">
+                <button @click="goToPage(pageNumber)" class="px-3 py-1 border rounded-lg text-sm" :class="{
+                    'bg-blue-600 text-white': currentPage === pageNumber,
+                    'hover:bg-gray-100': currentPage !== pageNumber
+                }">
                     {{ pageNumber }}
                 </button>
             </template>
 
             <!-- Tombol Next -->
-            <button 
-                @click="nextPage"
-                :disabled="currentPage === totalPages"
+            <button @click="nextPage" :disabled="currentPage === totalPages"
                 class="px-3 py-1 border rounded-lg hover:bg-gray-100"
                 :class="{ 'opacity-50 cursor-not-allowed': currentPage === totalPages }">
                 <span class="text-sm">&gt;</span>

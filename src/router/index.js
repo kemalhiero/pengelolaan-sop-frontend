@@ -37,7 +37,7 @@ const router = createRouter({
       component: () => import('@/views/Unauthorized.vue')
     },
     {
-      path: '/sop/detail',
+      path: '/sop/:id',
       name: 'DetailSop',
       component: () => import('@/views/sop/SopDetail.vue')
     },
