@@ -7,6 +7,7 @@ import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import SopDocTemplate from '@/components/sop/SopDocTemplate.vue';
 import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
 import ExclamationMarkIcon from '@/assets/icons/ExclamationMarkIcon.vue';
+import CheckIcon from '@/assets/icons/CheckIcon.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -24,111 +25,51 @@ const confirm = () => {
     router.push({ name: 'SopDocs' });
 };
 
-const signaturePreview = ref(''); // URL atau path pratinjau tanda tangan
-const signature = ref(''); // Placeholder untuk menyimpan tanda tangan yang diunggah
-const signatureUploaded = ref(false); // State untuk mengecek apakah tanda tangan sudah diunggah
-const signatureUsed = ref(false); // State untuk mengecek apakah tanda tangan sudah digunakan
-
-const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-        // Simpan URL pratinjau tanda tangan
-        signaturePreview.value = URL.createObjectURL(file);
-        signatureUploaded.value = true;
-    }
-};
-
-const removeSignature = () => {
-    signaturePreview.value = '';
-    signature.value = ''; // Reset tanda tangan yang diunggah
-    signatureUploaded.value = false;
-    signatureUsed.value = false; // Reset status penggunaan tanda tangan
-    console.log('Tanda tangan dihapus');
-};
-
-const useSignature = () => {
-    if (signatureUploaded.value) {
-        signatureUsed.value = true; // Tandai bahwa tanda tangan telah digunakan
-        signature.value = signaturePreview.value; // Simpan tanda tangan yang digunakan
-        // Logika untuk menggunakan tanda tangan, misalnya menyimpannya ke server atau menambahkannya ke dokumen
-        console.log('Tanda tangan digunakan:', signaturePreview.value);
-        // Tambahkan logika lain, seperti menyimpan tanda tangan ke server
-    } else {
-        console.error('Tidak ada tanda tangan yang diunggah!');
-    }
-};
+const userSignature = ref(''); // Placeholder untuk menyimpan tanda tangan yang diunggah
 
 onMounted(async () => {
-    await fetchSopVersion();
-    await fetchInfoSop();
-    await fetchSopStep();
-    await fetchCurrentHod();
+    // Periksa apakah data SOP sudah ada dan valid
+    if (!sopData.value.id || sopData.value.id !== route.params.id) {
+        console.log('Data SOP tidak ditemukan atau tidak sesuai, mengambil ulang dari API...');
+        await fetchSopVersion();
+        await fetchInfoSop();
+    }
+
+    // Periksa apakah langkah-langkah SOP sudah ada
+    if (!sopData.value.steps || sopData.value.steps.length === 0) {
+        console.log('Langkah-langkah SOP tidak ditemukan, mengambil ulang dari API...');
+        await fetchSopStep();
+    }
+
+    // Periksa apakah data HOD sudah ada
+    if (!hodData.value) {
+        console.log('Data HOD tidak ditemukan, mengambil ulang dari API...');
+        await fetchCurrentHod();
+    }
 });
 </script>
 
 <template>
     <main class="p-4 md:ml-64 h-auto pt-20 px-10">
-        <h2 class="text-4xl text-center my-8 font-bold">Pengesahan SOP .....</h2>
+        <h2 class="text-4xl text-center my-8 font-bold">Pengesahan SOP {{ sopData.name }}</h2>
 
-        <!-- Tanda Tangan -->
         <div class="lg:col-span-2 p-6">
             <h2 class="text-2xl font-bold text-gray-800 mb-1">Tanda Tangan</h2>
-            <p class="text-sm mb-6">
-                Unggah hasil pindai dari tanda tangan dan stempel jabatan Anda. Pastikan latar belakangnya berwarna putih!
-            </p>
-
-            <!-- Jika tanda tangan belum diunggah -->
-            <div v-if="!signatureUploaded" class="space-y-4">
-                <div class="flex items-center">
-                    <input
-                        type="file"
-                        @change="handleFileUpload"
-                        accept="image/png, image/jpeg, image/webp"
-                        class="sr-only"
-                        id="signatureInput"
-                    />
-                    <label
-                        for="signatureInput"
-                        class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition cursor-pointer"
-                    >
-                        Pilih Tanda Tangan
-                    </label>
-                    <span class="ml-4 text-gray-600">Belum ada file yang dipilih</span>
-                </div>
+            <p class="text-sm mb-6">Status tanda tangan Anda.</p>
+        
+            <div v-if="!userSignature" class="flex items-center text-red-600 font-medium">
+                <ExclamationMarkIcon class="w-5 h-5 mr-2" />
+                <p>
+                    Anda belum mengunggah tanda tangan. Silakan unggah tanda tangan Anda di halaman 
+                    <RouterLink to="/profile" class="underline text-blue-600">Profil Pengguna!</RouterLink>
+                </p>
             </div>
-
-            <!-- Jika tanda tangan sudah diunggah -->
-            <div v-else class="space-y-4">
-                <div class="flex justify-center">
-                    <img
-                        :src="signaturePreview"
-                        alt="Pratinjau Tanda Tangan"
-                        class="max-w-full max-h-32 rounded-md border border-gray-300"
-                    />
-                </div>
-                <div class="flex justify-end space-x-4">
-                    <button
-                        @click="removeSignature"
-                        class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
-                    >
-                        Hapus Tanda Tangan
-                    </button>
-                    <button
-                        type="button" @click="useSignature"
-                        class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition"
-                    >
-                        Gunakan Tanda Tangan
-                    </button>
-                </div>
-                <div v-if="signatureUsed" class="flex justify-end mt-4">
-                    <p class="text-green-600 font-medium">Tanda tangan telah digunakan!</p>
-                </div>
+            <div v-else class="flex items-center text-green-600 font-medium">
+                <CheckIcon class="w-5 h-5 mr-2" />
+                Tanda tangan Anda telah diunggah. Silahkan tinjau dan sahkan SOP ini!
             </div>
         </div>
-
         
-        <h3 class="text-3xl text-center font-bold my-4">Pratinjau Dokumen SOP dan BPMN</h3>
-
         <div class="flex justify-center my-6">
             <div class="inline-flex rounded-md shadow-sm" role="group">
             <button 
@@ -166,7 +107,7 @@ onMounted(async () => {
             />           
         </div>
 
-        <div v-else-if="activeTab === 'bpmn'">
+        <div v-else-if="activeTab === 'bpmn'" class="mb-10">
             <SopBpmnTemplate
                 v-if="sopData.steps && sopData.steps.length > 0 && sopData.implementer && sopData.implementer.length > 0"
                 :name="sopData.name" 
@@ -178,11 +119,14 @@ onMounted(async () => {
             </div>
         </div>
 
-        <div class="my-10 flex justify-center">
-            <button type="button" @click="showConfirmationModal = true" :disabled="!signatureUsed"
+        <div class="mb-10 flex flex-col items-center">
+            <button type="button" @click="showConfirmationModal = true" :disabled="!userSignature"
                 class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-1/4 disabled:cursor-not-allowed disabled:bg-opacity-60">
                 Sahkan SOP dan BPMN?
             </button>
+            <p v-if="!userSignature" class="text-sm text-red-600 mt-2">
+                Anda harus mengunggah tanda tangan terlebih dahulu untuk dapat mengesahkan SOP.
+            </p>
         </div>
 
     </main>

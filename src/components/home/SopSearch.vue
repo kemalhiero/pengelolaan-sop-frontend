@@ -80,7 +80,6 @@ onMounted(() => {
                 detail-link="DetailSop" 
             />
         </div>
-        
     </div>
 
 </template>
