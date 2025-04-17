@@ -5,17 +5,22 @@ import { toast } from 'vue3-toastify';
 import { useAuthStore } from '@/stores/auth';
 import { useToastPromise } from '@/utils/toastPromiseHandler';
 import { sendCode, updateEmail, updatePw, verifCode } from '@/api/authApi';
-import { addProfilePhoto, addSignatureFile, deleteUserProfile, getUserProfile } from '@/api/userApi';
+import { addProfilePhoto, addSignatureFile, deleteSignatureFile, deleteUserProfile, getUserProfile } from '@/api/userApi';
 
 import EyeIcon from '@/assets/icons/EyeIcon.vue';
 import EyeSlashIcon from '@/assets/icons/EyeSlashIcon.vue';
 import LockedInputColumnIndicator from '@/components/indicator/LockedInputColumnIndicator.vue';
+import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
 
 const authStore = useAuthStore();
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';
 
-const showEmailConfirmationModal = ref(false);
+const showModal = ref({
+    deleteSignature: false,
+    profilePhoto: false,
+    emailConfirmation: false,
+});
 const emailConfirmationCode = ref('');
 const userProfile = ref({
     name: '',
@@ -32,13 +37,20 @@ const passwordChange = reactive({
     newPassword: '',
     confirmPassword: ''
 });
-const isPhotoModalOpen = ref(false);
-const selectedImage = ref('');
+const profileImage = ref({
+    file: null,
+    preview: null
+});
+const signatureImage = ref({
+    file: null,
+    preview: null
+});
 const showPw = ref({
     current: false,
     new: false,
     confirm_new: false
 });
+
 const toggleCurrentPassword = () => { showPw.value.current = !showPw.value.current };
 const toggleNewPassword = () => { showPw.value.new = !showPw.value.new };
 const toggleConfirmPassword = () => { showPw.value.confirm_new = !showPw.value.confirm_new };
@@ -49,44 +61,68 @@ const fetchProfile = async () => {
         const result = await getUserProfile();
         userProfile.value = result.data;
         originalEmail.value = result.data.email;
-        signaturePreview.value = result.data.signature;
-        signatureFile.value = result.data.signature;
+        signatureImage.value.preview = result.data.signature;
+        signatureImage.value.file = result.data.signature;
     } catch (error) {
         console.error('Fetch error:', error);
     }
 };
 
 const openPhotoModal = () => {
-    isPhotoModalOpen.value = true
+    showModal.value.profilePhoto = true
 };
 
 const closePhotoModal = () => {
-    isPhotoModalOpen.value = false
-    selectedImage.value = null
+    if (profileImage.value.preview) {
+        URL.revokeObjectURL(profileImage.value.preview); // Hapus URL sementara
+    }
+    showModal.value.profilePhoto = false;
+    profileImage.value.file = null;
+    profileImage.value.preview = null;
 };
 
-const onFileSelected = (event) => {
-    const file = event.target.files[0]
+const onProfilePhotoSelected = (event) => {
+    const file = event.target.files[0];
     if (file) {
-        signatureFile.value = file;
-        signaturePreview.value = URL.createObjectURL(file);
+        const validImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        if (!validImageTypes.includes(file.type)) {
+            toast('File yang dipilih harus berupa gambar (jpg, png, webp)', {
+                type: 'error',
+                autoClose: 5000,
+            });
+            profileImage.value.file = null;
+            profileImage.value.preview = null;
+            return;
+        }
+        profileImage.value.file = file; // Simpan file asli
+        profileImage.value.preview = URL.createObjectURL(file); // Buat URL sementara untuk pratinjau
     } else {
-        signatureFile.value = null;
-        signaturePreview.value = null;
+        profileImage.value.file = null;
+        profileImage.value.preview = null;
     }
 };
 
 const uploadPhoto = () => {
     try {
+        if (!profileImage.value.file) {
+            toast('Pilih foto terlebih dahulu!', {
+                type: 'warning',
+                autoClose: 5000,
+            });
+            return;
+        }
+
         useToastPromise(
             new Promise((resolve, reject) => {
-                addProfilePhoto(selectedImage.value)
+                addProfilePhoto(profileImage.value.file)
                     .then(response => {
                         if (!response.success) {
                             throw response;
                         }
                         resolve(response);
+                        fetchProfile(); // Refresh profile data after upload
                         closePhotoModal();
+                        // authStore.setPhoto(response.data.photo); // Update photo in auth store
                     })
                     .catch(error => reject(error));
             }),
@@ -99,30 +135,49 @@ const uploadPhoto = () => {
 
     } catch (error) {
         console.error('Fetch error:', error);
-        toast(`Data gagal ditambahkan! <br> ${error} `, {
-            type: "error",
-            autoClose: 5000,
-            dangerouslyHTMLString: true
-        });
     }
 };
 
-const removePhoto = async () => {
+const removeProfilePhoto = async () => {
     try {
-        await deleteUserProfile()
-        userProfile.value.photo = null;
-        selectedImage.value = null;
-        closePhotoModal();
-        authStore.setPhoto('');
+        if (profileImage.value.file instanceof File) {
+            profileImage.value.preview = null;
+            profileImage.value.file = null;
+        } else if (typeof profileImage.value.file === 'string') {
+            useToastPromise(
+                new Promise((resolve, reject) => {
+                    deleteUserProfile()
+                        .then(response => {
+                            if (!response.success) {
+                                throw response;
+                            }
+                            userProfile.value.photo = null;
+                            profileImage.value.preview = null;
+                            profileImage.value.file = null;
+                            closePhotoModal();
+                            resolve(response);
+                        })
+                        .catch(error => reject(error));
+                }),
+                {
+                    messages: {
+                        success: 'Foto profil berhasil dihapus!',
+                        pending: 'Sedang menghapus foto profil...'
+                    }
+                }
+            );
+        } else {
+            console.log('ini jenis filenya: ', typeof profileImage.value.file);
+            toast(`Pilih foto profil terbaru terlebih dahulu `, {
+                type: "warning",
+                autoClose: 7000,
+            });
+        }
+        // authStore.setPhoto('');
     } catch (error) {
         console.error('Fetch error:', error);
-        toast(`Data gagal ditambahkan! <br> ${error} `, {
-            type: "error",
-            autoClose: 5000,
-            dangerouslyHTMLString: true
-        });
     }
-}
+};
 
 const changePassword = () => {
     try {
@@ -151,7 +206,6 @@ const changePassword = () => {
                 }
             }
         );
-
     } catch (error) {
         console.error('Fetch error:', error);
     }
@@ -170,7 +224,7 @@ const checkDataUpdate = () => {
                             throw response;
                         }
                         resolve(response);
-                        showEmailConfirmationModal.value = true;
+                        showModal.value.emailConfirmation = true;
                     })
                         .catch(error => reject(error));
                 }),
@@ -207,7 +261,7 @@ const verifyCode = async () => {        //verifikasi kode dan perbarui email
                             throw response;
                         }
                         resolve(response);
-                        showEmailConfirmationModal.value = false;
+                        showModal.value.emailConfirmation = false;
                     })
                         .catch(error => reject(error));
                 }),
@@ -231,17 +285,14 @@ const verifyCode = async () => {        //verifikasi kode dan perbarui email
     }
 };
 
-const signaturePreview = ref(null);
-const signatureFile = ref(null);
-
 const onSignatureFileSelected = (event) => {
     const file = event.target.files[0];
     if (file) {
-        signatureFile.value = file;
-        signaturePreview.value = URL.createObjectURL(file);
+        signatureImage.value.file = file;
+        signatureImage.value.preview = URL.createObjectURL(file);
     } else {
-        signatureFile.value = null;
-        signaturePreview.value = null;
+        signatureImage.value.file = null;
+        signatureImage.value.preview = null;
     }
 };
 
@@ -271,10 +322,10 @@ const getFileName = (file) => {
 
 const uploadSignature = () => {
     try {
-        if (signatureFile.value instanceof File) {
+        if (signatureImage.value.file instanceof File) {
             useToastPromise(
                 new Promise((resolve, reject) => {
-                    addSignatureFile(signatureFile.value)
+                    addSignatureFile(signatureImage.value.file)
                         .then(response => {
                             if (!response.success) {
                                 throw response;
@@ -287,20 +338,17 @@ const uploadSignature = () => {
                     messages: {
                         success: 'Tanda tangan berhasil diunggah!',
                         pending: 'Sedang mengunggah tanda tangan...'
-                    },
-                    toastOptions: {
-                        autoClose: 7000
                     }
                 }
             );
-        } else if (typeof signatureFile.value === 'string') {
+        } else if (typeof signatureImage.value.file === 'string') {
             toast(`Pilih tanda tangan terbaru terlebih dahulu `, {
                 type: "warning",
                 autoClose: 7000,
             });
         } else {
-            console.log('ini jenis filenya', typeof signatureFile.value)
-            toast(`Jenis file ${typeof signatureFile.value} tidak sesuai!`, {
+            console.log('ini jenis filenya', typeof signatureImage.value.file)
+            toast(`Jenis file ${typeof signatureImage.value.file} tidak sesuai!`, {
                 type: "error",
                 autoClose: 7000,
                 dangerouslyHTMLString: true
@@ -308,14 +356,50 @@ const uploadSignature = () => {
         }
     } catch (error) {
         console.error('Fetch error:', error);
-        toast(`Data gagal ditambahkan! <br> ${error} `, {
-            type: "error",
-            autoClose: 5000,
-            dangerouslyHTMLString: true
-        });
     }
 };
 
+const removeSignature = async () => {
+    try {
+        if (signatureImage.value.file instanceof File) {
+            signatureImage.value.preview = null;
+            signatureImage.value.file = null;
+            showModal.value.deleteSignature = false;
+        } else if (typeof signatureImage.value.file === 'string') {
+            // Hapus tanda tangan dari server
+            useToastPromise(
+                new Promise((resolve, reject) => {
+                    deleteSignatureFile()
+                        .then(response => {
+                            if (!response.success) {
+                                throw response;
+                            }
+                            signatureImage.value.preview = null;
+                            signatureImage.value.file = null;
+                            showModal.value.deleteSignature = false;
+                            resolve(response);
+                        })
+                        .catch(error => reject(error));
+                }),
+                {
+                    messages: {
+                        success: 'Tanda tangan berhasil dihapus!',
+                        pending: 'Sedang menghapus tanda tangan...'
+                    }
+                }
+            );
+
+        } else {
+            console.log('ini jenis filenya: ', typeof signatureImage.value.file)
+            toast(`Pilih tanda tangan terbaru terlebih dahulu `, {
+                type: "warning",
+                autoClose: 7000,
+            });
+        }
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+};
 
 onMounted(() => {
     fetchProfile();
@@ -331,7 +415,7 @@ onMounted(() => {
             <div class="lg:col-span-1 flex flex-col items-center my-auto">
                 <div class="relative mb-4">
                     <img :src="userProfile.photo || '/user-avatar.jpg'" alt="Foto Profil"
-                        class="w-48 lg:w-60 rounded-full object-cover border-4 border-gray-300 shadow-lg" />
+                        class="w-48 lg:w-60 h-48 lg:h-60 rounded-full border-4 border-gray-300 shadow-lg object-cover" />
                     <button @click="openPhotoModal"
                         class="absolute bottom-0 lg:bottom-2 right-0 lg:right-2 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -408,7 +492,8 @@ onMounted(() => {
             <!-- Tanda Tangan -->
             <div class="lg:col-span-2 p-6" v-if="showSignatureForm">
                 <h2 class="text-2xl font-bold text-gray-800 mb-1">Tanda Tangan</h2>
-                <p class="text-sm mb-6">Unggah hasil pindai dari tanda tangan dan stempel jabatan anda. Pastikan latar belakangnya berwarna putih!</p>
+                <p class="text-sm mb-6">Unggah hasil pindai dari tanda tangan dan stempel jabatan anda. Pastikan
+                    latarnya berwarna putih!</p>
                 <form @submit.prevent="uploadSignature" class="space-y-4">
                     <div class="flex items-center">
                         <input type="file" @change="onSignatureFileSelected" accept="image/png, image/jpeg, image/webp"
@@ -417,16 +502,22 @@ onMounted(() => {
                             class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition">
                             Pilih Tanda Tangan
                         </button>
-                        <span v-if="signaturePreview" class="ml-4 text-gray-600">{{ getFileName(signatureFile) }}</span>
+                        <span v-if="signatureImage.preview" class="ml-4 text-gray-600">{{
+                            decodeURI(getFileName(signatureImage.file)) }}</span>
                     </div>
-                    <div v-if="signaturePreview" class="flex justify-center">
-                        <img :src="signaturePreview" alt="Pratinjau Tanda Tangan"
+                    <div v-if="signatureImage.preview" class="flex justify-center">
+                        <img :src="signatureImage.preview" alt="Pratinjau Tanda Tangan"
                             class="max-w-full max-h-32 rounded-md" />
                     </div>
-                    <div class="flex justify-end">
-                        <button type="submit" :disabled="!signaturePreview || typeof signatureFile == 'string'"
+                    <div class="flex justify-end space-x-4">
+                        <button type="button" @click="showModal.deleteSignature = true" :disabled="!signatureImage.preview"
+                            class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition disabled:cursor-not-allowed disabled:bg-opacity-60">
+                            Hapus
+                        </button>
+                        <button type="submit"
+                            :disabled="!signatureImage.preview || typeof signatureImage.file == 'string'"
                             class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition disabled:cursor-not-allowed disabled:bg-opacity-60">
-                            Unggah Tanda Tangan
+                            Unggah
                         </button>
                     </div>
                 </form>
@@ -489,43 +580,45 @@ onMounted(() => {
             </div>
 
         </div>
+    </div>
 
-        <!-- Modal Foto Profil -->
-        <div v-if="isPhotoModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
-                <h3 class="text-xl font-semibold text-gray-900 mb-4">Kelola Foto Profil</h3>
-                <div class="mb-4">
-                    <input type="file" @change="onFileSelected" accept="image/png, image/jpeg, image/webp"
-                        class="hidden" ref="fileInput" />
-                    <button @click="$refs.fileInput.click()"
-                        class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                        Pilih Foto
-                    </button>
-                </div>
-                <div v-if="selectedImage" class="mb-4 flex justify-center">
-                    <img :src="selectedImage" alt="Pratinjau Foto" class="max-w-full max-h-64 rounded-lg" />
-                </div>
-                <div class="flex space-x-2">
-                    <button @click="uploadPhoto" :disabled="!selectedImage"
-                        class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                        Unggah
-                    </button>
-                    <button @click="removePhoto"
-                        class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                        Hapus
-                    </button>
-                    <button @click="closePhotoModal"
-                        class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
-                        Batal
-                    </button>
-                </div>
+    <!-- Modal Foto Profil -->
+    <div v-if="showModal.profilePhoto" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="closePhotoModal"></div>
+
+        <div class="relative bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
+            <h3 class="text-lg font-medium text-gray-800 mb-4 text-center">Kelola Foto Profil</h3>
+            <div class="mb-4 text-center">
+                <input type="file" @change="onProfilePhotoSelected" accept="image/png, image/jpeg, image/webp"
+                    class="hidden" ref="fileInput" />
+                <button @click="$refs.fileInput.click()"
+                    class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition">
+                    Pilih Foto
+                </button>
+            </div>
+            <div v-if="profileImage.preview" class="mb-4 flex justify-center">
+                <img :src="profileImage.preview" alt="Pratinjau Foto"
+                    class="w-48 h-48 rounded-full object-cover shadow-md" />
+            </div>
+            <div class="flex justify-between space-x-2">
+                <button @click="uploadPhoto" :disabled="!profileImage.file"
+                    class="flex-1 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    Unggah
+                </button>
+                <button @click="removeProfilePhoto" :disabled="!profileImage.preview"
+                    class="flex-1 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    Hapus
+                </button>
+                <button @click="closePhotoModal"
+                    class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition">
+                    Batal
+                </button>
             </div>
         </div>
-
     </div>
 
     <!-- modal konfirmasi email -->
-    <div v-show="showEmailConfirmationModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
+    <div v-show="showModal.emailConfirmation" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
 
         <div class="fixed inset-0 bg-gray-800 bg-opacity-30"></div>
 
@@ -561,5 +654,9 @@ onMounted(() => {
         </div>
 
     </div>
+
+    <DeleteDataModal :showModal="showModal.deleteSignature" :deleteData="removeSignature"
+        @update:showModal="showModal.deleteSignature = $event"
+        text="Anda yakin ingin menghapus file tanda tangan ini?" />
 
 </template>

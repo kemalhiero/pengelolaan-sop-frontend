@@ -44,8 +44,7 @@ const props = defineProps({
         required: true
     },
     selectedId: {
-        type: Number,
-        required: true
+        type: Number
     },
     text: {
         type: String,
@@ -60,6 +59,10 @@ const closeModal = () => {
 };
 
 const handleDelete = () => {
-  props.deleteData(props.selectedId);
+    if (props.selectedId) {
+        props.deleteData(props.selectedId);
+    } else {
+        props.deleteData();
+    }
 };
 </script>

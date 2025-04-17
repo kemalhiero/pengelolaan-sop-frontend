@@ -9,6 +9,7 @@ const addProfilePhoto = (data) => uploadFile('user/profile/photo', data, getToke
 const deleteUserProfile = () => deleteRequest('user/profile/photo', getToken());
 
 const addSignatureFile = (data) => uploadFile('user/signature', data, getToken());
+const deleteSignatureFile = () => deleteRequest('user/signature', getToken());
 
 const addDrafter = (data) => postRequest('user/drafter', data, getToken());
 const getAllDrafter = () => getRequest('user/drafter', getToken());
@@ -30,7 +31,7 @@ const getPicDetail = (id) => getRequest(`user/pic/${id}`, getToken());
 export {
     getUserByRole, getUserProfile, 
     addProfilePhoto, deleteUserProfile,
-    addSignatureFile,
+    addSignatureFile, deleteSignatureFile,
     getAllDrafter, getDrafterByIdDetail, createSopDrafter, deleteSopDrafter, addDrafter, getDrafterDetail,
     updateHod, getHodCandidate, getCurrentHod,
     getAllPic, addPic, getUnassignedPic, getPicCandidate, getPicDetail
