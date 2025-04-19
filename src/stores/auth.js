@@ -53,8 +53,8 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = newToken;
   };
 
-  const setPhoto = (newToken) => {
-    token.value = newToken;
+  const setPhoto = (photoUrl) => {
+    user.value.photo = photoUrl;
   };
 
   const logout = () => {

@@ -77,7 +77,7 @@ const submitSop = async () => {
                 number: `T/${String(form.value.number).padStart(3, '0')}/UN16.17.02/OT.01.00/${currentYear}`,
                 description: form.value.description,
                 version: parseInt(form.value.version) + 1,
-                signer: null, // ntar pikirin ini bagusya siapa
+                signer_id: null, // ntar pikirin ini bagusya siapa
             }
         );
 

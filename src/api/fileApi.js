@@ -28,7 +28,7 @@ const uploadFile = async (endpoint, file, token = null) => {
         return {
             success: response.ok,
             status: response.status,
-            data: result.data,
+            data: result.fileUrl || null,
             error: !response.ok ? result : null,
         };
     } catch (error) {

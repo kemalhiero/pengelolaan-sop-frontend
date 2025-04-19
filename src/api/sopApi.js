@@ -26,9 +26,12 @@ const createSopStep = (data) => postRequest('sop/step', data, getToken());
 const updateSopStep = (id, data) => patchRequest(`sop/step/${id}`, data, getToken());
 const deleteSopStep = (id) => deleteRequest(`sop/step/${id}`, getToken());
 
+const confirmSopandBpmn = (id, data) => patchRequest(`sop/confirm/${id}`, data, getToken());
+
 export {
     getAllSop, createSop, getOneSop, updateSop, deleteSop,             //tabel sop
     createSopDetail, updateSopDetail, deleteSopDetail, getAssignment, getAssignmentDetail, 
     getSectionandWarning, getLatestSopInYear, getManagedSop, getSopVersion,      //tabel detail sop
-    createSopStep, getSopStep, updateSopStep, deleteSopStep    //tabel sop step
+    createSopStep, getSopStep, updateSopStep, deleteSopStep,    //tabel sop step
+    confirmSopandBpmn
 };

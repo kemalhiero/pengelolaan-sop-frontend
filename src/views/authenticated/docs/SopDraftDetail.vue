@@ -31,6 +31,7 @@ import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const cdnUrl = import.meta.env.VITE_CDN_URL; // URL untuk CDN
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -46,7 +47,7 @@ const showModal = ref({
     deleteAssignment: false,
 });
 
-const { sopData, hodData, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchCurrentHod } = useSopData(route.params.id);
+const { sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchCurrentHod } = useSopData(route.params.id);
 
 const fetchFeedback = async () => {
     try {
@@ -282,7 +283,7 @@ onMounted(async () => {
         <div class="mt-8" v-if="activeTab === 'document'">
             <SopDocTemplate
                 :name="sopData.name" :number="sopData.number"
-                :pic-name="hodData.name" :pic-number="hodData.id_number"
+                :pic-name="signer.name" :pic-number="signer.id_number"
                 created-date="-" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
                 :section="sopData.section" :warning="sopData.warning"
                 :law-basis="sopData.legalBasis.map(item => item.legal)"
@@ -290,7 +291,8 @@ onMounted(async () => {
                 :related-sop="sopData.relatedSop.map(item => item.related_sop)"
                 :equipment="sopData.equipment.map(item => item.equipment)" 
                 :record-data="sopData.record.map(item => item.data_record)"
-                :implementer="sopData.implementer" :steps="sopData.steps" 
+                :implementer="sopData.implementer" :steps="sopData.steps"
+                :signature="sopData.status === 1 ? `${cdnUrl}/${sopData.signature_url}` : null"
             />
         </div>
 
@@ -329,7 +331,7 @@ onMounted(async () => {
             </div>
         </div>
 
-        <div class="w-full lg:w-2/3 flex justify-center mx-auto my-10" v-if="![2, 7].includes(sopData.status)">
+        <div class="w-full lg:w-2/3 flex justify-center mx-auto my-10" v-if="![1, 2, 7].includes(sopData.status)">
             <form class="w-full bg-white space-y-5" @submit.prevent="submitFeedback">
                 <h2 class="text-xl font-semibold mb-4">Form Umpan Balik</h2>
                 <div>

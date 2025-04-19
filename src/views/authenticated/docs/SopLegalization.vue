@@ -3,11 +3,15 @@ import { inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { useSopData } from '@/composables/useSopData';
+import { getUserProfile } from '@/api/userApi';
+import { confirmSopandBpmn } from '@/api/sopApi';
+
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import SopDocTemplate from '@/components/sop/SopDocTemplate.vue';
 import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
 import ExclamationMarkIcon from '@/assets/icons/ExclamationMarkIcon.vue';
 import CheckIcon from '@/assets/icons/CheckIcon.vue';
+import { useToastPromise } from '@/utils/toastPromiseHandler';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -17,15 +21,47 @@ const activeTab = ref('document');
 const router = useRouter();
 const route = useRoute();
 
-const { sopData, hodData, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchCurrentHod } = useSopData(route.params.id);
+const { sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchCurrentHod } = useSopData(route.params.id);
 
 const confirm = () => {
-    // Logic to handle confirmation
-    console.log('SOP and BPMN confirmed');
-    router.push({ name: 'SopDocs' });
+    try {
+        // Call the API to confirm the SOP and BPMN
+        useToastPromise(
+            new Promise((resolve, reject) => {
+                confirmSopandBpmn(sopData.value.id, { status: 1 })
+                    .then(response => {
+                        if (!response.success) {
+                            throw response;
+                        }
+                        console.log('SOP and BPMN confirmed successfully!');
+                        router.push({ name: 'SopDocs' });
+                        resolve(response);
+                    })
+                    .catch(error => reject(error));
+            }),
+            {
+                messages: {
+                    success: 'Berhasil mengesahkan SOP dan BPMN!'
+                }
+            }
+        );
+    } catch (error) {
+        console.error('Error confirming SOP and BPMN:', error);
+    } finally {
+        showConfirmationModal.value = false; // Close the modal after confirmation
+    }
 };
 
 const userSignature = ref(''); // Placeholder untuk menyimpan tanda tangan yang diunggah
+
+const fetchProfile = async () => {
+    try {
+        const result = await getUserProfile();
+        userSignature.value = result.data.signature; // Ambil tanda tangan dari profil pengguna
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+};
 
 onMounted(async () => {
     // Periksa apakah data SOP sudah ada dan valid
@@ -42,10 +78,12 @@ onMounted(async () => {
     }
 
     // Periksa apakah data HOD sudah ada
-    if (!hodData.value) {
+    if (!signer.value.id_number) {
+        console.log('hod', signer.value)
         console.log('Data HOD tidak ditemukan, mengambil ulang dari API...');
         await fetchCurrentHod();
     }
+    await fetchProfile();
 });
 </script>
 
@@ -69,7 +107,7 @@ onMounted(async () => {
                 Tanda tangan Anda telah diunggah. Silahkan tinjau dan sahkan SOP ini!
             </div>
         </div>
-        
+
         <div class="flex justify-center my-6">
             <div class="inline-flex rounded-md shadow-sm" role="group">
             <button 
@@ -94,7 +132,7 @@ onMounted(async () => {
         <div v-if="activeTab === 'document'">
             <SopDocTemplate 
                 :name="sopData.name" :number="sopData.number"
-                :pic-name="hodData.name" :pic-number="hodData.id_number"
+                :pic-name="signer.name" :pic-number="signer.id_number"
                 created-date="-" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
                 :section="sopData.section" :warning="sopData.warning"
                 :law-basis="sopData.legalBasis.map(item => item.legal)"
@@ -103,7 +141,7 @@ onMounted(async () => {
                 :equipment="sopData.equipment.map(item => item.equipment)" 
                 :record-data="sopData.record.map(item => item.data_record)"
                 :implementer="sopData.implementer" :steps="sopData.steps" 
-                :signature="signature"
+                :signature="userSignature"
             />           
         </div>
 

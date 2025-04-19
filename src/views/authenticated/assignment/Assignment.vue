@@ -2,10 +2,11 @@
 import { inject, onMounted, ref } from "vue";
 import { getAssignment } from "@/api/sopApi";
 
-import DataTable from "@/components/DataTable.vue";
+import statusTexts from '@/data/statusTexts.json';
 import Error from "@/components/Error.vue";
-import TableSkeleton from "@/components/TableSkeleton.vue";
+import DataTable from "@/components/DataTable.vue";
 import EmptyState from "@/components/EmptyState.vue";
+import TableSkeleton from "@/components/TableSkeleton.vue";
 
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';
@@ -79,7 +80,7 @@ onMounted(() => {
                 :status-columns="[
                     { field: 'status', label: 'Status' }
                 ]"
-                :badge-text="['Batal', 'Selesai', 'Belum Selesai']"
+                :badge-text="statusTexts.sopDetail"
                 :link-column="true"
                 detail-link="AssignmentDetail"
             />

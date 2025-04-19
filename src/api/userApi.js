@@ -22,6 +22,8 @@ const updateHod = (data) => patchRequest('user/hod', data, getToken());
 const getHodCandidate = () => getRequest('user/hod/candidate', getToken());
 const getCurrentHod = () => getRequest('user/hod/current', getToken());
 
+const getSigner = (id) => getRequest(`user/signer/${id}`, getToken());
+
 const addPic = (data) => postRequest('user/pic', data, getToken());
 const getAllPic = () => getRequest('user/pic', getToken());
 const getPicCandidate = () => getRequest('user/pic/candidate', getToken());
@@ -34,5 +36,6 @@ export {
     addSignatureFile, deleteSignatureFile,
     getAllDrafter, getDrafterByIdDetail, createSopDrafter, deleteSopDrafter, addDrafter, getDrafterDetail,
     updateHod, getHodCandidate, getCurrentHod,
+    getSigner,
     getAllPic, addPic, getUnassignedPic, getPicCandidate, getPicDetail
 };

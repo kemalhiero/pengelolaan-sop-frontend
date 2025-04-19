@@ -14,15 +14,16 @@ layoutType.value = 'guest';
 const route = useRoute();
 const authStore = useAuthStore();
 
-const { sopData, hodData, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchCurrentHod } = useSopData(route.params.id);
+const { sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchSigner } = useSopData(route.params.id);
 
 const activeTab = ref('document');
+const cdnUrl = import.meta.env.VITE_CDN_URL; // URL untuk CDN
 
 onMounted(async () => {
     await fetchSopVersion();
     await fetchInfoSop();
     await fetchSopStep();
-    await fetchCurrentHod();
+    await fetchSigner(sopData.value.signer_id);
 });
 </script>
 
@@ -56,7 +57,7 @@ onMounted(async () => {
         <div v-if="activeTab === 'document'">
             <SopDocTemplate 
                 :name="sopData.name" :number="sopData.number"
-                :pic-name="hodData.name" :pic-number="hodData.id_number"
+                :pic-name="signer.name" :pic-number="signer.id_number"
                 created-date="-" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
                 :section="sopData.section" :warning="sopData.warning"
                 :law-basis="sopData.legalBasis.map(item => item.legal)"
@@ -65,7 +66,7 @@ onMounted(async () => {
                 :equipment="sopData.equipment.map(item => item.equipment)" 
                 :record-data="sopData.record.map(item => item.data_record)"
                 :implementer="sopData.implementer" :steps="sopData.steps" 
-                :signature="null"
+                :signature="`${cdnUrl}/${sopData.signature_url}`"
             /> 
         </div>
 

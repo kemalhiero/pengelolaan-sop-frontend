@@ -16,6 +16,7 @@ const authStore = useAuthStore();
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';
 
+// const cdnUrl = import.meta.env.VITE_CDN_URL;
 const showModal = ref({
     deleteSignature: false,
     profilePhoto: false,
@@ -122,7 +123,7 @@ const uploadPhoto = () => {
                         resolve(response);
                         fetchProfile(); // Refresh profile data after upload
                         closePhotoModal();
-                        // authStore.setPhoto(response.data.photo); // Update photo in auth store
+                        // authStore.setPhoto(`${cdnUrl}/${response.data}`); // Update photo in auth store
                     })
                     .catch(error => reject(error));
             }),
@@ -143,7 +144,7 @@ const removeProfilePhoto = async () => {
         if (profileImage.value.file instanceof File) {
             profileImage.value.preview = null;
             profileImage.value.file = null;
-        } else if (typeof profileImage.value.file === 'string') {
+        } else if (profileImage.value.file === null || userProfile.value.photo) {
             useToastPromise(
                 new Promise((resolve, reject) => {
                     deleteUserProfile()
@@ -154,6 +155,7 @@ const removeProfilePhoto = async () => {
                             userProfile.value.photo = null;
                             profileImage.value.preview = null;
                             profileImage.value.file = null;
+                            // authStore.setPhoto(null); // Clear photo in auth store
                             closePhotoModal();
                             resolve(response);
                         })
@@ -173,7 +175,6 @@ const removeProfilePhoto = async () => {
                 autoClose: 7000,
             });
         }
-        // authStore.setPhoto('');
     } catch (error) {
         console.error('Fetch error:', error);
     }
@@ -596,8 +597,8 @@ onMounted(() => {
                     Pilih Foto
                 </button>
             </div>
-            <div v-if="profileImage.preview" class="mb-4 flex justify-center">
-                <img :src="profileImage.preview" alt="Pratinjau Foto"
+            <div v-if="profileImage.preview || userProfile.photo" class="mb-4 flex justify-center">
+                <img :src="profileImage.preview || userProfile.photo" alt="Pratinjau Foto"
                     class="w-48 h-48 rounded-full object-cover shadow-md" />
             </div>
             <div class="flex justify-between space-x-2">
@@ -605,7 +606,7 @@ onMounted(() => {
                     class="flex-1 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
                     Unggah
                 </button>
-                <button @click="removeProfilePhoto" :disabled="!profileImage.preview"
+                <button @click="removeProfilePhoto" :disabled="!profileImage.preview && !userProfile.photo"
                     class="flex-1 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
                     Hapus
                 </button>
