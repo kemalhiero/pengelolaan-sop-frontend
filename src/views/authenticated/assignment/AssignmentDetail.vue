@@ -1,5 +1,5 @@
 <script setup>
-import { ref, provide, onMounted, watch, inject } from 'vue';
+import { ref, provide, onMounted, watch, inject, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 
@@ -11,6 +11,7 @@ import { createRelatedSop, getRelatedSop, deleteRelatedSop } from '@/api/related
 import { createRecord, getSopRecord, deleteSopRecord } from '@/api/recordApi';
 import { createIQ, getIQ, deleteIQ } from '@/api/implementQualificationApi';
 import { useToastPromise } from '@/utils/toastPromiseHandler';
+import { getDraftFeedback } from '@/api/feedbackApi';
 import { getCurrentHod } from '@/api/userApi';
 
 import NumberOneCircleIcon from '@/assets/icons/NumberOneCircleIcon.vue';
@@ -31,25 +32,57 @@ layoutType.value = 'guest';
 
 const route = useRoute();
 const router = useRouter();
+let idsopdetail = route.params.id;
 
 // State untuk mengatur langkah
 const currentStep = ref(1);  // Langkah sekarang
 const firstStepRef = ref(null);
 
+const showFeedback = ref(false)
+const draftFeedback = ref([]);
+
 const picInfo = ref();
+const legalBasisData = ref();
+const formData = ref({
+    section: '',
+    implementer: [],
+    legalBasis: [],
+    implementQualification: [],
+    relatedSop: [],
+    equipment: [],
+    warning: '',
+    record: []
+});
+const sopStep = ref([]);
+const hodData = ref({
+    id_number: '',
+    name: '',
+});
+const isDisabled = computed(() => {
+    return picInfo.value && (picInfo.value.status === 1 || picInfo.value.status === 0);
+});
+
+provide('picData', picInfo);
+provide('sopStep', sopStep);
+provide('legalBasisData', legalBasisData);
+provide('hodData', hodData);
+provide('sopFormData', {
+    formData,
+    updateFormData(newData) {
+        formData.value = { ...formData.value, ...newData }
+    }
+});
+provide('isDisabled', isDisabled);
+
 const fetchPicInfo = async () => {
     try {
-        const response = await getAssignmentDetail(route.params.id);
+        const response = await getAssignmentDetail(idsopdetail);
         picInfo.value = response.data;
     } catch (error) {
         console.error('Fetch error:', error);
     }
 };
-provide('picData', picInfo);
 
-let idsopdetail = route.params.id;
-
-const legalBasisData = ref();
 const fetchLegalBasis = async () => {
     try {
         const response = await getLawBasis();
@@ -63,24 +96,6 @@ const fetchLegalBasis = async () => {
         console.error('Fetch error:', error);
     }
 };
-provide('legalBasisData', legalBasisData);
-
-const formData = ref({
-    section: '',
-    implementer: [],
-    legalBasis: [],
-    implementQualification: [],
-    relatedSop: [],
-    equipment: [],
-    warning: '',
-    record: []
-});
-provide('sopFormData', {
-    formData,
-    updateFormData(newData) {
-        formData.value = { ...formData.value, ...newData }
-    }
-});
 
 const fetchInfoSop = async () => {
     try {
@@ -115,9 +130,6 @@ const fetchInfoSop = async () => {
         console.error('Fetch info sop error:', error);
     }
 };
-
-const sopStep = ref([]);
-provide('sopStep', sopStep);
 
 watch(() => sopStep.value,
     (newValue) => {
@@ -154,10 +166,7 @@ const fetchSopStep = async () => {
     }
 };
 
-const hodData = ref({
-    id_number: '',
-    name: '',
-});
+
 const fetchCurrentHod = async () => {
     try {
         const response = await getCurrentHod();
@@ -167,7 +176,18 @@ const fetchCurrentHod = async () => {
         console.error('Fetch data kadep error:', error);
     }
 };
-provide('hodData', hodData);
+
+// jalanin kalau status sop selain 1 dan 2
+const fetchFeedback = async () => {
+    try {
+        const response = await getDraftFeedback(idsopdetail);
+        if (response.success) {
+            draftFeedback.value = response.data;
+        }
+    } catch (error) {
+        console.error('Fetch feedback error:', error);
+    }
+};
 
 // sinkron data sop
 const syncSopInfo = async () => {
@@ -608,20 +628,25 @@ const prevStep = () => {
     }
 };
 
-onMounted(() => {
-    fetchPicInfo();
+onMounted(async () => {
+    await fetchPicInfo();
 
-    fetchInfoSop();
-    fetchSopStep();
+    await fetchInfoSop();
+    await fetchSopStep();
 
-    fetchLegalBasis();
-    fetchCurrentHod();
+    await fetchLegalBasis();
+    await fetchCurrentHod();
+
+    if (picInfo.value.status !== 2) {
+        await fetchFeedback();
+    }
 });
 </script>
 
 <template>
     <PageTitle judul="Penyusunan Dokumen SOP" class="my-12" />
-    <!-- stepper -->
+
+    <!-- Main SOP creation stepper and content -->
     <ol
         class="flex items-center justify-center w-full text-sm font-medium text-center text-gray-500 sm:text-base max-w-2xl mx-auto">
         <li class="flex md:w-full items-center text-blue-600 sm:after:content-[''] after:w-full after:h-1 after:border-b after:border-gray-400 after:border-1 after:hidden sm:after:inline-block after:mx-6 xl:after:mx-10"
@@ -665,8 +690,8 @@ onMounted(() => {
         </button>
 
         <button type="button"
-            :title="currentStep < 3 ? 'Klik untuk menyimpan progres saat ini ke server' : 'Untuk menyimpan progres, klik tombol kirim!'"
-            :disabled="currentStep == 3"
+            :title="isDisabled ? 'Tidak dapat menyimpan progres!' : currentStep < 3 ? 'Klik untuk menyimpan progres saat ini ke server' : 'Untuk menyimpan progres, klik tombol kirim!'"
+            :disabled="currentStep === 3 || isDisabled"
             class="w-[28%] text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
             @click="syncData">
             <!-- <SpinnerIcon class="inline w-5 me-3 fill-current animate-spin" />
@@ -675,13 +700,66 @@ onMounted(() => {
             Simpan Progres
         </button>
 
-        <button type="button"
-            class="w-1/4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-            @click="nextStep">
+        <button type="button" @click="nextStep" :disabled="isDisabled && currentStep == 3"
+            :title="(currentStep === 3 && isDisabled) ? 'Tidak dapat mengirim draft!' : currentStep == 3 ? 'Kirim Draft' : 'Lanjut ke langkah berikutnya'"
+            class="w-1/4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
             <p v-if="currentStep == 3">Kirim</p>
             <p v-else>Lanjut</p>
             <CircleArrowRight class="fill-current w-5 ml-2 mt-1" />
         </button>
     </div>
 
+    <!-- Floating feedback button and panel -->
+    <div class="fixed bottom-6 right-6 z-50">
+        <div v-if="showFeedback && draftFeedback && draftFeedback.length > 0" 
+            class="absolute bottom-full right-0 mb-3 w-96 bg-white rounded-lg shadow-xl border border-gray-200 transition-all duration-300 transform origin-bottom-right">
+            <div class="flex justify-between items-center bg-blue-50 p-3 rounded-t-lg border-b border-gray-200">
+                <div class="flex items-center">
+                    <span class="font-medium">Umpan Balik</span>
+                    <span class="bg-yellow-100 text-yellow-800 text-xs font-medium ml-2 px-2 py-0.5 rounded-full">{{ draftFeedback.length }}</span>
+                </div>
+                <button @click="showFeedback = false" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="max-h-96 overflow-y-auto p-1">
+                <div v-for="(feedback, index) in draftFeedback" :key="index"
+                    class="p-4 border-b last:border-b-0" 
+                    :class="[feedback?.type === 'revisi' ? 'bg-yellow-50' : 'bg-green-50']">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center">
+                            <span class="font-semibold text-sm">{{ feedback?.user?.name || 'User' }}</span>
+                            <span class="text-xs text-gray-500 ml-2">({{ feedback.user.role }})</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-500">{{ feedback?.createdAt || '-' }}</span>
+                            <span v-if="feedback?.type == 'revisi'" class="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full">Perlu Revisi</span>
+                            <span v-else-if="feedback?.type == 'setuju'" class="inline-block bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">Setuju</span>
+                        </div>
+                    </div>
+                    <p class="text-sm">{{ feedback?.feedback || '-' }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Floating feedback button with badge -->
+        <button 
+            v-if="draftFeedback && draftFeedback.length > 0"
+            @click="showFeedback = !showFeedback" :title="showFeedback ? 'Tutup' : 'Lihat Umpan Balik'"
+            class="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transition-all duration-300"
+            :class="{'rotate-45 bg-red-600 hover:bg-red-700': showFeedback}">
+            <span v-if="!showFeedback" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {{ draftFeedback.length }}
+            </span>
+            <!-- Use the same icon (plus/close) for both states so rotation works properly -->
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path v-if="!showFeedback" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
 </template>

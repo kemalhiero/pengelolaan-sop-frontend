@@ -3,6 +3,7 @@ import { inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 
+import { useToastPromise } from '@/utils/toastPromiseHandler';
 import { createSopDrafter, getUserByRole } from '@/api/userApi';
 import { createSopDetail, getLatestSopInYear, getOneSop } from '@/api/sopApi';
 
@@ -71,27 +72,36 @@ const submitSop = async () => {
         }
         showDrafterWarning.value = false;
 
-        const resultSopdetail = await createSopDetail(
-            route.params.id,
+        await useToastPromise(
+            (async () => {
+                // 1. Buat detail SOP
+                const resultSopdetail = await createSopDetail(
+                    route.params.id,
+                    {
+                        number: `T/${String(form.value.number).padStart(3, '0')}/UN16.17.02/OT.01.00/${currentYear}`,
+                        description: form.value.description,
+                        version: parseInt(form.value.version) + 1,
+                        signer_id: null,
+                    }
+                );
+                // 2. Buat semua drafter sekaligus
+                await Promise.all(
+                    form.value.drafter.map(item =>
+                        createSopDrafter({
+                            id_user: item.id,
+                            id_sop_detail: resultSopdetail.data.id_sop_detail,
+                        })
+                    )
+                );
+            })(),
             {
-                number: `T/${String(form.value.number).padStart(3, '0')}/UN16.17.02/OT.01.00/${currentYear}`,
-                description: form.value.description,
-                version: parseInt(form.value.version) + 1,
-                signer_id: null, // ntar pikirin ini bagusya siapa
+                messages: {
+                    pending: 'Menyimpan data SOP...',
+                    success: 'SOP versi baru & penyusun berhasil dibuat!',
+                    error: 'Gagal membuat SOP versi baru atau penyusun!'
+                }
             }
         );
-
-        form.value.drafter.forEach(async (item) => {
-            await createSopDrafter({
-                id_user: item.id,
-                id_sop_detail: resultSopdetail.data.id_sop_detail,
-            })
-        });
-
-        toast("Data berhasil ditambahkan!", {
-            type: "success",
-            autoClose: 3000,
-        });
 
         setTimeout(() => {
             router.push(`/app/docs/${route.params.id}`)
@@ -99,11 +109,6 @@ const submitSop = async () => {
 
     } catch (error) {
         console.error('Error saat mengirim data:', error);
-        toast(`Data gagal ditambahkan! <br> ${error} `, {
-            "type": "error",
-            "autoClose": 5000,
-            'dangerouslyHTMLString': true
-        });
     }
 };
 

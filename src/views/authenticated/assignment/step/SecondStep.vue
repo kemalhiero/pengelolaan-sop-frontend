@@ -15,6 +15,7 @@ watch(
     },
     { deep: true, immediate: true }
 );
+const isDisabled = inject('isDisabled');
 
 // Modal state
 const showBranchModal = ref(false);
@@ -121,10 +122,10 @@ updateSequenceNumbers();
                         </th>
                         <td class="px-2 py-3">
                             <input type="hidden" v-model="step.id_step">
-                            <input v-model="step.name" class="w-full p-2 border border-gray-300 rounded-md" />
+                            <input v-model="step.name" class="w-full p-2 border border-gray-300 rounded-md" :readonly="isDisabled" />
                         </td>
                         <td class="px-2 py-3">
-                            <select v-model="step.type" class="w-full p-2 border border-gray-300 rounded-md">
+                            <select v-model="step.type" class="w-full p-2 border border-gray-300 rounded-md disabled:opacity-100" :disabled="isDisabled">
                                 <template v-if="index == 0">
                                     <option value="terminator" selected>Start</option>
                                 </template>
@@ -156,20 +157,20 @@ updateSequenceNumbers();
                             </div>
                         </td>
                         <td class="px-2 py-3">
-                            <select v-model="step.id_implementer" class="w-full p-2 border border-gray-300 rounded-md">
+                            <select v-model="step.id_implementer" class="w-full p-2 border border-gray-300 rounded-md disabled:opacity-100" :disabled="isDisabled">
                                 <option v-for="(item, index) in formData.implementer" :value="item.id" :key="index">{{
                                     item.name }}</option>
                             </select>
                         </td>
                         <td class="px-2 py-3">
-                            <input v-model="step.fittings" class="w-full p-2 border border-gray-300 rounded-md" />
+                            <input v-model="step.fittings" class="w-full p-2 border border-gray-300 rounded-md" :readonly="isDisabled" />
                         </td>
                         <td class="px-2 py-3">
                             <div class="flex items-center">
-                                <input type="number" v-model="step.time" min="0"
+                                <input type="number" v-model="step.time" min="0" :readonly="isDisabled"
                                     class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 rounded-l-md w-14"
                                     placeholder="">
-                                <select v-model="step.time_unit" class="p-2 border border-gray-300 rounded-r-md w-20">
+                                <select v-model="step.time_unit" class="p-2 border border-gray-300 rounded-r-md w-20 disabled:opacity-100" :disabled="isDisabled">
                                     <option value="h">Jam</option>
                                     <option value="m">Menit</option>
                                     <option value="d">Hari</option>
@@ -180,21 +181,21 @@ updateSequenceNumbers();
                             </div>
                         </td>
                         <td class="px-2 py-3">
-                            <input v-model="step.output" class="w-full p-2 border border-gray-300 rounded-md" />
+                            <input v-model="step.output" class="w-full p-2 border border-gray-300 rounded-md" :readonly="isDisabled" />
                         </td>
                         <td class="px-2 py-3">
-                            <input v-model="step.description" class="w-full p-2 border border-gray-300 rounded-md " />
+                            <input v-model="step.description" class="w-full p-2 border border-gray-300 rounded-md " :readonly="isDisabled" />
                         </td>
                         <td class="px-2 py-3">
                             <div class="flex gap-2">
-                                <button @click="removeStep(index)" :title="`Hapus tahapan ${index + 1}`"
-                                    :disabled="sopStep.length == 1"
-                                    class="px-3 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex disabled:cursor-not-allowed">
+                                <button @click="removeStep(index)" :title="isDisabled ? 'Tidak dapat menghapus tahapan!' : `Hapus tahapan ${index + 1}`"
+                                    :disabled="sopStep.length == 1 || isDisabled"
+                                    class="px-3 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex disabled:cursor-not-allowed disabled:bg-opacity-60">
                                     <TrashCanIcon class="fill-current w-4" />
                                 </button>
                                 <button v-if="step.type === 'decision'" @click="openBranchModal(index)"
-                                    title="Konfigurasi Cabang Decision"
-                                    class="px-3 py-2 text-white bg-gray-600 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 inline-flex">
+                                    :title="isDisabled ? 'Tidak dapat mengkonfigurasi item!' : 'Konfigurasi Cabang Decision'" :disabled="isDisabled"
+                                    class="px-3 py-2 text-white bg-gray-600 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 inline-flex disabled:cursor-not-allowed disabled:bg-opacity-60">
                                     <GearIcon class="fill-current w-4" />
                                 </button>
                             </div>
@@ -205,8 +206,9 @@ updateSequenceNumbers();
 
             <!-- Tombol Tambah -->
             <div class="flex justify-center mt-4">
-                <button @click="addStep"
-                    class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 inline-flex">
+                <button @click="addStep" :disabled="isDisabled"
+                    :title="isDisabled ? 'Tidak dapat menambah tahapan!' : 'Tambah Tahapan'"
+                    class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 inline-flex disabled:cursor-not-allowed disabled:bg-opacity-60">
                     <CirclePlusIcon class="fill-current w-6 mr-2" />
                     Tambah Tahapan
                 </button>

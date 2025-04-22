@@ -28,14 +28,14 @@ const confirm = () => {
         // Call the API to confirm the SOP and BPMN
         useToastPromise(
             new Promise((resolve, reject) => {
-                confirmSopandBpmn(sopData.value.id, { status: 1 })
+                confirmSopandBpmn(sopData.value.id)
                     .then(response => {
                         if (!response.success) {
                             throw response;
                         }
                         console.log('SOP and BPMN confirmed successfully!');
-                        router.push({ name: 'SopDocs' });
                         resolve(response);
+                        router.push({ name: 'SopDocs' });
                     })
                     .catch(error => reject(error));
             }),

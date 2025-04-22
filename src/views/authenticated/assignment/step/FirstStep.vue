@@ -13,6 +13,7 @@ import Divider from '@/components/Divider.vue';
 
 const legalBasisData = inject('legalBasisData');
 const picInfo = inject('picData');
+const isDisabled = inject('isDisabled');
 
 const showModal = ref({
     legalBasis: false,
@@ -209,7 +210,7 @@ onMounted(() => {
                 Seksi<span class="text-red-600">*</span>
                 <Tooltip field="section" text="Misal: Semua Seksi di Lingkungan Departemen Sistem Informasi" />
             </label>
-            <input type="text" id="sop-section" v-model="formData.section" required
+            <input type="text" id="sop-section" v-model="formData.section" required :disabled="isDisabled"
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 " />
             <WarningText v-if="showWarningText.section" text="Harap isi data ini!" />
         </div>
@@ -224,16 +225,17 @@ onMounted(() => {
                     <li v-for="(item, index) in formData.implementer" :key="index"
                         class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
                         <span class="mr-2">{{ item.name }}</span>
-                        <button :title="`Hapus item ${index + 1}`" @click="implementer.removeItem(index)" type="button"
-                            class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
+                        <button :title="isDisabled ? 'Tidak dapat menghapus item!' : `Hapus item ${index + 1}`" @click="implementer.removeItem(index)" type="button" :disabled="isDisabled"
+                            class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center disabled:cursor-not-allowed disabled:bg-opacity-60">
                             <TrashCanIcon class="fill-current w-4" />
                         </button>
                     </li>
                 </ul>
             </div>
 
-            <button @click="showModal.executor = true"
-                class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center"
+            <button @click="showModal.executor = true" :disabled="isDisabled"
+                :title="isDisabled ? 'Tidak dapat menambah item!' : 'Tambah Pelaksana'"
+                class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center disabled:cursor-not-allowed disabled:bg-opacity-60"
                 type="button">
                 Tambah Pelaksana
             </button>
@@ -252,16 +254,17 @@ onMounted(() => {
                     <li v-for="(law, index) in formData.legalBasis" :key="index"
                         class="flex items-center justify-between p-2 bg-gray-200 rounded-lg mb-2">
                         <span class="text-sm">{{ law.legal }}</span>
-                        <button :title="`Hapus peraturan ${index + 1}`" @click="legalBasis.removeItem(index)"
-                            class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
+                        <button :title="isDisabled ? 'Tidak dapat menghapus item!' :`Hapus item ${index + 1}`" @click="legalBasis.removeItem(index)" :disabled="isDisabled"
+                            class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex disabled:cursor-not-allowed disabled:bg-opacity-60">
                             <TrashCanIcon class="fill-current w-4" />
                         </button>
                     </li>
                 </ul>
             </div>
 
-            <button @click="showModal.legalBasis = true"
-                class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center"
+            <button @click="showModal.legalBasis = true" :disabled="isDisabled"
+                :title="isDisabled ? 'Tidak dapat menambah item!' : 'Tambah Dasar Hukum'"
+                class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center disabled:cursor-not-allowed disabled:bg-opacity-60"
                 type="button">
                 Tambah Dasar Hukum
             </button>
@@ -276,7 +279,7 @@ onMounted(() => {
             </label>
             <input type="text" id="implement-qualification" v-model="implementQualification.newItem.value" @keyup.enter.prevent="implementQualification.addItem"
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
-                placeholder="ketikkan, lalu tekan enter" title="Contoh: Memiliki Kemampuan pengolahan data sederhana" />
+                :placeholder="isDisabled ? 'Tidak dapat menambahkan item!' : 'Ketikkan, lalu tekan enter'" title="Contoh: Memiliki Kemampuan pengolahan data sederhana" :disabled="isDisabled" />
             <WarningText v-if="showWarningText.implementQualification"
                 text="Jangan lupa ketikkan kualifikasi pelaksanaan!" />
             <!-- Daftar kualifikasi pelaksanaan -->
@@ -285,8 +288,8 @@ onMounted(() => {
                     <li v-for="(iq, index) in formData.implementQualification" :key="index"
                         class="flex items-center justify-between p-2 bg-gray-200 rounded-lg mb-2">
                         <span>{{ iq }}</span>
-                        <button :title="`Hapus item ${index + 1}`" @click="implementQualification.removeItem(index)"
-                            class="p-2 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
+                        <button :title="`Hapus item ${index + 1}`" @click="implementQualification.removeItem(index)" :disabled="isDisabled"
+                            class="p-2 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex disabled:cursor-not-allowed disabled:bg-opacity-60">
                             <TrashCanIcon class="fill-current w-4" />
                         </button>
                     </li>
@@ -301,7 +304,7 @@ onMounted(() => {
             </label>
             <input type="text" id="related-sop" v-model="relatedSop.newItem.value" @keyup.enter.prevent="relatedSop.addItem"
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
-                placeholder="ketikkan, lalu tekan enter" />
+                :placeholder="isDisabled ? 'Tidak dapat menambahkan item!' : 'Ketikkan, lalu tekan enter'" :disabled="isDisabled" />
 
             <!-- Daftar POS AP yang terkait -->
             <div v-if="formData.relatedSop.length > 0" class="my-4">
@@ -309,8 +312,8 @@ onMounted(() => {
                     <li v-for="(rs, index) in formData.relatedSop" :key="index"
                         class="flex items-center justify-between p-2 bg-gray-200 rounded-lg mb-2">
                         <span>{{ rs }}</span>
-                        <button :title="`Hapus item ${index + 1}`" @click="relatedSop.removeItem(index)"
-                            class="p-2 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
+                        <button :title="`Hapus item ${index + 1}`" @click="relatedSop.removeItem(index)" :disabled="isDisabled"
+                            class="p-2 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex disabled:cursor-not-allowed disabled:bg-opacity-60">
                             <TrashCanIcon class="fill-current w-4" />
                         </button>
                     </li>
@@ -325,15 +328,15 @@ onMounted(() => {
             </label>
             <input type="text" id="equipment-input" v-model="equipment.newItem.value" @keyup.enter.prevent="equipment.addItem"
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
-                placeholder="ketikkan, lalu tekan enter" />
+                :placeholder="isDisabled ? 'Tidak dapat menambahkan item!' : 'Ketikkan, lalu tekan enter'" :disabled="isDisabled" />
             <!-- Daftar peralatan/perlengkapan -->
             <div v-if="formData.equipment.length > 0" class="my-4">
                 <ul class="flex flex-wrap gap-2">
                     <li v-for="(eq, index) in formData.equipment" :key="index"
                         class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
                         <span class="mr-2">{{ eq }}</span>
-                        <button :title="`Hapus item ${index + 1}`" @click="equipment.removeItem(index)"
-                            class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
+                        <button :title="`Hapus item ${index + 1}`" @click="equipment.removeItem(index)" :disabled="isDisabled"
+                            class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center disabled:cursor-not-allowed disabled:bg-opacity-60">
                             <TrashCanIcon class="fill-current w-4" />
                         </button>
                     </li>
@@ -348,7 +351,7 @@ onMounted(() => {
                 <Tooltip field="warning" text="Misal: Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses 
                     kerja praktik mahasiswa." />
             </label>
-            <textarea id="sop-warning" placeholder="ketikkan teks peringatan disini" v-model="formData.warning" required
+            <textarea id="sop-warning" :placeholder="isDisabled ? 'Tidak dapat menambahkan teks peringatan!' : 'Ketikkan teks peringatan disini'" v-model="formData.warning" required :disabled="isDisabled"
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 h-24"></textarea>
             <WarningText v-if="showWarningText.warning" text="Harap isi teks peringatan!" />
         </div>
@@ -360,8 +363,8 @@ onMounted(() => {
                 <Tooltip field="data-record" text="Misal: Dokumen" />
             </label>
             <input type="text" id="data-record-input" v-model="record.newItem.value" @keyup.enter.prevent="record.addItem"
-                class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
-                placeholder="ketikkan, lalu tekan enter" />
+            class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
+            :placeholder="isDisabled ? 'Tidak dapat menambahkan item!' : 'Ketikkan, lalu tekan enter'" :disabled="isDisabled"/>
             <WarningText v-if="showWarningText.record" text="Jangan lupa ketikkan media pencatatan dan pendataan!" />
             <!-- Daftar peralatan/perlengkapan -->
             <div v-if="formData.record.length > 0" class="my-4">
@@ -369,8 +372,8 @@ onMounted(() => {
                     <li v-for="(rd, index) in formData.record" :key="index"
                         class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
                         <span class="mr-2">{{ rd }}</span>
-                        <button :title="`Hapus item ${index + 1}`" @click="record.removeItem(index)"
-                            class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
+                        <button :title="`Hapus item ${index + 1}`" @click="record.removeItem(index)" :disabled="isDisabled"
+                            class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center disabled:cursor-not-allowed disabled:bg-opacity-60">
                             <TrashCanIcon class="fill-current w-4" />
                         </button>
                     </li>
@@ -403,17 +406,6 @@ onMounted(() => {
                 </div>
                 <!-- Modal body -->
                 <div class="p-4 md:p-5 space-y-4">
-
-                    <!-- <div class="flex justify-end mb-4">
-                        <router-link to="#">
-                            <button
-                                class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center dark:focus:ring-[#2557D6]/50 me-2 mb-2 ml-auto"
-                                title="">
-                                <CirclePlusIcon class="w-5 mr-3 fill-current" />
-                                Tambah SOP Baru
-                            </button>
-                        </router-link>
-                    </div> -->
 
                     <DataTable v-if="legalBasisData"
                         :data="legalBasisData" 

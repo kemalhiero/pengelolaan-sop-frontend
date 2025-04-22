@@ -96,7 +96,10 @@ const processSubmitFeedback = async (feedbackData) => {
         {
             messages: {
                 success: 'Umpan balik berhasil dikirim!',
-            }
+            },
+            toastOptions: {
+                autoClose: 3000,
+            },
         }
     );
 
@@ -124,7 +127,7 @@ const processSubmitFeedback = async (feedbackData) => {
         await updateSopDetail(route.params.id, { status: newStatus });
         setTimeout(() => {
             router.push(redirectPath);
-        }, 5000);
+        }, 3000);
     }
 };
 

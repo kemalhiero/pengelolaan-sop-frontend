@@ -365,7 +365,6 @@ const removeSignature = async () => {
         if (signatureImage.value.file instanceof File) {
             signatureImage.value.preview = null;
             signatureImage.value.file = null;
-            showModal.value.deleteSignature = false;
         } else if (typeof signatureImage.value.file === 'string') {
             // Hapus tanda tangan dari server
             useToastPromise(
@@ -377,7 +376,6 @@ const removeSignature = async () => {
                             }
                             signatureImage.value.preview = null;
                             signatureImage.value.file = null;
-                            showModal.value.deleteSignature = false;
                             resolve(response);
                         })
                         .catch(error => reject(error));
@@ -399,6 +397,8 @@ const removeSignature = async () => {
         }
     } catch (error) {
         console.error('Fetch error:', error);
+    } finally {
+        showModal.value.deleteSignature = false;
     }
 };
 
