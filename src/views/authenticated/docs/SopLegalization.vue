@@ -88,86 +88,83 @@ onMounted(async () => {
 </script>
 
 <template>
-    <main class="p-4 md:ml-64 h-auto pt-20 px-10">
-        <h2 class="text-4xl text-center my-8 font-bold">Pengesahan SOP {{ sopData.name }}</h2>
+    <h2 class="text-4xl text-center my-8 font-bold">Pengesahan SOP {{ sopData.name }}</h2>
 
-        <div class="lg:col-span-2 p-6">
-            <h2 class="text-2xl font-bold text-gray-800 mb-1">Tanda Tangan</h2>
-            <p class="text-sm mb-6">Status tanda tangan Anda.</p>
-        
-            <div v-if="!userSignature" class="flex items-center text-red-600 font-medium">
-                <ExclamationMarkIcon class="w-5 h-5 mr-2" />
-                <p>
-                    Anda belum mengunggah tanda tangan. Silakan unggah tanda tangan Anda di halaman 
-                    <RouterLink to="/profile" class="underline text-blue-600">Profil Pengguna!</RouterLink>
-                </p>
-            </div>
-            <div v-else class="flex items-center text-green-600 font-medium">
-                <CheckIcon class="w-5 h-5 mr-2" />
-                Tanda tangan Anda telah diunggah. Silahkan tinjau dan sahkan SOP ini!
-            </div>
-        </div>
-
-        <div class="flex justify-center my-6">
-            <div class="inline-flex rounded-md shadow-sm" role="group">
-            <button 
-                @click="activeTab = 'document'" 
-                type="button" 
-                class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-l-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
-                :class="activeTab === 'document' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'"
-            >
-                Dokumen SOP
-            </button>
-            <button 
-                @click="activeTab = 'bpmn'" 
-                type="button" 
-                class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-r-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
-                :class="activeTab === 'bpmn' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'"
-            >
-                Diagram BPMN
-            </button>
-            </div>
-        </div>
-
-        <div v-if="activeTab === 'document'">
-            <SopDocTemplate 
-                :name="sopData.name" :number="sopData.number"
-                :pic-name="signer.name" :pic-number="signer.id_number"
-                created-date="-" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
-                :section="sopData.section" :warning="sopData.warning"
-                :law-basis="sopData.legalBasis.map(item => item.legal)"
-                :implement-qualification="sopData.implementQualification.map(item => item.qualification)" 
-                :related-sop="sopData.relatedSop.map(item => item.related_sop)"
-                :equipment="sopData.equipment.map(item => item.equipment)" 
-                :record-data="sopData.record.map(item => item.data_record)"
-                :implementer="sopData.implementer" :steps="sopData.steps" 
-                :signature="userSignature"
-            />           
-        </div>
-
-        <div v-else-if="activeTab === 'bpmn'" class="mb-10">
-            <SopBpmnTemplate
-                v-if="sopData.steps && sopData.steps.length > 0 && sopData.implementer && sopData.implementer.length > 0"
-                :name="sopData.name" 
-                :steps="sopData.steps || []" 
-                :implementer="sopData.implementer || []" 
-            />
-            <div v-else class="my-4 p-4 bg-gray-100 rounded text-center">
-                Belum ada tahapan yang diinputkan oleh penyusun!
-            </div>
-        </div>
-
-        <div class="mb-10 flex flex-col items-center">
-            <button type="button" @click="showConfirmationModal = true" :disabled="!userSignature"
-                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-1/4 disabled:cursor-not-allowed disabled:bg-opacity-60">
-                Sahkan SOP dan BPMN?
-            </button>
-            <p v-if="!userSignature" class="text-sm text-red-600 mt-2">
-                Anda harus mengunggah tanda tangan terlebih dahulu untuk dapat mengesahkan SOP.
+    <div class="lg:col-span-2 p-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-1">Tanda Tangan</h2>
+        <p class="text-sm mb-6">Status tanda tangan Anda.</p>
+    
+        <div v-if="!userSignature" class="flex items-center text-red-600 font-medium">
+            <ExclamationMarkIcon class="w-5 h-5 mr-2" />
+            <p>
+                Anda belum mengunggah tanda tangan. Silakan unggah tanda tangan Anda di halaman 
+                <RouterLink to="/profile" class="underline text-blue-600">Profil Pengguna!</RouterLink>
             </p>
         </div>
+        <div v-else class="flex items-center text-green-600 font-medium">
+            <CheckIcon class="w-5 h-5 mr-2" />
+            Tanda tangan Anda telah diunggah. Silahkan tinjau dan sahkan SOP ini!
+        </div>
+    </div>
 
-    </main>
+    <div class="flex justify-center my-6">
+        <div class="inline-flex rounded-md shadow-sm" role="group">
+        <button 
+            @click="activeTab = 'document'" 
+            type="button" 
+            class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-l-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
+            :class="activeTab === 'document' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'"
+        >
+            Dokumen SOP
+        </button>
+        <button 
+            @click="activeTab = 'bpmn'" 
+            type="button" 
+            class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-r-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
+            :class="activeTab === 'bpmn' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'"
+        >
+            Diagram BPMN
+        </button>
+        </div>
+    </div>
+
+    <div v-if="activeTab === 'document'">
+        <SopDocTemplate 
+            :name="sopData.name" :number="sopData.number"
+            :pic-name="signer.name" :pic-number="signer.id_number"
+            created-date="-" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
+            :section="sopData.section" :warning="sopData.warning"
+            :law-basis="sopData.legalBasis.map(item => item.legal)"
+            :implement-qualification="sopData.implementQualification.map(item => item.qualification)" 
+            :related-sop="sopData.relatedSop.map(item => item.related_sop)"
+            :equipment="sopData.equipment.map(item => item.equipment)" 
+            :record-data="sopData.record.map(item => item.data_record)"
+            :implementer="sopData.implementer" :steps="sopData.steps" 
+            :signature="userSignature"
+        />           
+    </div>
+
+    <div v-else-if="activeTab === 'bpmn'" class="mb-10">
+        <SopBpmnTemplate
+            v-if="sopData.steps && sopData.steps.length > 0 && sopData.implementer && sopData.implementer.length > 0"
+            :name="sopData.name" 
+            :steps="sopData.steps || []" 
+            :implementer="sopData.implementer || []" 
+        />
+        <div v-else class="my-4 p-4 bg-gray-100 rounded text-center">
+            Belum ada tahapan yang diinputkan oleh penyusun!
+        </div>
+    </div>
+
+    <div class="mb-10 flex flex-col items-center">
+        <button type="button" @click="showConfirmationModal = true" :disabled="!userSignature"
+            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-1/4 disabled:cursor-not-allowed disabled:bg-opacity-60">
+            Sahkan SOP dan BPMN?
+        </button>
+        <p v-if="!userSignature" class="text-sm text-red-600 mt-2">
+            Anda harus mengunggah tanda tangan terlebih dahulu untuk dapat mengesahkan SOP.
+        </p>
+    </div>
 
     <div v-show="showConfirmationModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full shadow-lg">
         <div class="fixed inset-0 bg-gray-800 bg-opacity-50" @click="showConfirmationModal = false"></div>
@@ -206,5 +203,4 @@ onMounted(async () => {
 
         </div>
     </div>
-
 </template>

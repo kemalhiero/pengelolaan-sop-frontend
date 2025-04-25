@@ -20,22 +20,18 @@ onMounted(() => {});
 </script>
 
 <template>
-    <main class="p-4 md:ml-64 h-auto pt-20">
+    <PageTitle judul="Umpan Balik terhadap SOP yang Dikelola" class="mt-3 mb-7" />
 
-        <PageTitle judul="Umpan Balik terhadap SOP yang Dikelola" class="mt-3 mb-7" />
-
-        <div class="container mx-auto p-8 lg:px-16">
-            <DataTable
-                :data="data" 
-                :columns="[
-                    { field: 'nama', label: 'Nama', sortable: true, searchable: true },
-                    { field: 'umpan_balik', label: 'Komentar', sortable: true, searchable: true },
-                    { field: 'tanggal', label: 'Waktu', sortable: true, searchable: true },
-                ]" 
-                :detail-column="true" 
-                @click="handleRowClick" 
-            />
-        </div>
-
-    </main>
+    <div class="container mx-auto p-8 lg:px-16">
+        <DataTable
+            :data="data" 
+            :columns="[
+                { field: 'nama', label: 'Nama', sortable: true, searchable: true },
+                { field: 'umpan_balik', label: 'Komentar', sortable: true, searchable: true },
+                { field: 'tanggal', label: 'Waktu', sortable: true, searchable: true },
+            ]" 
+            :detail-column="true" 
+            @click="handleRowClick" 
+        />
+    </div>
 </template>

@@ -46,55 +46,51 @@ onMounted(() => {
 </script>
 
 <template>
-    <main class="p-4 md:ml-64 h-auto pt-20">
+    <PageTitle judul="Daftar Dokumen SOP yang Dikelola" class="mt-3 mb-7" />
 
-        <PageTitle judul="Daftar Dokumen SOP yang Dikelola" class="mt-3 mb-7" />
+    <div class="container mx-auto p-8 lg:px-16">
 
-        <div class="container mx-auto p-8 lg:px-16">
-
-            <div class="flex justify-end mb-4">
-                <router-link :to="{ name: 'SopPropose' }">
-                    <button
-                        class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center dark:focus:ring-[#2557D6]/50 me-2 mb-2 ml-auto"
-                        title="">
-                        <CirclePlusIcon class="w-5 mr-3 fill-current" />
-                        Tambah SOP Baru
-                    </button>
-                </router-link>
-            </div>
-
-            <div>
-                <TableSkeleton 
-                    v-if="isLoading" 
-                    :columns="5" 
-                    :rows="5" 
-                />
-                <Error 
-                    v-else-if="hasError" 
-                    @click="fetchData" 
-                />
-                <EmptyState 
-                    v-else-if="!hasError && data.length === 0" 
-                    title="Tidak ada data dokumen sop!"
-                    message="Belum ada data dokumen sop yang tersedia saat ini" 
-                    @click="fetchData" 
-                />
-                <DataTable v-else 
-                    :data="data" 
-                    :columns="[
-                        { field: 'name', label: 'Nama', sortable: true, searchable: true },
-                        { field: 'org_name', label: 'Organisasi', sortable: true, searchable: true },
-                    ]" 
-                    :status-columns="[
-                        { field: 'is_active', label: 'Status' }
-                    ]" 
-                    :badge-text="['Tidak Berlaku', 'Berlaku', 'Belum Berlaku']" 
-                    :link-column="true"
-                    detail-link="SopDocDetail" 
-                />
-            </div>
-
+        <div class="flex justify-end mb-4">
+            <router-link :to="{ name: 'SopPropose' }">
+                <button
+                    class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center dark:focus:ring-[#2557D6]/50 me-2 mb-2 ml-auto"
+                    title="">
+                    <CirclePlusIcon class="w-5 mr-3 fill-current" />
+                    Tambah SOP Baru
+                </button>
+            </router-link>
         </div>
 
-    </main>
+        <div>
+            <TableSkeleton 
+                v-if="isLoading" 
+                :columns="5" 
+                :rows="5" 
+            />
+            <Error 
+                v-else-if="hasError" 
+                @click="fetchData" 
+            />
+            <EmptyState 
+                v-else-if="!hasError && data.length === 0" 
+                title="Tidak ada data dokumen sop!"
+                message="Belum ada data dokumen sop yang tersedia saat ini" 
+                @click="fetchData" 
+            />
+            <DataTable v-else 
+                :data="data" 
+                :columns="[
+                    { field: 'name', label: 'Nama', sortable: true, searchable: true },
+                    { field: 'org_name', label: 'Organisasi', sortable: true, searchable: true },
+                ]" 
+                :status-columns="[
+                    { field: 'is_active', label: 'Status' }
+                ]" 
+                :badge-text="['Tidak Berlaku', 'Berlaku', 'Belum Berlaku']" 
+                :link-column="true"
+                detail-link="SopDocDetail" 
+            />
+        </div>
+
+    </div>
 </template>

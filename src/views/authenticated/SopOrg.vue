@@ -261,95 +261,91 @@ onMounted(() => {
 </script>
 
 <template>
-    <main class="p-4 md:ml-64 h-auto pt-20">
+    <PageTitle judul="Daftar Organisasi yang Dikelola" class="mt-3 mb-7" />
 
-        <PageTitle judul="Daftar Organisasi yang Dikelola" class="mt-3 mb-7" />
-
-        <div class="container mx-auto p-8 lg:px-16">
-            <div class="flex justify-end mb-4">
-                <AddDataButton btnLabel="Input Organisasi Baru" @click="openAddModal" />
-            </div>
-
-            <div>
-                <TableSkeleton 
-                    v-if="isLoading"
-                    :columns="4"
-                    :rows="4"
-                />
-                <Error v-else-if="hasError" @click="fetchDataOrg" />
-                <EmptyState 
-                    v-else-if="!hasError && data.length === 0"
-                    title="Tidak ada data organisasi!"
-                    message="Belum ada data organisasi yang tersedia saat ini"
-                    @click="fetchDataOrg"
-                />
-                <div v-else class="relative overflow-x-auto shadow-md sm:rounded-lg">
-                    <table class="w-full text-sm text-left text-gray-500">
-                        <thead class="text-xs text-gray-900 uppercase bg-gray-50">
-                            <tr>
-                                <th scope="col" class="px-6 py-3">
-                                    Nama
-                                </th>
-                                <th scope="col" class="px-6 py-3">
-                                    Penanggung Jawab
-                                </th>
-                                <th scope="col" class="px-6 py-3">
-                                    Jumlah SOP
-                                </th>
-                                <th scope="col" class="px-6 py-3">
-                                    Keterangan
-                                </th>
-                                <th scope="col" class="px-6 py-3">
-                                    <span class="sr-only">Edit</span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="(item, index) in data" :key="index" class="bg-white border-b">
-                                <th scope="row" class="px-6 py-4 font-medium text-gray-900">
-                                    {{ item.name }}
-                                </th>
-                                <td class="px-6 py-4">
-                                    <ul v-if="item.pic.length > 0" class="list-disc">
-                                        <li v-for="itempic in item.pic">{{ itempic.name }}</li>
-                                    </ul>
-                                    <p v-else>-</p>
-                                </td>
-                                <td class="px-6 py-4">
-                                    {{ item.total_sop }}
-                                </td>
-                                <td class="px-6 py-4">
-                                    {{ item.about }}
-                                </td>
-                                <td class="px-6 py-4 flex justify-evenly">
-                                    <button title="Edit data departemen" @click="openEditDepartementModal" v-if="item.id == 0"
-                                        class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
-                                        <PenToSquareIcon class="fill-current w-4" />
-                                    </button>
-                                    <button :title="`Edit organisasi ${item.name}`" @click="openUpdateModal(item.id)" v-else
-                                        class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
-                                        <PenToSquareIcon class="fill-current w-4" />
-                                    </button>
-                                    <button :title="`Hapus data ${item.name}`" @click="openDeleteModal(item.id)" v-if="item.id != 0 && item.total_sop == 0"
-                                        class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
-                                        <TrashCanIcon class="fill-current w-4" />
-                                    </button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+    <div class="container mx-auto p-8 lg:px-16">
+        <div class="flex justify-end mb-4">
+            <AddDataButton btnLabel="Input Organisasi Baru" @click="openAddModal" />
         </div>
 
-        <DeleteDataModal 
-            :showModal="showModalDelete"
-            :deleteData="deleteData" 
-            :selectedId="selectedDeleteId"
-            @update:showModal="showModalDelete = $event" 
-        />
+        <div>
+            <TableSkeleton 
+                v-if="isLoading"
+                :columns="4"
+                :rows="4"
+            />
+            <Error v-else-if="hasError" @click="fetchDataOrg" />
+            <EmptyState 
+                v-else-if="!hasError && data.length === 0"
+                title="Tidak ada data organisasi!"
+                message="Belum ada data organisasi yang tersedia saat ini"
+                @click="fetchDataOrg"
+            />
+            <div v-else class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-900 uppercase bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">
+                                Nama
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                Penanggung Jawab
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                Jumlah SOP
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                Keterangan
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                <span class="sr-only">Edit</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(item, index) in data" :key="index" class="bg-white border-b">
+                            <th scope="row" class="px-6 py-4 font-medium text-gray-900">
+                                {{ item.name }}
+                            </th>
+                            <td class="px-6 py-4">
+                                <ul v-if="item.pic.length > 0" class="list-disc">
+                                    <li v-for="itempic in item.pic">{{ itempic.name }}</li>
+                                </ul>
+                                <p v-else>-</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                {{ item.total_sop }}
+                            </td>
+                            <td class="px-6 py-4">
+                                {{ item.about }}
+                            </td>
+                            <td class="px-6 py-4 flex justify-evenly">
+                                <button title="Edit data departemen" @click="openEditDepartementModal" v-if="item.id == 0"
+                                    class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
+                                    <PenToSquareIcon class="fill-current w-4" />
+                                </button>
+                                <button :title="`Edit organisasi ${item.name}`" @click="openUpdateModal(item.id)" v-else
+                                    class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
+                                    <PenToSquareIcon class="fill-current w-4" />
+                                </button>
+                                <button :title="`Hapus data ${item.name}`" @click="openDeleteModal(item.id)" v-if="item.id != 0 && item.total_sop == 0"
+                                    class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
+                                    <TrashCanIcon class="fill-current w-4" />
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-    </main>
+    <DeleteDataModal 
+        :showModal="showModalDelete"
+        :deleteData="deleteData" 
+        :selectedId="selectedDeleteId"
+        @update:showModal="showModalDelete = $event" 
+    />
 
     <!-- TAMBAH/EDIT DATA ORGANISASI BIASA -->
     <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">

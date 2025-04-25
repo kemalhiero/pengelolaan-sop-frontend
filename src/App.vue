@@ -2,11 +2,11 @@
 import { provide, ref } from 'vue';
 import { RouterView } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-const authStore = useAuthStore();
 
 import AppShell from '@/components/authenticated/AppShell.vue';   // authenticated
 import Navbar from '@/components/Navbar.vue';
 
+const authStore = useAuthStore();
 authStore.initializeRememberMe();
 authStore.initializeAuth();
 
@@ -21,6 +21,29 @@ provide('layoutType', layout);
     <Navbar v-else-if="layout === 'guest'" />
     <div v-else></div>
   </template>
-  <RouterView />
+
+  <main :class="layout === 'admin' ? 'p-4 md:ml-64 h-auto pt-20 print:ml-0' : ''">
+    <RouterView />
+  </main>
 
 </template>
+
+<style>
+/* cari cara supaya opsi pada dialognya langsung a4 dan tata letaknya lanskap */
+@media print {
+  body {
+    margin: 0; /* Hilangkan margin default browser */
+  }
+  .print-page {
+    margin: 15mm auto; /* Margin atas/bawah/kiri/kanan */
+  }
+  .print-page * {
+    -webkit-print-color-adjust: exact; /* Untuk mencetak warna */
+    print-color-adjust: exact; /* Standard property for compatibility */
+  }
+  .print-break-after-page {
+    break-after: page;
+    page-break-after: always;
+  }
+}
+</style>

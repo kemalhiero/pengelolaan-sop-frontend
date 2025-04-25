@@ -47,7 +47,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <nav class="bg-white border-gray-200">
+  <nav class="bg-white border-gray-200 print:hidden">
     <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
       <RouterLink to="/" class="flex items-center space-x-3">
         <img src="/logo.svg" class="h-8" alt="Flowbite Logo" />

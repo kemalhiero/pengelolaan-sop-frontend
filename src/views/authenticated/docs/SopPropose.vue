@@ -128,102 +128,99 @@ onMounted(() => {
 </script>
 
 <template>
-    <main class="p-4 md:ml-64 h-auto pt-20">
+    <PageTitle judul="Usulkan POS baru" class="mt-3 mb-7" />
 
-        <PageTitle judul="Usulkan POS baru" class="mt-3 mb-7" />
+    <section class="bg-white">
+        <div class="py-8 px-4 mx-auto max-w-3xl">
+            <form @submit.prevent="submitSop">
+                <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
+                    <div class="col-span-2">
+                        <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
+                            Nama<span class="text-red-600">*</span>
+                        </label>
+                        <input type="text" v-model="form.name" id="name" placeholder="ketik nama sop disini..." required minlength="3" maxlength="100"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
+                            title="Contoh : Pengusulan Kerja Praktik (langsung judul, tanpa perlu 'SOP' atau 'POS' di awal)">
+                    </div>
 
-        <section class="bg-white">
-            <div class="py-8 px-4 mx-auto max-w-3xl">
-                <form @submit.prevent="submitSop">
-                    <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
-                        <div class="col-span-2">
-                            <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
-                                Nama<span class="text-red-600">*</span>
-                            </label>
-                            <input type="text" v-model="form.name" id="name" placeholder="ketik nama sop disini..." required minlength="3" maxlength="100"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                title="Contoh : Pengusulan Kerja Praktik (langsung judul, tanpa perlu 'SOP' atau 'POS' di awal)">
-                        </div>
-
-                        <div class="col-span-2 sm:col-span-1">
-                            <label for="num" class="block mb-2 text-sm font-medium text-gray-900">
-                                Nomor<span class="text-red-600">*</span>
-                            </label>
-                            <div class="flex items-center">
-                                <span
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg p-2.5">
-                                    T/
-                                </span>
-                                <input name="num" type="number" min="1" max="999" required v-model="form.number" @blur=""
-                                    class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 min-w-12 w-full"
-                                    title="Masukkan no urut sop">
-                                <span
-                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5 w-fit whitespace-nowrap">
-                                    /UN16.17.02/OT.01.00/{{ currentYear }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="col-span-2 sm:col-span-1">
-                            <label for="org" class="block mb-2 text-sm font-medium text-gray-900">
-                                Organisasi<span class="text-red-600">*</span>
-                            </label>
-                            <select id="org" v-model="form.id_org" required
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                                <option selected disabled value="">Pilih organisasi</option>
-                                <option v-for="(item, index) in dataOrg" :value="item.id" :key="`org-${index}`">
-                                    {{ item.name }}
-                                </option>
-                            </select>
-                        </div>
-
-                        <div class="col-span-2">
-                            <label class="block mb-2 text-sm font-medium">
-                                Penugasan<span class="text-red-600">*</span>
-                            </label>
-
-                            <div v-if="form.drafter.length > 0" class="my-4">
-                                <ul class="flex flex-wrap gap-2">
-                                    <li v-for="(item, index) in form.drafter" :key="index"
-                                        class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
-                                        <span class="mr-2">{{ item.name }}</span>
-                                        <button :title="`Hapus item ${index + 1}`" @click="removeDrafter(index)"
-                                            type="button"
-                                            class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
-                                            <TrashCanIcon class="fill-current w-4" />
-                                        </button>
-                                    </li>
-                                </ul>
-                            </div>
-
-                            <button @click="showDrafterModal = true"
-                                class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center"
-                                type="button">
-                                Tambahkan User
-                            </button>
-
-                            <WarningText v-show="showDrafterWarning"
-                                text="Jangan lupa untuk memilih user yang akan ditugaskan!" />
-
-                        </div>
-
-                        <div class="col-span-2">
-                            <label for="description" class="block mb-2 text-sm font-medium text-gray-900">
-                                Deskripsi<span class="text-red-600">*</span>
-                            </label>
-                            <textarea id="description" rows="8" v-model="form.description" required minlength="10" maxlength="1000"
-                                class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500"
-                                placeholder="ketikkan deskripsi SOP disini..."></textarea>
+                    <div class="col-span-2 sm:col-span-1">
+                        <label for="num" class="block mb-2 text-sm font-medium text-gray-900">
+                            Nomor<span class="text-red-600">*</span>
+                        </label>
+                        <div class="flex items-center">
+                            <span
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg p-2.5">
+                                T/
+                            </span>
+                            <input name="num" type="number" min="1" max="999" required v-model="form.number" @blur=""
+                                class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 min-w-12 w-full"
+                                title="Masukkan no urut sop">
+                            <span
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5 w-fit whitespace-nowrap">
+                                /UN16.17.02/OT.01.00/{{ currentYear }}
+                            </span>
                         </div>
                     </div>
-                    <button type="submit"
-                        class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-3 sm:mt-6 text-center">
-                        Mulai buat SOP baru
-                    </button>
-                </form>
-            </div>
-        </section>
-    </main>
+
+                    <div class="col-span-2 sm:col-span-1">
+                        <label for="org" class="block mb-2 text-sm font-medium text-gray-900">
+                            Organisasi<span class="text-red-600">*</span>
+                        </label>
+                        <select id="org" v-model="form.id_org" required
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+                            <option selected disabled value="">Pilih organisasi</option>
+                            <option v-for="(item, index) in dataOrg" :value="item.id" :key="`org-${index}`">
+                                {{ item.name }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="col-span-2">
+                        <label class="block mb-2 text-sm font-medium">
+                            Penugasan<span class="text-red-600">*</span>
+                        </label>
+
+                        <div v-if="form.drafter.length > 0" class="my-4">
+                            <ul class="flex flex-wrap gap-2">
+                                <li v-for="(item, index) in form.drafter" :key="index"
+                                    class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
+                                    <span class="mr-2">{{ item.name }}</span>
+                                    <button :title="`Hapus item ${index + 1}`" @click="removeDrafter(index)"
+                                        type="button"
+                                        class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
+                                        <TrashCanIcon class="fill-current w-4" />
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <button @click="showDrafterModal = true"
+                            class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center"
+                            type="button">
+                            Tambahkan User
+                        </button>
+
+                        <WarningText v-show="showDrafterWarning"
+                            text="Jangan lupa untuk memilih user yang akan ditugaskan!" />
+
+                    </div>
+
+                    <div class="col-span-2">
+                        <label for="description" class="block mb-2 text-sm font-medium text-gray-900">
+                            Deskripsi<span class="text-red-600">*</span>
+                        </label>
+                        <textarea id="description" rows="8" v-model="form.description" required minlength="10" maxlength="1000"
+                            class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500"
+                            placeholder="ketikkan deskripsi SOP disini..."></textarea>
+                    </div>
+                </div>
+                <button type="submit"
+                    class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-3 sm:mt-6 text-center">
+                    Mulai buat SOP baru
+                </button>
+            </form>
+        </div>
+    </section>
 
     <div v-show="showDrafterModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
 

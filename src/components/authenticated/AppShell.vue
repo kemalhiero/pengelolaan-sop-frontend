@@ -45,7 +45,7 @@ onMounted(() => {
 <template>
 
     <!-- Navbar -->
-    <nav class="bg-white border-b border-gray-200 px-4 py-2.5 fixed left-0 right-0 top-0 z-50">
+    <nav class="bg-white border-b border-gray-200 px-4 py-2.5 fixed left-0 right-0 top-0 z-50 print:hidden">
         <div class="flex flex-wrap justify-between items-center">
             <div class="flex justify-start items-center">
                 <button data-drawer-target="drawer-navigation" data-drawer-toggle="drawer-navigation"
@@ -112,9 +112,8 @@ onMounted(() => {
     </nav>
 
     <!-- Sidebar -->
-    <aside
-        class="fixed top-0 left-0 z-40 w-64 h-screen pt-14 transition-transform -translate-x-full bg-white border-r border-gray-200 md:translate-x-0"
-        aria-label="Sidenav" id="drawer-navigation">
+    <aside aria-label="Sidenav" id="drawer-navigation"
+        class="fixed top-0 left-0 z-40 w-64 h-screen pt-14 transition-transform -translate-x-full bg-white border-r border-gray-200 md:translate-x-0 print:hidden">
         <div class="overflow-y-auto py-5 px-3 h-full bg-white">
 
             <ul class="space-y-2">
@@ -234,7 +233,6 @@ onMounted(() => {
         </div>
 
         <!-- <SidebarSetting/> -->
-
     </aside>
 
 </template>

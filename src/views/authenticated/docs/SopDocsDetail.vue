@@ -147,86 +147,83 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="p-4 md:ml-64 h-auto pt-20 px-10">
 
-    <template v-if="sopData">
-      <div class="flex justify-center items-center">
-        <PageTitle :judul="`SOP ${sopData.name}`" class="my-8" />
-        <div class="space-x-2 ml-3 flex justify-center items-center" v-if="sopData.version">
-            <button title="Edit data penugasan" @click="showModal.edit = true"
-                class="p-2 text-white w-8 h-8 bg-yellow-400 rounded-full hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50">
-                <PenToSquareIcon class="fill-current" />
-            </button>
-            <button title="Hapus" @click="showModal.delete = true" v-if="sopData.version.length === 0"
-                class="p-2 text-white w-8 h-8 bg-red-600 rounded-full hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center">
-                <TrashCanIcon class="fill-current" />
-            </button>
-        </div>
+  <template v-if="sopData">
+    <div class="flex justify-center items-center">
+      <PageTitle :judul="`SOP ${sopData.name}`" class="my-8" />
+      <div class="space-x-2 ml-3 flex justify-center items-center" v-if="sopData.version">
+          <button title="Edit data penugasan" @click="showModal.edit = true"
+              class="p-2 text-white w-8 h-8 bg-yellow-400 rounded-full hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50">
+              <PenToSquareIcon class="fill-current" />
+          </button>
+          <button title="Hapus" @click="showModal.delete = true" v-if="sopData.version.length === 0"
+              class="p-2 text-white w-8 h-8 bg-red-600 rounded-full hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center">
+              <TrashCanIcon class="fill-current" />
+          </button>
       </div>
-
-      <div class="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-5">
-        <div class="bg-gray-200 p-5 rounded-xl shadow-md">
-          <h4 class="mb-2.5 text-lg">Organisasi</h4>
-          <h5 class="text-lg font-bold" v-if="sopData.organization">
-            {{ sopData.organization.name }}
-          </h5>
-        </div>
-        <div class="bg-gray-200 p-5 rounded-xl shadow-md">
-          <h4 class="mb-2.5 text-lg">Tanggal Pembuatan</h4>
-          <h5 class="text-xl font-bold">
-            {{ sopData.creation_date }}
-          </h5>
-        </div>
-        <div class="bg-gray-200 p-5 rounded-xl shadow-md">
-          <h4 class="mb-2.5 text-lg">Status</h4>
-          <h5 class="text-xl font-bold">
-            {{ switchStatusIsActive(sopData.is_active) }}
-          </h5>
-        </div>
-      </div>
-
-      <div class="my-8">
-        <TableSkeleton 
-            v-if="isLoading"
-            :columns="5"
-            :rows="5"
-        />
-        <Error v-else-if="hasError" @click="fetchData" />
-        <EmptyState 
-            v-else-if="!hasError && sopData.version.length === 0"
-            title="Tidak ada data versi sop!"
-            message="Belum ada data versi sop yang tersedia saat ini"
-            @click="fetchData"
-        />
-        <DataTable v-else
-          :data="sopData.version" 
-          :columns="[
-            { field: 'number', label: 'Nomor POS', sortable: true, searchable: true },
-            { field: 'version', label: 'Versi', sortable: true, searchable: true },
-            { field: 'revision_date', label: 'Tanggal Revisi', sortable: true, searchable: true },
-            { field: 'effective_date', label: 'Tanggal Efektif', sortable: true, searchable: true },
-          ]" 
-          :status-columns="[
-            { field: 'status', label: 'Status' }
-          ]" 
-          :badge-text="statusTexts.sopDetail" 
-          :detail-column="true"
-          @click="handleRowClick"
-        />
-      </div>
-    </template>
-    <Error v-else @click="fetchData"/>
-
-    <div class="flex justify-center mb-8">
-        <button :disabled="isUpdateDisabled" @click="redirectToProposeVersion"
-          :title="isUpdateDisabled ? 'Tidak dapat memperbarui versi SOP karena ada versi yang sedang diproses' : 'Buat sop dengan versi terbaru'"
-          class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
-            <CirclePlusIcon class="w-5 mr-3 fill-current" />
-            Perbarui versi SOP
-        </button>
     </div>
 
-  </main>
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-5">
+      <div class="bg-gray-200 p-5 rounded-xl shadow-md">
+        <h4 class="mb-2.5 text-lg">Organisasi</h4>
+        <h5 class="text-lg font-bold" v-if="sopData.organization">
+          {{ sopData.organization.name }}
+        </h5>
+      </div>
+      <div class="bg-gray-200 p-5 rounded-xl shadow-md">
+        <h4 class="mb-2.5 text-lg">Tanggal Pembuatan</h4>
+        <h5 class="text-xl font-bold">
+          {{ sopData.creation_date }}
+        </h5>
+      </div>
+      <div class="bg-gray-200 p-5 rounded-xl shadow-md">
+        <h4 class="mb-2.5 text-lg">Status</h4>
+        <h5 class="text-xl font-bold">
+          {{ switchStatusIsActive(sopData.is_active) }}
+        </h5>
+      </div>
+    </div>
+
+    <div class="my-8">
+      <TableSkeleton 
+          v-if="isLoading"
+          :columns="5"
+          :rows="5"
+      />
+      <Error v-else-if="hasError" @click="fetchData" />
+      <EmptyState 
+          v-else-if="!hasError && sopData.version.length === 0"
+          title="Tidak ada data versi sop!"
+          message="Belum ada data versi sop yang tersedia saat ini"
+          @click="fetchData"
+      />
+      <DataTable v-else
+        :data="sopData.version" 
+        :columns="[
+          { field: 'number', label: 'Nomor POS', sortable: true, searchable: true },
+          { field: 'version', label: 'Versi', sortable: true, searchable: true },
+          { field: 'revision_date', label: 'Tanggal Revisi', sortable: true, searchable: true },
+          { field: 'effective_date', label: 'Tanggal Efektif', sortable: true, searchable: true },
+        ]" 
+        :status-columns="[
+          { field: 'status', label: 'Status' }
+        ]" 
+        :badge-text="statusTexts.sopDetail" 
+        :detail-column="true"
+        @click="handleRowClick"
+      />
+    </div>
+  </template>
+  <Error v-else @click="fetchData"/>
+
+  <div class="flex justify-center mb-8">
+      <button :disabled="isUpdateDisabled" @click="redirectToProposeVersion"
+        :title="isUpdateDisabled ? 'Tidak dapat memperbarui versi SOP karena ada versi yang sedang diproses' : 'Buat sop dengan versi terbaru'"
+        class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
+          <CirclePlusIcon class="w-5 mr-3 fill-current" />
+          Perbarui versi SOP
+      </button>
+  </div>
 
   <!-- modal edit -->
   <div class="fixed inset-0 z-50 flex items-center justify-center w-full h-full" v-show="showModal.edit">

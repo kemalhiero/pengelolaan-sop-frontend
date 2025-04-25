@@ -112,53 +112,49 @@ onMounted(() => {
 </script>
 
 <template>
-    <main class="p-4 md:ml-64 h-auto pt-20">
+    <PageTitle judul="Kelola Ketua Departemen" class="mt-3 mb-7" />
 
-        <PageTitle judul="Kelola Ketua Departemen" class="mt-3 mb-7" />
+    <div class="container mx-auto p-8 lg:px-16">
 
-        <div class="container mx-auto p-8 lg:px-16">
-
-            <div class="lg:col-span-2 p-6">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Info Ketua Departemen saat ini</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                        <label class="block text-sm font-medium text-gray-700">Nama</label>
-                        <div class="flex items-center border border-gray-300 rounded-lg shadow-sm">
-                            <input type="text" disabled v-model="dataHod.name"
-                                class="w-full pl-3 py-2 border-none bg-transparent" />
-                        </div>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="block text-sm font-medium text-gray-700">NIM/NIP</label>
-                        <div class="flex items-center border border-gray-300 rounded-lg shadow-sm">
-                            <input type="text" disabled v-model="dataHod.id_number"
-                                class="w-full pl-3 py-2 border-none bg-transparent" />
-                        </div>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="block text-sm font-medium text-gray-700">Email</label>
-                        <input type="email" disabled v-model="dataHod.email"
-                            class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" />
-                    </div>
-                    <div class="space-y-2">
-                        <label class="block text-sm font-medium text-gray-700">Gender</label>
-                        <div class="flex items-center border border-gray-300 rounded-lg shadow-sm">
-                            <input type="text" disabled v-model="dataHod.gender"
-                                class="w-full pl-3 py-2 border-none bg-transparent" />
-                        </div>
+        <div class="lg:col-span-2 p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Info Ketua Departemen saat ini</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Nama</label>
+                    <div class="flex items-center border border-gray-300 rounded-lg shadow-sm">
+                        <input type="text" disabled v-model="dataHod.name"
+                            class="w-full pl-3 py-2 border-none bg-transparent" />
                     </div>
                 </div>
-                <div class="mt-10 flex justify-end">
-                    <button type="button" @click="showAddModal = true"
-                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex">
-                        Perbarui ketua departemen?
-                    </button>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">NIM/NIP</label>
+                    <div class="flex items-center border border-gray-300 rounded-lg shadow-sm">
+                        <input type="text" disabled v-model="dataHod.id_number"
+                            class="w-full pl-3 py-2 border-none bg-transparent" />
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" disabled v-model="dataHod.email"
+                        class="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" />
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Gender</label>
+                    <div class="flex items-center border border-gray-300 rounded-lg shadow-sm">
+                        <input type="text" disabled v-model="dataHod.gender"
+                            class="w-full pl-3 py-2 border-none bg-transparent" />
+                    </div>
                 </div>
             </div>
-
+            <div class="mt-10 flex justify-end">
+                <button type="button" @click="showAddModal = true"
+                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex">
+                    Perbarui ketua departemen?
+                </button>
+            </div>
         </div>
 
-    </main>
+    </div>
 
     <div v-show="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
         <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showAddModal = false"></div>
@@ -232,5 +228,4 @@ onMounted(() => {
 
         </div>
     </div>
-
 </template>

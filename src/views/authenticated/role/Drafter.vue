@@ -118,39 +118,35 @@ onMounted(() => {
 </script>
 
 <template>
-    <main class="p-4 md:ml-64 h-auto pt-20">
+    <PageTitle judul="Kelola Penyusun SOP" class="mt-3 mb-7" />
 
-        <PageTitle judul="Kelola Penyusun SOP" class="mt-3 mb-7" />
-
-        <div class="container mx-auto p-8 lg:px-16">
-            <div class="flex justify-end mb-4">
-                <AddDataButton btnLabel="Tambah Penyusun Baru" btn-title="Tambah penyusun sop baru"
-                    @click="showAddModal = true" />
-            </div>
-
-            <div>
-                <TableSkeleton v-if="isLoading" :columns="5" :rows="5" />
-                <Error v-else-if="hasError" @click="fetchDrafter" />
-                <EmptyState v-else-if="!hasError && dataDrafter.length === 0" title="Tidak ada data penyusun!"
-                    message="Belum ada data penyusun yang tersedia saat ini" @click="fetchDrafter" />
-                <DataTable v-else 
-                    :data="dataDrafter" 
-                    :columns="[
-                        { field: 'id_number', label: 'NIM/NIP', sortable: true, searchable: true },
-                        { field: 'name', label: 'Nama', sortable: true, searchable: true },
-                        { field: 'org', label: 'Organisasi', sortable: true, searchable: true },
-                    ]" 
-                    :status-columns="[
-                        { field: 'status', label: 'Status' }
-                    ]" 
-                    :badge-text="['Belum ada tugas', 'Sudah memiliki tugas']" 
-                    :detail-column="true"
-                    @click="handleRowClick" 
-                />
-            </div>
+    <div class="container mx-auto p-8 lg:px-16">
+        <div class="flex justify-end mb-4">
+            <AddDataButton btnLabel="Tambah Penyusun Baru" btn-title="Tambah penyusun sop baru"
+                @click="showAddModal = true" />
         </div>
 
-    </main>
+        <div>
+            <TableSkeleton v-if="isLoading" :columns="5" :rows="5" />
+            <Error v-else-if="hasError" @click="fetchDrafter" />
+            <EmptyState v-else-if="!hasError && dataDrafter.length === 0" title="Tidak ada data penyusun!"
+                message="Belum ada data penyusun yang tersedia saat ini" @click="fetchDrafter" />
+            <DataTable v-else 
+                :data="dataDrafter" 
+                :columns="[
+                    { field: 'id_number', label: 'NIM/NIP', sortable: true, searchable: true },
+                    { field: 'name', label: 'Nama', sortable: true, searchable: true },
+                    { field: 'org', label: 'Organisasi', sortable: true, searchable: true },
+                ]" 
+                :status-columns="[
+                    { field: 'status', label: 'Status' }
+                ]" 
+                :badge-text="['Belum ada tugas', 'Sudah memiliki tugas']" 
+                :detail-column="true"
+                @click="handleRowClick" 
+            />
+        </div>
+    </div>
 
     <div v-show="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
         <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showAddModal = false"></div>

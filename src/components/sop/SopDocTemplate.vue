@@ -160,7 +160,7 @@ const connections = computed(() => {
     <div class="flex justify-center">
         <div class="overflow-x-auto" style="margin: 0 auto;">
             <!-- Table pertama (Informasi SOP) -->
-            <div class="w-[297mm] relative my-5">
+            <div class="relative my-5 print-page print-break-after-page">
                 <table class="w-full border-collapse border-2 border-black mb-8">
                     <tbody>
                         <tr>
@@ -304,7 +304,7 @@ const connections = computed(() => {
             </div>
 
             <!-- Tabel Kedua (Tahapan SOP) -->
-            <div class="w-[297mm] relative mb-10">
+            <div class="relative mb-10 print-page">
                 <table class="w-full border-collapse border-2 border-black" id="sop-container">
                     <thead>
                         <tr class="bg-[#D9D9D9]">

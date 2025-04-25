@@ -118,36 +118,32 @@ onMounted(() => {
 </script>
 
 <template>
-    <main class="p-4 md:ml-64 h-auto pt-20">
+    <PageTitle judul="Kelola Penanggung Jawab" class="mt-3 mb-7" />
 
-        <PageTitle judul="Kelola Penanggung Jawab" class="mt-3 mb-7" />
-
-        <div class="container mx-auto p-8 lg:px-16">
-            <div class="flex justify-end mb-4">
-                <AddDataButton btnLabel="Tambah PJ Baru" btn-title="Tambah penanggung jawab baru"
-                    @click="showAddModal = true" />
-            </div>
-
-            <div>
-                <TableSkeleton v-if="isLoading" :columns="5" :rows="5" />
-                <Error v-else-if="hasError" @click="fetchPic" />
-                <EmptyState v-else-if="!hasError && dataPic.length === 0" title="Tidak ada data penanggung jawab!"
-                    message="Belum ada data penanggung jawab yang tersedia atau anda belum terdaftar di organisasi yang ada."
-                    @click="fetchPic" />
-                <DataTable v-else 
-                    :data="dataPic" 
-                    :columns="[
-                        { field: 'id_number', label: 'NIM/NIP', sortable: true, searchable: true },
-                        { field: 'name', label: 'Nama', sortable: true, searchable: true },
-                        { field: 'org', label: 'Organisasi', sortable: true, searchable: true },
-                    ]" 
-                    :detail-column="true" 
-                    @click="handleRowClick" 
-                />
-            </div>
+    <div class="container mx-auto p-8 lg:px-16">
+        <div class="flex justify-end mb-4">
+            <AddDataButton btnLabel="Tambah PJ Baru" btn-title="Tambah penanggung jawab baru"
+                @click="showAddModal = true" />
         </div>
 
-    </main>
+        <div>
+            <TableSkeleton v-if="isLoading" :columns="5" :rows="5" />
+            <Error v-else-if="hasError" @click="fetchPic" />
+            <EmptyState v-else-if="!hasError && dataPic.length === 0" title="Tidak ada data penanggung jawab!"
+                message="Belum ada data penanggung jawab yang tersedia atau anda belum terdaftar di organisasi yang ada."
+                @click="fetchPic" />
+            <DataTable v-else 
+                :data="dataPic" 
+                :columns="[
+                    { field: 'id_number', label: 'NIM/NIP', sortable: true, searchable: true },
+                    { field: 'name', label: 'Nama', sortable: true, searchable: true },
+                    { field: 'org', label: 'Organisasi', sortable: true, searchable: true },
+                ]" 
+                :detail-column="true" 
+                @click="handleRowClick" 
+            />
+        </div>
+    </div>
 
     <div v-show="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
         <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showAddModal = false"></div>

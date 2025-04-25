@@ -13,7 +13,7 @@ layoutType.value = 'guest';
 
 <template>
     <!-- Jumbotron -->
-    <section class="bg-center bg-no-repeat bg-[url('/conference.jpg')] bg-gray-700 bg-blend-multiply">
+    <section class="bg-center bg-no-repeat bg-[url('/conference.jpg')] bg-gray-700 bg-blend-multiply print:hidden">
         <div class="px-4 mx-auto max-w-screen-xl text-center py-24 lg:py-56">
             <h1 class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-white md:text-5xl lg:text-6xl">
                 Sistem Informasi Pengelolaan SOP</h1>
@@ -34,7 +34,7 @@ layoutType.value = 'guest';
         </div>
     </section>
 
-    <div id="tabel-sop">
+    <div id="tabel-sop" class="print-break-after-page">
         <SopSearch />
     </div>
 

@@ -207,9 +207,9 @@ const setSvgRef = (el, index) => {
 <template>
   <div class="flex justify-center px-5 lg:px-0">
     <div class="overflow-x-auto w-fit">
-      <div class="relative bg-white">
+      <div class="relative bg-white print-page">
         <!-- Tabel untuk lanes -->
-        <table class="border-2 border-black relative z-10 w-fit md:my-5" :style="{ minWidth: `${diagramWidth}px` }" id="bpmn-container">
+        <table class="border-2 border-black relative z-10 w-full md:my-5" :style="{ minWidth: `${diagramWidth}px` }" id="bpmn-container">
           <tbody>
             <tr>
               <td v-if="props.name" class="border-2 border-black w-10" :rowspan="implementer.length">

@@ -199,86 +199,19 @@ onMounted(() => {
 </script>
 
 <template>
-    <main class="p-4 md:ml-64 h-auto pt-20">
+    <PageTitle judul="Daftar Peraturan yang Digunakan" class="mt-3 mb-7" />
 
-        <PageTitle judul="Daftar Peraturan yang Digunakan" class="mt-3 mb-7" />
+    <div class="container mx-auto p-8 lg:px-16">
 
-        <div class="container mx-auto p-8 lg:px-16">
-
-            <!-- modal tambah aturan -->
-            <div class="flex justify-end mb-4">
-                <AddDataButton btnLabel="Input Peraturan Baru" @click="openAddModal" />
-            </div>
-
-            <!-- Komponen AddDataModal -->
-            <AddDataModal 
-                modalTitle="Tambahkan peraturan baru" 
-                :showModal="showAddModal" 
-                :formFields="[
-                    {
-                        id: 'id_law_type',
-                        label: 'Jenis Peraturan',
-                        type: 'select',
-                        placeholder: 'Pilih jenis peraturan',
-                        required: true,
-                        options: tipePeraturan,
-                        optionValue: 'id',
-                        optionLabel: 'law_type'
-                    },
-                    { id: 'number', label: 'Nomor', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 95', required: true, min: 1, max: 999 },
-                    { id: 'year', label: 'Tahun', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 2022', required: true, min: 1945, max: new Date().getFullYear() },
-                    { id: 'about', label: 'Pembahasan', type: 'textarea', placeholder: 'Misal: Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas', required: true }
-                ]" 
-                :formData="form" 
-                :submitData="submitData" 
-                @update:showModal="(val) => {
-                    showAddModal = val;
-                    if (!val) resetForm();
-                }" 
-            />
-
-            <div>
-                <TableSkeleton 
-                    v-if="isLoading"
-                    :columns="7"
-                    :rows="4"
-                />
-                <Error v-else-if="hasError" @click="fetchData" />
-                <EmptyState 
-                    v-else-if="!hasError && data.length === 0"
-                    title="Tidak ada data penyusun!"
-                    message="Belum ada data penyusun yang tersedia saat ini"
-                    @click="fetchData"
-                />
-                <DataTable v-else
-                    :data="data" 
-                    :columns="[
-                        { field: 'law_type', label: 'Jenis', sortable: true, searchable: true },
-                        { field: 'number', label: 'Nomor', sortable: true, searchable: true },
-                        { field: 'year', label: 'Tahun', sortable: true, searchable: true },
-                        { field: 'about', label: 'Tentang', sortable: false, searchable: true },
-                        { field: 'sop_total', label: 'Jumlah SOP', sortable: false, searchable: true }
-                    ]" 
-                    @edit="openUpdateModal"
-                    @delete="openDeleteModal" 
-                    :edit-delete-column="true"
-                    :show-delete-button="shouldShowDeleteButton"
-                />
-            </div>
+        <!-- modal tambah aturan -->
+        <div class="flex justify-end mb-4">
+            <AddDataButton btnLabel="Input Peraturan Baru" @click="openAddModal" />
         </div>
 
-        <!-- Komponen DeleteDataModal -->
-        <DeleteDataModal 
-            :showModal="showModalDelete" 
-            :deleteData="deleteData" 
-            :selectedId="selectedDeleteId"
-            @update:showModal="showModalDelete = $event" 
-        />
-
-        <!-- modal edit -->
-        <EditDataModal 
-            modalTitle="Perbarui dasar hukum" 
-            :showModal="showModalUpdate" 
+        <!-- Komponen AddDataModal -->
+        <AddDataModal 
+            modalTitle="Tambahkan peraturan baru" 
+            :showModal="showAddModal" 
             :formFields="[
                 {
                     id: 'id_law_type',
@@ -295,10 +228,73 @@ onMounted(() => {
                 { id: 'about', label: 'Pembahasan', type: 'textarea', placeholder: 'Misal: Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas', required: true }
             ]" 
             :formData="form" 
-            :updateData="updateData" 
-            :selectedId="selectedUpdateId"
-            @update:showModal="showModalUpdate = $event" 
+            :submitData="submitData" 
+            @update:showModal="(val) => {
+                showAddModal = val;
+                if (!val) resetForm();
+            }" 
         />
 
-    </main>
+        <div>
+            <TableSkeleton 
+                v-if="isLoading"
+                :columns="7"
+                :rows="4"
+            />
+            <Error v-else-if="hasError" @click="fetchData" />
+            <EmptyState 
+                v-else-if="!hasError && data.length === 0"
+                title="Tidak ada data penyusun!"
+                message="Belum ada data penyusun yang tersedia saat ini"
+                @click="fetchData"
+            />
+            <DataTable v-else
+                :data="data" 
+                :columns="[
+                    { field: 'law_type', label: 'Jenis', sortable: true, searchable: true },
+                    { field: 'number', label: 'Nomor', sortable: true, searchable: true },
+                    { field: 'year', label: 'Tahun', sortable: true, searchable: true },
+                    { field: 'about', label: 'Tentang', sortable: false, searchable: true },
+                    { field: 'sop_total', label: 'Jumlah SOP', sortable: false, searchable: true }
+                ]" 
+                @edit="openUpdateModal"
+                @delete="openDeleteModal" 
+                :edit-delete-column="true"
+                :show-delete-button="shouldShowDeleteButton"
+            />
+        </div>
+    </div>
+
+    <!-- Komponen DeleteDataModal -->
+    <DeleteDataModal 
+        :showModal="showModalDelete" 
+        :deleteData="deleteData" 
+        :selectedId="selectedDeleteId"
+        @update:showModal="showModalDelete = $event" 
+    />
+
+    <!-- modal edit -->
+    <EditDataModal 
+        modalTitle="Perbarui dasar hukum" 
+        :showModal="showModalUpdate" 
+        :formFields="[
+            {
+                id: 'id_law_type',
+                label: 'Jenis Peraturan',
+                type: 'select',
+                placeholder: 'Pilih jenis peraturan',
+                required: true,
+                options: tipePeraturan,
+                optionValue: 'id',
+                optionLabel: 'law_type'
+            },
+            { id: 'number', label: 'Nomor', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 95', required: true, min: 1, max: 999 },
+            { id: 'year', label: 'Tahun', type: 'number', isColSpanHalf: true, placeholder: 'Mis. 2022', required: true, min: 1945, max: new Date().getFullYear() },
+            { id: 'about', label: 'Pembahasan', type: 'textarea', placeholder: 'Misal: Organisasi dan Tata Kerja Organ Pengelola Universitas Andalas', required: true }
+        ]" 
+        :formData="form" 
+        :updateData="updateData" 
+        :selectedId="selectedUpdateId"
+        @update:showModal="showModalUpdate = $event" 
+    />
 </template>

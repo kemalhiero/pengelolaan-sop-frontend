@@ -19,6 +19,10 @@ const { sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchSigne
 const activeTab = ref('document');
 const cdnUrl = import.meta.env.VITE_CDN_URL; // URL untuk CDN
 
+const printSop = () => {
+    window.print();
+};
+
 onMounted(async () => {
     await fetchSopVersion();
     await fetchInfoSop();
@@ -29,32 +33,30 @@ onMounted(async () => {
 
 <template>
     <div class="container mx-auto">
-        <h2 class="text-4xl text-center my-12 font-bold">SOP Pendaftaran Kerja Praktik</h2>
+        <h2 class="text-4xl text-center my-12 font-bold print:hidden">SOP {{ sopData.name }}</h2>
 
         <!-- Tab Buttons -->
-        <div class="flex justify-center mb-6">
+        <div class="flex justify-center mb-6 print:hidden">
             <div class="inline-flex rounded-md shadow-sm" role="group">
-            <button 
-                @click="activeTab = 'document'" 
-                type="button" 
-                class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-l-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
-                :class="activeTab === 'document' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'"
-            >
-                Dokumen SOP
-            </button>
-            <button 
-                @click="activeTab = 'bpmn'" 
-                type="button" 
-                class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-r-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
-                :class="activeTab === 'bpmn' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'"
-            >
-                Diagram BPMN
-            </button>
+                <button 
+                    @click="activeTab = 'document'" type="button" 
+                    class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-l-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
+                    :class="activeTab === 'document' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'"
+                >
+                    Dokumen SOP
+                </button>
+                <button 
+                    @click="activeTab = 'bpmn'" type="button" 
+                    class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-r-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
+                    :class="activeTab === 'bpmn' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'"
+                >
+                    Diagram BPMN
+                </button>
             </div>
         </div>
 
         <!-- SOP Document Tab -->
-        <div v-if="activeTab === 'document'">
+        <div v-if="activeTab === 'document'" class="print:block print:bg-white print:p-0 print:m-0">
             <SopDocTemplate 
                 :name="sopData.name" :number="sopData.number"
                 :pic-name="signer.name" :pic-number="signer.id_number"
@@ -71,7 +73,7 @@ onMounted(async () => {
         </div>
 
         <!-- BPMN Diagram Tab -->
-        <div v-else-if="activeTab === 'bpmn'">
+        <div v-else-if="activeTab === 'bpmn'" class="">
             <SopBpmnTemplate
                 v-if="sopData.steps && sopData.steps.length > 0 && sopData.implementer && sopData.implementer.length > 0"
                 :name="sopData.name" 
@@ -83,19 +85,19 @@ onMounted(async () => {
             </div>
         </div>
 
-        <div class="flex flex-col lg:flex-row max-w-screen-lg mx-auto my-12 space-y-6 lg:space-y-0 lg:space-x-8">
+        <div class="flex flex-col lg:flex-row max-w-screen-lg mx-auto my-12 space-y-6 lg:space-y-0 lg:space-x-8 print:hidden">
             <!-- Bagian Kiri: Tombol -->
             <div class="w-full lg:w-1/3 p-6 flex flex-col space-y-4">
                 <h2 class="text-lg font-semibold mb-4">Simpan Dokumen</h2>
-                <button
+                <button @click="printSop"
                     class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-base py-3 px-6 flex items-center justify-center">
                     <IconDownload class="w-5 mr-3 fill-current" />
-                    Unduh SOP
+                    Cetak SOP
                 </button>
-                <button
+                <button @click=""
                     class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-base py-3 px-6 flex items-center justify-center">
                     <IconDownload class="w-5 mr-3 fill-current" />
-                    Unduh BPMN
+                    Cetak BPMN
                 </button>
             </div>
 
