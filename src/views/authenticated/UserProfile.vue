@@ -120,7 +120,7 @@ const uploadPhoto = () => {
                         if (!response.success) {
                             throw response;
                         }
-                        resolve(response);
+                        resolve();
                         fetchProfile(); // Refresh profile data after upload
                         closePhotoModal();
                         // authStore.setPhoto(`${cdnUrl}/${response.data}`); // Update photo in auth store
@@ -157,7 +157,7 @@ const removeProfilePhoto = async () => {
                             profileImage.value.file = null;
                             // authStore.setPhoto(null); // Clear photo in auth store
                             closePhotoModal();
-                            resolve(response);
+                            resolve();
                         })
                         .catch(error => reject(error));
                 }),
@@ -197,7 +197,7 @@ const changePassword = () => {
                         passwordChange.currentPassword = '';
                         passwordChange.newPassword = '';
                         passwordChange.confirmPassword = '';
-                        resolve(response);
+                        resolve();
                     })
                     .catch(error => reject(error));
             }),
@@ -224,7 +224,7 @@ const checkDataUpdate = () => {
                         if (!response.success) {
                             throw response;
                         }
-                        resolve(response);
+                        resolve();
                         showModal.value.emailConfirmation = true;
                     })
                         .catch(error => reject(error));
@@ -261,7 +261,7 @@ const verifyCode = async () => {        //verifikasi kode dan perbarui email
                         if (!response.success) {
                             throw response;
                         }
-                        resolve(response);
+                        resolve();
                         showModal.value.emailConfirmation = false;
                     })
                         .catch(error => reject(error));
@@ -331,7 +331,7 @@ const uploadSignature = () => {
                             if (!response.success) {
                                 throw response;
                             }
-                            resolve(response);
+                            resolve();
                         })
                         .catch(error => reject(error));
                 }),
@@ -376,7 +376,7 @@ const removeSignature = async () => {
                             }
                             signatureImage.value.preview = null;
                             signatureImage.value.file = null;
-                            resolve(response);
+                            resolve();
                         })
                         .catch(error => reject(error));
                 }),

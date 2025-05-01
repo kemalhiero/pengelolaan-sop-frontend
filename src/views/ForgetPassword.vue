@@ -19,7 +19,7 @@ const submitForgetPw = () => {
                         if (!response.success) {
                             throw response;
                         }
-                        resolve(response);
+                        resolve();
                     })
                     .catch(error => reject(error));
             }),

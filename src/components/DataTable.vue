@@ -2,13 +2,14 @@
 import { ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
+import EyeIcon from '@/assets/icons/EyeIcon.vue';
 import SortIcon from '@/assets/icons/SortIcon.vue';
-import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
+import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
+
 import GreenBadgeIndicator from './indicator/GreenBadgeIndicator.vue';
 import RedBadgeIndicator from './indicator/RedBadgeIndicator.vue';
 import YellowBadgeIndicator from './indicator/YellowBadgeIndicator.vue';
-import EyeIcon from '@/assets/icons/EyeIcon.vue';
 
 const router = useRouter();
 
@@ -64,6 +65,10 @@ const props = defineProps({
         type: String
     },
     showDeleteButton: {
+        type: Function,
+        default: null,
+    },
+    showEditButton: {
         type: Function,
         default: null,
     },
@@ -339,6 +344,7 @@ const goToPage = (page) => {
                     </td>
                     <td class="px-6 py-4 flex justify-center" v-if="props.editDeleteColumn == true">
                         <button :title="`Edit item ${index + 1}`" @click="$emit('edit', item.id)"
+                            v-if="showEditButton ? showEditButton(item) : true"
                             class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
                             <PenToSquareIcon class="fill-current w-4" />
                         </button>

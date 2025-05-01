@@ -62,7 +62,7 @@ const submitHod = async () => {
                         if (!response.success) {
                             throw response;
                         }
-                        resolve(response);
+                        resolve();
                         // fetchHod();
                         // fetchCandidate();
 

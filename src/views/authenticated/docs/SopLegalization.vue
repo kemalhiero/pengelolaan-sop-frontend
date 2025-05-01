@@ -34,7 +34,7 @@ const confirm = () => {
                             throw response;
                         }
                         console.log('SOP and BPMN confirmed successfully!');
-                        resolve(response);
+                        resolve();
                         router.push({ name: 'SopDocs' });
                     })
                     .catch(error => reject(error));

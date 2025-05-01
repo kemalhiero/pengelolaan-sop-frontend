@@ -502,6 +502,7 @@ const syncSopStep = async () => {
             // Fetch updated steps after all changes
             await fetchSopStep();
 
+            // Gunakan resolve dengan pesan detail
             resolve(`Berhasil menambah ${changes.toAdd.length} data baru, memperbarui ${changes.toUpdate.length} data dan menghapus ${changes.toDelete.length} data`);
         } catch (error) {
             console.error('Error saat sinkronisasi data:', error);
@@ -511,7 +512,8 @@ const syncSopStep = async () => {
 
     useToastPromise(syncPromise, {
         messages: {
-            success: 'Berhasil menyimpan progres!',
+            // Ambil pesan sukses dari resolve promise
+            success: (msg) => msg,
         },
     });
 };
