@@ -1,6 +1,7 @@
 <script setup>
 import { computed, inject, ref } from 'vue';
-import SopDocTemplate from '@/components/sop/SopDocTemplate.vue';
+import SopInfoTemplate from '@/components/sop/SopInfoTemplate.vue';
+import SopStepTemplate from '@/components/sop/SopStepTemplate.vue';
 import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
 import Divider from '@/components/Divider.vue';
 
@@ -44,7 +45,7 @@ const activeTab = ref('document');
 
         <!-- TODO pic ganti jadi kadep -->
         <div v-if="activeTab === 'document'">
-            <SopDocTemplate
+            <SopInfoTemplate
                 :name="picInfo.name"
                 :number="picInfo.number"
                 :created-date="picInfo.creation_date"
@@ -61,6 +62,9 @@ const activeTab = ref('document');
                 :equipment="formData.equipment"
                 :warning="formData.warning"
                 :record-data="formData.record"
+            />
+            
+            <SopStepTemplate
                 :implementer="formData.implementer"
                 :steps="sopStep"
             />

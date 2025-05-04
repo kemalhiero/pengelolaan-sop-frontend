@@ -22,11 +22,12 @@ import GreenBadgeIndicator from '@/components/indicator/GreenBadgeIndicator.vue'
 import ExclamationMarkIcon from '@/assets/icons/ExclamationMarkIcon.vue';
 import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
 import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
-import SopDocTemplate from '@/components/sop/SopDocTemplate.vue';
+import SopInfoTemplate from '@/components/sop/SopInfoTemplate.vue';
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
+import SopStepTemplate from '@/components/sop/SopStepTemplate.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -282,7 +283,7 @@ onMounted(async () => {
     </div>
 
     <div class="mt-8" v-if="activeTab === 'document'">
-        <SopDocTemplate
+        <SopInfoTemplate
             :name="sopData.name" :number="sopData.number"
             :pic-name="signer.name" :pic-number="signer.id_number"
             created-date="-" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
@@ -292,8 +293,11 @@ onMounted(async () => {
             :related-sop="sopData.relatedSop.map(item => item.related_sop)"
             :equipment="sopData.equipment.map(item => item.equipment)" 
             :record-data="sopData.record.map(item => item.data_record)"
-            :implementer="sopData.implementer" :steps="sopData.steps"
             :signature="sopData.status === 1 ? `${cdnUrl}/${sopData.signature_url}` : null"
+        />
+
+        <SopStepTemplate
+            :implementer="sopData.implementer" :steps="sopData.steps"
         />
     </div>
 

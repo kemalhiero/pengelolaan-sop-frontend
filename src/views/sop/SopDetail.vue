@@ -7,7 +7,8 @@ import { useSopData } from '@/composables/useSopData';
 import { useToastPromise } from '@/utils/toastPromiseHandler';
 import { addDraftFeedback, deleteDraftFeedback, getGeneralFeedback } from '@/api/feedbackApi';
 import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
-import SopDocTemplate from '@/components/sop/SopDocTemplate.vue';
+import SopInfoTemplate from '@/components/sop/SopInfoTemplate.vue';
+import SopStepTemplate from '@/components/sop/SopStepTemplate.vue';
 import PrintIcon from '@/assets/icons/PrintIcon.vue';
 import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
 
@@ -130,7 +131,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="container mx-auto">
+    <div class="">
         <h2 class="text-4xl text-center my-12 font-bold print:hidden">SOP {{ sopData.name }}</h2>
 
         <!-- Tab Buttons -->
@@ -155,41 +156,48 @@ onMounted(async () => {
 
         <!-- SOP Document Tab -->
         <div v-if="activeTab === 'document'" class="flex flex-col items-center justify-center space-y-4">
-            <div class="print:block print:bg-white print:p-0 print:m-0">
-                <SopDocTemplate 
-                    :name="sopData.name" :number="sopData.number"
-                    :pic-name="signer.name" :pic-number="signer.id_number"
-                    created-date="-" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
-                    :section="sopData.section" :warning="sopData.warning"
-                    :law-basis="sopData.legalBasis.map(item => item.legal)"
-                    :implement-qualification="sopData.implementQualification.map(item => item.qualification)" 
-                    :related-sop="sopData.relatedSop.map(item => item.related_sop)"
-                    :equipment="sopData.equipment.map(item => item.equipment)" 
-                    :record-data="sopData.record.map(item => item.data_record)"
-                    :implementer="sopData.implementer" :steps="sopData.steps" 
-                    :signature="`${cdnUrl}/${sopData.signature_url}`"
-                /> 
+            <div class="w-full overflow-x-auto print:overflow-visible">
+                <div class="min-w-[800px] print:min-w-0 print:w-auto print:block print:bg-white print:p-0 print:m-0">
+                    <SopInfoTemplate
+                        :name="sopData.name" :number="sopData.number"
+                        :pic-name="signer.name" :pic-number="signer.id_number"
+                        created-date="-" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
+                        :section="sopData.section" :warning="sopData.warning"
+                        :law-basis="sopData.legalBasis.map(item => item.legal)"
+                        :implement-qualification="sopData.implementQualification.map(item => item.qualification)" 
+                        :related-sop="sopData.relatedSop.map(item => item.related_sop)"
+                        :equipment="sopData.equipment.map(item => item.equipment)" 
+                        :record-data="sopData.record.map(item => item.data_record)"
+                        :signature="`${cdnUrl}/${sopData.signature_url}`"
+                    />
+                        
+                    <SopStepTemplate
+                        :implementer="sopData.implementer" :steps="sopData.steps" 
+                    />
+                </div>
             </div>
-
+        
             <button @click="printSop"
                 class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-base py-3 px-6 flex items-center justify-center print:hidden">
                 <PrintIcon class="w-5 mr-3 fill-current" />
                 Cetak SOP (Ukuran A4)
             </button>            
         </div>
-
+        
         <!-- BPMN Diagram Tab -->
         <div v-else-if="activeTab === 'bpmn'">
             <div v-if="sopData.steps && sopData.steps.length > 0 && sopData.implementer && sopData.implementer.length > 0" 
                 class="flex flex-col items-center justify-center space-y-4">
-                <div class="print:block print:bg-white print:p-0 print:m-0">
-                    <SopBpmnTemplate
-                        :name="sopData.name" 
-                        :steps="sopData.steps || []" 
-                        :implementer="sopData.implementer || []" 
-                    />
+                <div class="w-full overflow-x-auto print:overflow-visible">
+                    <div class="min-w-[800px] print:min-w-0 print:w-auto print:block print:bg-white print:p-0 print:m-0">
+                        <SopBpmnTemplate
+                            :name="sopData.name" 
+                            :steps="sopData.steps || []" 
+                            :implementer="sopData.implementer || []" 
+                        />
+                    </div>
                 </div>
-
+        
                 <button @click="printSop"
                     class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-base py-3 px-6 flex items-center justify-center print:hidden">
                     <PrintIcon class="w-5 mr-3 fill-current" />
@@ -201,7 +209,7 @@ onMounted(async () => {
             </div>
         </div>
 
-        <div class="w-full lg:w-2/3 flex flex-col mx-auto mt-10 mb-6 print:hidden">
+        <div class="w-fit lg:w-2/3 flex flex-col sm:mx-auto mx-10 mt-10 mb-6 print:hidden">
             <div class="border-b-2 border-blue-500 pb-2 mb-4 flex justify-between items-center">
                 <h2 class="text-xl font-bold">Umpan Balik Pengguna</h2>
                 <span v-if="draftFeedback && draftFeedback.length > 0" class="text-sm text-gray-500">{{ draftFeedback.length }} komentar</span>
@@ -272,7 +280,7 @@ onMounted(async () => {
             </div>
         </div>
         
-        <div class="w-full lg:w-2/3 mx-auto my-10 print:hidden">
+        <div class="lg:w-2/3 sm:mx-auto mx-10 my-10 print:hidden">
             <div class="border-b-2 border-blue-500 pb-2 mb-6">
                 <h2 class="text-2xl font-bold">Form Umpan Balik</h2>
             </div>

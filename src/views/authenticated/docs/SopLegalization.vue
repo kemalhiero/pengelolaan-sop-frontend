@@ -7,7 +7,8 @@ import { getUserProfile } from '@/api/userApi';
 import { confirmSopandBpmn } from '@/api/sopApi';
 
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
-import SopDocTemplate from '@/components/sop/SopDocTemplate.vue';
+import SopInfoTemplate from '@/components/sop/SopInfoTemplate.vue';
+import SopStepTemplate from '@/components/sop/SopStepTemplate.vue';
 import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
 import ExclamationMarkIcon from '@/assets/icons/ExclamationMarkIcon.vue';
 import CheckIcon from '@/assets/icons/CheckIcon.vue';
@@ -129,7 +130,7 @@ onMounted(async () => {
     </div>
 
     <div v-if="activeTab === 'document'">
-        <SopDocTemplate 
+        <SopInfoTemplate
             :name="sopData.name" :number="sopData.number"
             :pic-name="signer.name" :pic-number="signer.id_number"
             created-date="-" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
@@ -139,9 +140,12 @@ onMounted(async () => {
             :related-sop="sopData.relatedSop.map(item => item.related_sop)"
             :equipment="sopData.equipment.map(item => item.equipment)" 
             :record-data="sopData.record.map(item => item.data_record)"
-            :implementer="sopData.implementer" :steps="sopData.steps" 
             :signature="userSignature"
-        />           
+        /> 
+        
+        <SopStepTemplate
+            :implementer="sopData.implementer" :steps="sopData.steps"
+        />
     </div>
 
     <div v-else-if="activeTab === 'bpmn'" class="mb-10">

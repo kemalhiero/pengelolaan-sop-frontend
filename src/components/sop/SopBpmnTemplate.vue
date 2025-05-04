@@ -205,7 +205,7 @@ const setSvgRef = (el, index) => {
 </script>
 
 <template>
-  <div class="flex justify-center px-5 lg:px-0">
+  <div class="flex justify-center px-5 lg:px-0 print:px-0">
     <div class="overflow-x-auto w-fit">
       <div class="relative bg-white print-page">
         <!-- Tabel untuk lanes -->
