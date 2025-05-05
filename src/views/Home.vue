@@ -1,11 +1,11 @@
 <script setup>
 import { inject } from 'vue';
 
-import Chart from '@/components/home/Chart.vue'
-import SOPTable from '@/components/home/HomeTable.vue';
 import SopSearch from '@/components/home/SopSearch.vue';
 import Footer from '@/components/Footer.vue';
-// import Faq from '@/components/home/Faq.vue';
+import Faq from '@/components/home/Faq.vue';
+import ColumnChart from '@/components/chart/ColumnChart.vue';
+import PieChart from '@/components/chart/PieChart.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';
@@ -13,11 +13,11 @@ layoutType.value = 'guest';
 
 <template>
     <!-- Jumbotron -->
-    <section class="bg-center bg-no-repeat bg-[url('/conference.jpg')] bg-gray-700 bg-blend-multiply print:hidden">
-        <div class="px-4 mx-auto max-w-screen-xl text-center py-24 lg:py-56">
+    <section class="bg-center bg-cover bg-no-repeat bg-[url('/fti.webp')]  bg-blend-overlay print:hidden">
+        <div class="px-4 text-center py-24 lg:py-56 bg-gradient-to-br from-blue-900/80 via-blue-900/90 to-black/80">
             <h1 class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-white md:text-5xl lg:text-6xl">
                 Sistem Informasi Pengelolaan SOP</h1>
-            <p class="mb-8 text-lg font-normal text-gray-300 lg:text-xl sm:px-16 lg:px-48">Selamat Datang di Website
+            <p class="mb-8 text-lg font-normal text-white lg:text-xl sm:px-16 lg:px-48">Selamat Datang di Situs
                 Sistem Pengelolaan SOP Departemen Sistem Informasi Unand!</p>
 
             <div class="flex flex-col space-y-4 sm:flex-row sm:justify-center sm:space-y-0">
@@ -42,21 +42,12 @@ layoutType.value = 'guest';
     <section class="bg-white">
         <div class="py-8 mx-auto max-w-screen-xl lg:py-16">
             <div class="grid md:grid-cols-2 gap-8">
-
-                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 md:p-10 max-w-2xl mx-auto">
-                    <h2 class="text-gray-900 text-3xl font-extrabold mb-2 text-center">Jumlah SOP pada tiap unit kerja
-                    </h2>
-                    <Chart />
-                </div>
-
-                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 md:p-10 max-w-2xl mx-auto">
-                    <h2 class="text-gray-900 text-3xl font-extrabold mb-2 text-center">
-                        Sop yang paling banyak dicari
-                    </h2>
-                    <!-- <p class="text-lg font-normal text-gray-500 mb-4">Static websites are now used to bootstrap lots of websites and are becoming the basis for a variety of tools that even influence both web designers and developers.</p> -->
-                    <SOPTable />
-
-                </div>
+                <ColumnChart
+                    name="Jumlah SOP per Organisasi"
+                />
+                <PieChart
+                    name="Distribusi SOP berdasarkan status"
+                />
             </div>
         </div>
     </section>
@@ -64,7 +55,7 @@ layoutType.value = 'guest';
     <!-- TODO tambahkan tautan ke web-web yang ada di dsi (web dsi, web fti, web unand, web lea, ldkom, labgis, lbi) -->
     <section></section>
 
-    <!-- <Faq/> -->
+    <Faq/>
 
     <Footer />
 

@@ -2,7 +2,7 @@
 import { onMounted, ref, computed } from 'vue';
 import BpmnLaneRow from '@/components/sop/shape/bpmn/BpmnLaneRow.vue';
 import ArrowConnector from '@/components/sop/shape/ArrowConnector.vue';
-import capitalizeWords from '@/utils/capitalizeWord';
+import { capitalizeWords } from '@/utils/text';
 
 const props = defineProps({
   name: {

@@ -1,7 +1,7 @@
 <script setup>
 import { inject } from 'vue';
-import DashboardPieChart from '@/components/authenticated/dashboard/DashboardPieChart.vue';
-import DashboardColumnChart from '@/components/authenticated/dashboard/DashboardColumnChart.vue';
+import PieChart from '@/components/chart/PieChart.vue';
+import ColumnChart from '@/components/chart/ColumnChart.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -16,10 +16,14 @@ layoutType.value = 'admin';
 
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4 my-4">
         <div class="border-2 border-dashed rounded-lg border-gray-300 dark:border-gray-600">
-            <DashboardColumnChart/>
+            <ColumnChart
+                name="tes dashboard"
+            />
         </div>
         <div class="border-2 border-dashed rounded-lg border-gray-300 dark:border-gray-600">
-            <DashboardPieChart/>
+            <PieChart
+                name="tes dashboard"
+            />
         </div>
     </div>
     <!-- <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">

@@ -16,4 +16,19 @@ const capitalizeWords = (text) => {
         .join(' ');
 };
 
-export default capitalizeWords;
+/**
+ * Converts a string to kebab-case (lowercase words separated by hyphens).
+ *
+ * @param {string} text - The string to be converted.
+ * @returns {string} The kebab-cased string.
+ */
+const toKebabCase = (text) => {
+    if (!text) return '';
+    return text
+        .toLowerCase()
+        .split(' ')
+        .filter(Boolean)
+        .join('-');
+};
+
+export { capitalizeWords, toKebabCase };
