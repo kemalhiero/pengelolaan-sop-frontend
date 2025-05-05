@@ -1,5 +1,6 @@
 <script setup>
-import { inject } from 'vue';
+import { inject, onMounted, ref } from 'vue';
+import { getNominalSopPerOrg, getSopDistByStatus } from '@/api/dashboardApi';
 
 import SopSearch from '@/components/home/SopSearch.vue';
 import Footer from '@/components/Footer.vue';
@@ -9,6 +10,49 @@ import PieChart from '@/components/chart/PieChart.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';
+
+const columnSeries = ref([]);
+const pieSeries = ref([]);
+
+const fetchData = async () => {
+    try {
+        const nominalSop = await getNominalSopPerOrg();
+        if (!nominalSop.success) {
+            hasError.value = true;
+            console.error('API Error:', nominalSop.error);
+            return;
+        }
+        columnSeries.value = [
+            {
+                name: "Jumlah SOP Berlaku",
+                color: "#1A56DB",
+                data: nominalSop.data.map(item => ({
+                    x: item.name,
+                    y: item.total_sop
+                }))
+            }
+        ];
+
+        const sopDist = await getSopDistByStatus();
+        if (!sopDist.success) {
+            hasError.value = true;
+            console.error('API Error:', sopDist.error);
+            return;
+        }
+        pieSeries.value = [
+            { name: "Berlaku", y: sopDist.data.berlaku || 0, color: "#1C64F2" },
+            { name: "Tidak Berlaku", y: sopDist.data.tidak_berlaku || 0, color: "#16BDCA" },
+            { name: "Sedang Proses", y: sopDist.data.proses || 0, color: "#9061F9" }
+        ];
+
+    } catch (error) {
+        console.error('Fetch data error', error);
+    }
+};
+
+onMounted(() => {
+    fetchData();
+})
 </script>
 
 <template>
@@ -39,15 +83,11 @@ layoutType.value = 'guest';
     </div>
 
     <!-- Grafik Statistik SOP -->
-    <section class="bg-white">
+    <section class="bg-white print-break-after-page">
         <div class="py-8 mx-auto max-w-screen-xl lg:py-16">
-            <div class="grid md:grid-cols-2 gap-8">
-                <ColumnChart
-                    name="Jumlah SOP per Organisasi"
-                />
-                <PieChart
-                    name="Distribusi SOP berdasarkan status"
-                />
+            <div class="grid md:grid-cols-2 gap-1">
+                <ColumnChart name="Jumlah SOP per Organisasi" :series="columnSeries" />
+                <PieChart name="Distribusi SOP berdasarkan status" :series="pieSeries" />
             </div>
         </div>
     </section>
@@ -55,7 +95,7 @@ layoutType.value = 'guest';
     <!-- TODO tambahkan tautan ke web-web yang ada di dsi (web dsi, web fti, web unand, web lea, ldkom, labgis, lbi) -->
     <section></section>
 
-    <Faq/>
+    <Faq />
 
     <Footer />
 

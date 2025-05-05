@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, watch, computed } from 'vue';
 import ApexCharts from 'apexcharts';
 import { toKebabCase } from '@/utils/text';
 
@@ -8,11 +8,27 @@ const props = defineProps({
         type: String,
         required: true
     },
+    series: {
+        type: Array,
+        required: true
+    }
 });
 
-const options = {
-        series: [52.8, 26.8, 20],
-        colors: ["#1C64F2", "#16BDCA", "#9061F9"],
+let chart = null;
+
+// Proses data agar sesuai kebutuhan ApexCharts
+const chartSeries = computed(() => props.series.map(item => item.y));
+const chartLabels = computed(() => props.series.map(item => item.name));
+const chartColors = computed(() => {
+    // Hanya gunakan color jika ada minimal satu item yang memiliki color
+    const hasColor = props.series.some(item => !!item.color);
+    return hasColor ? props.series.map(item => item.color || undefined) : undefined;
+});
+
+const getOptions = () => {
+    const options = {
+        series: chartSeries.value,
+        labels: chartLabels.value,
         chart: {
             height: 380,
             width: "100%",
@@ -33,7 +49,6 @@ const options = {
                 }
             },
         },
-        labels: ["Berlaku", "Sedang Disusun", "Kadaluarsa"],
         dataLabels: {
             enabled: true,
             style: {
@@ -47,14 +62,14 @@ const options = {
         yaxis: {
             labels: {
                 formatter: function (value) {
-                    return value + "%"
+                    return value
                 },
             },
         },
         xaxis: {
             labels: {
                 formatter: function (value) {
-                    return value + "%"
+                    return value
                 },
             },
             axisTicks: {
@@ -64,18 +79,41 @@ const options = {
                 show: false,
             },
         },
+    };
+    // Tambahkan colors hanya jika chartColors.value ada isinya
+    if (chartColors.value) {
+        options.colors = chartColors.value;
+    }
+    return options;
 };
 
-onMounted(() => {
-    if (document.getElementById(`app-pie-chart-${toKebabCase(props.name)}`) && typeof ApexCharts !== 'undefined') {
-        const chart = new ApexCharts(document.getElementById(`app-pie-chart-${toKebabCase(props.name)}`), options);
-        chart.render();
+function renderChart() {
+    const el = document.getElementById(`app-pie-chart-${toKebabCase(props.name)}`);
+    if (el && typeof ApexCharts !== 'undefined') {
+        if (chart) {
+            chart.updateOptions(getOptions());
+        } else {
+            chart = new ApexCharts(el, getOptions());
+            chart.render();
+        }
     }
+}
+
+onMounted(() => {
+    renderChart();
 });
+
+watch(
+    () => props.series,
+    () => {
+        renderChart();
+    },
+    { deep: true }
+);
 </script>
 
 <template>
-    <div class="mx-auto px-4 my-8 max-w-lg w-full bg-white rounded-lg shadow p-4 md:p-6">
+    <div class="mx-auto px-4 max-w-xl xl:w-full bg-white rounded-lg shadow p-4 md:p-6">
         <h2 class="text-gray-900 text-3xl font-extrabold mb-2 text-center">{{ props.name }}</h2>
         <div class="py-6" :id="`app-pie-chart-${toKebabCase(props.name)}`"></div>
     </div>

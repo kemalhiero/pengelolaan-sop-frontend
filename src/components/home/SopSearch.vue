@@ -44,7 +44,7 @@ onMounted(() => {
 
     <div class="text-center mt-16 mb-8 mx-12 lg:mx-40">
         <h1 class="mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-4xl lg:text-5xl">
-            Prosedur Operasional Standar (SOP)</h1>
+            Standar Operasional Prosedur (SOP)</h1>
         <p class="text-lg font-normal lg:text-xl sm:px-16 xl:px-48">
             Berikut merupakan daftar dokumen SOP yang berlaku di lingkungan<br>
             Departemen Sistem Informasi Universitas Andalas

@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, watch } from 'vue';
 import ApexCharts from 'apexcharts';
 import { toKebabCase } from '@/utils/text';
 
@@ -8,34 +8,16 @@ const props = defineProps({
         type: String,
         required: true
     },
+    series: {
+        type: Array,
+        required: true
+    }
 });
 
+let chart = null;
+
 const options = {
-    colors: ["#1A56DB", "#FDBA8C"],
-    series: [
-        {
-            name: "Tidak Berlaku",
-            color: "#1A56DB",
-            data: [
-                { x: "DSI", y: 231 },
-                { x: "LEA", y: 122 },
-                { x: "LABGIS", y: 63 },
-                { x: "LDKOM", y: 421 },
-                { x: "LBI", y: 122 },
-            ],
-        },
-        {
-            name: "Berlaku",
-            color: "#FDBA8C",
-            data: [
-                { x: "DSI", y: 232 },
-                { x: "LEA", y: 113 },
-                { x: "LABGIS", y: 341 },
-                { x: "LDKOM", y: 224 },
-                { x: "LBI", y: 522 },
-            ],
-        },
-    ],
+    series: [],
     chart: {
         type: "bar",
         height: "350px",
@@ -82,7 +64,7 @@ const options = {
         },
     },
     dataLabels: {
-        enabled: false,
+        enabled: true,
     },
     legend: {
         show: true,
@@ -109,19 +91,32 @@ const options = {
     fill: {
         opacity: 1,
     },
+};
+
+function renderChart() {
+    const el = document.getElementById(`app-column-chart-${toKebabCase(props.name)}`);
+    if (el && typeof ApexCharts !== 'undefined') {
+        if (chart) {
+            chart.updateSeries(props.series);
+        } else {
+            chart = new ApexCharts(el, { ...options, series: props.series });
+            chart.render();
+        }
+    }
 }
 
 onMounted(() => {
-    if (document.getElementById(`app-column-chart-${toKebabCase(props.name)}`) && typeof ApexCharts !== 'undefined') {
-        const chart = new ApexCharts(document.getElementById(`app-column-chart-${toKebabCase(props.name)}`), options);
-        chart.render();
-    }
-})
+    renderChart();
+});
+
+watch(() => props.series, () => {
+    renderChart();
+}, { deep: true });
 
 </script>
 
 <template>
-    <div class="container mx-auto px-4 my-8 max-w-lg w-full bg-white rounded-lg shadow p-4 md:p-6">
+    <div class="mx-auto px-4 max-w-xl xl:w-full bg-white rounded-lg shadow p-4 md:p-6">
         <h2 class="text-gray-900 text-3xl font-extrabold mb-2 text-center">{{ props.name }}</h2>
         <div :id="`app-column-chart-${toKebabCase(props.name)}`"></div>
     </div>

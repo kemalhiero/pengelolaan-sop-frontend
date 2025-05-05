@@ -5,6 +5,37 @@ import ColumnChart from '@/components/chart/ColumnChart.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
+
+const columnSeries = [
+    {
+        name: "Tidak Berlaku",
+        color: "#1A56DB",
+        data: [
+            { x: "DSI", y: 231 },
+            { x: "LEA", y: 122 },
+            { x: "LABGIS", y: 63 },
+            { x: "LDKOM", y: 421 },
+            { x: "LBI", y: 122 },
+        ],
+    },
+    {
+        name: "Berlaku",
+        color: "#FDBA8C",
+        data: [
+            { x: "DSI", y: 232 },
+            { x: "LEA", y: 113 },
+            { x: "LABGIS", y: 341 },
+            { x: "LDKOM", y: 224 },
+            { x: "LBI", y: 522 },
+        ],
+    },
+];
+
+const pieSeries = [
+    { name: "Berlaku", y: 232, color: "#1C64F2" },
+    { name: "Tidak Berlaku", y: 231, color: "#16BDCA" },
+    { name: "Kadaluarsa", y: 50, color: "#9061F9" }
+];
 </script>
 
 <template>
@@ -18,11 +49,13 @@ layoutType.value = 'admin';
         <div class="border-2 border-dashed rounded-lg border-gray-300 dark:border-gray-600">
             <ColumnChart
                 name="tes dashboard"
+                :series="columnSeries"
             />
         </div>
         <div class="border-2 border-dashed rounded-lg border-gray-300 dark:border-gray-600">
             <PieChart
                 name="tes dashboard"
+                :series="pieSeries"
             />
         </div>
     </div>

@@ -31,4 +31,20 @@ const toKebabCase = (text) => {
         .join('-');
 };
 
-export { capitalizeWords, toKebabCase };
+/**
+ * Converts a phrase to its acronym, ignoring common stop words (e.g., "Laboratory of Enterprise Application" -> "LEA").
+ *
+ * @param {string} text - The string to be converted.
+ * @returns {string} The acronym in uppercase.
+ */
+const toAcronym = (text) => {
+    if (!text) return '';
+    const stopWords = ['of', 'the', 'and', 'a', 'an', 'in', 'on', 'at', 'for', 'with', 'to', 'by', 'from'];
+    return text
+        .split(' ')
+        .filter(word => word && !stopWords.includes(word.toLowerCase()))
+        .map(word => word[0].toUpperCase())
+        .join('');
+};
+
+export { capitalizeWords, toKebabCase, toAcronym };
