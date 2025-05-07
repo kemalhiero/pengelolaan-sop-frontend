@@ -113,7 +113,7 @@ watch(
 </script>
 
 <template>
-    <div class="mx-auto px-4 max-w-xl xl:w-full bg-white rounded-lg shadow p-4 md:p-6">
+    <div class="mx-auto px-4 xl:w-full bg-white rounded-lg shadow p-4 md:p-6">
         <h2 class="text-gray-900 text-3xl font-extrabold mb-2 text-center">{{ props.name }}</h2>
         <div class="py-6" :id="`app-pie-chart-${toKebabCase(props.name)}`"></div>
     </div>

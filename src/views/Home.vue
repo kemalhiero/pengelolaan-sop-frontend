@@ -11,18 +11,16 @@ import PieChart from '@/components/chart/PieChart.vue';
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';
 
-const columnSeries = ref([]);
-const pieSeries = ref([]);
+const nominalSopPerOrg = ref([]);
+const sopDistbyStatus = ref([]);
 
 const fetchData = async () => {
     try {
         const nominalSop = await getNominalSopPerOrg();
         if (!nominalSop.success) {
-            hasError.value = true;
             console.error('API Error:', nominalSop.error);
-            return;
         }
-        columnSeries.value = [
+        nominalSopPerOrg.value = [
             {
                 name: "Jumlah SOP Berlaku",
                 color: "#1A56DB",
@@ -35,11 +33,9 @@ const fetchData = async () => {
 
         const sopDist = await getSopDistByStatus();
         if (!sopDist.success) {
-            hasError.value = true;
             console.error('API Error:', sopDist.error);
-            return;
         }
-        pieSeries.value = [
+        sopDistbyStatus.value = [
             { name: "Berlaku", y: sopDist.data.berlaku || 0, color: "#1C64F2" },
             { name: "Tidak Berlaku", y: sopDist.data.tidak_berlaku || 0, color: "#16BDCA" },
             { name: "Sedang Proses", y: sopDist.data.proses || 0, color: "#9061F9" }
@@ -86,8 +82,8 @@ onMounted(() => {
     <section class="bg-white print-break-after-page">
         <div class="py-8 mx-auto max-w-screen-xl lg:py-16">
             <div class="grid md:grid-cols-2 gap-1">
-                <ColumnChart name="Jumlah SOP per Organisasi" :series="columnSeries" />
-                <PieChart name="Distribusi SOP berdasarkan status" :series="pieSeries" />
+                <ColumnChart name="Jumlah SOP per Organisasi" :series="nominalSopPerOrg" />
+                <PieChart name="Distribusi SOP berdasarkan status" :series="sopDistbyStatus" />
             </div>
         </div>
     </section>

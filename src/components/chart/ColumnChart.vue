@@ -112,11 +112,10 @@ onMounted(() => {
 watch(() => props.series, () => {
     renderChart();
 }, { deep: true });
-
 </script>
 
 <template>
-    <div class="mx-auto px-4 max-w-xl xl:w-full bg-white rounded-lg shadow p-4 md:p-6">
+    <div class="mx-auto px-4 xl:w-full bg-white rounded-lg shadow p-4 md:p-6">
         <h2 class="text-gray-900 text-3xl font-extrabold mb-2 text-center">{{ props.name }}</h2>
         <div :id="`app-column-chart-${toKebabCase(props.name)}`"></div>
     </div>
