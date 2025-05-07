@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import { getSopVersion, getSectionandWarning, getSopStep } from '@/api/sopApi';
 import { getSopImplementer } from '@/api/implementerApi';
@@ -127,6 +127,11 @@ export function useSopData(route) {
         }
     };
 
+    // Computed untuk cek data kosong
+    const isDataError = computed(() => {
+        return !sopData.value || !sopData.value.name || !signer.value || !signer.value.name;
+    });
+
     return {
         signer,
         sopData,
@@ -134,6 +139,7 @@ export function useSopData(route) {
         fetchInfoSop,
         fetchSopStep,
         fetchCurrentHod,
-        fetchSigner
+        fetchSigner,
+        isDataError,
     };
 }

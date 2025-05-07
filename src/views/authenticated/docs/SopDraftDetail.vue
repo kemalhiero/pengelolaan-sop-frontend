@@ -28,6 +28,7 @@ import PageTitle from '@/components/authenticated/PageTitle.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import SopStepTemplate from '@/components/sop/SopStepTemplate.vue';
+import Error from '@/components/Error.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -44,11 +45,10 @@ const activeTab = ref('document'); // 'document' or 'bpmn'
 
 const showModal = ref({
     approveSopDraft: false,
-    editAssignment: false,
     deleteAssignment: false,
 });
 
-const { sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchCurrentHod } = useSopData(route.params.id);
+const { sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchCurrentHod, isDataError } = useSopData(route.params.id);
 
 const fetchFeedback = async () => {
     try {
@@ -194,7 +194,7 @@ const deleteData = async (id) => {
                 }
             }
         );
-        
+
         router.push({ name: 'SopDocDetail', params: { id: sopData.value.id_sop } }).catch((err) => {
             if (err.name !== 'NavigationDuplicated') {
                 console.error('Navigation error:', err);
@@ -207,18 +207,20 @@ const deleteData = async (id) => {
     }
 };
 
-onMounted(async () => {
+const fetchAllData = async () => {
     await fetchSopVersion();
     await fetchInfoSop();
     await fetchSopStep();
     await fetchCurrentHod();
     await fetchFeedback();
-});
+};
+
+onMounted(fetchAllData);
 </script>
 
 <template>
     <div class="my-10 flex justify-center items-center">
-        <PageTitle :judul="`Pengecekan Draft SOP ${sopData?.name}`" />
+        <PageTitle :judul="sopData.name ? `Pengecekan Draft SOP ${sopData?.name}` : 'Ngapain iseng iseng?🤨'" />
         <div class="space-x-2 ml-3 flex justify-center items-center" v-if="[0, 2].includes(sopData.status)">
             <button title="Edit data penugasan" @click="redirectEditAssignment"
                 class="p-2 text-white w-8 h-8 bg-yellow-400 rounded-full hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50">
@@ -231,143 +233,134 @@ onMounted(async () => {
         </div>
     </div>
 
-    <div class="grid grid-cols-2 lg:grid-cols-3 gap-5">
-        <div class="bg-gray-200 p-5 rounded-xl shadow-md">
-            <h4 class="mb-2.5 text-lg">Versi</h4>
-            <h5 class="text-lg font-bold">
-                {{ sopData?.version }}
-            </h5>
+    <template v-if="!isDataError">
+        <div class="grid grid-cols-2 lg:grid-cols-3 gap-5">
+            <div class="bg-gray-200 p-5 rounded-xl shadow-md">
+                <h4 class="mb-2.5 text-lg">Versi</h4>
+                <h5 class="text-lg font-bold">
+                    {{ sopData?.version }}
+                </h5>
+            </div>
+            <div class="bg-gray-200 p-5 rounded-xl shadow-md">
+                <h4 class="mb-2.5 text-lg">Status</h4>
+                <h5 class="text-xl font-bold">
+                    {{ switchStatusSopDetail(sopData?.status) }}
+                </h5>
+            </div>
+            <div class="bg-gray-200 p-5 rounded-xl shadow-md col-span-2 lg:col-span-1 lg:row-span-2">
+                <h4 class="mb-2.5 text-lg">Penyusun</h4>
+                <ul class="list-disc list-inside" v-if="sopData?.users.length > 0">
+                    <li class="text-lg font-bold" v-for="(user, index) in sopData?.users" :key="index">
+                        {{ user.identity_number }} - {{ user.name }}
+                    </li>
+                </ul>
+                <p class="italic text-slate-600" v-else>belum ada penyusun yang dipilih</p>
+            </div>
+            <div class="bg-gray-200 p-5 rounded-xl shadow-md col-span-2">
+                <h4 class="mb-2.5 text-lg">Deskripsi</h4>
+                <h5 class="text-base font-bold">
+                    {{ sopData?.description }}
+                </h5>
+            </div>
         </div>
-        <div class="bg-gray-200 p-5 rounded-xl shadow-md">
-            <h4 class="mb-2.5 text-lg">Status</h4>
-            <h5 class="text-xl font-bold">
-                {{ switchStatusSopDetail(sopData?.status) }}
-            </h5>
-        </div>
-        <div class="bg-gray-200 p-5 rounded-xl shadow-md col-span-2 lg:col-span-1 lg:row-span-2">
-            <h4 class="mb-2.5 text-lg">Penyusun</h4>
-            <ul class="list-disc list-inside" v-if="sopData?.users.length > 0">
-                <li class="text-lg font-bold" v-for="(user, index) in sopData?.users" :key="index">
-                    {{ user.identity_number }} - {{ user.name }}
-                </li>
-            </ul>
-            <p class="italic text-slate-600" v-else>belum ada penyusun yang dipilih</p>
-        </div>
-        <div class="bg-gray-200 p-5 rounded-xl shadow-md col-span-2">
-            <h4 class="mb-2.5 text-lg">Deskripsi</h4>
-            <h5 class="text-base font-bold">
-                {{ sopData?.description }}
-            </h5>
-        </div>
-    </div>
 
-    <div class="flex justify-center my-6">
-        <div class="inline-flex rounded-md shadow-sm" role="group">
-        <button 
-            @click="activeTab = 'document'" 
-            type="button" 
-            class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-l-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
-            :class="activeTab === 'document' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'"
-        >
-            Dokumen SOP
-        </button>
-        <button 
-            @click="activeTab = 'bpmn'" 
-            type="button" 
-            class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-r-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
-            :class="activeTab === 'bpmn' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'"
-        >
-            Diagram BPMN
-        </button>
+        <div class="flex justify-center my-6">
+            <div class="inline-flex rounded-md shadow-sm" role="group">
+                <button @click="activeTab = 'document'" type="button"
+                    class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-l-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
+                    :class="activeTab === 'document' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'">
+                    Dokumen SOP
+                </button>
+                <button @click="activeTab = 'bpmn'" type="button"
+                    class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-r-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
+                    :class="activeTab === 'bpmn' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'">
+                    Diagram BPMN
+                </button>
+            </div>
         </div>
-    </div>
 
-    <div class="mt-8" v-if="activeTab === 'document'">
-        <SopInfoTemplate
-            :name="sopData.name" :number="sopData.number"
-            :pic-name="signer.name" :pic-number="signer.id_number"
-            created-date="-" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
-            :section="sopData.section" :warning="sopData.warning"
-            :law-basis="sopData.legalBasis.map(item => item.legal)"
-            :implement-qualification="sopData.implementQualification.map(item => item.qualification)" 
-            :related-sop="sopData.relatedSop.map(item => item.related_sop)"
-            :equipment="sopData.equipment.map(item => item.equipment)" 
-            :record-data="sopData.record.map(item => item.data_record)"
-            :signature="sopData.status === 1 ? `${cdnUrl}/${sopData.signature_url}` : null"
-        />
+        <div class="mt-8" v-if="activeTab === 'document'">
+            <SopInfoTemplate :name="sopData.name" :number="sopData.number" :pic-name="signer.name"
+                :pic-number="signer.id_number" created-date="-" :revision-date="sopData.revision_date"
+                :effective-date="sopData.effective_date" :section="sopData.section" :warning="sopData.warning"
+                :law-basis="sopData.legalBasis.map(item => item.legal)"
+                :implement-qualification="sopData.implementQualification.map(item => item.qualification)"
+                :related-sop="sopData.relatedSop.map(item => item.related_sop)"
+                :equipment="sopData.equipment.map(item => item.equipment)"
+                :record-data="sopData.record.map(item => item.data_record)"
+                :signature="sopData.status === 1 ? `${cdnUrl}/${sopData.signature_url}` : null" />
 
-        <SopStepTemplate
-            :implementer="sopData.implementer" :steps="sopData.steps"
-        />
-    </div>
-
-    <div v-else-if="activeTab === 'bpmn'">
-        <SopBpmnTemplate
-            v-if="sopData.steps && sopData.steps.length > 0 && sopData.implementer && sopData.implementer.length > 0"
-            :name="sopData.name" 
-            :steps="sopData.steps || []" 
-            :implementer="sopData.implementer || []" 
-        />
-        <div v-else class="my-4 p-4 bg-gray-100 rounded text-center">
-            Belum ada tahapan yang diinputkan oleh penyusun!
+            <SopStepTemplate :implementer="sopData.implementer" :steps="sopData.steps" />
         </div>
-    </div>
 
-    <!-- Only render when both steps and implementer arrays exist and have data -->
-    <div class="w-full lg:w-2/3 flex flex-col mx-auto mt-12 mb-5" v-if="![2].includes(sopData.status)">
-        <h2 class="text-xl font-semibold mb-4">Umpan Balik Sebelumnya</h2>
-        <div v-if="draftFeedback && draftFeedback.length > 0" class="space-y-4">
-            <div v-for="(feedback, index) in draftFeedback" :key="index"
-                class="bg-gray-200 p-4 rounded-lg shadow-md">
-                <div class="flex items-center">
-                    <span class="text-base font-bold">{{ feedback?.user?.name || 'User' }}</span>
-                    <span class="ml-1 mr-2">({{ feedback.user.role }})</span> |
-                    <span class="text-sm text-gray-600 mx-2">{{ feedback?.createdAt || '-' }}</span> |
-                    <span class="mx-2">
-                        <YellowBadgeIndicator v-if="feedback?.type == 'revisi'" teks="Perlu Revisi" />
-                        <GreenBadgeIndicator v-else-if="feedback?.type == 'setuju'" teks="Setuju" />
-                    </span>
+        <div v-else-if="activeTab === 'bpmn'">
+            <SopBpmnTemplate
+                v-if="sopData.steps && sopData.steps.length > 0 && sopData.implementer && sopData.implementer.length > 0"
+                :name="sopData.name" :steps="sopData.steps || []" :implementer="sopData.implementer || []" />
+            <div v-else class="my-4 p-4 bg-gray-100 rounded text-center">
+                Belum ada tahapan yang diinputkan oleh penyusun!
+            </div>
+        </div>
+
+        <!-- Only render when both steps and implementer arrays exist and have data -->
+        <div class="w-full lg:w-2/3 flex flex-col mx-auto mt-12 mb-5" v-if="![2].includes(sopData.status)">
+            <h2 class="text-xl font-semibold mb-4">Umpan Balik Sebelumnya</h2>
+            <div v-if="draftFeedback && draftFeedback.length > 0" class="space-y-4">
+                <div v-for="(feedback, index) in draftFeedback" :key="index"
+                    class="bg-gray-200 p-4 rounded-lg shadow-md">
+                    <div class="flex items-center">
+                        <span class="text-base font-bold">{{ feedback?.user?.name || 'User' }}</span>
+                        <span class="ml-1 mr-2">({{ feedback.user.role }})</span> |
+                        <span class="text-sm text-gray-600 mx-2">{{ feedback?.createdAt || '-' }}</span> |
+                        <span class="mx-2">
+                            <YellowBadgeIndicator v-if="feedback?.type == 'revisi'" teks="Perlu Revisi" />
+                            <GreenBadgeIndicator v-else-if="feedback?.type == 'setuju'" teks="Setuju" />
+                        </span>
+                    </div>
+                    <p class="text-lg mt-1">{{ feedback?.feedback || '-' }}</p>
                 </div>
-                <p class="text-lg mt-1">{{ feedback?.feedback || '-' }}</p>
+            </div>
+            <div v-else class="text-center text-gray-500">
+                Belum ada umpan balik yang diberikan.
             </div>
         </div>
-        <div v-else class="text-center text-gray-500">
-            Belum ada umpan balik yang diberikan.
-        </div>
-    </div>
 
-    <div class="w-full lg:w-2/3 flex justify-center mx-auto my-10" v-if="![1, 2, 7].includes(sopData.status)">
-        <form class="w-full bg-white space-y-5" @submit.prevent="submitFeedback">
-            <h2 class="text-xl font-semibold mb-4">Form Umpan Balik</h2>
-            <div>
-                <label for="status" class="block mb-2 text-sm font-medium">Status<span class="text-red-600">*</span></label>
-                <select type="text" id="status" v-model="statusSop" required
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                    <option selected disabled value="">Pilih status</option>
-                    <option value="1">Setuju</option>
-                    <option value="2">Perlu Revisi</option>
-                </select>
-            </div>
-            <div>
-                <label for="description" class="block mb-2 text-sm font-medium">Keterangan<span class="text-red-600">*</span></label>
-                <textarea id="description" rows="4" v-model="newFeedback" required minlength="5" maxLength="500"
-                    class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Tuliskan umpan balik anda (minimal 5 karakter)"></textarea>
-            </div>
-            <button type="submit" :disabled="statusSop === '' || newFeedback.length < 5"
-                class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 disabled:cursor-not-allowed disabled:bg-opacity-60">
-                <p v-if="statusSop == 1">Lanjut ke Pengesahan SOP</p>
-                <p v-else>Kirim Umpan Balik</p>
+        <div class="w-full lg:w-2/3 flex justify-center mx-auto my-10" v-if="![1, 2, 7].includes(sopData.status)">
+            <form class="w-full bg-white space-y-5" @submit.prevent="submitFeedback">
+                <h2 class="text-xl font-semibold mb-4">Form Umpan Balik</h2>
+                <div>
+                    <label for="status" class="block mb-2 text-sm font-medium">Status<span
+                            class="text-red-600">*</span></label>
+                    <select type="text" id="status" v-model="statusSop" required
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                        <option selected disabled value="">Pilih status</option>
+                        <option value="1">Setuju</option>
+                        <option value="2">Perlu Revisi</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="description" class="block mb-2 text-sm font-medium">Keterangan<span
+                            class="text-red-600">*</span></label>
+                    <textarea id="description" rows="4" v-model="newFeedback" required minlength="5" maxLength="500"
+                        class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Tuliskan umpan balik anda (minimal 5 karakter)"></textarea>
+                </div>
+                <button type="submit" :disabled="statusSop === '' || newFeedback.length < 5"
+                    class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 disabled:cursor-not-allowed disabled:bg-opacity-60">
+                    <p v-if="statusSop == 1">Lanjut ke Pengesahan SOP</p>
+                    <p v-else>Kirim Umpan Balik</p>
+                </button>
+            </form>
+        </div>
+
+        <div class="flex justify-center mt-8 mb-12" v-if="sopData.status === 7">
+            <button type="button" @click="router.push({ name: 'SopLegalization', params: { id: route.params.id } })"
+                class="w-2/5 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5">
+                <p>Lanjut ke Pengesahan SOP ==></p>
             </button>
-        </form>
-    </div>
-
-    <div class="flex justify-center mt-8 mb-12" v-if="sopData.status === 7">
-        <button type="button" @click="router.push({ name: 'SopLegalization', params: { id: route.params.id } })"
-            class="w-2/5 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5">
-            <p>Lanjut ke Pengesahan SOP ==></p>
-        </button>
-    </div>
+        </div>
+    </template>
+    <Error v-else @click="fetchAllData" />
 
     <div v-show="showModal.approveSopDraft"
         class="fixed inset-0 z-50 flex items-center justify-center w-full h-full shadow-lg">
@@ -406,5 +399,6 @@ onMounted(async () => {
     </div>
 
     <DeleteDataModal :showModal="showModal.deleteAssignment" :deleteData="deleteData" :selectedId="sopData.id"
-        @update:showModal="showModal.deleteAssignment = $event" text="Anda yakin ingin menghapus penugasan SOP ini? Semua progres yang ada saat ini juga akan dihapus!" />
+        @update:showModal="showModal.deleteAssignment = $event"
+        text="Anda yakin ingin menghapus penugasan SOP ini? Semua progres yang ada saat ini juga akan dihapus!" />
 </template>

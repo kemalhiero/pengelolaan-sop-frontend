@@ -1,5 +1,5 @@
 <script setup>
-import { inject, onMounted, ref } from 'vue';
+import { computed, inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 
@@ -11,6 +11,7 @@ import PageTitle from '@/components/authenticated/PageTitle.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import WarningText from '@/components/validation/WarningText.vue';
+import Error from '@/components/Error.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -30,6 +31,10 @@ const form = ref({
     description: ''
 });
 let oldDrafters;
+
+const isDataError = computed(() => {
+    return !form.value || !form.value.name || !dataDrafter.value || !dataDrafter.value[0].name;
+});
 
 const fetchDrafter = async () => {
     try {
@@ -127,17 +132,18 @@ const fetchDraft = async () => {
     }
 };
 
-onMounted(() => {
-    fetchDrafter();
-    fetchDraft();
-});
+const fetchAllData = async () => {
+    await fetchDrafter();
+    await fetchDraft();
+};
 
+onMounted(fetchAllData);
 </script>
 
 <template>
-    <PageTitle judul="Perbarui Data Penugasan SOP" />
+    <PageTitle :judul="isDataError? 'Ngapain iseng iseng?🤨' : 'Perbarui Data Penugasan SOP'" />
 
-    <section class="bg-white">
+    <section class="bg-white" v-if="!isDataError">
         <div class="py-8 px-4 mx-auto max-w-3xl">
             <form @submit.prevent="submitSop">
                 <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
@@ -185,7 +191,6 @@ onMounted(() => {
 
                         <WarningText v-show="showDrafterWarning"
                             text="Jangan lupa untuk memilih user yang akan ditugaskan!" />
-
                     </div>
 
                     <div class="col-span-2">
@@ -204,11 +209,10 @@ onMounted(() => {
             </form>
         </div>
     </section>
+    <Error v-else @click="fetchAllData" />
 
     <div v-show="showDrafterModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
-
         <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showDrafterModal = false"></div>
-
         <div class="relative w-full max-w-2xl max-h-full">
             <!-- Modal content -->
             <div class="relative bg-white rounded-lg shadow">
@@ -244,6 +248,5 @@ onMounted(() => {
                 </div>
             </div>
         </div>
-
     </div>
 </template>

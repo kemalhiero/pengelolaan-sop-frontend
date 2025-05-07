@@ -26,6 +26,7 @@ import FirstStep from './step/FirstStep.vue';
 import SecondStep from './step/SecondStep.vue';
 import ThirdStep from './step/ThirdStep.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
+import Error from '@/components/Error.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';
@@ -60,6 +61,11 @@ const hodData = ref({
 });
 const isDisabled = computed(() => {
     return picInfo.value && (picInfo.value.status === 1 || picInfo.value.status === 0);
+});
+
+// Fungsi untuk menentukan apakah data sudah lengkap, sekaligus mengecek apakah user iseng
+const isDataError = computed(() => {
+    return !picInfo.value || !picInfo.value.name || !picInfo.value.number;
 });
 
 provide('picData', picInfo);
@@ -630,7 +636,7 @@ const prevStep = () => {
     }
 };
 
-onMounted(async () => {
+const fetchAllData = async () => {
     await fetchPicInfo();
 
     await fetchInfoSop();
@@ -642,126 +648,131 @@ onMounted(async () => {
     if (picInfo.value.status !== 2) {
         await fetchFeedback();
     }
-});
+};
+
+onMounted(fetchAllData);
 </script>
 
 <template>
-    <PageTitle judul="Penyusunan Dokumen SOP" class="my-12" />
+    <PageTitle :judul="isDataError ? 'Ngapain iseng iseng?🤨' :  `Penyusunan Dokumen SOP`" class="my-12" />
 
-    <!-- Main SOP creation stepper and content -->
-    <ol
-        class="flex items-center justify-center w-full text-sm font-medium text-center text-gray-500 sm:text-base max-w-2xl mx-auto">
-        <li class="flex md:w-full items-center text-blue-600 sm:after:content-[''] after:w-full after:h-1 after:border-b after:border-gray-400 after:border-1 after:hidden sm:after:inline-block after:mx-6 xl:after:mx-10"
-            title="Informasi mengenai sop yang ditentukan oleh penanggung jawab">
-            <span class="flex items-center after:content-['/'] sm:after:hidden after:mx-2 after:text-gray-400">
-                <CheckIcon v-if="currentStep > 1" />
-                <NumberOneCircleIcon class="mr-2" v-else-if="currentStep == 1" />
-                Informasi
-                <span class="hidden sm:inline-flex sm:ms-2">SOP</span>
-            </span>
-        </li>
-        <li class="flex md:w-full items-center after:content-[''] after:w-full after:h-1 after:border-b after:border-gray-400 after:border-1 after:hidden sm:after:inline-block after:mx-6 xl:after:mx-10"
-            :class="{ 'text-blue-600': currentStep >= 2 }">
-            <span class="flex items-center after:content-['/'] sm:after:hidden after:mx-2 after:text-gray-400">
-                <span class="me-2" v-if="currentStep < 2">2</span>
-                <CheckIcon class="fill-blue-600" v-else-if="currentStep > 2" />
-                <NumberTwoCircleIcon class="mr-2 fill-blue-700" v-else="currentStep == 2" />
-                Tahapan <span class="hidden sm:inline-flex sm:ms-2">SOP</span>
-            </span>
-        </li>
-        <li class="flex items-center" :class="{ 'text-blue-600': currentStep === 3 }">
-            <span class="me-2" v-if="currentStep < 3">3</span>
-            <NumberThreeCircleIcon class="mr-2 fill-blue-600" v-else-if="currentStep == 3" />
-            Pratinjau
-        </li>
-    </ol>
-
-    <!-- tampilan data -->
-    <div class="my-8 px-6 md:px-0">
-        <FirstStep v-if="currentStep == 1" ref="firstStepRef" />
-        <SecondStep v-else-if="currentStep == 2" />
-        <ThirdStep v-else-if="currentStep == 3" />
-    </div>
-
-    <div class="flex justify-between mb-8 px-6 max-w-3xl mx-auto">
-        <button type="button" :disabled="currentStep == 1"
-            class="w-1/4 text-white bg-gray-500 hover:bg-gray-600 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-            @click="prevStep">
-            <CircleArrowLeft class="fill-current w-5 mr-2 mt-1" />
-            Sebelumnya
-        </button>
-
-        <button type="button"
-            :title="isDisabled ? 'Tidak dapat menyimpan progres!' : currentStep < 3 ? 'Klik untuk menyimpan progres saat ini ke server' : 'Untuk menyimpan progres, klik tombol kirim!'"
-            :disabled="currentStep === 3 || isDisabled"
-            class="w-[28%] text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-            @click="syncData">
-            <!-- <SpinnerIcon class="inline w-5 me-3 fill-current animate-spin" />
-            Loading... -->
-            <FloppyDiskIcon class="fill-current w-5 mr-2" />
-            Simpan Progres
-        </button>
-
-        <button type="button" @click="nextStep" :disabled="isDisabled && currentStep == 3"
-            :title="(currentStep === 3 && isDisabled) ? 'Tidak dapat mengirim draft!' : currentStep == 3 ? 'Kirim Draft' : 'Lanjut ke langkah berikutnya'"
-            class="w-1/4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
-            <p v-if="currentStep == 3">Kirim</p>
-            <p v-else>Lanjut</p>
-            <CircleArrowRight class="fill-current w-5 ml-2 mt-1" />
-        </button>
-    </div>
-
-    <!-- Floating feedback button and panel -->
-    <div class="fixed bottom-6 right-6 z-50">
-        <div v-if="showFeedback && draftFeedback && draftFeedback.length > 0" 
-            class="absolute bottom-full right-0 mb-3 w-96 bg-white rounded-lg shadow-xl border border-gray-200 transition-all duration-300 transform origin-bottom-right">
-            <div class="flex justify-between items-center bg-blue-50 p-3 rounded-t-lg border-b border-gray-200">
-                <div class="flex items-center">
-                    <span class="font-medium">Umpan Balik</span>
-                    <span class="bg-yellow-100 text-yellow-800 text-xs font-medium ml-2 px-2 py-0.5 rounded-full">{{ draftFeedback.length }}</span>
-                </div>
-                <button @click="showFeedback = false" class="text-gray-500 hover:text-gray-700 focus:outline-none">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            <div class="max-h-96 overflow-y-auto p-1">
-                <div v-for="(feedback, index) in draftFeedback" :key="index"
-                    class="p-4 border-b last:border-b-0" 
-                    :class="[feedback?.type === 'revisi' ? 'bg-yellow-50' : 'bg-green-50']">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center">
-                            <span class="font-semibold text-sm">{{ feedback?.user?.name || 'User' }}</span>
-                            <span class="text-xs text-gray-500 ml-2">({{ feedback.user.role }})</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs text-gray-500">{{ feedback?.createdAt || '-' }}</span>
-                            <span v-if="feedback?.type == 'revisi'" class="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full">Perlu Revisi</span>
-                            <span v-else-if="feedback?.type == 'setuju'" class="inline-block bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">Setuju</span>
-                        </div>
-                    </div>
-                    <p class="text-sm">{{ feedback?.feedback || '-' }}</p>
-                </div>
-            </div>
+    <template v-if="!isDataError">
+        <!-- Main SOP creation stepper and content -->
+        <ol
+            class="flex items-center justify-center w-full text-sm font-medium text-center text-gray-500 sm:text-base max-w-2xl mx-auto">
+            <li class="flex md:w-full items-center text-blue-600 sm:after:content-[''] after:w-full after:h-1 after:border-b after:border-gray-400 after:border-1 after:hidden sm:after:inline-block after:mx-6 xl:after:mx-10"
+                title="Informasi mengenai sop yang ditentukan oleh penanggung jawab">
+                <span class="flex items-center after:content-['/'] sm:after:hidden after:mx-2 after:text-gray-400">
+                    <CheckIcon v-if="currentStep > 1" />
+                    <NumberOneCircleIcon class="mr-2" v-else-if="currentStep == 1" />
+                    Informasi
+                    <span class="hidden sm:inline-flex sm:ms-2">SOP</span>
+                </span>
+            </li>
+            <li class="flex md:w-full items-center after:content-[''] after:w-full after:h-1 after:border-b after:border-gray-400 after:border-1 after:hidden sm:after:inline-block after:mx-6 xl:after:mx-10"
+                :class="{ 'text-blue-600': currentStep >= 2 }">
+                <span class="flex items-center after:content-['/'] sm:after:hidden after:mx-2 after:text-gray-400">
+                    <span class="me-2" v-if="currentStep < 2">2</span>
+                    <CheckIcon class="fill-blue-600" v-else-if="currentStep > 2" />
+                    <NumberTwoCircleIcon class="mr-2 fill-blue-700" v-else="currentStep == 2" />
+                    Tahapan <span class="hidden sm:inline-flex sm:ms-2">SOP</span>
+                </span>
+            </li>
+            <li class="flex items-center" :class="{ 'text-blue-600': currentStep === 3 }">
+                <span class="me-2" v-if="currentStep < 3">3</span>
+                <NumberThreeCircleIcon class="mr-2 fill-blue-600" v-else-if="currentStep == 3" />
+                Pratinjau
+            </li>
+        </ol>
+    
+        <!-- tampilan data -->
+        <div class="my-8 px-6 md:px-0">
+            <FirstStep v-if="currentStep == 1" ref="firstStepRef" />
+            <SecondStep v-else-if="currentStep == 2" />
+            <ThirdStep v-else-if="currentStep == 3" />
         </div>
-        
-        <!-- Floating feedback button with badge -->
-        <button 
-            v-if="draftFeedback && draftFeedback.length > 0"
-            @click="showFeedback = !showFeedback" :title="showFeedback ? 'Tutup' : 'Lihat Umpan Balik'"
-            class="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transition-all duration-300"
-            :class="{'rotate-45 bg-red-600 hover:bg-red-700': showFeedback}">
-            <span v-if="!showFeedback" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {{ draftFeedback.length }}
-            </span>
-            <!-- Use the same icon (plus/close) for both states so rotation works properly -->
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path v-if="!showFeedback" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                      d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                      d="M6 18L18 6M6 6l12 12" />
-            </svg>
-        </button>
-    </div>
+    
+        <div class="flex justify-between mb-8 px-6 max-w-3xl mx-auto">
+            <button type="button" :disabled="currentStep == 1"
+                class="w-1/4 text-white bg-gray-500 hover:bg-gray-600 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                @click="prevStep">
+                <CircleArrowLeft class="fill-current w-5 mr-2 mt-1" />
+                Sebelumnya
+            </button>
+    
+            <button type="button"
+                :title="isDisabled ? 'Tidak dapat menyimpan progres!' : currentStep < 3 ? 'Klik untuk menyimpan progres saat ini ke server' : 'Untuk menyimpan progres, klik tombol kirim!'"
+                :disabled="currentStep === 3 || isDisabled"
+                class="w-[28%] text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                @click="syncData">
+                <!-- <SpinnerIcon class="inline w-5 me-3 fill-current animate-spin" />
+                Loading... -->
+                <FloppyDiskIcon class="fill-current w-5 mr-2" />
+                Simpan Progres
+            </button>
+    
+            <button type="button" @click="nextStep" :disabled="isDisabled && currentStep == 3"
+                :title="(currentStep === 3 && isDisabled) ? 'Tidak dapat mengirim draft!' : currentStep == 3 ? 'Kirim Draft' : 'Lanjut ke langkah berikutnya'"
+                class="w-1/4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                <p v-if="currentStep == 3">Kirim</p>
+                <p v-else>Lanjut</p>
+                <CircleArrowRight class="fill-current w-5 ml-2 mt-1" />
+            </button>
+        </div>
+    
+        <!-- Floating feedback button and panel -->
+        <div class="fixed bottom-6 right-6 z-50">
+            <div v-if="showFeedback && draftFeedback && draftFeedback.length > 0" 
+                class="absolute bottom-full right-0 mb-3 w-96 bg-white rounded-lg shadow-xl border border-gray-200 transition-all duration-300 transform origin-bottom-right">
+                <div class="flex justify-between items-center bg-blue-50 p-3 rounded-t-lg border-b border-gray-200">
+                    <div class="flex items-center">
+                        <span class="font-medium">Umpan Balik</span>
+                        <span class="bg-yellow-100 text-yellow-800 text-xs font-medium ml-2 px-2 py-0.5 rounded-full">{{ draftFeedback.length }}</span>
+                    </div>
+                    <button @click="showFeedback = false" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="max-h-96 overflow-y-auto p-1">
+                    <div v-for="(feedback, index) in draftFeedback" :key="index"
+                        class="p-4 border-b last:border-b-0" 
+                        :class="[feedback?.type === 'revisi' ? 'bg-yellow-50' : 'bg-green-50']">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center">
+                                <span class="font-semibold text-sm">{{ feedback?.user?.name || 'User' }}</span>
+                                <span class="text-xs text-gray-500 ml-2">({{ feedback.user.role }})</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-gray-500">{{ feedback?.createdAt || '-' }}</span>
+                                <span v-if="feedback?.type == 'revisi'" class="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded-full">Perlu Revisi</span>
+                                <span v-else-if="feedback?.type == 'setuju'" class="inline-block bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full">Setuju</span>
+                            </div>
+                        </div>
+                        <p class="text-sm">{{ feedback?.feedback || '-' }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Floating feedback button with badge -->
+            <button 
+                v-if="draftFeedback && draftFeedback.length > 0"
+                @click="showFeedback = !showFeedback" :title="showFeedback ? 'Tutup' : 'Lihat Umpan Balik'"
+                class="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transition-all duration-300"
+                :class="{'rotate-45 bg-red-600 hover:bg-red-700': showFeedback}">
+                <span v-if="!showFeedback" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {{ draftFeedback.length }}
+                </span>
+                <!-- Use the same icon (plus/close) for both states so rotation works properly -->
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path v-if="!showFeedback" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                    <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+    </template>
+    <Error v-else @click="fetchAllData" />
 </template>
