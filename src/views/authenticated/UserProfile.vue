@@ -11,6 +11,7 @@ import EyeIcon from '@/assets/icons/EyeIcon.vue';
 import EyeSlashIcon from '@/assets/icons/EyeSlashIcon.vue';
 import LockedInputColumnIndicator from '@/components/indicator/LockedInputColumnIndicator.vue';
 import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
+import roleAbbreviation from '@/data/roleAbbrv.json';
 
 const authStore = useAuthStore();
 const layoutType = inject('layoutType');
@@ -465,7 +466,7 @@ onMounted(() => {
                         <div class="space-y-2">
                             <label class="block text-sm font-medium text-gray-700">Role</label>
                             <div class="flex items-center border border-gray-300 rounded-lg shadow-sm">
-                                <input type="text" disabled v-model="userProfile.role"
+                                <input type="text" disabled :value="roleAbbreviation[userProfile.role]"
                                     class="w-full pl-3 py-2 border-none bg-transparent" />
                                 <LockedInputColumnIndicator />
                             </div>

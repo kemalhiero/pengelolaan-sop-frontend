@@ -195,7 +195,7 @@ const deleteData = async (id) => {
             }
         );
 
-        router.push({ name: 'SopDocDetail', params: { id: sopData.value.id_sop } }).catch((err) => {
+        router.replace({ name: 'SopDocDetail', params: { id: sopData.value.id_sop } }).catch((err) => {
             if (err.name !== 'NavigationDuplicated') {
                 console.error('Navigation error:', err);
             } else {

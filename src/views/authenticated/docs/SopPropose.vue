@@ -3,10 +3,11 @@ import { inject, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 
+import { useToastPromise } from '@/utils/toastPromiseHandler';
 import { useAuthStore } from '@/stores/auth';
 import { getOrg } from '@/api/orgApi';
 import { createSopDrafter, getUserByRole, getUserProfile } from '@/api/userApi';
-import { createSop, createSopDetail } from '@/api/sopApi';
+import { createSop, createSopDetail, deleteSop } from '@/api/sopApi';
 
 import DataTable from '@/components/DataTable.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
@@ -55,54 +56,90 @@ const removeDrafter = (index) => {
 };
 
 const submitSop = async () => {
-    try {
-        if (form.value.drafter.length == 0) {
-            return showDrafterWarning.value = true
-        }
-        showDrafterWarning.value = false;
-
-        const dataSop = await createSop({
-            id_org: form.value.id_org,
-            name: form.value.name
-        });
-        console.log('created data sop', dataSop);
-
-        const resultSopdetail = await createSopDetail(
-            dataSop.data.id_sop,
-            {
-                number: `T/${String(form.value.number).padStart(3, '0')}/UN16.17.02/OT.01.00/${currentYear}`,
-                description: form.value.description,
-                version: 1
+    const syncPromise = new Promise(async (resolve, reject) => {
+        let createdSopId = null;
+        try {
+            if (form.value.drafter.length == 0) {
+                showDrafterWarning.value = true;
+                return;
             }
-        );
-        console.log(resultSopdetail);
+            showDrafterWarning.value = false;
 
-        form.value.drafter.forEach(async (item) => {
-            await createSopDrafter({
-                id_user: item.id,
-                id_sop_detail: resultSopdetail.data.id_sop_detail,
-            })
-        });
+            // 1. Create SOP
+            let dataSop;
+            try {
+                dataSop = await createSop({
+                    id_org: form.value.id_org,
+                    name: form.value.name
+                });
+                createdSopId = dataSop.data.id_sop;
+            } catch (error) {
+                const msg = error?.error?.message || error?.message || 'Gagal membuat SOP';
+                toast.error(msg);
+                return reject(msg);
+            }
 
-        console.log('sukses submit semua');
+            // 2. Create SOP Detail
+            let resultSopdetail;
+            try {
+                resultSopdetail = await createSopDetail(
+                    dataSop.data.id_sop,
+                    {
+                        number: `T/${String(form.value.number).padStart(3, '0')}/UN16.17.02/OT.01.00/${currentYear}`,
+                        description: form.value.description,
+                        version: 1
+                    }
+                );
+            } catch (error) {
+                const msg = error?.error?.message || error?.message || 'Gagal membuat detail SOP';
+                toast.error(msg);
+                // Hapus SOP yang sudah dibuat jika detail gagal
+                if (createdSopId) {
+                    try {
+                        await deleteSop(createdSopId);
+                    } catch (delErr) {
+                        // Optional: tampilkan error penghapusan
+                        toast.error('Gagal menghapus SOP setelah error: ' + (delErr?.error?.message || delErr?.message));
+                    }
+                }
+                return reject(msg);
+            }
 
-        toast("Data berhasil ditambahkan!", {
-            type: "success",
-            autoClose: 2000,
-        });
+            // 3. Create SOP Drafter
+            try {
+                for (const item of form.value.drafter) {
+                    await createSopDrafter({
+                        id_user: item.id,
+                        id_sop_detail: resultSopdetail.data.id_sop_detail,
+                    });
+                }
+            } catch (error) {
+                const msg = error?.error?.message || error?.message || 'Gagal menambahkan drafter';
+                toast.error(msg);
+                return reject(msg);
+            }
 
-        setTimeout(() => {
-            router.push('/app/docs')
-        }, 2000) // Delay 2 detik
+            setTimeout(() => {
+                router.push('/app/docs')
+            }, 2000)
+            resolve('Berhasil menambahkan semua data!');
+        } catch (error) {
+            const msg = error?.error?.message || error?.message || 'Terjadi kesalahan';
+            toast.error(msg);
+            reject(msg);
+        }
+    });
 
-    } catch (error) {
-        console.error('Error saat mengirim data:', error);
-        toast(`Data gagal ditambahkan! <br> ${error} `, {
-            type: "error",
+    useToastPromise(syncPromise, {
+        messages: {
+            success: 'Sukses mengusulkan SOP baru!',
+            error: (msg) => msg,
+        },
+        toastOptions: {
             autoClose: 5000,
-            dangerouslyHTMLString: true
-        });
-    }
+            dangerouslyHTMLString: true,
+        }
+    });
 };
 
 const fetchProfile = async () => {
@@ -138,7 +175,7 @@ onMounted(() => {
                         <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
                             Nama<span class="text-red-600">*</span>
                         </label>
-                        <input type="text" v-model="form.name" id="name" placeholder="ketik nama sop disini..." required minlength="3" maxlength="100"
+                        <input type="text" v-model="form.name" id="name" placeholder="ketik nama sop disini..." required minlength="5" maxlength="100"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                             title="Contoh : Pengusulan Kerja Praktik (langsung judul, tanpa perlu 'SOP' atau 'POS' di awal)">
                     </div>

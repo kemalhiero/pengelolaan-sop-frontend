@@ -8,6 +8,9 @@ const props = defineProps({
         type: String,
         required: true
     },
+    titleHover: {
+        type: String,
+    },
     series: {
         type: Array,
         required: true
@@ -114,7 +117,7 @@ watch(
 
 <template>
     <div class="mx-auto px-4 xl:w-full bg-white rounded-lg shadow p-4 md:p-6">
-        <h2 class="text-gray-900 text-3xl font-extrabold mb-2 text-center">{{ props.name }}</h2>
+        <h2 class="text-gray-900 text-3xl font-extrabold mb-2 text-center" :title="props.titleHover">{{ props.name }}</h2>
         <div class="py-6" :id="`app-pie-chart-${toKebabCase(props.name)}`"></div>
     </div>
 </template>

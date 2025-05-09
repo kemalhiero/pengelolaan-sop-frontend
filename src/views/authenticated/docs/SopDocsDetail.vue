@@ -129,7 +129,7 @@ const deleteData = async (id) => {
       showModal.value.delete = false;
 
       setTimeout(() => {
-        router.push({ name: 'SopDocs' });
+        router.replace({ name: 'SopDocs' });
       }, 2000);
     } else {
       console.error('Gagal menghapus data:', response.error);

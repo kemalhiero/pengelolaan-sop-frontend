@@ -1,26 +1,37 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
+import { toAcronym } from '@/utils/text';
+import { useAuthStore } from '@/stores/auth';
+import { getAnnualSopMakingTrend, getNominalFeedbackTopSop, getNominalSopEachOrgByStatus, getNominalUserEachRole, getMostRevisedSop, getSopOrgDistByStatus } from '@/api/dashboardApi';
+
 import PieChart from '@/components/chart/PieChart.vue';
 import ColumnChart from '@/components/chart/ColumnChart.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import LineChart from '@/components/chart/LineChart.vue';
-import { getAnnualSopMakingTrend, getNominalFeedbackTopSop, getNominalSopEachOrgByStatus, getNominalUserEachRole, getMostRevisedSop } from '@/api/dashboardApi';
-import { toAcronym } from '@/utils/text';
+import EmptyGrid from '@/components/EmptyGrid.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
 
+const authStore = useAuthStore();
 const nominalSop = ref([]);
 const nominalUser = ref([]);
 const sopMakingTrend = ref([]);
 const nominalFeedback = ref([]);
 const mostRevisedSop = ref([]);
+const sopOrgDistByStatus = ref([]);
 
 const fetchData = async () => {
     try {
         // 1. Data untuk ColumnChart (Jumlah SOP Per Organisasi)
         const sopOrgRes = await getNominalSopEachOrgByStatus();
-        if (sopOrgRes.data && sopOrgRes.data.length > 0) {
+        if (
+            sopOrgRes.data &&
+            sopOrgRes.data.length > 0 &&
+            !sopOrgRes.data.every(item =>
+                Object.values(item.total_sop).every(val => val === 0)
+            )
+        ) {
             const statusKeys = Object.keys(sopOrgRes.data[0].total_sop).filter(key => key !== 'total');
             const colors = ["#FDBA8C", "#1A56DB", "#16BDCA"];
             nominalSop.value = statusKeys.map((status, idx) => ({
@@ -31,8 +42,6 @@ const fetchData = async () => {
                     y: item.total_sop[status] ?? 0
                 }))
             }));
-        } else {
-            nominalSop.value = [];
         }
 
         // 2. Data untuk PieChart (Jumlah User per Role)
@@ -44,8 +53,6 @@ const fetchData = async () => {
                 y: userRoleRes.data[key],
                 color: colors[idx % colors.length]
             }));
-        } else {
-            nominalUser.value = [];
         }
 
         // 3. Data untuk LineChart (Tren Pembuatan SOP)
@@ -58,8 +65,6 @@ const fetchData = async () => {
                     data: Object.entries(trendRes.data).map(([x, y]) => ({ x, y }))
                 }
             ];
-        } else {
-            sopMakingTrend.value = [];
         }
 
         // 4. Data untuk ColumnChart (Jumlah Feedback Top 8 SOP)
@@ -75,8 +80,6 @@ const fetchData = async () => {
                     }))
                 }
             ];
-        } else {
-            nominalFeedback.value = [];
         }
 
         // 5. Data untuk ColumnChart (SOP dengan revisi terbanyak)
@@ -92,8 +95,22 @@ const fetchData = async () => {
                     }))
                 }
             ];
-        } else {
-            mostRevisedSop.value = [];
+        }
+
+        // 6. Data untuk PieChart (Distribusi SOP Organisasi per Status)
+        const sopDist = await getSopOrgDistByStatus();
+        if (
+            sopDist.data && (
+                sopDist.data.berlaku > 0 ||
+                sopDist.data.tidak_berlaku > 0 ||
+                sopDist.data.proses > 0
+            )
+        ) {
+            sopOrgDistByStatus.value = [
+                { name: "Berlaku", y: sopDist.data.berlaku || 0, color: "#1C64F2" },
+                { name: "Tidak Berlaku", y: sopDist.data.tidak_berlaku || 0, color: "#16BDCA" },
+                { name: "Sedang Proses", y: sopDist.data.proses || 0, color: "#9061F9" }
+            ];
         }
 
     } catch (error) {
@@ -103,27 +120,47 @@ const fetchData = async () => {
 
 onMounted(() => {
     fetchData();
-})
+});
 </script>
 
 <template>
     <PageTitle judul="Visualisasi Data" class="mt-3 mb-7" />
 
     <div class="border-2 border-dashed rounded-lg border-gray-300 mb-4">
-        <ColumnChart name="Jumlah SOP Per Organisasi" :series="nominalSop" />
+        <template v-if="authStore.userRole === 'kadep'">
+            <ColumnChart name="Jumlah SOP Per Organisasi" :series="nominalSop" title-hover="Jumlah SOP di seluruh organisasi di DSI" v-if="nominalSop.length > 0" />
+            <EmptyGrid v-else message="Belum ada SOP yang dibuat!" />
+        </template>
+        <template v-else>
+            <ColumnChart name="SOP dengan revisi terbanyak" :series="mostRevisedSop"
+                v-if="mostRevisedSop[0]?.data.length > 0" title-hover="Top 8 SOP yang paling banyak direvisi di organisasi anda" />
+            <EmptyGrid v-else message="Belum ada SOP yang dibuat!" />
+        </template>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4 my-4">
         <div class="border-2 border-dashed rounded-lg border-gray-300">
-            <LineChart name="Tren Pembuatan SOP" :series="sopMakingTrend" />
+            <LineChart name="Tren Pembuatan SOP" :series="sopMakingTrend" v-if="sopMakingTrend[0]?.data.length > 0" />
+            <EmptyGrid v-else message="Belum ada SOP yang dibuat!" />
         </div>
         <div class="border-2 border-dashed rounded-lg border-gray-300">
             <PieChart name="Jumlah User per Role" :series="nominalUser" />
         </div>
         <div class="border-2 border-dashed rounded-lg border-gray-300">
-            <ColumnChart name="SOP dengan feedback terbanyak" :series="nominalFeedback" />
+            <ColumnChart name="SOP dengan feedback terbanyak" :series="nominalFeedback"
+                v-if="nominalFeedback[0]?.data.length > 0" title-hover="Top 8 SOP yang paling banyak mendapatkan umpan balik" />
+            <EmptyGrid v-else message="Belum ada SOP yang mendapat feedback user!" />
         </div>
         <div class="border-2 border-dashed rounded-lg border-gray-300">
-            <ColumnChart name="SOP dengan revisi terbanyak" :series="mostRevisedSop" />
+            <template v-if="authStore.userRole === 'kadep'">
+                <ColumnChart name="SOP dengan revisi terbanyak" :series="mostRevisedSop"
+                    v-if="mostRevisedSop[0]?.data.length > 0" title-hover="Top 8 SOP yang paling sering direvisi di DSI" />
+                <EmptyGrid v-else message="Belum ada SOP yang dibuat!" />
+            </template>
+            <template v-else>
+                <PieChart v-if="sopOrgDistByStatus.length > 0" name="Jumlah SOP per Status"
+                    :series="sopOrgDistByStatus" title-hover="Distribusi SOP pada organisasi anda berdasarkan statusnya" />
+                <EmptyGrid v-else message="Belum ada SOP yang dibuat!" />
+            </template>
         </div>
     </div>
 </template>

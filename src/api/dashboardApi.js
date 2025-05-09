@@ -6,11 +6,13 @@ const getSopDistByStatus = () => getRequest('dashboard/sop-dist-by-status');
 
 const getMostRevisedSop = () => getRequest('dashboard/most-revised-sop', getToken());
 const getAnnualSopMakingTrend = () => getRequest('dashboard/annual-sop-trend', getToken());
+const getSopOrgDistByStatus = () => getRequest('dashboard/sop-org-dist-by-status', getToken());
 const getNominalUserEachRole = () => getRequest('dashboard/nominal-user-each-role', getToken());
 const getNominalFeedbackTopSop = () => getRequest('dashboard/nominal-feedback-top-sop', getToken());
 const getNominalSopEachOrgByStatus = () => getRequest('dashboard/nominal-sop-each-org-by-status', getToken());
 
-export { 
+export {
     getNominalSopPerOrg, getSopDistByStatus,
-    getAnnualSopMakingTrend, getNominalUserEachRole, getNominalFeedbackTopSop, getNominalSopEachOrgByStatus, getMostRevisedSop
+    getAnnualSopMakingTrend, getNominalUserEachRole, getNominalFeedbackTopSop,
+    getNominalSopEachOrgByStatus, getMostRevisedSop, getSopOrgDistByStatus
 };
