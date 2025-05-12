@@ -2,7 +2,7 @@ import getToken from "@/utils/getToken";
 import { getRequest, postRequest, patchRequest, deleteRequest } from "./apiClient";
 import { uploadFile } from "./fileApi";
 
-const getUserByRole = (role) => getRequest(`user?role=${role}`, getToken());
+const getUserByRole = (role) => getRequest(`user/role/${role}`, getToken());
 const getUserProfile = () => getRequest('user/profile', getToken());
 
 const addProfilePhoto = (data) => uploadFile('user/profile/photo', data, getToken());

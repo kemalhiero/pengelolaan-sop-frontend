@@ -1,6 +1,6 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
-import { toast } from 'vue3-toastify';
+import { useToastPromise } from "@/utils/toastPromiseHandler";
 import { getLawType, createLawType, updateLawType, deleteLawType } from '@/api/lawTypeApi';
 
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
@@ -64,24 +64,34 @@ const openAddModal = () => {
 // Fungsi untuk mengirim data ke API dengan metode POST
 const submitData = async () => {
     try {
-        await createLawType(form.value);
-        resetForm();
-
-        showAddModal.value = false;
-        fetchData();
-
-        toast("Data berhasil ditambahkan!", {
-            type: "success",
-            autoClose: 3000,
-        });
-
+        await useToastPromise(
+            new Promise((resolve, reject) => {
+                createLawType(form.value)
+                    .then(() => {
+                        resetForm();
+                        showAddModal.value = false;
+                        fetchData();
+                        resolve();
+                    })
+                    .catch((err) => {
+                        console.error('Error saat mengirim data:', err);
+                        reject(err);
+                    });
+            }),
+            {
+                messages: {
+                    pending: "Menyimpan data...",
+                    success: "Data berhasil disimpan!",
+                    error: (err) => `Gagal menyimpan data! <br> ${err}`
+                },
+                toastOptions: { 
+                    autoClose: 3000, 
+                    dangerouslyHTMLString: true 
+                }
+            }
+        );
     } catch (error) {
         console.error('Error saat mengirim data:', error);
-        toast(`Data gagal ditambahkan! <br> ${error} `, {
-            type: "error",
-            autoClose: 5000,
-            dangerouslyHTMLString: true
-        });
     }
 };
 
@@ -101,27 +111,35 @@ const closeDeleteModal = () => {
 
 const deleteData = async (id) => {  // Fungsi untuk menghapus data berdasarkan ID
     try {
-        console.log(id)
-        const response = await deleteLawType(id);
-        console.log(response);
-
-        // Lakukan penghapusan item dari array data
-        data.value = data.value.filter(item => item.id !== id);
-        closeDeleteModal(); // Tutup modal setelah penghapusan
-
-        toast("Data berhasil dihapus!", {
-            type: "success",
-            autoClose: 3000,
-        });
-
-        console.log(`Data dengan ID ${id} berhasil dihapus`);
+        useToastPromise(
+            new Promise((resolve, reject) => {
+                deleteLawType(id)
+                    .then(() => {
+                        // Lakukan penghapusan item dari array data
+                        data.value = data.value.filter(item => item.id !== id);
+                        closeDeleteModal(); // Tutup modal setelah penghapusan
+                        console.log(`Data dengan ID ${id} berhasil dihapus`);
+                        resolve();
+                    })
+                    .catch((err) => {
+                        console.error('Delete error:', err);
+                        reject(err);
+                    });
+            }),
+            {
+                messages: {
+                    pending: "Menghapus data...",
+                    success: "Data berhasil dihapus!",
+                    error: (err) => `Gagal menghapus data! <br> ${err}`
+                },
+                toastOptions: { 
+                    autoClose: 5000, 
+                    dangerouslyHTMLString: true 
+                }
+            }
+        );
     } catch (error) {
         console.error('Delete error:', error);
-        toast(`Data gagal dihapus! <br> ${error} `, {
-            type: "error",
-            autoClose: 5000,
-            dangerouslyHTMLString: true
-        });
     }
 };
 
@@ -152,32 +170,39 @@ const closeUpdateModal = () => {
 
 const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan ID
     try {
-        const response = await updateLawType(id, form.value);
-        console.log(response);
-        console.log(`Data dengan ID ${id} berhasil diperbarui`);
-
-        fetchData();
-        closeUpdateModal(); // Tutup modal setelah penghapusan
-        toast("Data berhasil diperbarui!", {
-            type: "success",
-            autoClose: 3000,
-        });
-
+        await useToastPromise(
+            new Promise((resolve, reject) => {
+            updateLawType(id, form.value)
+                .then(() => {
+                    fetchData();
+                    closeUpdateModal();
+                    resolve();
+                })
+                .catch((err) => {
+                    console.error('Update error:', err);
+                    reject(err);
+                });
+            }),
+            {
+                messages: {
+                    pending: "Memperbarui data...",
+                    success: "Data berhasil diperbarui!",
+                    error: (err) => `Gagal memperbarui data! <br> ${err}`
+                },
+                toastOptions: { 
+                    autoClose: 3000, 
+                    dangerouslyHTMLString: true 
+                }
+            }
+        );
     } catch (error) {
         console.error('Update error:', error);
-        toast(`Data gagal diperbarui! <br> ${error} `, {
-            type: "error",
-            autoClose: 5000,
-            dangerouslyHTMLString: true
-        });
     }
 };
 
-// ---------------------------------
 onMounted(() => {
     fetchData();
 });
-
 </script>
 
 <template>

@@ -114,7 +114,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/docs/SopLegalization.vue'),
       meta: {
         requiresAuth: true,
-        roles: ['pj', 'kadep']
+        roles: ['kadep']
       }
     },
     {
