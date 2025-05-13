@@ -1,13 +1,12 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { toast } from 'vue3-toastify';
 
 import { useToastPromise } from '@/utils/toastPromiseHandler';
 import { useAuthStore } from '@/stores/auth';
 import { getOrg } from '@/api/orgApi';
 import { createSopDrafter, getUserByRole, getUserProfile } from '@/api/userApi';
-import { createSop, createSopDetail, deleteSop } from '@/api/sopApi';
+import { createSop, createSopDetail, deleteSop, getLatestSopInYear } from '@/api/sopApi';
 
 import DataTable from '@/components/DataTable.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
@@ -23,15 +22,19 @@ const showDrafterModal = ref(false);
 const currentYear = new Date().getFullYear();
 const dataOrg = ref([]);
 const dataDrafter = ref([]);
-const showDrafterWarning = ref(false);
+const showWarning = ref({
+    drafter: false,
+    number: false
+});
 const form = ref({
     name: '',
-    number: '',
+    number: 0,
     id_org: '',
     drafter: [],
     description: ''
 });
 const authStore = useAuthStore();
+let latestSopNumber = 0;
 
 const fetchOrg = async () => {
     try {
@@ -51,95 +54,89 @@ const fetchDrafter = async () => {
     }
 };
 
+const fetchLatestSopInYear = async () => {
+  try {
+    const response = await getLatestSopInYear(currentYear);
+    latestSopNumber = parseInt(response.data.number.split("/")[1]);
+    form.value.number = latestSopNumber + 1;
+  } catch (error) {
+    console.error('Fetch error:', error);
+  }
+};
+
 const removeDrafter = (index) => {
     form.value.drafter.splice(index, 1);
 };
 
 const submitSop = async () => {
-    const syncPromise = new Promise(async (resolve, reject) => {
-        let createdSopId = null;
-        try {
-            if (form.value.drafter.length == 0) {
-                showDrafterWarning.value = true;
-                return;
-            }
-            showDrafterWarning.value = false;
+    try {
+        // Validasi paralel & singkat
+        showWarning.value.drafter = !form.value.drafter.length;
+        showWarning.value.number = form.value.number <= latestSopNumber || form.value.number > 999;
+        if (showWarning.value.drafter || showWarning.value.number) return;
 
-            // 1. Create SOP
-            let dataSop;
-            try {
-                dataSop = await createSop({
-                    id_org: form.value.id_org,
-                    name: form.value.name
-                });
-                createdSopId = dataSop.data.id_sop;
-            } catch (error) {
-                const msg = error?.error?.message || error?.message || 'Gagal membuat SOP';
-                toast.error(msg);
-                return reject(msg);
-            }
 
-            // 2. Create SOP Detail
-            let resultSopdetail;
-            try {
-                resultSopdetail = await createSopDetail(
-                    dataSop.data.id_sop,
-                    {
-                        number: `T/${String(form.value.number).padStart(3, '0')}/UN16.17.02/OT.01.00/${currentYear}`,
-                        description: form.value.description,
-                        version: 1
+        await useToastPromise(
+            () =>
+                new Promise(async (resolve, reject) => {
+                    let createdSopId = null;
+
+                    let dataSop = await createSop({
+                        id_org: form.value.id_org,
+                        name: form.value.name
+                    }) || null;
+                    createdSopId = dataSop?.data?.id_sop;
+                    if (!dataSop.success) {
+                        console.error('Error creating SOP:', dataSop.error);
+                        reject(dataSop.error?.message || dataSop.error || 'Terjadi kesalahan saat membuat SOP');
+                        return;
                     }
-                );
-            } catch (error) {
-                const msg = error?.error?.message || error?.message || 'Gagal membuat detail SOP';
-                toast.error(msg);
-                // Hapus SOP yang sudah dibuat jika detail gagal
-                if (createdSopId) {
-                    try {
+
+                    let resultSopdetail = await createSopDetail(
+                        dataSop.data.id_sop,
+                        {
+                            number: `T/${String(form.value.number).padStart(3, '0')}/UN16.17.02/OT.01.00/${currentYear}`,
+                            description: form.value.description,
+                            version: 1,
+                            signer_id: null,
+                        }
+                    ) || null;
+
+                    if (!resultSopdetail.success) {
                         await deleteSop(createdSopId);
-                    } catch (delErr) {
-                        // Optional: tampilkan error penghapusan
-                        toast.error('Gagal menghapus SOP setelah error: ' + (delErr?.error?.message || delErr?.message));
+                        console.error('Error creating SOP detail:', resultSopdetail.error);
+                        reject(resultSopdetail.error?.message || resultSopdetail.error || 'Terjadi kesalahan saat membuat detail SOP');
+                        return;
                     }
+
+                    await Promise.all(
+                        form.value.drafter.map(item =>
+                            createSopDrafter({
+                                id_user: item.id,
+                                id_sop_detail: resultSopdetail.data.id_sop_detail,
+                            })
+                        )
+                    );
+
+                    setTimeout(() => {
+                        router.push('/app/docs');
+                    }, 2000);
+                    resolve();
+                }),
+            {
+                messages: {
+                    success: 'Sukses mengusulkan SOP baru!',
+                    error: (msg) => msg,
+                },
+                toastOptions: {
+                    autoClose: 5000,
+                    dangerouslyHTMLString: true,
                 }
-                return reject(msg);
             }
-
-            // 3. Create SOP Drafter
-            try {
-                for (const item of form.value.drafter) {
-                    await createSopDrafter({
-                        id_user: item.id,
-                        id_sop_detail: resultSopdetail.data.id_sop_detail,
-                    });
-                }
-            } catch (error) {
-                const msg = error?.error?.message || error?.message || 'Gagal menambahkan drafter';
-                toast.error(msg);
-                return reject(msg);
-            }
-
-            setTimeout(() => {
-                router.push('/app/docs')
-            }, 2000)
-            resolve('Berhasil menambahkan semua data!');
-        } catch (error) {
-            const msg = error?.error?.message || error?.message || 'Terjadi kesalahan';
-            toast.error(msg);
-            reject(msg);
-        }
-    });
-
-    useToastPromise(syncPromise, {
-        messages: {
-            success: 'Sukses mengusulkan SOP baru!',
-            error: (msg) => msg,
-        },
-        toastOptions: {
-            autoClose: 5000,
-            dangerouslyHTMLString: true,
-        }
-    });
+        );
+    } catch (error) {
+        console.error('Error:', error);
+    }
 };
 
 const fetchProfile = async () => {
@@ -148,6 +145,7 @@ const fetchProfile = async () => {
         const org = dataOrg.value.find(org => org.name === result.data.org);
         if (org) {
             dataOrg.value = [org];
+            form.value.id_org = org.id;
         }
     } catch (error) {
         console.error('Fetch error:', error);
@@ -157,11 +155,11 @@ const fetchProfile = async () => {
 onMounted(() => {
     fetchOrg();
     fetchDrafter();
+    fetchLatestSopInYear();
     if (authStore.userRole == 'pj') {
         fetchProfile();
     }
 });
-
 </script>
 
 <template>
@@ -185,18 +183,15 @@ onMounted(() => {
                             Nomor<span class="text-red-600">*</span>
                         </label>
                         <div class="flex items-center">
-                            <span
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg p-2.5">
-                                T/
-                            </span>
-                            <input name="num" type="number" min="1" max="999" required v-model="form.number" @blur=""
+                            <span class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg p-2.5"> T/ </span>
+                            <input id="num" type="number" :min="form.number" max="999" required v-model="form.number" @click="showWarning.number = false"
                                 class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 min-w-12 w-full"
                                 title="Masukkan no urut sop">
-                            <span
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5 w-fit whitespace-nowrap">
+                            <span class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5 w-fit whitespace-nowrap">
                                 /UN16.17.02/OT.01.00/{{ currentYear }}
                             </span>
                         </div>
+                        <WarningText v-show="showWarning.number" text="Nomor sudah dipakai, ganti dengan yang lain!" />
                     </div>
 
                     <div class="col-span-2 sm:col-span-1">
@@ -205,10 +200,15 @@ onMounted(() => {
                         </label>
                         <select id="org" v-model="form.id_org" required
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                            <option selected disabled value="">Pilih organisasi</option>
-                            <option v-for="(item, index) in dataOrg" :value="item.id" :key="`org-${index}`">
-                                {{ item.name }}
-                            </option>
+                            <template v-if="authStore.userRole == 'kadep'">
+                                <option selected disabled value="">Pilih organisasi</option>
+                                <option v-for="(item, index) in dataOrg" :value="item.id" :key="`org-${index}`">
+                                    {{ item.name }}
+                                </option>
+                            </template>
+                            <template v-else>
+                                <option selected :value="dataOrg[0]?.id">{{ dataOrg[0]?.name }}</option>
+                            </template>
                         </select>
                     </div>
 
@@ -222,8 +222,7 @@ onMounted(() => {
                                 <li v-for="(item, index) in form.drafter" :key="index"
                                     class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
                                     <span class="mr-2">{{ item.name }}</span>
-                                    <button :title="`Hapus item ${index + 1}`" @click="removeDrafter(index)"
-                                        type="button"
+                                    <button :title="`Hapus item ${index + 1}`" @click="removeDrafter(index)" type="button"
                                         class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
                                         <TrashCanIcon class="fill-current w-4" />
                                     </button>
@@ -231,15 +230,13 @@ onMounted(() => {
                             </ul>
                         </div>
 
-                        <button @click="showDrafterModal = true"
-                            class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center"
-                            type="button">
+                        <button @click="showDrafterModal = true" type="button"
+                            class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center">
                             Tambahkan User
                         </button>
 
-                        <WarningText v-show="showDrafterWarning"
+                        <WarningText v-show="showWarning.drafter"
                             text="Jangan lupa untuk memilih user yang akan ditugaskan!" />
-
                     </div>
 
                     <div class="col-span-2">
@@ -260,44 +257,33 @@ onMounted(() => {
     </section>
 
     <div v-show="showDrafterModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
-
         <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showDrafterModal = false"></div>
-
         <div class="relative w-full max-w-2xl max-h-full">
-            <!-- Modal content -->
             <div class="relative bg-white rounded-lg shadow">
-                <!-- Modal header -->
                 <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
                     <h3 class="text-xl font-medium text-gray-900">
                         Centang user yang akan ditugaskan untuk membuat SOP
                     </h3>
-                    <button type="button"
-                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
-                        @click="showDrafterModal = false">
+                    <button type="button" @click="showDrafterModal = false"
+                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">
                         <XMarkCloseIcon class="w-3 h-3" />
                         <span class="sr-only">Tutup modal</span>
                     </button>
                 </div>
-                <!-- Modal body -->
                 <div class="p-4 md:p-5 space-y-4">
-                    <DataTable 
-                        :data="dataDrafter" 
+                    <DataTable :data="dataDrafter"
                         :columns="[{ field: 'name', label: 'Nama', sortable: true, searchable: true },]"
-                        :check-column="true"
-                        v-model="form.drafter" 
+                        :check-column="true" v-model="form.drafter" 
                     />
                 </div>
-                <!-- Modal footer -->
-                <div
-                    class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
+                <div class="flex items-center p-4 md:p-5 space-x-3 border-t border-gray-200 rounded-b">
                     <button :disabled="form.drafter.length == 0"
-                        @click="showDrafterModal = false, showDrafterWarning = false" type="button"
+                        @click="showDrafterModal = false, showWarning.drafter = false" type="button"
                         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">
                         Pilih
                     </button>
                 </div>
             </div>
         </div>
-
     </div>
 </template>

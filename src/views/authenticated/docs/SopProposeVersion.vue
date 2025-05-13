@@ -1,7 +1,6 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { toast } from 'vue3-toastify';
 
 import { useToastPromise } from '@/utils/toastPromiseHandler';
 import { createSopDrafter, getUserByRole } from '@/api/userApi';
@@ -28,8 +27,12 @@ const form = ref({
     description: ''
 });
 let sopYear;
+let latestSopNumber = 0;
 const dataDrafter = ref([]);
-const showDrafterWarning = ref(false);
+const showWarning = ref({
+    drafter: false,
+    number: false
+});
 
 const fetchData = async () => {
   try {
@@ -44,8 +47,8 @@ const fetchData = async () => {
 const fetchLatestSopInYear = async () => {
   try {
     const response = await getLatestSopInYear(sopYear);
-    const parts = response.data.number.split("/");
-    form.value.number = parseInt(parts[1]) + 1 ;
+    latestSopNumber = parseInt(response.data.number.split("/")[1]);
+    form.value.number = latestSopNumber + 1;
     form.value.version = response.data.version;
   } catch (error) {
     console.error('Fetch error:', error);
@@ -67,13 +70,13 @@ const removeDrafter = (index) => {
 
 const submitSop = async () => {
     try {
-        if (form.value.drafter.length == 0) {
-            return showDrafterWarning.value = true
-        }
-        showDrafterWarning.value = false;
+        showWarning.value.drafter = !form.value.drafter.length;
+        showWarning.value.number = form.value.number <= latestSopNumber || form.value.number > 999;
+        if (showWarning.value.drafter || showWarning.value.number) return;
 
         await useToastPromise(
-            (async () => {
+            () =>
+                new Promise(async (resolve, reject) => {
                 // 1. Buat detail SOP
                 const resultSopdetail = await createSopDetail(
                     route.params.id,
@@ -84,6 +87,12 @@ const submitSop = async () => {
                         signer_id: null,
                     }
                 );
+                if (!resultSopdetail.success) {
+                    console.error('Error creating SOP detail:', resultSopdetail.error);
+                    reject(resultSopdetail.error?.message || resultSopdetail.error || 'Terjadi kesalahan saat membuat detail SOP');
+                    return;
+                }
+
                 // 2. Buat semua drafter sekaligus
                 await Promise.all(
                     form.value.drafter.map(item =>
@@ -93,12 +102,15 @@ const submitSop = async () => {
                         })
                     )
                 );
-            })(),
+                resolve();
+            }),
             {
                 messages: {
-                    pending: 'Menyimpan data SOP...',
-                    success: 'SOP versi baru & penyusun berhasil dibuat!',
-                    error: 'Gagal membuat SOP versi baru atau penyusun!'
+                    success: 'SOP versi baru berhasil dibuat!',
+                    error: (msg) => msg,
+                },
+                toastOptions: {
+                    autoClose: 5000,
                 }
             }
         );
@@ -128,24 +140,20 @@ onMounted( async() => {
                 <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
                     
                     <div class="col-span-2 sm:col-span-1">
-                        <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
+                        <label for="num" class="block mb-2 text-sm font-medium text-gray-900">
                             Nomor
                             <span class="text-red-600">*</span>
                         </label>
                         <div class="flex items-center">
-                            <span
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg p-2.5">
-                                T/
-                            </span>
-                            <input type="number" :min="form.number" max="999" required v-model="form.number"
-                            @blur=""
+                            <span class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg p-2.5"> T/ </span>
+                            <input id="num" type="number" :min="form.number" max="999" required v-model="form.number" @click="showWarning.number = false"
                                 class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 min-w-12 w-full"
                                 title="Masukkan no urut sop">
-                                <span
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5 w-fit whitespace-nowrap">
+                            <span class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5 w-fit whitespace-nowrap">
                                 /UN16.17.02/OT.01.00/{{ currentYear }}
                             </span>
                         </div>
+                        <WarningText v-show="showWarning.number" text="Nomor sudah dipakai, ganti dengan yang lain!" />
                     </div>
 
                     <div class="col-span-2">
@@ -158,8 +166,7 @@ onMounted( async() => {
                                 <li v-for="(item, index) in form.drafter" :key="index"
                                     class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
                                     <span class="mr-2">{{ item.name }}</span>
-                                    <button :title="`Hapus item ${index + 1}`" @click="removeDrafter(index)"
-                                        type="button"
+                                    <button :title="`Hapus item ${index + 1}`" @click="removeDrafter(index)" type="button"
                                         class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
                                         <TrashCanIcon class="fill-current w-4" />
                                     </button>
@@ -167,14 +174,12 @@ onMounted( async() => {
                             </ul>
                         </div>
 
-                        <button @click="showDrafterModal = true"
-                            class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center"
-                            type="button">
+                        <button @click="showDrafterModal = true" type="button"
+                            class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center">
                             Tambahkan User
                         </button>
 
-                        <WarningText v-show="showDrafterWarning" text="Jangan lupa untuk memilih user yang akan ditugaskan!" />
-
+                        <WarningText v-show="showWarning.drafter" text="Jangan lupa untuk memilih user yang akan ditugaskan!" />
                     </div>
 
                     <div class="col-span-2">
@@ -196,13 +201,9 @@ onMounted( async() => {
 
     <!-- TODO ntar tampilin juga user yang sudah terpilih sebelumnya (sudah terceklis saat modal ditampilin) -->
     <div v-show="showDrafterModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
-
         <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showDrafterModal = false"></div>
-
         <div class="relative w-full max-w-2xl max-h-full">
-            <!-- Modal content -->
             <div class="relative bg-white rounded-lg shadow">
-                <!-- Modal header -->
                 <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
                     <h3 class="text-xl font-medium text-gray-900">
                         Centang user yang akan ditugaskan untuk membuat SOP
@@ -214,7 +215,6 @@ onMounted( async() => {
                         <span class="sr-only">Tutup modal</span>
                     </button>
                 </div>
-                <!-- Modal body -->
                 <div class="p-4 md:p-5 space-y-4">
                     <DataTable 
                         :data="dataDrafter" 
@@ -223,17 +223,15 @@ onMounted( async() => {
                         v-model="form.drafter" 
                     />
                 </div>
-                <!-- Modal footer -->
                 <div
                     class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
                     <button :disabled="form.drafter.length == 0"
-                        @click="showDrafterModal = false, showDrafterWarning = false" type="button"
+                        @click="showDrafterModal = false, showWarning.drafter = false" type="button"
                         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">
                         Pilih
                     </button>
                 </div>
             </div>
         </div>
-
     </div>
 </template>

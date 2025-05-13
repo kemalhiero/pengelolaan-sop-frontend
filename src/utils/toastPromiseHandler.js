@@ -59,7 +59,12 @@ export const useToastPromise = (promiseCallback, options = {}) => {
             },
             error: {
                 render({ data }) {
-                    const errorMessage = data?.error?.message || messages.error || defaultMessages.error;
+                    // Jika data adalah string, tampilkan langsung
+                    if (typeof data === 'string') {
+                        return `Gagal: ${data}`;
+                    }
+                    // Jika data adalah object error
+                    const errorMessage = data?.error?.message || data?.message || messages.error || defaultMessages.error;
                     return `Gagal: ${errorMessage}`;
                 },
                 icon: icons.error || defaultIcons.error
