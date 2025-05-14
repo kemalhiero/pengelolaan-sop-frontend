@@ -14,15 +14,15 @@ const activeTab = ref('document');
 </script>
 
 <template>
-    <div class="max-w-screen-xl mx-auto">
-        <div class="max-w-4xl mx-auto text-center">
+    <div class="max-w-screen-xl mx-auto mb-10">
+        <div class="max-w-4xl mx-auto text-center print:hidden">
             <p>
                 Berikut pratinjau dokumen dari data yang sudah anda masukkan sebelumnya. <br> 
                 Periksa terlebih dahulu sebelum dikirim!
             </p>
         </div>
 
-        <div class="flex justify-center my-6">
+        <div class="flex justify-center my-6 print:hidden">
             <div class="inline-flex rounded-md shadow-sm" role="group">
             <button 
                 @click="activeTab = 'document'" 
@@ -77,8 +77,5 @@ const activeTab = ref('document');
                 :implementer="formData.implementer" 
             />
         </div>
-
-        <Divider/>
-
     </div>
 </template>

@@ -11,6 +11,7 @@ import SopInfoTemplate from '@/components/sop/SopInfoTemplate.vue';
 import SopStepTemplate from '@/components/sop/SopStepTemplate.vue';
 import PrintIcon from '@/assets/icons/PrintIcon.vue';
 import Error from '@/components/Error.vue';
+import roleAbbreviation from '@/data/roleAbbrv.json';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';
@@ -138,7 +139,6 @@ onMounted(fetchAllData);
     </h2>
 
     <template v-if="!isDataError">
-
         <div>
             <!-- Tab Buttons -->
             <div class="flex justify-center mb-6 print:hidden">
@@ -215,9 +215,9 @@ onMounted(fetchAllData);
                 </div>
             </div>
 
-            <div class="w-fit lg:w-2/3 flex flex-col sm:mx-auto mx-10 mt-10 mb-6 print:hidden">
+            <div class="mx-4 sm:mx-10 lg:w-2/3 lg:mx-auto mt-10 mb-6 print:hidden">
                 <div class="border-b-2 border-blue-500 pb-2 mb-4 flex justify-between items-center">
-                    <h2 class="text-xl font-bold">Umpan Balik Pengguna</h2>
+                    <h2 class="text-2xl font-bold">Umpan Balik Pengguna</h2>
                     <span v-if="draftFeedback && draftFeedback.length > 0" class="text-sm text-gray-500">{{ draftFeedback.length }} komentar</span>
                 </div>
                 
@@ -233,7 +233,7 @@ onMounted(fetchAllData);
                                     </svg>
                                 </div>
                                 <span class="text-sm font-bold text-gray-800">{{ feedback?.user?.name || 'User' }}</span>
-                                <span class="ml-2 px-1.5 py-0.5 text-xs bg-gray-200 text-gray-700 rounded-full">{{ feedback.user.role }}</span>
+                                <span class="ml-2 px-1.5 py-0.5 text-xs bg-gray-200 text-gray-700 rounded-full">{{ roleAbbreviation[feedback.user.role] }}</span>
                                 <span class="mx-2 text-gray-400 text-xs">|</span>
                                 <span class="text-xs text-gray-600">{{ feedback?.createdAt || '-' }}</span>
                             </div>
@@ -286,7 +286,7 @@ onMounted(fetchAllData);
                 </div>
             </div>
             
-            <div class="lg:w-2/3 sm:mx-auto mx-10 my-10 print:hidden">
+            <div class="mx-4 sm:mx-10 lg:w-2/3 lg:mx-auto my-10 print:hidden">
                 <div class="border-b-2 border-blue-500 pb-2 mb-6">
                     <h2 class="text-2xl font-bold">Form Umpan Balik</h2>
                 </div>

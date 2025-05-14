@@ -181,7 +181,7 @@ onMounted(() => {
                     class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 h-48">{{ picInfo.description }}</textarea>
             </div>
     
-            <div class="text-black flex flex-row">
+            <div class="text-black flex flex-row mb-5">
                 <div class="w-1/2">
                     <h2 class="mb-2 text-sm font-semibold">User yang ditugaskan:</h2>
                     <ul class="space-y-1 list-disc list-inside text-sm">
@@ -210,7 +210,7 @@ onMounted(() => {
                 Seksi<span class="text-red-600">*</span>
                 <Tooltip field="section" text="Misal: Semua Seksi di Lingkungan Departemen Sistem Informasi" />
             </label>
-            <input type="text" id="sop-section" v-model="formData.section" required :disabled="isDisabled"
+            <input type="text" id="sop-section" v-model="formData.section" required :disabled="isDisabled" @focus="showWarningText.section = false"
                 class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 " />
             <WarningText v-if="showWarningText.section" text="Harap isi data ini!" />
         </div>
@@ -234,9 +234,8 @@ onMounted(() => {
             </div>
 
             <button @click="showModal.executor = true" :disabled="isDisabled"
-                :title="isDisabled ? 'Tidak dapat menambah item!' : 'Tambah Pelaksana'"
                 class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center disabled:cursor-not-allowed disabled:bg-opacity-60"
-                type="button">
+                type="button" :title="isDisabled ? 'Tidak dapat menambah item!' : 'Tambah Pelaksana'">
                 Tambah Pelaksana
             </button>
 
@@ -278,7 +277,7 @@ onMounted(() => {
                 <Tooltip field="implement-qualification" text="Misal: Memiliki kemampuan pengolahan data sederhana" />
             </label>
             <input type="text" id="implement-qualification" v-model="implementQualification.newItem.value" @keyup.enter.prevent="implementQualification.addItem"
-                class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
+                class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 " @focus="showWarningText.implementQualification = false"
                 :placeholder="isDisabled ? 'Tidak dapat menambahkan item!' : 'Ketikkan, lalu tekan enter'" title="Contoh: Memiliki Kemampuan pengolahan data sederhana" :disabled="isDisabled" />
             <WarningText v-if="showWarningText.implementQualification"
                 text="Jangan lupa ketikkan kualifikasi pelaksanaan!" />
@@ -383,15 +382,12 @@ onMounted(() => {
 
     </div>
 
-    <!-- <button @click="console.log(form)">konsol</button> -->
-
     <!-- Large Modal -->
     <div v-show="showModal.legalBasis" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
         <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showModal.legalBasis = false"></div>
 
         <div class="relative w-full max-w-4xl max-h-full">
             <div class="relative bg-white rounded-lg shadow">
-                <!-- Modal header -->
                 <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
                     <h3 class="text-xl font-medium text-gray-900 dark:text-white">
                         Centang peraturan yang akan ditambahkan ke SOP
@@ -404,9 +400,7 @@ onMounted(() => {
                         <span class="sr-only">Tutup modal</span>
                     </button>
                 </div>
-                <!-- Modal body -->
                 <div class="p-4 md:p-5 space-y-4">
-
                     <DataTable v-if="legalBasisData"
                         :data="legalBasisData" 
                         :columns="[{ field: 'legal', label: 'Peraturan', sortable: true, searchable: true }]" 
@@ -414,13 +408,11 @@ onMounted(() => {
                         v-model="formData.legalBasis" 
                     />
                     <PulseLoading v-else />
-
                 </div>
-                <!-- Modal footer -->
-                <div
-                    class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
+                <div class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
                     <button :disabled="formData.legalBasis.length == 0" @click="showModal.legalBasis = false" type="button"
-                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Pilih</button>
+                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">
+                        Pilih</button>
                 </div>
             </div>
         </div>
@@ -428,7 +420,6 @@ onMounted(() => {
 
     <div v-show="showModal.executor" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
         <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showModal.executor = false"></div>
-
         <div class="relative w-full max-w-xl max-h-full">
             <div class="relative bg-white rounded-lg shadow">
                 <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
@@ -450,8 +441,7 @@ onMounted(() => {
                         v-model="formData.implementer"
                     />
                 </div>
-                <div
-                    class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
+                <div class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
                     <button :disabled="formData.implementer.length == 0" @click="showModal.executor = false" type="button"
                         class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Pilih</button>
                 </div>

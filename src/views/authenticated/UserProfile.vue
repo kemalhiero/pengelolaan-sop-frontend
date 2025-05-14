@@ -437,7 +437,7 @@ onMounted(() => {
                         <div class="space-y-2">
                             <label class="block text-sm font-medium text-gray-700">Nama</label>
                             <div class="flex items-center border border-gray-300 rounded-lg shadow-sm">
-                                <input type="text" disabled v-model="userProfile.name"
+                                <input type="text" disabled :value="userProfile.name"
                                     class="w-full pl-3 py-2 border-none bg-transparent" />
                                 <LockedInputColumnIndicator />
                             </div>
@@ -445,7 +445,7 @@ onMounted(() => {
                         <div class="space-y-2">
                             <label class="block text-sm font-medium text-gray-700">NIM/NIP</label>
                             <div class="flex items-center border border-gray-300 rounded-lg shadow-sm">
-                                <input type="text" disabled v-model="userProfile.id_number"
+                                <input type="text" disabled :value="userProfile.id_number"
                                     class="w-full pl-3 py-2 border-none bg-transparent" />
                                 <LockedInputColumnIndicator />
                             </div>
@@ -458,7 +458,7 @@ onMounted(() => {
                         <div class="space-y-2">
                             <label class="block text-sm font-medium text-gray-700">Gender</label>
                             <div class="flex items-center border border-gray-300 rounded-lg shadow-sm">
-                                <input type="text" disabled v-model="userProfile.gender"
+                                <input type="text" disabled :value="userProfile.gender"
                                     class="w-full pl-3 py-2 border-none bg-transparent" />
                                 <LockedInputColumnIndicator />
                             </div>
@@ -474,7 +474,7 @@ onMounted(() => {
                         <div class="space-y-2">
                             <label class="block text-sm font-medium text-gray-700">Organisasi</label>
                             <div class="flex items-center border border-gray-300 rounded-lg shadow-sm">
-                                <input type="text" disabled v-model="userProfile.org"
+                                <input type="text" disabled :value="userProfile.org"
                                     class="w-full pl-3 py-2 border-none bg-transparent" />
                                 <LockedInputColumnIndicator />
                             </div>

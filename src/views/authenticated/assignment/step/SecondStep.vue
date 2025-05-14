@@ -55,10 +55,10 @@ const addStep = () => {
         seq_number: newSeqNumber, // Tetapkan sequence number berdasarkan posisi
         name: '',
         type: '',
-        id_implementer: '',
+        id_implementer: implementerId,
         fittings: '',
-        time: '',
-        time_unit: 'h',
+        time: 0,
+        time_unit: 'm',
         output: '',
         description: ''
     });
@@ -93,6 +93,22 @@ watch(() => sopStep.value.map(step => step.type), (newTypes) => {
         }
     });
 }, { deep: true });
+
+// Watch implementer changes to auto-assign when there's only one
+let implementerId = 0;
+watch(() => formData.value.implementer,
+    (newValue) => {
+        if (newValue && newValue.length === 1 && sopStep.value) {
+            // When there's exactly one implementer, auto-assign its ID to all steps
+            implementerId = newValue[0].id;
+            sopStep.value = sopStep.value.map(step => ({
+                ...step,
+                id_implementer: implementerId
+            }));
+        }
+    },
+    { immediate: true }
+);
 
 // Initialize sequence numbers when component is loaded
 updateSequenceNumbers();
@@ -171,8 +187,8 @@ updateSequenceNumbers();
                                     class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 rounded-l-md w-14"
                                     placeholder="">
                                 <select v-model="step.time_unit" class="p-2 border border-gray-300 rounded-r-md w-20 disabled:opacity-100" :disabled="isDisabled">
-                                    <option value="h">Jam</option>
                                     <option value="m">Menit</option>
+                                    <option value="h">Jam</option>
                                     <option value="d">Hari</option>
                                     <option value="w">Minggu</option>
                                     <option value="mo">Bulan</option>

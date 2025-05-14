@@ -146,11 +146,11 @@ watch(() => sopStep.value,
                 id_next_step_if_yes: null,
                 seq_number: null,
                 name: '',
-                type: '',
-                id_implementer: '',
+                type: 'terminator',
+                id_implementer: 0,
                 fittings: '',
-                time: '',
-                time_unit: 'h',
+                time: 0,
+                time_unit: 'm',
                 output: '',
                 description: ''
             }];
@@ -532,7 +532,7 @@ const validateLastStep = () => {
 };
 
 const validateStepForm = (step) => {
-    if (!step.name || !step.type || !step.id_implementer || !step.time) {
+    if (!step.name || !step.type || !step.id_implementer || step.time === null || step.time_unit === null) {
         return false;
     }
     if (step.type === 'decision' && (!step.id_next_step_if_yes || !step.id_next_step_if_no)) {
@@ -654,12 +654,11 @@ onMounted(fetchAllData);
 </script>
 
 <template>
-    <PageTitle :judul="isDataError ? 'Ngapain iseng iseng?🤨' :  `Penyusunan Dokumen SOP`" class="my-12" />
+    <PageTitle :judul="isDataError ? 'Ngapain iseng iseng?🤨' :  `Penyusunan Dokumen SOP`" class="my-12 print:hidden" />
 
     <template v-if="!isDataError">
         <!-- Main SOP creation stepper and content -->
-        <ol
-            class="flex items-center justify-center w-full text-sm font-medium text-center text-gray-500 sm:text-base max-w-2xl mx-auto">
+        <ol class="flex items-center justify-center w-full text-sm font-medium text-center text-gray-500 sm:text-base max-w-2xl mx-auto print:hidden">
             <li class="flex md:w-full items-center text-blue-600 sm:after:content-[''] after:w-full after:h-1 after:border-b after:border-gray-400 after:border-1 after:hidden sm:after:inline-block after:mx-6 xl:after:mx-10"
                 title="Informasi mengenai sop yang ditentukan oleh penanggung jawab">
                 <span class="flex items-center after:content-['/'] sm:after:hidden after:mx-2 after:text-gray-400">
@@ -692,7 +691,7 @@ onMounted(fetchAllData);
             <ThirdStep v-else-if="currentStep == 3" />
         </div>
     
-        <div class="flex justify-between mb-8 px-6 max-w-3xl mx-auto">
+        <div class="flex justify-between mb-8 px-6 max-w-3xl mx-auto print:hidden">
             <button type="button" :disabled="currentStep == 1"
                 class="w-1/4 text-white bg-gray-500 hover:bg-gray-600 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 @click="prevStep">
@@ -721,7 +720,7 @@ onMounted(fetchAllData);
         </div>
     
         <!-- Floating feedback button and panel -->
-        <div class="fixed bottom-6 right-6 z-50">
+        <div class="fixed bottom-6 right-6 z-50 print:hidden">
             <div v-if="showFeedback && draftFeedback && draftFeedback.length > 0" 
                 class="absolute bottom-full right-0 mb-3 w-96 bg-white rounded-lg shadow-xl border border-gray-200 transition-all duration-300 transform origin-bottom-right">
                 <div class="flex justify-between items-center bg-blue-50 p-3 rounded-t-lg border-b border-gray-200">

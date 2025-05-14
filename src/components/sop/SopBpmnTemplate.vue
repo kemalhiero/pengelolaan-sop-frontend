@@ -202,6 +202,22 @@ onMounted(() => {
 const setSvgRef = (el, index) => {
   if (el) svgRefs.value[index] = el;
 };
+
+const calculateTitleWidth = (text, implementerCount) => {
+  // Base width untuk single character (dalam pixels)
+  const charWidth = 10;
+  
+  // Hitung maxWidth berdasarkan jumlah implementer
+  // Asumsi setiap implementer memiliki tinggi 120px
+  const rowHeight = 120;
+  const maxWidth = implementerCount * rowHeight * 0.8; // 0.8 sebagai safety factor
+  
+  // Hitung lebar text
+  const textWidth = text.length * charWidth;
+  
+  // Return nilai yang lebih kecil antara textWidth dan maxWidth
+  return Math.min(textWidth, maxWidth);
+};
 </script>
 
 <template>
@@ -212,9 +228,11 @@ const setSvgRef = (el, index) => {
         <table class="border-2 border-black relative z-10 w-full md:my-5" :style="{ minWidth: `${diagramWidth}px` }" id="bpmn-container">
           <tbody>
             <tr>
-              <td v-if="props.name" class="border-2 border-black w-10" :rowspan="implementer.length">
-                <div class="flex justify-center w-10">
-                  <p class="-rotate-90 origin-center whitespace-nowrap font-bold text-lg">
+              <td v-if="props.name" class="border-2 border-black" 
+                  :rowspan="implementer.length" :style="{ width: `${calculateTitleWidth(props.name, implementer.length)}px` }">
+                <div class="flex items-center justify-center">
+                  <p class="font-bold text-lg -rotate-90 text-center p-3"
+                     :class="calculateTitleWidth(props.name, implementer.length) >= (implementer.length * 120 * 0.8) ? 'whitespace-normal' : 'whitespace-nowrap'">
                     {{ capitalizeWords(props.name) }}
                   </p>
                 </div>
