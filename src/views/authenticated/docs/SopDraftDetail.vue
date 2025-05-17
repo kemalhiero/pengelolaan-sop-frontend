@@ -29,6 +29,8 @@ import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import SopStepTemplate from '@/components/sop/SopStepTemplate.vue';
 import Error from '@/components/Error.vue';
+import roleAbbreviation from '@/data/roleAbbrv.json';
+import BlueBadgeIndicator from '@/components/indicator/BlueBadgeIndicator.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -69,14 +71,27 @@ const submitFeedback = async () => {
         type: statusSop.value,
     };
 
-    // Jika setuju dan user adalah kadep, tampilkan modal konfirmasi terlebih dahulu
-    if (statusSop.value == 1 && authStore.userRole === 'kadep') {
-        // Simpan data feedback untuk digunakan nanti
+    // Jika setuju, tampilkan modal konfirmasi terlebih dahulu
+    if (statusSop.value == 1) {
         showModal.value.approveSopDraft = true;
-        return; // Hentikan eksekusi fungsi di sini
+        return;
     }
+    
+    console.log('feedbackData', feedbackData);
+    await processSubmitFeedback(feedbackData);
+};
 
-    // Untuk kasus lain (bukan kadep atau tidak setuju), lanjutkan normal
+const confirmSop = async () => {
+    showModal.value.approveSopDraft = false;
+
+    // Buat data feedback untuk diproses
+    const feedbackData = {
+        id_sop_detail: route.params.id,
+        feedback: newFeedback.value,
+        type: statusSop.value,
+    };
+
+    // Proses feedback dan update status
     await processSubmitFeedback(feedbackData);
 };
 
@@ -104,6 +119,14 @@ const processSubmitFeedback = async (feedbackData) => {
         }
     );
 
+    // Jika feedback adalah catatan, reload halaman setelah submit
+    if (feedbackData.type == 3) {
+        setTimeout(() => {
+            window.location.reload();
+        }, 3000);
+        return;
+    }
+
     // Tentukan status baru dan redirect path berdasarkan pilihan dan role
     let newStatus = null;
     let redirectPath = `/app/docs/${sopData.value.id_sop}`;
@@ -130,21 +153,6 @@ const processSubmitFeedback = async (feedbackData) => {
             router.push(redirectPath);
         }, 3000);
     }
-};
-
-const confirmSop = async () => {
-    // Tutup modal
-    showModal.value.approveSopDraft = false;
-
-    // Buat data feedback untuk diproses
-    const feedbackData = {
-        id_sop_detail: route.params.id,
-        feedback: newFeedback.value,
-        type: statusSop.value,
-    };
-
-    // Proses feedback dan update status
-    await processSubmitFeedback(feedbackData);
 };
 
 const redirectEditAssignment = () => {
@@ -205,6 +213,22 @@ const deleteData = async (id) => {
     } catch (error) {
         console.error('Error saat menghapus data SOP:', error);
     }
+};
+
+// Tambahkan fungsi pengecekan status
+const isFeedbackFormDisabled = () => {
+    return [1, 2, 7].includes(sopData.value.status);
+};
+
+// Fungsi untuk menentukan apakah hanya opsi "Catatan" yang boleh dipilih
+const isCatatanOnly = () => {
+    if (
+        (authStore.userRole === 'kadep' && [3, 4].includes(sopData.value.status)) ||
+        (authStore.userRole === 'pj' && [5, 6].includes(sopData.value.status))
+    ) {
+        return true;
+    }
+    return false;
 };
 
 const fetchAllData = async () => {
@@ -310,14 +334,15 @@ onMounted(fetchAllData);
                     class="bg-gray-200 p-4 rounded-lg shadow-md">
                     <div class="flex items-center">
                         <span class="text-base font-bold">{{ feedback?.user?.name || 'User' }}</span>
-                        <span class="ml-1 mr-2">({{ feedback.user.role }})</span> |
+                        <span class="ml-1 mr-2">({{ roleAbbreviation[feedback.user.role] }})</span> |
                         <span class="text-sm text-gray-600 mx-2">{{ feedback?.createdAt || '-' }}</span> |
                         <span class="mx-2">
                             <YellowBadgeIndicator v-if="feedback?.type == 'revisi'" teks="Perlu Revisi" />
                             <GreenBadgeIndicator v-else-if="feedback?.type == 'setuju'" teks="Setuju" />
+                            <BlueBadgeIndicator v-else-if="feedback?.type == 'catatan'" teks="Catatan" />
                         </span>
                     </div>
-                    <p class="text-lg mt-1">{{ feedback?.feedback || '-' }}</p>
+                    <p class="text-lg mt-1 whitespace-pre-line">{{ feedback?.feedback || '-' }}</p>
                 </div>
             </div>
             <div v-else class="text-center text-gray-500">
@@ -325,22 +350,25 @@ onMounted(fetchAllData);
             </div>
         </div>
 
-        <div class="w-full lg:w-2/3 flex justify-center mx-auto my-10" v-if="![1, 2, 7].includes(sopData.status)">
+        <div class="w-full lg:w-2/3 flex justify-center mx-auto my-10" v-if="!isFeedbackFormDisabled()">
             <form class="w-full bg-white space-y-5" @submit.prevent="submitFeedback">
                 <h2 class="text-xl font-semibold mb-4">Form Umpan Balik</h2>
                 <div>
-                    <label for="status" class="block mb-2 text-sm font-medium">Status<span
-                            class="text-red-600">*</span></label>
+                    <label for="status" class="block mb-2 text-sm font-medium">
+                        Tipe<span class="text-red-600">*</span>
+                    </label>
                     <select type="text" id="status" v-model="statusSop" required
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                        <option selected disabled value="">Pilih status</option>
-                        <option value="1">Setuju</option>
-                        <option value="2">Perlu Revisi</option>
+                        <option selected disabled value="">Pilih tipe</option>
+                        <option v-if="!isCatatanOnly()" value="1" title="Setujui SOP">Setujui</option>
+                        <option v-if="!isCatatanOnly()" value="2" title="SOP perlu direvisi lagi">Perlu Revisi</option>
+                        <option value="3" title="Hanya memberikan catatan/tanggapan tanpa menyetujui atau merevisi SOP">Catatan</option>
                     </select>
                 </div>
                 <div>
-                    <label for="description" class="block mb-2 text-sm font-medium">Keterangan<span
-                            class="text-red-600">*</span></label>
+                    <label for="description" class="block mb-2 text-sm font-medium">
+                        Keterangan<span class="text-red-600">*</span>
+                    </label>
                     <textarea id="description" rows="4" v-model="newFeedback" required minlength="5" maxLength="500"
                         class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="Tuliskan umpan balik anda (minimal 5 karakter)"></textarea>
@@ -398,7 +426,10 @@ onMounted(fetchAllData);
         </div>
     </div>
 
-    <DeleteDataModal :showModal="showModal.deleteAssignment" :deleteData="deleteData" :selectedId="sopData.id"
+    <DeleteDataModal 
+        :showModal="showModal.deleteAssignment" 
+        :deleteData="deleteData" :selectedId="sopData.id"
         @update:showModal="showModal.deleteAssignment = $event"
-        text="Anda yakin ingin menghapus penugasan SOP ini? Semua progres yang ada saat ini juga akan dihapus!" />
+        text="Anda yakin ingin menghapus penugasan SOP ini? Semua progres yang ada saat ini juga akan dihapus!" 
+    />
 </template>
