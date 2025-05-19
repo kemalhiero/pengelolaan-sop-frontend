@@ -3,7 +3,7 @@ import FeatherIcon from '@/assets/icons/FeatherIcon.vue';
 </script>
 
 <template>
-    <div class="bg-white my-6 p-6 rounded-lg shadow-lg text-center">
+    <div class="bg-white my-6 p-6 rounded-lg shadow-lg text-center print:hidden">
       <FeatherIcon class="w-16 mx-auto" />
       <p class="text-xl font-semibold mt-4">Terjadi error!</p>
       <p class="mt-2">Silakan coba lagi atau hubungi pihak jurusan!</p>

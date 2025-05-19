@@ -22,6 +22,7 @@ export function useSopData(route) {
         signer_id: '',
         signature_url: '',
         pic_position: '',
+        creation_date: '',
         revision_date: '',
         effective_date: '',
         section: '',

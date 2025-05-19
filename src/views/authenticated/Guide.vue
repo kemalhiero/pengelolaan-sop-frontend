@@ -2,22 +2,42 @@
 import { inject, onMounted } from 'vue'
 import { initAccordions } from 'flowbite';
 
+import { useAuthStore } from '@/stores/auth';
 import AngleIcon from '@/assets/icons/AngleIcon.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
+const authStore = useAuthStore();
+let dataGuide = [];
 
-const dataGuide = [
-    {
-        q: "Apa itu SIPP?",
-        a: "SIPP merupakan singkatan dari Sistem Informasi Pengelolaan Prosedur, yang merupakan aplikasi berbasis web untuk mengelola berbagai dokumen POS (Prosedur Operasional Standar) di Departemen Sistem Informasi, Universitas Andalas."
-    },
-    {
-        q: "Apa tujuan dari sistem ini?",
-        a: "Sistem ini dibangun agar proses pengelolaan SOP dapat berjalan dengan lebih baik lagi, dimulai dari proses pembuatan hingga publikasi. Dengan demikian diharapkan proses bisnis yang ada di Departemen Sistem Informasi dapat berjalan lebih baik lagi."
-    },
-];
+if (authStore.userRole === 'kadep') {
+    dataGuide = [
+        {
+            q: 'Bagaimana cara Kadep menyetujui SOP yang diajukan?',
+            a: 'Kadep dapat melihat daftar SOP yang menunggu persetujuan pada halaman dokumen. Klik SOP yang ingin ditinjau, baca detailnya, lalu berikan umpan balik beserta tipenya, apakah "Setujui", "Tolak" atau sekedar "Catatan" sesuai keputusan.'
+        }, {
+            q: 'Apakah Kadep bisa memberikan catatan revisi pada SOP?',
+            a: 'Ya, Kadep dapat menambahkan catatan revisi saat memberikan umpan balik pada SOP, agar pengusul dapat memperbaiki dokumen sesuai masukan.'
+        }, {
+            q: 'Bagaimana Kadep memantau status SOP di departemen?',
+            a: 'Kadep dapat melihat status seluruh SOP pada halaman dokumen, termasuk SOP yang sedang diproses, disetujui, atau ditolak.'
+        }
+    ];
+} else if (authStore.userRole === 'pj') {
+    dataGuide = [
+        {
+            q: 'Bagaimana cara PJ mengajukan SOP baru?',
+            a: 'PJ dapat mengajukan SOP baru dengan mengeklik tombol "Tambah SOP" pada halaman dokumen, lalu mengisi formulir pengajuan . Pastikan semua informasi yang diperlukan sudah lengkap.'
+        }, {
+            q: 'Apakah PJ bisa mengedit info penugasan SOP yang sudah diajukan?',
+            a: 'Masih bisa selagi SOP masih adalam tahap penyusunan.'
+        }, {
+            q: 'Bagaimana cara PJ melihat status SOP yang diajukan?',
+            a: 'PJ dapat memantau status SOP yang diajukan pada halaman dokumen, termasuk apakah SOP sedang diproses atau sudah disetujui.'
+        }
+    ];
+}
 
 onMounted(() => {
     initAccordions();

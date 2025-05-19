@@ -180,6 +180,10 @@ const calculateGlobalLayout = () => {
   });
 };
 
+const setSvgRef = (el, index) => {
+  if (el) svgRefs.value[index] = el;
+};
+
 // Computed property untuk estimasi total width diagram berdasarkan jumlah langkah
 const diagramWidth = computed(() => {
   if (processedSteps.value.length === 0) return 0;
@@ -190,7 +194,7 @@ const diagramWidth = computed(() => {
   
   // Total width adalah posisi x langkah terakhir + lebar langkah + margin tambahan
   const totalSteps = processedSteps.value.length;
-  return baseX + totalSteps * (shapeWidth + spacing) + 0; // tambahkan margin kanan 60px
+  return baseX + totalSteps * (shapeWidth + spacing) + 80; // tambahkan margin kanan 60px
 });
 
 onMounted(() => {
@@ -199,13 +203,9 @@ onMounted(() => {
   }
 });
 
-const setSvgRef = (el, index) => {
-  if (el) svgRefs.value[index] = el;
-};
-
 const calculateTitleWidth = (text, implementerCount) => {
   // Base width untuk single character (dalam pixels)
-  const charWidth = 10;
+  const charWidth = 9;
   
   // Hitung maxWidth berdasarkan jumlah implementer
   // Asumsi setiap implementer memiliki tinggi 120px
@@ -228,14 +228,11 @@ const calculateTitleWidth = (text, implementerCount) => {
         <table class="border-2 border-black relative z-10 w-full md:my-5" :style="{ minWidth: `${diagramWidth}px` }" id="bpmn-container">
           <tbody>
             <tr>
-              <td v-if="props.name" class="border-2 border-black" 
-                  :rowspan="implementer.length" :style="{ width: `${calculateTitleWidth(props.name, implementer.length)}px` }">
-                <div class="flex items-center justify-center">
-                  <p class="font-bold text-lg -rotate-90 text-center p-3"
+              <td v-if="props.name" class="border-2 border-black w-0" :rowspan="implementer.length">
+                  <p class="font-bold text-lg -rotate-90 text-center"
                      :class="calculateTitleWidth(props.name, implementer.length) >= (implementer.length * 120 * 0.8) ? 'whitespace-normal' : 'whitespace-nowrap'">
                     {{ capitalizeWords(props.name) }}
                   </p>
-                </div>
               </td>
               <BpmnLaneRow
                 :implementer="implementer[0]"

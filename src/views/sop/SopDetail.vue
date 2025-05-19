@@ -122,6 +122,10 @@ const deleteFeedback = async (feedbackId) => {
     }
 };
 
+const reloadPage = () => {
+    window.location.reload();
+};
+
 const fetchAllData = async () => {
     await fetchSopVersion();
     await fetchInfoSop();
@@ -135,10 +139,10 @@ onMounted(fetchAllData);
 
 <template>
     <h2 class="text-4xl text-center my-12 font-bold print:hidden">
-        {{ isDataError ? 'Ngapain iseng iseng?🤨' : `SOP ${sopData.name}` }}
+        {{ isDataError || sopData.status != 1 ? 'Ngapain iseng iseng?🤨' : `SOP ${sopData.name}` }}
     </h2>
 
-    <template v-if="!isDataError">
+    <template v-if="!isDataError && sopData.status == 1">
         <div>
             <!-- Tab Buttons -->
             <div class="flex justify-center mb-6 print:hidden">
@@ -167,7 +171,8 @@ onMounted(fetchAllData);
                         <SopInfoTemplate
                             :name="sopData.name" :number="sopData.number"
                             :pic-name="signer.name" :pic-number="signer.id_number"
-                            created-date="-" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
+                            :created-date="sopData.creation_date" :revision-date="sopData.revision_date"
+                            :effective-date="sopData.status == 0 ? `${sopData.effective_date} (Kadaluarsa)`: sopData.effective_date"
                             :section="sopData.section" :warning="sopData.warning"
                             :law-basis="sopData.legalBasis.map(item => item.legal)"
                             :implement-qualification="sopData.implementQualification.map(item => item.qualification)" 
@@ -345,5 +350,5 @@ onMounted(fetchAllData);
         />
     </template>
 
-    <Error v-else @click="fetchAllData" />
+    <Error v-else @click="reloadPage" />
 </template>
