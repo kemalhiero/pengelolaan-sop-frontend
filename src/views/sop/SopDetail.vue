@@ -166,8 +166,8 @@ onMounted(fetchAllData);
 
             <!-- SOP Document Tab -->
             <div v-if="activeTab === 'document'" class="flex flex-col items-center justify-center space-y-4">
-                <div class="w-full overflow-x-auto print:overflow-visible">
-                    <div class="min-w-[800px] print:min-w-0 print:w-auto print:block print:bg-white print:p-0 print:m-0">
+                <div class="w-full print:overflow-visible">
+                    <div class="print:block print:bg-white">
                         <SopInfoTemplate
                             :name="sopData.name" :number="sopData.number"
                             :pic-name="signer.name" :pic-number="signer.id_number"
@@ -182,9 +182,7 @@ onMounted(fetchAllData);
                             :signature="`${cdnUrl}/${sopData.signature_url}`"
                         />
                             
-                        <SopStepTemplate
-                            :implementer="sopData.implementer" :steps="sopData.steps" 
-                        />
+                        <SopStepTemplate :implementer="sopData.implementer" :steps="sopData.steps" />
                     </div>
                 </div>
             
@@ -199,8 +197,8 @@ onMounted(fetchAllData);
             <div v-else-if="activeTab === 'bpmn'">
                 <div v-if="sopData.steps && sopData.steps.length > 0 && sopData.implementer && sopData.implementer.length > 0" 
                     class="flex flex-col items-center justify-center space-y-4">
-                    <div class="w-full overflow-x-auto print:overflow-visible">
-                        <div class="min-w-[800px] print:min-w-0 print:w-auto print:block print:bg-white print:p-0 print:m-0">
+                    <div class="w-full print:overflow-visible">
+                        <div class="print:block print:bg-white">
                             <SopBpmnTemplate
                                 :name="sopData.name" 
                                 :steps="sopData.steps || []" 

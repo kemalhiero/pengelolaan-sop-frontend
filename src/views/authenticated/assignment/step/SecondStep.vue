@@ -115,7 +115,7 @@ updateSequenceNumbers();
 </script>
 
 <template>
-    <div class="max-w-screen-xl mx-auto px-3 md:px-0">
+    <div class="max-w-screen-xl mx-5 xl:mx-auto">
         <div class="relative overflow-x-auto sm:rounded-lg">
             <table class="w-full text-sm text-left">
                 <thead class="text-xs uppercase bg-gray-50">
@@ -219,16 +219,16 @@ updateSequenceNumbers();
                     </tr>
                 </tbody>
             </table>
+        </div>
 
-            <!-- Tombol Tambah -->
-            <div class="flex justify-center mt-4">
-                <button @click="addStep" :disabled="isDisabled"
-                    :title="isDisabled ? 'Tidak dapat menambah tahapan!' : 'Tambah Tahapan'"
-                    class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 inline-flex disabled:cursor-not-allowed disabled:bg-opacity-60">
-                    <CirclePlusIcon class="fill-current w-6 mr-2" />
-                    Tambah Tahapan
-                </button>
-            </div>
+        <!-- Tombol Tambah -->
+        <div class="flex justify-center mt-4">
+            <button @click="addStep" :disabled="isDisabled"
+                :title="isDisabled ? 'Tidak dapat menambah tahapan!' : 'Tambah Tahapan'"
+                class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 inline-flex disabled:cursor-not-allowed disabled:bg-opacity-60">
+                <CirclePlusIcon class="fill-current w-6 mr-2" />
+                Tambah Tahapan
+            </button>
         </div>
 
         <!-- Branch Configuration Modal -->

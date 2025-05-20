@@ -685,7 +685,7 @@ onMounted(fetchAllData);
         </ol>
     
         <!-- tampilan data -->
-        <div class="my-8 px-6 md:px-0">
+        <div class="my-8">
             <FirstStep v-if="currentStep == 1" ref="firstStepRef" />
             <SecondStep v-else-if="currentStep == 2" />
             <ThirdStep v-else-if="currentStep == 3" />

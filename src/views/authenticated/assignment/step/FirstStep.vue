@@ -122,7 +122,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="max-w-2xl mx-auto">
+    <div class="max-w-2xl mx-4 sm:mx-auto">
         <div class="my-4 inline-flex items-center">
             <CircleInfoIcon class="w-5 mr-2" />
             Informasi dari Penanggung Jawab, tidak bisa diubah!

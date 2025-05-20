@@ -194,7 +194,7 @@ const diagramWidth = computed(() => {
   
   // Total width adalah posisi x langkah terakhir + lebar langkah + margin tambahan
   const totalSteps = processedSteps.value.length;
-  return baseX + totalSteps * (shapeWidth + spacing) + 80; // tambahkan margin kanan 60px
+  return baseX + totalSteps * (shapeWidth + spacing) + 50; // tambahkan margin kanan 60px
 });
 
 onMounted(() => {
@@ -203,36 +203,31 @@ onMounted(() => {
   }
 });
 
-const calculateTitleWidth = (text, implementerCount) => {
-  // Base width untuk single character (dalam pixels)
-  const charWidth = 9;
-  
-  // Hitung maxWidth berdasarkan jumlah implementer
-  // Asumsi setiap implementer memiliki tinggi 120px
-  const rowHeight = 120;
-  const maxWidth = implementerCount * rowHeight * 0.8; // 0.8 sebagai safety factor
-  
-  // Hitung lebar text
-  const textWidth = text.length * charWidth;
-  
-  // Return nilai yang lebih kecil antara textWidth dan maxWidth
-  return Math.min(textWidth, maxWidth);
-};
+const charWidth = 9; // Base width untuk single character (dalam pixels)
+const rowHeight = 120; // Asumsi setiap implementer memiliki tinggi 120px
+
+const dynamicTitleWidth = computed(() => {
+  const maxWidth = props.implementer.length * rowHeight * 0.8;    // 0.8 sebagai safety factor
+  const textWidth = props.name.length * charWidth;  // Hitung lebar text
+  const lineCount = textWidth <= maxWidth ? 1 : Math.ceil(textWidth / maxWidth);
+  return (lineCount * 30) + 20;
+});
 </script>
 
 <template>
-  <div class="flex justify-center px-5 lg:px-0 print:px-0">
-    <div class="overflow-x-auto w-fit">
+  <div class="flex justify-center">
+    <div class="overflow-x-auto px-4 lg:px-0 print:px-0">
       <div class="relative bg-white print-page">
-        <!-- Tabel untuk lanes -->
         <table class="border-2 border-black relative z-10 w-full md:my-5" :style="{ minWidth: `${diagramWidth}px` }" id="bpmn-container">
           <tbody>
             <tr>
-              <td v-if="props.name" class="border-2 border-black w-0" :rowspan="implementer.length">
-                  <p class="font-bold text-lg -rotate-90 text-center"
-                     :class="calculateTitleWidth(props.name, implementer.length) >= (implementer.length * 120 * 0.8) ? 'whitespace-normal' : 'whitespace-nowrap'">
+              <td v-if="props.name" class="border-2 border-black w-0 relative" :rowspan="implementer.length">
+                <div class="relative h-full" :style="`width: ${dynamicTitleWidth}px;`">
+                  <p class="font-bold text-lg -rotate-90 text-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+                    :class="(props.name.length * charWidth) > (props.implementer.length * rowHeight * 0.8) ? 'whitespace-normal' : 'whitespace-nowrap'">
                     {{ capitalizeWords(props.name) }}
                   </p>
+                </div>
               </td>
               <BpmnLaneRow
                 :implementer="implementer[0]"
