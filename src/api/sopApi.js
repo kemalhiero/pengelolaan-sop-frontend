@@ -14,9 +14,9 @@ const createSopDetail = (id, data) => postRequest(`sop/detail/${id}`, data, getT
 const updateSopDetail = (id, data) => patchRequest(`sop/detail/${id}`, data, getToken());
 const deleteSopDetail = (id) => deleteRequest(`sop/detail/${id}`, getToken());
 
-const getManagedSop = () => getRequest(`sop/managed`, getToken());
+const getManagedSop = () => getRequest('sop/managed', getToken());
 
-const getAssignment = () => getRequest(`sop/assignment`, getToken());
+const getAssignment = () => getRequest('sop/assignment', getToken());
 const getAssignmentDetail = (id) => getRequest(`sop/assignment/${id}`, getToken());
 
 const getSectionandWarning = (iddetail) => getRequest(`sop/info/${iddetail}`, getToken());

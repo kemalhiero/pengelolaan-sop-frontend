@@ -2,8 +2,8 @@
 import { inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { addDraftFeedback, getDraftFeedback } from '@/api/feedbackApi';
-import { deleteSopDetail, updateSopDetail } from '@/api/sopApi';
+import { addDraftFeedback, deleteDraftFeedback, getDraftFeedback } from '@/api/feedbackApi';
+import { deleteSopDetail, deleteSopStep, updateSopDetail } from '@/api/sopApi';
 import { deleteSopImplementer } from '@/api/implementerApi';
 import { deleteIQ } from '@/api/implementQualificationApi';
 import { deleteSopEquipment } from '@/api/equipmentApi';
@@ -183,7 +183,9 @@ const deleteData = async (id) => {
                     ...sopData.value.record.map(item => deleteSopRecord(item.id)),
                     ...sopData.value.equipment.map(item => deleteSopEquipment(item.id)),
                     ...sopData.value.relatedSop.map(item => deleteRelatedSop(item.id)),
-                    ...sopData.value.implementQualification.map(item => deleteIQ(item.id))
+                    ...sopData.value.implementQualification.map(item => deleteIQ(item.id)),
+                    ...sopData.value.steps.map(item => deleteSopStep(item.id_step)),
+                    ...draftFeedback.value.map(item => deleteDraftFeedback(item.id))
                 ]);
                 console.log('Child data SOP berhasil dihapus');
 

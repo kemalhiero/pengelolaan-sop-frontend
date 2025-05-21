@@ -7,6 +7,7 @@ import Footer from '@/components/Footer.vue';
 import Faq from '@/components/home/Faq.vue';
 import ColumnChart from '@/components/chart/ColumnChart.vue';
 import PieChart from '@/components/chart/PieChart.vue';
+import EmptyGrid from '@/components/EmptyGrid.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';
@@ -81,15 +82,19 @@ onMounted(() => {
     <!-- Grafik Statistik SOP -->
     <section class="bg-white print-break-after-page">
         <div class="py-8 mx-auto max-w-screen-xl lg:py-16">
-            <div class="grid md:grid-cols-2 gap-1">
-                <ColumnChart name="Jumlah SOP per Organisasi" :series="nominalSopPerOrg" />
-                <PieChart name="Distribusi SOP berdasarkan status" :series="sopDistbyStatus" />
+            <div class="grid md:grid-cols-2 gap-4">
+                <ColumnChart name="Jumlah SOP per Organisasi" :series="nominalSopPerOrg" v-if="nominalSopPerOrg[0]?.data.length" />
+                <div v-else class="border-2 border-dashed rounded-lg border-gray-300">
+                    <EmptyGrid message="Belum ada SOP yang dipublikasikan!" />
+                </div>
+
+                <PieChart name="Distribusi SOP berdasarkan status" :series="sopDistbyStatus" v-if="sopDistbyStatus.some(item => item.y !== 0)" />
+                <div v-else class="border-2 border-dashed rounded-lg border-gray-300">
+                    <EmptyGrid message="Belum ada data distribusi SOP!" />
+                </div>
             </div>
         </div>
     </section>
-
-    <!-- TODO tambahkan tautan ke web-web yang ada di dsi (web dsi, web fti, web unand, web lea, ldkom, labgis, lbi) -->
-    <section></section>
 
     <Faq />
 

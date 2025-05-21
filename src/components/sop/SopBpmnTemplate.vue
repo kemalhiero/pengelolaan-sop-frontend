@@ -205,9 +205,10 @@ onMounted(() => {
 
 const charWidth = 9; // Base width untuk single character (dalam pixels)
 const rowHeight = 120; // Asumsi setiap implementer memiliki tinggi 120px
+const safetyFactor = 1; // Faktor keamanan untuk lebar teks
 
 const dynamicTitleWidth = computed(() => {
-  const maxWidth = props.implementer.length * rowHeight * 0.8;    // 0.8 sebagai safety factor
+  const maxWidth = props.implementer.length * rowHeight * safetyFactor;
   const textWidth = props.name.length * charWidth;  // Hitung lebar text
   const lineCount = textWidth <= maxWidth ? 1 : Math.ceil(textWidth / maxWidth);
   return (lineCount * 30) + 20;
@@ -224,7 +225,7 @@ const dynamicTitleWidth = computed(() => {
               <td v-if="props.name" class="border-2 border-black w-0 relative" :rowspan="implementer.length">
                 <div class="relative h-full" :style="`width: ${dynamicTitleWidth}px;`">
                   <p class="font-bold text-lg -rotate-90 text-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-                    :class="(props.name.length * charWidth) > (props.implementer.length * rowHeight * 0.8) ? 'whitespace-normal' : 'whitespace-nowrap'">
+                    :class="(props.name.length * charWidth) > (props.implementer.length * rowHeight * safetyFactor) ? 'whitespace-normal' : 'whitespace-nowrap'">
                     {{ capitalizeWords(props.name) }}
                   </p>
                 </div>

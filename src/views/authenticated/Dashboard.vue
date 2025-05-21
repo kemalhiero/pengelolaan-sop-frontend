@@ -20,6 +20,7 @@ const sopMakingTrend = ref([]);
 const nominalFeedback = ref([]);
 const mostRevisedSop = ref([]);
 const sopOrgDistByStatus = ref([]);
+const orgName = ref('');
 
 const fetchData = async () => {
     try {
@@ -90,11 +91,14 @@ const fetchData = async () => {
                     name: "Jumlah Revisi",
                     color: "#1A56DB",
                     data: mostRevisedRes.data.map(item => ({
-                        x: `${item.name} - ${toAcronym(item.org)}`,
+                        x: authStore.userRole === 'kadep'
+                            ? `${item.name} - ${toAcronym(item.org)}`
+                            : item.name,
                         y: item.count
                     }))
                 }
             ];
+            orgName.value = mostRevisedRes.data[0].org;
         }
 
         // 6. Data untuk PieChart (Distribusi SOP Organisasi per Status)
@@ -124,9 +128,12 @@ onMounted(() => {
 </script>
 
 <template>
-    <PageTitle judul="Visualisasi Data" class="mt-3 mb-7" />
+    <PageTitle
+        :judul="`Visualisasi Data di ${authStore.userRole === 'kadep' ? 'DSI' : toAcronym(orgName)}`"
+        class="mt-3 mb-7"
+    />
 
-    <div class="border-2 border-dashed rounded-lg border-gray-300 mb-4">
+    <div class="border-2 rounded-lg border-gray-300 mb-4">
         <template v-if="authStore.userRole === 'kadep'">
             <ColumnChart name="Jumlah SOP Per Organisasi" :series="nominalSop" title-hover="Jumlah SOP di seluruh organisasi di DSI" v-if="nominalSop.length > 0" />
             <EmptyGrid v-else message="Belum ada SOP yang dibuat!" />
@@ -138,19 +145,19 @@ onMounted(() => {
         </template>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4 my-4">
-        <div class="border-2 border-dashed rounded-lg border-gray-300">
+        <div class="border-2 rounded-lg border-gray-300">
             <LineChart name="Tren Pembuatan SOP" :series="sopMakingTrend" v-if="sopMakingTrend[0]?.data.length > 0" />
             <EmptyGrid v-else message="Belum ada SOP yang dibuat!" />
         </div>
-        <div class="border-2 border-dashed rounded-lg border-gray-300">
+        <div class="border-2 rounded-lg border-gray-300">
             <PieChart name="Jumlah User per Role" :series="nominalUser" />
         </div>
-        <div class="border-2 border-dashed rounded-lg border-gray-300">
+        <div class="border-2 rounded-lg border-gray-300">
             <ColumnChart name="SOP dengan feedback terbanyak" :series="nominalFeedback"
                 v-if="nominalFeedback[0]?.data.length > 0" title-hover="Top 8 SOP yang paling banyak mendapatkan umpan balik" />
             <EmptyGrid v-else message="Belum ada SOP yang mendapat feedback user!" />
         </div>
-        <div class="border-2 border-dashed rounded-lg border-gray-300">
+        <div class="border-2 rounded-lg border-gray-300">
             <template v-if="authStore.userRole === 'kadep'">
                 <ColumnChart name="SOP dengan revisi terbanyak" :series="mostRevisedSop"
                     v-if="mostRevisedSop[0]?.data.length > 0" title-hover="Top 8 SOP yang paling sering direvisi di DSI" />
