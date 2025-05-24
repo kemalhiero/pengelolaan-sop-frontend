@@ -39,7 +39,7 @@ export function useSopData(route) {
 
         steps: [],
     });
-    
+
     const signer = ref({
         id_number: '',
         name: '',
@@ -114,7 +114,7 @@ export function useSopData(route) {
         }
     };
 
-    const fetchSigner= async (iduser) => {
+    const fetchSigner = async (iduser) => {
         try {
             const response = await getSigner(iduser);
             if (!response.success) {

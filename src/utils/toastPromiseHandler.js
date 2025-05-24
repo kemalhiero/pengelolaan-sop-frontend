@@ -52,8 +52,18 @@ export const useToastPromise = (promiseCallback, options = {}) => {
                 icon: icons.pending || defaultIcons.pending
             },
             success: {
-                render() {
-                    return messages.success || defaultMessages.success;
+                render({ data }) {
+                    // Jika data adalah string, tampilkan langsung
+                    if (typeof data === 'string') {
+                        return messages.success
+                            ? typeof messages.success === 'function'
+                                ? messages.success(data)
+                                : messages.success
+                            : data;
+                    }
+                    // Jika data adalah object
+                    const successMessage = data?.message || messages.success || defaultMessages.success;
+                    return successMessage;
                 },
                 icon: icons.success || defaultIcons.success
             },

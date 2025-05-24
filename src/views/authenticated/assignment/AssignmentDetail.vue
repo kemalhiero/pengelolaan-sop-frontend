@@ -92,12 +92,10 @@ const fetchPicInfo = async () => {
 const fetchLegalBasis = async () => {
     try {
         const response = await getLawBasis();
-        const stringifyLegal = response.data.map(item => ({
+        legalBasisData.value = response.data.map(item => ({
             id: item.id,
             legal: `${item.law_type} Nomor ${item.number} Tahun ${item.year} tentang ${item.about}`
         }));
-
-        legalBasisData.value = stringifyLegal;
     } catch (error) {
         console.error('Fetch error:', error);
     }
@@ -195,173 +193,97 @@ const fetchFeedback = async () => {
     }
 };
 
-// sinkron data sop
-const syncSopInfo = async () => {
+// Fungsi untuk update section dan warning
+async function updateSectionAndWarning() {
+    await updateSopDetail(idsopdetail, {
+        section: formData.value.section,
+        warning: formData.value.warning
+    });
+}
 
-    const syncPromise = new Promise(async (resolve, reject) => {
+// Fungsi untuk membandingkan data baru dan lama
+function getDiffData(existingData, apiData, idKey, mode) {
+    if (mode === 'two') {
+        // Data berupa objek dengan id
+        return {
+            toAdd: existingData.filter(newItem =>
+                !apiData.some(apiItem => apiItem.id === newItem.id)
+            ),
+            toRemove: apiData.filter(apiItem =>
+                !existingData.some(newItem => apiItem.id === newItem.id)
+            )
+        };
+    } else {
+        // Data berupa array of string/number
+        return {
+            toAdd: existingData.filter(newItem =>
+                !apiData.some(apiItem => apiItem[idKey] === newItem)
+            ),
+            toRemove: apiData.filter(apiItem =>
+                !existingData.some(newItem => apiItem[idKey] === newItem)
+            )
+        };
+    }
+}
+
+// Fungsi utama sinkronisasi data SOP
+const syncSopInfo = async () => {
+    const syncPromise = (async () => {
         try {
-            // Konfigurasi untuk setiap jenis data
-            const syncConfigurations = [
-                // ----------many to many-------------
-                {
-                    existingData: formData.value.implementer,
-                    createFn: createSopImplementer,
-                    deleteFn: deleteSopImplementer,
-                    idKey: 'id_implementer',
-                    deleteParams: 'two'
-                },
-                {
-                    existingData: formData.value.legalBasis,
-                    createFn: createSopLawBasis,
-                    deleteFn: deleteSopLawBasis,
-                    idKey: 'id_legal',
-                    deleteParams: 'two'
-                },
-                // ----------one to many-------------
-                {
-                    existingData: formData.value.record,
-                    createFn: createRecord,
-                    deleteFn: deleteSopRecord,
-                    idKey: 'data_record',
-                    deleteParams: 'one'
-                },
-                {
-                    existingData: formData.value.equipment,
-                    createFn: createEquipment,
-                    deleteFn: deleteSopEquipment,
-                    idKey: 'equipment',
-                    deleteParams: 'one'
-                },
-                {
-                    existingData: formData.value.relatedSop,
-                    createFn: createRelatedSop,
-                    deleteFn: deleteRelatedSop,
-                    idKey: 'related_sop',
-                    deleteParams: 'one'
-                },
-                {
-                    existingData: formData.value.implementQualification,
-                    createFn: createIQ,
-                    deleteFn: deleteIQ,
-                    idKey: 'qualification',
-                    deleteParams: 'one'
-                }
+            // 1. Update section dan warning
+            await updateSectionAndWarning();
+
+            // 2. Konfigurasi data yang akan disinkronkan
+            const configs = [
+                { data: formData.value.implementer, create: createSopImplementer, del: deleteSopImplementer, key: 'id_implementer', mode: 'two' },
+                { data: formData.value.legalBasis, create: createSopLawBasis, del: deleteSopLawBasis, key: 'id_legal', mode: 'two' },
+                { data: formData.value.record, create: createRecord, del: deleteSopRecord, key: 'data_record', mode: 'one' },
+                { data: formData.value.equipment, create: createEquipment, del: deleteSopEquipment, key: 'equipment', mode: 'one' },
+                { data: formData.value.relatedSop, create: createRelatedSop, del: deleteRelatedSop, key: 'related_sop', mode: 'one' },
+                { data: formData.value.implementQualification, create: createIQ, del: deleteIQ, key: 'qualification', mode: 'one' }
             ];
 
-            // Update section dan warning
-            await updateSopDetail(idsopdetail, {
-                section: formData.value.section,
-                warning: formData.value.warning
-            });
+            let totalAdded = 0, totalRemoved = 0;
 
-            let allNewData = [];
-            let allDeleteData = [];
+            // 3. Sinkronisasi tiap jenis data
+            for (const cfg of configs) {
+                const apiResp = await fetchExistingSopInfo(idsopdetail, cfg.key);
+                const apiData = apiResp.data;
+                const { toAdd, toRemove } = getDiffData(cfg.data, apiData, cfg.key, cfg.mode);
 
-            // Proses sinkronisasi untuk setiap konfigurasi
-            for (const config of syncConfigurations) {
-                const {
-                    existingData,
-                    createFn,
-                    deleteFn,
-                    idKey,
-                    deleteParams
-                } = config;
-
-                // Fetch data existing dari API untuk perbandingan
-                const apiResponse = await fetchExistingSopInfo(idsopdetail, idKey);
-                const apiData = apiResponse.data;
-
-                let newData;
-                let removedData;
-
-                if (deleteParams === 'two') {
-                    newData = existingData.filter(
-                        newItem => !apiData.some(
-                            existItem => existItem.id === newItem.id
-                        )
-                    );
-                    removedData = apiData.filter(
-                        existItem => !existingData.some(
-                            newItem => existItem.id === newItem.id
-                        )
-                    );
-                } else {
-                    newData = existingData.filter(
-                        newItem => !apiData.some(
-                            existItem => existItem[idKey] === newItem
-                        )
-                    );
-                    removedData = apiData.filter(
-                        existItem => !existingData.some(
-                            newItem => existItem[idKey] === newItem
-                        )
-                    );
-                };
-
-                allNewData.push(...newData)
-                allDeleteData.push(...removedData)
-
-                if (newData.length > 0) {
-                    for (let i = 0; i < newData.length; i++) {
-                        await addNewData(newData[i], createFn, idKey, deleteParams);
+                // Tambah data baru
+                for (const item of toAdd) {
+                    if (cfg.mode === 'two') {
+                        await cfg.create({ id_sop_detail: idsopdetail, [cfg.key]: item.id });
+                    } else {
+                        await cfg.create({ id_sop_detail: idsopdetail, [cfg.key]: item });
                     }
                 }
-
-                if (removedData.length > 0) {
-                    for (let i = 0; i < removedData.length; i++) {
-                        await deleteRemovedData(removedData[i], deleteFn, deleteParams);
+                // Hapus data yang tidak ada lagi
+                for (const item of toRemove) {
+                    if (cfg.mode === 'two') {
+                        await cfg.del(idsopdetail, item.id);
+                    } else {
+                        await cfg.del(item.id);
                     }
                 }
-            };
+                totalAdded += toAdd.length;
+                totalRemoved += toRemove.length;
+            }
 
-            console.log('allNewData', allNewData)
-            console.log('allDeleteData', allDeleteData)
-            console.log('Berhasil sinkronisasi data SOP');
-
-            // Resolve promise jika berhasil
-            resolve(`Berhasil menambah ${allNewData.length} data baru dan menghapus ${allDeleteData.length} data`);
+            return `Berhasil menambah ${totalAdded} data baru dan menghapus ${totalRemoved} data`;
         } catch (error) {
             console.error('Error saat sinkronisasi data:', error);
-            // Reject promise jika gagal
-            reject(error);
+            throw error;
         }
-    });
+    })();
 
     useToastPromise(syncPromise, {
-        messages: {
-            success: 'Berhasil menyimpan progres!',
-        },
-        toastOptions: {
-            autoClose: 3000,
-        },
+        messages: { success: 'Berhasil menyimpan progres!' },
+        toastOptions: { autoClose: 3000 }
     });
 };
 
-async function addNewData(newData, createFn, idKey, deleteParams) {
-    if (deleteParams == 'two') {
-        await createFn({
-            id_sop_detail: idsopdetail,
-            [idKey]: newData.id
-        })
-    } else {
-        await createFn({
-            id_sop_detail: idsopdetail,
-            [idKey]: newData
-        })
-    }
-};
-
-async function deleteRemovedData(removedData, deleteFn, deleteParams) {
-    if (deleteParams === 'two') {
-        // For implementer and legal basis
-        await deleteFn(idsopdetail, removedData.id);
-    } else {
-        // For record, equipment, etc.
-        await deleteFn(removedData.id);
-    }
-};
-
-// Fungsi untuk fetch data existing (sesuaikan dengan kebutuhan API Anda)
 const fetchExistingSopInfo = async (idsopdetail, dataType) => {
     try {
         switch (dataType) {
@@ -387,144 +309,108 @@ const fetchExistingSopInfo = async (idsopdetail, dataType) => {
 };
 
 // ---------- fungsi sop step---------------
-const compareSteps = (responseSteps, currentSteps) => {
-    // Konversi array menjadi map untuk memudahkan pencarian
-    const responseStepsMap = new Map(
-        responseSteps.map(step => [step.seq_number, step])
-    );
-    const currentStepsMap = new Map(
-        currentSteps.map(step => [step.seq_number, step])
-    );
+// Membandingkan langkah SOP antara data server dan data user
+function compareSteps(serverSteps, userSteps) {
+    // Buat Map agar pencarian lebih mudah
+    const serverMap = new Map(serverSteps.map(step => [step.seq_number, step]));
+    const userMap = new Map(userSteps.map(step => [step.seq_number, step]));
 
-    // Data untuk diproses
-    const stepsToAdd = [];    // Data baru untuk ditambahkan
-    const stepsToDelete = []; // Data yang akan dihapus
-    const stepsToUpdate = []; // Data yang akan diupdate
+    const stepsToAdd = [];
+    const stepsToUpdate = [];
+    const stepsToDelete = [];
 
-    // Cek data yang akan ditambahkan dan diupdate
-    currentSteps.forEach(currentStep => {
-        // Jika id_step null atau tidak ada di responseSteps, berarti data baru
-        if (!currentStep.id_step || !responseStepsMap.has(currentStep.id_step)) {
-            stepsToAdd.push(currentStep);
+    // Cari langkah yang perlu ditambah atau diupdate
+    userSteps.forEach(userStep => {
+        // Jika id_step belum ada di server, berarti data baru
+        if (!userStep.id_step || !serverMap.has(userStep.id_step)) {
+            stepsToAdd.push(userStep);
             return;
         }
-
-        // Cek apakah ada perubahan pada data yang sudah ada
-        const responseStep = responseStepsMap.get(currentStep.id_step);
-        const hasChanges = Object.keys(currentStep).some(key =>
-            JSON.stringify(currentStep[key]) !== JSON.stringify(responseStep[key])
+        // Jika ada perubahan data, masukkan ke stepsToUpdate
+        const serverStep = serverMap.get(userStep.id_step);
+        const isDifferent = Object.keys(userStep).some(key =>
+            JSON.stringify(userStep[key]) !== JSON.stringify(serverStep[key])
         );
-
-        if (hasChanges) {
-            stepsToUpdate.push({
-                id: currentStep.id_step,
-                data: currentStep
-            });
+        if (isDifferent) {
+            stepsToUpdate.push({ id: userStep.id_step, data: userStep });
         }
     });
 
-    // Cek data yang akan dihapus
-    responseSteps.forEach(responseStep => {
-        if (!currentStepsMap.has(responseStep.id_step)) {
-            stepsToDelete.push(responseStep.id_step);
+    // Cari langkah yang perlu dihapus
+    serverSteps.forEach(serverStep => {
+        if (!userMap.has(serverStep.id_step)) {
+            stepsToDelete.push(serverStep.id_step);
         }
     });
 
-    return {
-        toAdd: stepsToAdd,
-        toUpdate: stepsToUpdate,
-        toDelete: stepsToDelete
-    };
+    return { stepsToAdd, stepsToUpdate, stepsToDelete };
 };
 
+// Membuat payload untuk create/update step
+function getStepPayload(step) {
+    const payload = {
+        id_sop_detail: idsopdetail,
+        seq_number: step.seq_number,
+        name: step.name,
+        type: step.type,
+        id_implementer: step.id_implementer,
+        fittings: step.fittings,
+        time: step.time,
+        time_unit: step.time_unit,
+        output: step.output,
+        description: step.description
+    };
+    if (step.type === 'decision') {
+        payload.id_next_step_if_yes = step.id_next_step_if_yes;
+        payload.id_next_step_if_no = step.id_next_step_if_no;
+    }
+    return payload;
+};
+
+// Sinkronisasi langkah SOP ke server
 const syncSopStep = async () => {
-    const syncPromise = new Promise(async (resolve, reject) => {
-        try {
-            const changes = compareSteps(apiResponseStep, sopStep.value);
+    const syncPromise = (async () => {
+        // Bandingkan data server dan data user
+        const { stepsToAdd, stepsToUpdate, stepsToDelete } = compareSteps(apiResponseStep, sopStep.value);
 
-            // Proses penghapusan data
-            for (const id of changes.toDelete) {
-                await deleteSopStep(id);
-            }
-
-            // Proses update data
-            for (const { id, data } of changes.toUpdate) {
-                console.log('Data being sent to update:', {
-                    id_next_step_if_yes: data.id_next_step_if_yes,
-                    id_next_step_if_no: data.id_next_step_if_no,
-                    type: data.type
-                });
-
-                const updateData = {
-                    id_sop_detail: idsopdetail,
-                    seq_number: data.seq_number,
-                    name: data.name,
-                    type: data.type,
-                    id_implementer: data.id_implementer,
-                    fittings: data.fittings,
-                    time: data.time,
-                    time_unit: data.time_unit,
-                    output: data.output,
-                    description: data.description
-                };
-
-                // Only add next step IDs if type is decision
-                if (data.type === 'decision') {
-                    updateData.id_next_step_if_yes = data.id_next_step_if_yes;
-                    updateData.id_next_step_if_no = data.id_next_step_if_no;
-                }
-
-                await updateSopStep(id, updateData);
-            }
-
-            // Add new steps
-            for (let i = 0; i < changes.toAdd.length; i++) {
-                const item = changes.toAdd[i];
-
-                const { seq_number, name, type, id_implementer, fittings, time, time_unit, output, description } = item;
-                const createData = {
-                    id_sop_detail: idsopdetail,
-                    seq_number,
-                    name,
-                    type,
-                    id_implementer,
-                    fittings,
-                    time,
-                    time_unit,
-                    output,
-                    description
-                };
-
-                // Only add next step IDs if type is decision
-                if (item.type === 'decision') {
-                    createData.id_next_step_if_yes = item.id_next_step_if_yes;
-                    createData.id_next_step_if_no = item.id_next_step_if_no;
-                }
-
-                const response = await createSopStep(createData);
-                console.log('New step created:', response.data);
-            }
-
-            // Fetch updated steps after all changes
-            await fetchSopStep();
-
-            // Gunakan resolve dengan pesan detail
-            resolve(`Berhasil menambah ${changes.toAdd.length} data baru, memperbarui ${changes.toUpdate.length} data dan menghapus ${changes.toDelete.length} data`);
-        } catch (error) {
-            console.error('Error saat sinkronisasi data:', error);
-            reject(error);
+        // Hapus langkah yang tidak ada di user
+        for (const id of stepsToDelete) {
+            await deleteSopStep(id);
         }
-    });
+
+        // Update langkah yang berubah
+        for (const { id, data } of stepsToUpdate) {
+            const updateData = getStepPayload(data);
+            await updateSopStep(id, updateData);
+        }
+
+        // Tambah langkah baru
+        for (const step of stepsToAdd) {
+            const createData = getStepPayload(step);
+            await createSopStep(createData);
+        }
+
+        // Ambil ulang data terbaru dari server
+        await fetchSopStep();
+
+        console.log(`Berhasil menambah ${stepsToAdd.length} data baru, memperbarui ${stepsToUpdate.length} data dan menghapus ${stepsToDelete.length} data`)
+        return 'Berhasil menyimpan tahapan SOP!';
+    })();
 
     useToastPromise(syncPromise, {
-        messages: {
-            // Ambil pesan sukses dari resolve promise
-            success: (msg) => msg,
-        },
+        messages: { success: (msg) => msg },
+        toastOptions: { autoClose: 3000 }
     });
+
+    try {
+        await syncPromise;
+    } catch (error) {
+        console.error('Error saat sinkronisasi data:', error);
+    }
 };
 
-// Tambahkan fungsi validasi
+
+// ---------- Fungsi validasi ---------------
 const validateLastStep = () => {
     if (!sopStep.value.length) return true;
     const lastStep = sopStep.value[sopStep.value.length - 1];
@@ -581,14 +467,14 @@ const nextStep = async () => {
         }
         // Check if all steps are filled correctly
         if (sopStep.value.some(step => !validateStepForm(step))) {
-            toast.warning('Silakan lengkapi data untuk semua kolom yang wajib diisi! (ditandai dengan <span class="text-red-600">*</span>)', {
+            toast.warning('Silakan lengkapi data wajib terlebih dahulu! (ditandai dengan <span class="text-red-600">*</span>)', {
                 autoClose: 7000,
                 dangerouslyHTMLString: true
             });
             return;
         }
         if (!validateLastStep()) {
-            toast.warning('Tahap terakhir harus bertipe End. Silakan ubah tipe tahap terakhir.', {
+            toast.warning('Tahap terakhir harus bertipe End. Silakan ubah!', {
                 autoClose: 7000,
             });
             return;
@@ -601,8 +487,7 @@ const nextStep = async () => {
         // Update status SOP kalau sekarang sudah dikirim untuk nantinya dicek oleh penanggung jawab atau kadep
         // dicek dulu apakah organisasinya dsi atau tidak, jika dsi maka akan langsung di cek oleh kadep
         // jika bukan dsi maka akan di cek oleh penanggung jawab
-        let promiseApdet;
-        promiseApdet = new Promise((resolve, reject) => {
+        const promiseApdet = new Promise((resolve, reject) => {
             // Set status 5 if organization is DSI, otherwise set status 3
             const newStatus = picInfo.value.organization === 'Departemen Sistem Informasi' ? 5 : 3;
 
@@ -618,10 +503,9 @@ const nextStep = async () => {
 
         useToastPromise(promiseApdet, {
             messages: {
-                success: 'Umpan balik berhasil dikirim!',
+                success: 'Draft SOP berhasil dikirim!',
             }
-        }
-        );
+        });
 
         setTimeout(() => {
             router.push('/assignment')
@@ -695,27 +579,22 @@ onMounted(fetchAllData);
             <button type="button" :disabled="currentStep == 1"
                 class="w-1/4 text-white bg-gray-500 hover:bg-gray-600 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 @click="prevStep">
-                <CircleArrowLeft class="fill-current w-5 mr-2 mt-1" />
-                Sebelumnya
+                    <CircleArrowLeft class="fill-current w-5 mr-2 mt-1" />
+                    Sebelumnya
             </button>
-    
-            <button type="button"
+            <button type="button" :disabled="currentStep === 3 || isDisabled"
                 :title="isDisabled ? 'Tidak dapat menyimpan progres!' : currentStep < 3 ? 'Klik untuk menyimpan progres saat ini ke server' : 'Untuk menyimpan progres, klik tombol kirim!'"
-                :disabled="currentStep === 3 || isDisabled"
                 class="w-[28%] text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 @click="syncData">
-                <!-- <SpinnerIcon class="inline w-5 me-3 fill-current animate-spin" />
-                Loading... -->
-                <FloppyDiskIcon class="fill-current w-5 mr-2" />
-                Simpan Progres
+                    <FloppyDiskIcon class="fill-current w-5 mr-2" />
+                    Simpan Tahap {{ currentStep }}
             </button>
-    
             <button type="button" @click="nextStep" :disabled="isDisabled && currentStep == 3"
                 :title="(currentStep === 3 && isDisabled) ? 'Tidak dapat mengirim draft!' : currentStep == 3 ? 'Kirim Draft' : 'Lanjut ke langkah berikutnya'"
                 class="w-1/4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
-                <p v-if="currentStep == 3">Kirim</p>
-                <p v-else>Lanjut</p>
-                <CircleArrowRight class="fill-current w-5 ml-2 mt-1" />
+                    <p v-if="currentStep == 3">Kirim</p>
+                    <p v-else>Lanjut</p>
+                    <CircleArrowRight class="fill-current w-5 ml-2 mt-1" />
             </button>
         </div>
     
