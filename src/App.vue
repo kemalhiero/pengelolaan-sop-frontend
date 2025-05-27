@@ -35,7 +35,7 @@ provide('layoutType', layout);
     margin: 0; /* Hilangkan margin default browser */
   }
   .print-page {
-    margin: 10mm auto; /* Margin atas-bawah/kiri-kanan */
+    margin: 0mm auto; /* Margin atas-bawah/kiri-kanan */
   }
   .print-page * {
     -webkit-print-color-adjust: exact; /* Untuk mencetak warna */

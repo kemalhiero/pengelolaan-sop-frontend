@@ -1,11 +1,13 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 import Process from '@/components/sop/shape/flowchart/Process.vue';
 import StartEnd from '@/components/sop/shape/flowchart/StartEnd.vue';
 import Decision from '@/components/sop/shape/flowchart/Decision.vue';
 import OffPageConnector from '@/components/sop/shape/flowchart/OffPageConnector.vue';
 import ArrowConnector from '@/components/sop/shape/ArrowConnector.vue';
+import { watch } from 'vue';
+import { nextTick } from 'vue';
 
 const props = defineProps({
     steps: {
@@ -19,7 +21,24 @@ const props = defineProps({
     }
 });
 
-// Fungsi untuk mendapatkan komponen shape berdasarkan tipe
+const BASE_STEPS_PER_PAGE = 6;
+const STEPS_WITH_BOTH_OPC = 5;
+const connectorChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const mainSopAreaId = 'main-sop-area'; // ID untuk container utama
+
+// --- Refs for column positioning ---
+const implementerHeaderRefs = ref({});
+const opcMounted = ref(false);
+
+const setImplementerHeaderRef = (el, implementerId) => {
+    if (el) {
+        implementerHeaderRefs.value[implementerId] = el;
+    } else {
+        // Clean up if element is removed (though less common for headers)
+        delete implementerHeaderRefs.value[implementerId];
+    }
+};
+
 const getShapeComponent = (type) => {
     const shapeMap = {
         'terminator': StartEnd,
@@ -30,118 +49,353 @@ const getShapeComponent = (type) => {
     return shapeMap[type] || Process;
 };
 
-// Add this function to transform time units
 const getFullTimeUnit = (unit) => {
-    const timeUnits = {
-        'h': 'Jam',
-        'm': 'Menit',
-        'd': 'Hari',
-        'w': 'Minggu',
-        'mo': 'Bulan',
-        'y': 'Tahun'
-    };
+    const timeUnits = { 'h': 'Jam', 'm': 'Menit', 'd': 'Hari', 'w': 'Minggu', 'mo': 'Bulan', 'y': 'Tahun' };
     return timeUnits[unit] || unit;
 };
 
-// Tambahkan reactive untuk track mounting status
 const arrowsMounted = ref(new Set());
-
-// Handler untuk mounted event dari arrow
 const handleArrowMounted = () => {
     arrowsMounted.value.add(true);
 };
 
-// Computed property untuk koneksi
 const connections = computed(() => {
     const allConnections = [];
+    let currentConnectorPairIndex = 0;
 
     props.steps.forEach((step) => {
-        if (step.type === 'decision') {
-            // Tambahkan koneksi untuk kondisi 'Yes'
-            if (step.id_next_step_if_yes) {
-                allConnections.push({
-                    from: `sop-step-${step.seq_number}`,
-                    to: `sop-step-${props.steps.find(s => s.id_step === step.id_next_step_if_yes)?.seq_number}`,
-                    label: 'Ya',
-                    condition: 'yes'
-                });
-            }
+        const sourceId = `sop-step-${step.seq_number}`;
+        const sourcePage = Math.floor((step.seq_number - 1) / BASE_STEPS_PER_PAGE);
 
-            // Tambahkan koneksi untuk kondisi 'No'
-            if (step.id_next_step_if_no) {
-                allConnections.push({
-                    from: `sop-step-${step.seq_number}`,
-                    to: `sop-step-${props.steps.find(s => s.id_step === step.id_next_step_if_no)?.seq_number}`,
-                    label: 'Tidak',
-                    condition: 'no'
+        const createConnectionEntries = (targetStepId, label = null, condition = null) => {
+            if (!targetStepId) return;
+            const targetStep = props.steps.find(s => s.id_step === targetStepId);
+            if (!targetStep) return;
+
+            const targetElementId = `sop-step-${targetStep.seq_number}`;
+            const targetPage = Math.floor((targetStep.seq_number - 1) / BASE_STEPS_PER_PAGE);
+
+            if (sourcePage !== targetPage) {
+                const baseConnectorId = `${step.seq_number}-to-${targetStep.seq_number}-${currentConnectorPairIndex}`;
+                
+                if (targetStep.seq_number > step.seq_number) {
+                    // Koneksi ke OPC outgoing
+                    allConnections.push({ 
+                        from: sourceId, 
+                        to: `sop-step-opc-out-${baseConnectorId}`,
+                        label, 
+                        condition,
+                        isOpcConnection: true,
+                        direction: 'down',
+                        sourcePage,
+                        targetPage
+                    });
+                }
+                
+                // Koneksi dari OPC incoming ke step target
+                allConnections.push({ 
+                    from: `sop-step-opc-in-${baseConnectorId}`,
+                    to: targetElementId,
+                    label,
+                    condition,
+                    isOpcConnection: true,
+                    direction: 'up',
+                    sourcePage: targetPage,
+                    targetPage
                 });
+                
+                currentConnectorPairIndex++;
+            } else {
+                allConnections.push({ from: sourceId, to: targetElementId, label, condition });
             }
+        };
+
+        if (step.type === 'decision') {
+            createConnectionEntries(step.id_next_step_if_yes, 'Ya', 'yes');
+            createConnectionEntries(step.id_next_step_if_no, 'Tidak', 'no');
+        } else if (step.id_next_step) {
+            createConnectionEntries(step.id_next_step);
         } else {
-            // Untuk step non-decision, gunakan sequential berikutnya
-            const nextStep = props.steps.find(s => s.seq_number === step.seq_number + 1);
-            if (nextStep) {
-                allConnections.push({
-                    from: `sop-step-${step.seq_number}`,
-                    to: `sop-step-${nextStep.seq_number}`
-                });
-            }
+            const nextStepInSequence = props.steps.find(s => s.seq_number === step.seq_number + 1);
+            if (nextStepInSequence) createConnectionEntries(nextStepInSequence.id_step);
         }
     });
-
     return allConnections;
+});
+
+const allOffPageConnectors = computed(() => {
+    const connectors = [];
+    let currentConnectorPairIndex = 0;
+    
+    props.steps.forEach((step) => {
+        const sourcePage = Math.floor((step.seq_number - 1) / BASE_STEPS_PER_PAGE);
+        
+        const processTargetForOPC = (targetStepId) => {
+            if (!targetStepId) return;
+            const targetStep = props.steps.find(s => s.id_step === targetStepId);
+            if (!targetStep) return;
+            
+            const targetPage = Math.floor((targetStep.seq_number - 1) / BASE_STEPS_PER_PAGE);
+            if (sourcePage !== targetPage) {
+                const connectorLetter = connectorChars[currentConnectorPairIndex % connectorChars.length];
+                const baseConnectorId = `${step.seq_number}-to-${targetStep.seq_number}-${currentConnectorPairIndex}`;
+                
+                // Push outgoing connector
+                connectors.push({
+                    id: `sop-step-opc-out-${baseConnectorId}`,
+                    stepSeq: step.seq_number,
+                    implementerId: step.id_implementer,
+                    type: 'outgoing',
+                    letter: connectorLetter,
+                    sourcePage,
+                    targetPage
+                });
+
+                // Push incoming connector
+                connectors.push({
+                    id: `sop-step-opc-in-${baseConnectorId}`,
+                    stepSeq: targetStep.seq_number,
+                    implementerId: targetStep.id_implementer,
+                    type: 'incoming',
+                    letter: connectorLetter,
+                    sourcePage,
+                    targetPage
+                });
+                
+                currentConnectorPairIndex++;
+            }
+        };
+        
+        if (step.type === 'decision') {
+            processTargetForOPC(step.id_next_step_if_yes);
+            processTargetForOPC(step.id_next_step_if_no);
+        } else if (step.id_next_step) {
+            processTargetForOPC(step.id_next_step);
+        } else {
+            const nextStepInSequence = props.steps.find(s => s.seq_number === step.seq_number + 1);
+            if (nextStepInSequence) processTargetForOPC(nextStepInSequence.id_step);
+        }
+    });
+    return connectors;
+});
+
+const incomingOffPageConnectors = computed(() => {
+    return allOffPageConnectors.value.filter(opc => opc.type === 'incoming');
+});
+
+const outgoingOffPageConnectors = computed(() => {
+    return allOffPageConnectors.value.filter(opc => opc.type === 'outgoing');
+});
+
+const getOpcStyle = (opc) => {
+    if (!opcMounted.value) return { visibility: 'hidden' };
+
+    const implementerColumn = document.querySelector(`[data-implementer-id="${opc.implementerId}"]`);
+    if (!implementerColumn) return { visibility: 'hidden' };
+
+    const rect = implementerColumn.getBoundingClientRect();
+    const containerDiv = document.querySelector(`#${mainSopAreaId}-${opc.sourcePage}`);
+    if (!containerDiv) return { visibility: 'hidden' };
+
+    const containerRect = containerDiv.getBoundingClientRect();
+    
+    const opcWidth = 50;
+    const leftPosition = rect.left - containerRect.left + (rect.width - opcWidth) / 2;
+
+    return { 
+        position: 'absolute',
+        left: `${leftPosition}px`,
+        zIndex: 10,
+        visibility: 'visible'
+    };
+};
+
+const currentPageNumber = computed(() => {
+    if (!props.steps.length) return 0;
+    const firstStep = props.steps[0];
+    return Math.floor((firstStep.seq_number - 1) / BASE_STEPS_PER_PAGE);
+});
+
+const hasIncomingOPC = computed(() => {
+    return incomingOffPageConnectors.value.some(opc => {
+        const opcPage = Math.floor((opc.stepSeq - 1) / BASE_STEPS_PER_PAGE);
+        return opcPage === currentPageNumber.value;
+    });
+});
+
+const hasOutgoingOPC = computed(() => {
+    return outgoingOffPageConnectors.value.some(opc => {
+        const opcPage = Math.floor((opc.stepSeq - 1) / BASE_STEPS_PER_PAGE);
+        return opcPage === currentPageNumber.value;
+    });
+});
+
+const stepsPerPage = computed(() => {
+    return hasIncomingOPC.value && hasOutgoingOPC.value ? STEPS_WITH_BOTH_OPC : BASE_STEPS_PER_PAGE;
+});
+
+const totalPages = computed(() => {
+    return Math.ceil(props.steps.length / stepsPerPage.value);
+});
+
+const allPages = computed(() => {
+    const pages = [];
+    for (let i = 0; i < totalPages.value; i++) {
+        const startIndex = i * stepsPerPage.value;
+        const endIndex = startIndex + stepsPerPage.value;
+        pages.push(props.steps.slice(startIndex, endIndex));
+    }
+    return pages;
+});
+
+const getIncomingOPCForPage = (pageIndex) => {
+    return incomingOffPageConnectors.value.filter(opc => {
+        const opcPage = Math.floor((opc.stepSeq - 1) / stepsPerPage.value);
+        return opcPage === pageIndex;
+    });
+};
+
+const getOutgoingOPCForPage = (pageIndex) => {
+    return outgoingOffPageConnectors.value.filter(opc => {
+        const opcPage = Math.floor((opc.stepSeq - 1) / stepsPerPage.value);
+        return opcPage === pageIndex;
+    });
+};
+
+const getConnectionsForPage = (pageIndex) => {
+    return connections.value.filter(conn => {
+        if (conn.isOpcConnection) {
+            // Untuk koneksi OPC, periksa sourcePage
+            return conn.sourcePage === pageIndex;
+        } else {
+            // Untuk koneksi normal
+            const fromSeq = parseInt(conn.from.split('-')[2]);
+            const startSeq = pageIndex * stepsPerPage.value + 1;
+            const endSeq = startSeq + stepsPerPage.value;
+            return fromSeq >= startSeq && fromSeq < endSeq;
+        }
+    });
+};
+
+// Fungsi untuk recalculate posisi OPC
+const recalculateOPCPositions = async () => {
+    await nextTick();
+    opcMounted.value = false;
+    await nextTick();
+    opcMounted.value = true;
+};
+
+// Watch untuk connections untuk memastikan arrows di-update
+watch(connections, async () => {
+    await recalculateOPCPositions();
+}, { deep: true });
+
+// Watch untuk allOffPageConnectors untuk memastikan OPC di-update
+watch(allOffPageConnectors, async () => {
+    await recalculateOPCPositions();
+}, { deep: true });
+
+// Mounting lifecycle hook
+onMounted(async () => {
+    await nextTick();
+    opcMounted.value = true;
 });
 </script>
 
 <template>
-    <div class="flex justify-center">
-        <div class="overflow-x-auto px-4 lg:px-0 print:px-0">
-            <div class="relative print-page w-[calc(297mm-3cm)] min-w-[calc(297mm-3cm)] max-w-[calc(297mm-3cm)] box-border">
-                <table class="w-full border-collapse border-2 border-black" id="sop-container">
-                    <thead>
+    <div class="flex flex-col gap-8">
+        <div v-for="(pageSteps, pageIndex) in allPages" :key="pageIndex"
+             class="print-page w-[calc(297mm-3cm)] min-w-[calc(297mm-3cm)] mx-auto">
+            <div :id="`${mainSopAreaId}-${pageIndex}`" class="relative">
+                
+                <!-- Incoming OPCs Area -->
+                <div v-if="getIncomingOPCForPage(pageIndex).length" 
+                     class="relative w-full h-[70px] mb-2">
+                    <template v-for="opc in getIncomingOPCForPage(pageIndex)" :key="opc.id">
+                        <OffPageConnector
+                            v-show="opcMounted"
+                            :id="opc.id"
+                            :letter="opc.letter"
+                            :style="getOpcStyle(opc)"
+                        />
+                    </template>
+                </div>
+
+                <!-- Table content -->
+                <table class="w-full border-collapse border-2 border-black table-fixed" :id="`sop-container-${pageIndex}`">
+                    <!-- Header only for first page -->
+                    <thead v-if="pageIndex === 0">
                         <tr class="bg-[#D9D9D9]">
-                            <th rowspan="2" class="border-2 py-0.5 px-2 border-black">NO</th>
-                            <th rowspan="2" class="border-2 py-0.5 px-2 border-black">KEGIATAN</th>
-                            <th :colspan="implementer.length" class="border-2 py-0.5 px-2 border-black">PELAKSANA</th>
-                            <th colspan="3" class="border-2 py-0.5 px-2 border-black">MUTU BAKU</th>
-                            <th rowspan="2" class="border-2 py-0.5 px-2 border-black">KET</th>
+                            <th rowspan="2" class="border-2 py-0.5 border-black">NO</th>
+                            <th rowspan="2" class="border-2 py-0.5 border-black">KEGIATAN</th>
+                            <th :colspan="implementer.length || 1" class="border-2 py-0.5 px-1 border-black">PELAKSANA</th>
+                            <th colspan="3" class="border-2 py-0.5 px-1 border-black">MUTU BAKU</th>
+                            <th rowspan="2" class="border-2 py-0.5 px-1 border-black">KET</th>
                         </tr>
                         <tr class="bg-[#D9D9D9]">
-                            <th v-for="impl in props.implementer" :key="impl.id" class="border-2 py-0.5 px-2 border-black">
+                            <th v-for="impl in props.implementer" :key="impl.id" 
+                                :ref="el => setImplementerHeaderRef(el, impl.id)"
+                                class="border-2 py-0.5 px-2 border-black">
                                 {{ impl.name.toUpperCase() }}
                             </th>
-                            <th class="border-2 py-0.5 px-2 border-black">KELENGKAPAN</th>
-                            <th class="border-2 py-0.5 px-2 border-black">WAKTU</th>
-                            <th class="border-2 py-0.5 px-2 border-black">OUTPUT</th>
+                            <th class="border-2 py-0.5 border-black">KELENGKAPAN</th>
+                            <th class="border-2 py-0.5 border-black">WAKTU</th>
+                            <th class="border-2 py-0.5 border-black">OUTPUT</th>
                         </tr>
                     </thead>
+                    <colgroup>
+                        <col class="w-[5%]"> <!-- NO -->
+                        <col class="w-[15%]"> <!-- KEGIATAN -->
+                        <col v-for="impl in props.implementer" 
+                             :key="impl.id" 
+                             :style="{ width: `${70 / props.implementer.length}%` }"> <!-- PELAKSANA -->
+                        <col class="w-[20%]"> <!-- KELENGKAPAN -->
+                        <col class="w-[11%]"> <!-- WAKTU -->
+                        <col class="w-[15%]"> <!-- OUTPUT -->
+                        <col class="w-[15%]"> <!-- KET -->
+                    </colgroup>
                     <tbody>
-                        <tr v-for="step in steps" :key="step.id_step">
-                            <td class="border-2 border-black py-0.5 px-2">{{ step.seq_number }}</td>
+                        <tr v-for="step in pageSteps" :key="step.id_step">
+                            <td class="border-2 border-black py-0.5 text-center">{{ step.seq_number }}</td>
                             <td class="border-2 border-black py-0.5 px-2">{{ step.name }}</td>
                             <td v-for="impl in props.implementer" :key="impl.id"
-                                class="border-2 border-black p-0 text-center align-middle">
-                                <div v-if="step.id_implementer === impl.id" class="flex justify-center items-center p-5">
-                                    <component :is="getShapeComponent(step.type)" :id="`sop-step-${step.seq_number}`"
-                                        class="relative z-10" />
+                                class="border-2 border-black p-0 text-center align-middle relative"
+                                :data-implementer-id="impl.id">
+                                <div v-if="step.id_implementer === impl.id" 
+                                     class="flex flex-col justify-around items-center px-3 py-5 min-h-[70px]">
+                                    <component :is="getShapeComponent(step.type)" 
+                                             :id="`sop-step-${step.seq_number}`"
+                                             class="relative z-10" />
                                 </div>
                             </td>
-                            <td class="border-2 border-black py-0.5 px-2">{{ step.fittings }}</td>
-                            <td class="border-2 border-black py-0.5 px-2">{{ `${step.time}
-                                ${getFullTimeUnit(step.time_unit)}` }}
-                            </td>
-                            <td class="border-2 border-black py-0.5 px-2">{{ step.output }}</td>
-                            <td class="border-2 border-black py-0.5 px-2">{{ step.description }}</td>
+                            <td class="border-2 border-black py-0.5 px-1">{{ step.fittings }}</td>
+                            <td class="border-2 border-black py-0.5 px-1">{{ `${step.time} ${getFullTimeUnit(step.time_unit)}` }}</td>
+                            <td class="border-2 border-black py-0.5 px-1">{{ step.output }}</td>
+                            <td class="border-2 border-black py-0.5 px-1">{{ step.description }}</td>
                         </tr>
                     </tbody>
                 </table>
-    
-                <!-- Panah -->
-                <svg class="absolute inset-0 w-full h-full pointer-events-none z-0">
+
+                <!-- Outgoing OPCs Area -->
+                <div v-if="getOutgoingOPCForPage(pageIndex).length" 
+                     class="relative w-full h-[70px] mt-6">
+                    <template v-for="opc in getOutgoingOPCForPage(pageIndex)" :key="opc.id">
+                        <OffPageConnector
+                            v-show="opcMounted"
+                            :id="opc.id"
+                            :letter="opc.letter"
+                            :style="getOpcStyle(opc)"
+                        />
+                    </template>
+                </div>
+
+                <!-- SVG arrows layer -->
+                <svg class="absolute inset-0 w-full h-full pointer-events-none z-20">
                     <arrow-connector 
-                        v-for="(connection, index) in connections" 
-                        :idarrow="index" 
-                        idcontainer="sop-container"
-                        :key="`${connection.from}-${connection.to}`" 
+                        v-for="(connection, index) in getConnectionsForPage(pageIndex)" 
+                        :key="`${pageIndex}-${index}`"
+                        :idarrow="`${pageIndex}-${index}`" 
+                        :idcontainer="`${mainSopAreaId}-${pageIndex}`"
                         :connection="connection" 
                         @mounted="handleArrowMounted" 
                     />
@@ -150,3 +404,15 @@ const connections = computed(() => {
         </div>
     </div>
 </template>
+
+<style scoped>
+@media print {
+    .print-page {
+        page-break-after: always;
+    }
+    
+    .print-page:last-child {
+        page-break-after: auto;
+    }
+}
+</style>

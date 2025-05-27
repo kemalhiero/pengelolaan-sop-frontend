@@ -3,7 +3,6 @@ import { computed, inject, ref } from 'vue';
 import SopInfoTemplate from '@/components/sop/SopInfoTemplate.vue';
 import SopStepTemplate from '@/components/sop/SopStepTemplate.vue';
 import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
-import Divider from '@/components/Divider.vue';
 
 const picInfo = inject('picData');
 const { formData } = inject('sopFormData');

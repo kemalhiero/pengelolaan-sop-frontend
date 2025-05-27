@@ -1,6 +1,6 @@
 <template>
-    <svg width="122" height="62" xmlns="http://www.w3.org/2000/svg">
-        <rect width="120" height="60" x="1" y="1" rx="30" ry="30" fill="none" stroke="black" stroke-width="2" />
-        <!-- <text x="50%" y="50%" font-family="Arial" font-size="16" text-anchor="middle" dy=".3em">Mulai</text> -->
+    <svg width="98" height="50" xmlns="http://www.w3.org/2000/svg">
+        <rect width="96" height="48" x="1" y="1" rx="24" ry="24" fill="none" stroke="black" stroke-width="2" />
+        <!-- <text x="50%" y="50%" font-family="Arial" font-size="13" text-anchor="middle" dy=".3em">Mulai</text> -->
     </svg>
 </template>
