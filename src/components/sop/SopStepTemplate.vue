@@ -59,13 +59,36 @@ const handleArrowMounted = () => {
     arrowsMounted.value.add(true);
 };
 
+// Helper function to get page number based on step sequence
+const getPageNumber = (stepSeq) => {
+    let currentPage = 0;
+    let stepCounter = 0;
+    
+    for (let i = 0; i < props.steps.length; i++) {
+        const step = props.steps[i];
+        if (step.seq_number === stepSeq) {
+            return currentPage;
+        }
+        
+        stepCounter++;
+        const stepsPerPage = getStepsPerPage(currentPage);
+        
+        if (stepCounter >= stepsPerPage) {
+            currentPage++;
+            stepCounter = 0;
+        }
+    }
+    
+    return currentPage;
+};
+
+// Update fungsi connections
 const connections = computed(() => {
     const allConnections = [];
-    let currentConnectorPairIndex = 0;
 
     props.steps.forEach((step) => {
         const sourceId = `sop-step-${step.seq_number}`;
-        const sourcePage = Math.floor((step.seq_number - 1) / BASE_STEPS_PER_PAGE);
+        const sourcePage = getPageNumber(step.seq_number);
 
         const createConnectionEntries = (targetStepId, label = null, condition = null) => {
             if (!targetStepId) return;
@@ -73,40 +96,42 @@ const connections = computed(() => {
             if (!targetStep) return;
 
             const targetElementId = `sop-step-${targetStep.seq_number}`;
-            const targetPage = Math.floor((targetStep.seq_number - 1) / BASE_STEPS_PER_PAGE);
+            const targetPage = getPageNumber(targetStep.seq_number);
 
             if (sourcePage !== targetPage) {
-                const baseConnectorId = `${step.seq_number}-to-${targetStep.seq_number}-${currentConnectorPairIndex}`;
+                // Ubah format baseConnectorId untuk konsistensi
+                const baseConnectorId = `step-${step.seq_number}-to-step-${targetStep.seq_number}`;
                 
-                if (targetStep.seq_number > step.seq_number) {
-                    // Koneksi ke OPC outgoing
-                    allConnections.push({ 
-                        from: sourceId, 
-                        to: `sop-step-opc-out-${baseConnectorId}`,
-                        label, 
-                        condition,
-                        isOpcConnection: true,
-                        direction: 'down',
-                        sourcePage,
-                        targetPage
-                    });
-                }
-                
-                // Koneksi dari OPC incoming ke step target
+                // Koneksi dari shape ke OPC outgoing
                 allConnections.push({ 
-                    from: `sop-step-opc-in-${baseConnectorId}`,
-                    to: targetElementId,
-                    label,
+                    from: sourceId, 
+                    to: `opc-out-${baseConnectorId}`,
+                    label, 
                     condition,
+                    isOpcConnection: true,
+                    direction: 'down',
+                    sourcePage,
+                    targetPage: sourcePage
+                });
+
+                // Koneksi dari OPC incoming ke shape target
+                allConnections.push({ 
+                    from: `opc-in-${baseConnectorId}`,
+                    to: targetElementId,
                     isOpcConnection: true,
                     direction: 'up',
                     sourcePage: targetPage,
                     targetPage
                 });
-                
-                currentConnectorPairIndex++;
             } else {
-                allConnections.push({ from: sourceId, to: targetElementId, label, condition });
+                allConnections.push({ 
+                    from: sourceId, 
+                    to: targetElementId, 
+                    label, 
+                    condition,
+                    sourcePage,
+                    targetPage 
+                });
             }
         };
 
@@ -120,6 +145,7 @@ const connections = computed(() => {
             if (nextStepInSequence) createConnectionEntries(nextStepInSequence.id_step);
         }
     });
+
     return allConnections;
 });
 
@@ -128,21 +154,22 @@ const allOffPageConnectors = computed(() => {
     let currentConnectorPairIndex = 0;
     
     props.steps.forEach((step) => {
-        const sourcePage = Math.floor((step.seq_number - 1) / BASE_STEPS_PER_PAGE);
+        const sourcePage = getPageNumber(step.seq_number);
         
         const processTargetForOPC = (targetStepId) => {
             if (!targetStepId) return;
             const targetStep = props.steps.find(s => s.id_step === targetStepId);
             if (!targetStep) return;
             
-            const targetPage = Math.floor((targetStep.seq_number - 1) / BASE_STEPS_PER_PAGE);
+            const targetPage = getPageNumber(targetStep.seq_number);
+            
             if (sourcePage !== targetPage) {
                 const connectorLetter = connectorChars[currentConnectorPairIndex % connectorChars.length];
-                const baseConnectorId = `${step.seq_number}-to-${targetStep.seq_number}-${currentConnectorPairIndex}`;
+                const baseConnectorId = `step-${step.seq_number}-to-step-${targetStep.seq_number}`;
                 
                 // Push outgoing connector
                 connectors.push({
-                    id: `sop-step-opc-out-${baseConnectorId}`,
+                    id: `opc-out-${baseConnectorId}`,
                     stepSeq: step.seq_number,
                     implementerId: step.id_implementer,
                     type: 'outgoing',
@@ -153,12 +180,12 @@ const allOffPageConnectors = computed(() => {
 
                 // Push incoming connector
                 connectors.push({
-                    id: `sop-step-opc-in-${baseConnectorId}`,
+                    id: `opc-in-${baseConnectorId}`,
                     stepSeq: targetStep.seq_number,
                     implementerId: targetStep.id_implementer,
                     type: 'incoming',
                     letter: connectorLetter,
-                    sourcePage,
+                    sourcePage: targetPage,
                     targetPage
                 });
                 
@@ -176,16 +203,25 @@ const allOffPageConnectors = computed(() => {
             if (nextStepInSequence) processTargetForOPC(nextStepInSequence.id_step);
         }
     });
-    return connectors;
+    
+    return connectors; // Pastikan mengembalikan array connectors
 });
 
-const incomingOffPageConnectors = computed(() => {
-    return allOffPageConnectors.value.filter(opc => opc.type === 'incoming');
-});
+const getIncomingOPCForPage = (pageIndex) => {
+    const connectors = allOffPageConnectors.value || [];
+    return connectors.filter(opc => 
+        opc.type === 'incoming' && 
+        opc.targetPage === pageIndex
+    );
+};
 
-const outgoingOffPageConnectors = computed(() => {
-    return allOffPageConnectors.value.filter(opc => opc.type === 'outgoing');
-});
+const getOutgoingOPCForPage = (pageIndex) => {
+    const connectors = allOffPageConnectors.value || [];
+    return connectors.filter(opc => 
+        opc.type === 'outgoing' && 
+        opc.sourcePage === pageIndex
+    );
+};
 
 const getOpcStyle = (opc) => {
     if (!opcMounted.value) return { visibility: 'hidden' };
@@ -210,69 +246,39 @@ const getOpcStyle = (opc) => {
     };
 };
 
-const currentPageNumber = computed(() => {
-    if (!props.steps.length) return 0;
-    const firstStep = props.steps[0];
-    return Math.floor((firstStep.seq_number - 1) / BASE_STEPS_PER_PAGE);
-});
+const getPageOPCCount = (pageIndex) => {
+    const incoming = getIncomingOPCForPage(pageIndex).length;
+    const outgoing = getOutgoingOPCForPage(pageIndex).length;
+    return incoming + outgoing;
+};
 
-const hasIncomingOPC = computed(() => {
-    return incomingOffPageConnectors.value.some(opc => {
-        const opcPage = Math.floor((opc.stepSeq - 1) / BASE_STEPS_PER_PAGE);
-        return opcPage === currentPageNumber.value;
-    });
-});
+const getStepsPerPage = (pageIndex) => {
+    const opcCount = getPageOPCCount(pageIndex);
+    return opcCount >= 2 ? STEPS_WITH_BOTH_OPC : BASE_STEPS_PER_PAGE;
+};
 
-const hasOutgoingOPC = computed(() => {
-    return outgoingOffPageConnectors.value.some(opc => {
-        const opcPage = Math.floor((opc.stepSeq - 1) / BASE_STEPS_PER_PAGE);
-        return opcPage === currentPageNumber.value;
-    });
-});
-
-const stepsPerPage = computed(() => {
-    return hasIncomingOPC.value && hasOutgoingOPC.value ? STEPS_WITH_BOTH_OPC : BASE_STEPS_PER_PAGE;
-});
-
-const totalPages = computed(() => {
-    return Math.ceil(props.steps.length / stepsPerPage.value);
-});
-
+// Update allPages computed property
 const allPages = computed(() => {
     const pages = [];
-    for (let i = 0; i < totalPages.value; i++) {
-        const startIndex = i * stepsPerPage.value;
-        const endIndex = startIndex + stepsPerPage.value;
-        pages.push(props.steps.slice(startIndex, endIndex));
+    let currentIndex = 0;
+
+    while (currentIndex < props.steps.length) {
+        const pageIndex = pages.length;
+        const maxSteps = getStepsPerPage(pageIndex);
+        pages.push(props.steps.slice(currentIndex, currentIndex + maxSteps));
+        currentIndex += maxSteps;
     }
     return pages;
 });
 
-const getIncomingOPCForPage = (pageIndex) => {
-    return incomingOffPageConnectors.value.filter(opc => {
-        const opcPage = Math.floor((opc.stepSeq - 1) / stepsPerPage.value);
-        return opcPage === pageIndex;
-    });
-};
-
-const getOutgoingOPCForPage = (pageIndex) => {
-    return outgoingOffPageConnectors.value.filter(opc => {
-        const opcPage = Math.floor((opc.stepSeq - 1) / stepsPerPage.value);
-        return opcPage === pageIndex;
-    });
-};
-
 const getConnectionsForPage = (pageIndex) => {
     return connections.value.filter(conn => {
         if (conn.isOpcConnection) {
-            // Untuk koneksi OPC, periksa sourcePage
-            return conn.sourcePage === pageIndex;
+            // Tampilkan koneksi OPC hanya di halaman sumber atau target
+            return conn.sourcePage === pageIndex || conn.targetPage === pageIndex;
         } else {
-            // Untuk koneksi normal
-            const fromSeq = parseInt(conn.from.split('-')[2]);
-            const startSeq = pageIndex * stepsPerPage.value + 1;
-            const endSeq = startSeq + stepsPerPage.value;
-            return fromSeq >= startSeq && fromSeq < endSeq;
+            // Untuk koneksi normal, tampilkan hanya di halaman sumber
+            return conn.sourcePage === pageIndex;
         }
     });
 };
