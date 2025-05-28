@@ -12,6 +12,7 @@ import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import WarningText from '@/components/validation/WarningText.vue';
 import Error from '@/components/Error.vue';
+import letterCode from '@/data/letterCode.js';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -65,7 +66,7 @@ const submitSop = async () => {
                     let apdetSopDetail = await updateSopDetail(
                         route.params.id,
                         {
-                            number: `T/${String(form.value.number).padStart(3, '0')}/UN16.17.02/OT.01.00/${form.value.year}`,
+                            number: `T/${String(form.value.number).padStart(3, '0')}/${letterCode}/${form.value.year}`,
                             description: form.value.description,
                         }
                     );
@@ -174,7 +175,7 @@ onMounted(fetchAllData);
                                 class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 min-w-12 w-full"
                                 title="Masukkan no urut sop">
                             <span class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5 w-fit whitespace-nowrap">
-                                /UN16.17.02/OT.01.00/{{ form.year }}
+                                /{{ letterCode + '/' + form.year }}
                             </span>
                         </div>
                         <WarningText v-show="showWarning.number" text="Nomor sudah dipakai, ganti dengan yang lain!" />

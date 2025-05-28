@@ -345,11 +345,10 @@ onMounted(async () => {
                     </thead>
                     <colgroup>
                         <col class="w-[5%]"> <!-- NO -->
-                        <col class="w-[15%]"> <!-- KEGIATAN -->
-                        <col v-for="impl in props.implementer" 
-                             :key="impl.id" 
+                        <col class="w-[20%]"> <!-- KEGIATAN -->
+                        <col v-for="impl in props.implementer" :key="impl.id" 
                              :style="{ width: `${70 / props.implementer.length}%` }"> <!-- PELAKSANA -->
-                        <col class="w-[20%]"> <!-- KELENGKAPAN -->
+                        <col class="w-[19%]"> <!-- KELENGKAPAN -->
                         <col class="w-[11%]"> <!-- WAKTU -->
                         <col class="w-[15%]"> <!-- OUTPUT -->
                         <col class="w-[15%]"> <!-- KET -->
@@ -357,28 +356,27 @@ onMounted(async () => {
                     <tbody>
                         <tr v-for="step in pageSteps" :key="step.id_step">
                             <td class="border-2 border-black py-0.5 text-center">{{ step.seq_number }}</td>
-                            <td class="border-2 border-black py-0.5 px-2">{{ step.name }}</td>
+                            <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.name }}</td>
                             <td v-for="impl in props.implementer" :key="impl.id"
                                 class="border-2 border-black p-0 text-center align-middle relative"
                                 :data-implementer-id="impl.id">
                                 <div v-if="step.id_implementer === impl.id" 
-                                     class="flex flex-col justify-around items-center px-3 py-5 min-h-[70px]">
+                                     class="flex flex-col justify-around items-center px-2 py-5 min-h-[70px]">
                                     <component :is="getShapeComponent(step.type)" 
                                              :id="`sop-step-${step.seq_number}`"
                                              class="relative z-10" />
                                 </div>
                             </td>
-                            <td class="border-2 border-black py-0.5 px-1">{{ step.fittings }}</td>
-                            <td class="border-2 border-black py-0.5 px-1">{{ `${step.time} ${getFullTimeUnit(step.time_unit)}` }}</td>
-                            <td class="border-2 border-black py-0.5 px-1">{{ step.output }}</td>
-                            <td class="border-2 border-black py-0.5 px-1">{{ step.description }}</td>
+                            <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.fittings }}</td>
+                            <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ `${step.time} ${getFullTimeUnit(step.time_unit)}` }}</td>
+                            <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.output }}</td>
+                            <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.description }}</td>
                         </tr>
                     </tbody>
                 </table>
 
                 <!-- Outgoing OPCs Area -->
-                <div v-if="getOutgoingOPCForPage(pageIndex).length" 
-                     class="relative w-full h-[70px] mt-6">
+                <div v-if="getOutgoingOPCForPage(pageIndex).length" class="relative w-full h-[70px] mt-6">
                     <template v-for="opc in getOutgoingOPCForPage(pageIndex)" :key="opc.id">
                         <OffPageConnector
                             v-show="opcMounted"

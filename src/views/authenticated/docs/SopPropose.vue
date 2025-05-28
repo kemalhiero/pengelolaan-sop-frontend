@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/auth';
 import { getOrg } from '@/api/orgApi';
 import { createSopDrafter, getUserByRole, getUserProfile } from '@/api/userApi';
 import { createSop, createSopDetail, deleteSop, getLatestSopInYear } from '@/api/sopApi';
+import letterCode from '@/data/letterCode.js';
 
 import DataTable from '@/components/DataTable.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
@@ -95,7 +96,7 @@ const submitSop = async () => {
                     let resultSopdetail = await createSopDetail(
                         dataSop.data.id_sop,
                         {
-                            number: `T/${String(form.value.number).padStart(3, '0')}/UN16.17.02/OT.01.00/${currentYear}`,
+                            number: `T/${String(form.value.number).padStart(3, '0')}/${letterCode}/${currentYear}`,
                             description: form.value.description,
                             version: 1,
                             signer_id: null,
@@ -188,7 +189,7 @@ onMounted(() => {
                                 class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 min-w-12 w-full"
                                 title="Masukkan no urut sop">
                             <span class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5 w-fit whitespace-nowrap">
-                                /UN16.17.02/OT.01.00/{{ currentYear }}
+                                /{{ letterCode + '/' + currentYear }}
                             </span>
                         </div>
                         <WarningText v-show="showWarning.number" text="Nomor sudah dipakai, ganti dengan yang lain!" />

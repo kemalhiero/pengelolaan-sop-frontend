@@ -32,7 +32,10 @@ export default {
           "800":"#1e40af",
           "900":"#1e3a8a",
           "950":"#172554"}
-      }
+      },
+      hyphens: {
+        'auto': 'auto',
+      },
     },
     fontFamily: {
       'body': [
