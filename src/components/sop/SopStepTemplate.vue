@@ -1,13 +1,11 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, nextTick, watch } from 'vue';
 
 import Process from '@/components/sop/shape/flowchart/Process.vue';
 import StartEnd from '@/components/sop/shape/flowchart/StartEnd.vue';
 import Decision from '@/components/sop/shape/flowchart/Decision.vue';
 import OffPageConnector from '@/components/sop/shape/flowchart/OffPageConnector.vue';
 import ArrowConnector from '@/components/sop/shape/ArrowConnector.vue';
-import { watch } from 'vue';
-import { nextTick } from 'vue';
 
 const props = defineProps({
     steps: {
@@ -82,7 +80,6 @@ const getPageNumber = (stepSeq) => {
     return currentPage;
 };
 
-// Update fungsi connections
 const connections = computed(() => {
     const allConnections = [];
 
@@ -138,8 +135,6 @@ const connections = computed(() => {
         if (step.type === 'decision') {
             createConnectionEntries(step.id_next_step_if_yes, 'Ya', 'yes');
             createConnectionEntries(step.id_next_step_if_no, 'Tidak', 'no');
-        } else if (step.id_next_step) {
-            createConnectionEntries(step.id_next_step);
         } else {
             const nextStepInSequence = props.steps.find(s => s.seq_number === step.seq_number + 1);
             if (nextStepInSequence) createConnectionEntries(nextStepInSequence.id_step);
@@ -196,8 +191,6 @@ const allOffPageConnectors = computed(() => {
         if (step.type === 'decision') {
             processTargetForOPC(step.id_next_step_if_yes);
             processTargetForOPC(step.id_next_step_if_no);
-        } else if (step.id_next_step) {
-            processTargetForOPC(step.id_next_step);
         } else {
             const nextStepInSequence = props.steps.find(s => s.seq_number === step.seq_number + 1);
             if (nextStepInSequence) processTargetForOPC(nextStepInSequence.id_step);
@@ -223,41 +216,18 @@ const getOutgoingOPCForPage = (pageIndex) => {
     );
 };
 
-const getOpcStyle = (opc) => {
-    if (!opcMounted.value) return { visibility: 'hidden' };
-
-    const implementerColumn = document.querySelector(`[data-implementer-id="${opc.implementerId}"]`);
-    if (!implementerColumn) return { visibility: 'hidden' };
-
-    const rect = implementerColumn.getBoundingClientRect();
-    const containerDiv = document.querySelector(`#${mainSopAreaId}-${opc.sourcePage}`);
-    if (!containerDiv) return { visibility: 'hidden' };
-
-    const containerRect = containerDiv.getBoundingClientRect();
-    
-    const opcWidth = 50;
-    const leftPosition = rect.left - containerRect.left + (rect.width - opcWidth) / 2;
-
-    return { 
-        position: 'absolute',
-        left: `${leftPosition}px`,
-        zIndex: 10,
-        visibility: 'visible'
-    };
-};
-
-const getPageOPCCount = (pageIndex) => {
-    const incoming = getIncomingOPCForPage(pageIndex).length;
-    const outgoing = getOutgoingOPCForPage(pageIndex).length;
-    return incoming + outgoing;
-};
-
 const getStepsPerPage = (pageIndex) => {
-    const opcCount = getPageOPCCount(pageIndex);
-    return opcCount >= 2 ? STEPS_WITH_BOTH_OPC : BASE_STEPS_PER_PAGE;
+    const totalSteps = props.steps.length;
+    if (pageIndex === 0) {
+        return BASE_STEPS_PER_PAGE;
+    }
+    const stepsLeft = totalSteps - BASE_STEPS_PER_PAGE - (pageIndex - 1) * STEPS_WITH_BOTH_OPC;
+    if (stepsLeft <= BASE_STEPS_PER_PAGE) {
+        return stepsLeft;
+    }
+    return STEPS_WITH_BOTH_OPC;
 };
 
-// Update allPages computed property
 const allPages = computed(() => {
     const pages = [];
     let currentIndex = 0;
@@ -281,6 +251,29 @@ const getConnectionsForPage = (pageIndex) => {
             return conn.sourcePage === pageIndex;
         }
     });
+};
+
+const getOpcStyle = (opc) => {
+    if (!opcMounted.value) return { visibility: 'hidden' };
+
+    const implementerColumn = document.querySelector(`[data-implementer-id="${opc.implementerId}"]`);
+    if (!implementerColumn) return { visibility: 'hidden' };
+
+    const rect = implementerColumn.getBoundingClientRect();
+    const containerDiv = document.querySelector(`#${mainSopAreaId}-${opc.sourcePage}`);
+    if (!containerDiv) return { visibility: 'hidden' };
+
+    const containerRect = containerDiv.getBoundingClientRect();
+    
+    const opcWidth = 50;
+    const leftPosition = rect.left - containerRect.left + (rect.width - opcWidth) / 2;
+
+    return { 
+        position: 'absolute',
+        left: `${leftPosition}px`,
+        zIndex: 10,
+        visibility: 'visible'
+    };
 };
 
 // Fungsi untuk recalculate posisi OPC
