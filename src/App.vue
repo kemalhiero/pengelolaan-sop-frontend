@@ -34,13 +34,6 @@ provide('layoutType', layout);
   body {
     margin: 0; /* Hilangkan margin default browser */
   }
-  .print-page {
-    margin: 0mm auto; /* Margin atas-bawah/kiri-kanan */
-  }
-  .print-page * {
-    -webkit-print-color-adjust: exact; /* Untuk mencetak warna */
-    print-color-adjust: exact; /* Standard property for compatibility */
-  }
   .print-break-after-page {
     break-after: page;
     page-break-after: always;

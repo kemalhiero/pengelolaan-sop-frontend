@@ -52,11 +52,6 @@ const getFullTimeUnit = (unit) => {
     return timeUnits[unit] || unit;
 };
 
-const arrowsMounted = ref(new Set());
-const handleArrowMounted = () => {
-    arrowsMounted.value.add(true);
-};
-
 // Helper function to get page number based on step sequence
 const getPageNumber = (stepSeq) => {
     let currentPage = 0;
@@ -284,13 +279,7 @@ const recalculateOPCPositions = async () => {
     opcMounted.value = true;
 };
 
-// Watch untuk connections untuk memastikan arrows di-update
-watch(connections, async () => {
-    await recalculateOPCPositions();
-}, { deep: true });
-
-// Watch untuk allOffPageConnectors untuk memastikan OPC di-update
-watch(allOffPageConnectors, async () => {
+watch(props.steps, async () => {
     await recalculateOPCPositions();
 }, { deep: true });
 
@@ -394,7 +383,6 @@ onMounted(async () => {
                         :idarrow="`${pageIndex}-${index}`" 
                         :idcontainer="`${mainSopAreaId}-${pageIndex}`"
                         :connection="connection" 
-                        @mounted="handleArrowMounted" 
                     />
                 </svg>
             </div>

@@ -209,3 +209,13 @@ const props = defineProps({
         </div>
     </div>
 </template>
+
+<style scoped>
+.print-page {
+    margin: 0mm auto; /* Margin atas-bawah/kiri-kanan */
+}
+.print-page * {
+    -webkit-print-color-adjust: exact; /* Untuk mencetak warna */
+    print-color-adjust: exact; /* Standard property for compatibility */
+}
+</style>
