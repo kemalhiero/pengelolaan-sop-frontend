@@ -7,7 +7,7 @@ const props = defineProps({
     required: true
   },
   idarrow: {
-    type: String,
+    type: [String, Number],
     required: true
   },
   idcontainer: {

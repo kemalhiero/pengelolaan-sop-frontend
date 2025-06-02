@@ -311,9 +311,10 @@ const fetchExistingSopInfo = async (idsopdetail, dataType) => {
 // ---------- fungsi sop step---------------
 // Membandingkan langkah SOP antara data server dan data user
 function compareSteps(serverSteps, userSteps) {
-    // Buat Map agar pencarian lebih mudah
-    const serverMap = new Map(serverSteps.map(step => [step.seq_number, step]));
-    const userMap = new Map(userSteps.map(step => [step.seq_number, step]));
+    // Buat Map berdasarkan id_step agar pencarian lebih akurat
+    const serverStepsMap = new Map(serverSteps.map(step => [step.id_step, step]));
+    // Untuk userStepsMap, kita hanya memetakan langkah yang sudah memiliki id_step (bukan yang baru dibuat di client)
+    const userStepsWithIdMap = new Map(userSteps.filter(step => step.id_step).map(step => [step.id_step, step]));
 
     const stepsToAdd = [];
     const stepsToUpdate = [];
@@ -321,24 +322,61 @@ function compareSteps(serverSteps, userSteps) {
 
     // Cari langkah yang perlu ditambah atau diupdate
     userSteps.forEach(userStep => {
-        // Jika id_step belum ada di server, berarti data baru
-        if (!userStep.id_step || !serverMap.has(userStep.id_step)) {
+        if (!userStep.id_step) {
+            // Jika userStep tidak memiliki id_step, berarti ini adalah data baru
             stepsToAdd.push(userStep);
-            return;
-        }
-        // Jika ada perubahan data, masukkan ke stepsToUpdate
-        const serverStep = serverMap.get(userStep.id_step);
-        const isDifferent = Object.keys(userStep).some(key =>
-            JSON.stringify(userStep[key]) !== JSON.stringify(serverStep[key])
-        );
-        if (isDifferent) {
-            stepsToUpdate.push({ id: userStep.id_step, data: userStep });
+        } else {
+            const serverStep = serverStepsMap.get(userStep.id_step);
+            if (serverStep) {
+                // Langkah ada di server, cek apakah ada perbedaan
+                // Kunci-kunci yang tidak perlu dibandingkan secara langsung (misal: timestamp server)
+                const excludedKeys = ['createdAt', 'updatedAt', 'id_sop_detail']; 
+                const isDifferent = Object.keys(userStep).some(key => {
+                    if (excludedKeys.includes(key)) {
+                        return false;
+                    }
+                    // Periksa apakah properti ada di kedua objek atau hanya di salah satu (misalnya properti decision type)
+                    const userValue = userStep[key];
+                    const serverValue = serverStep[key];
+
+                    // Jika satu ada dan yang lain tidak (kecuali null/undefined dianggap sama jika keduanya tidak ada)
+                    if ((userValue !== undefined && serverValue === undefined) || (userValue === undefined && serverValue !== undefined)) {
+                        // Anggap berbeda jika salah satu null/undefined dan yang lain memiliki nilai
+                        if (!( (userValue === null || userValue === undefined) && (serverValue === null || serverValue === undefined) )) {
+                            return true;
+                        }
+                    }
+                    
+                    return JSON.stringify(userValue) !== JSON.stringify(serverValue);
+                });
+
+                if (isDifferent) {
+                    stepsToUpdate.push({ id: userStep.id_step, data: userStep });
+                }
+            } else {
+                // User step memiliki id_step, tapi tidak ditemukan di server.
+                // Ini bisa berarti langkah tersebut baru dibuat di client dan id_step nya unik (misal UUID client-side)
+                // atau langkah tersebut sudah dihapus di server.
+                // Jika id_step di-generate client dan unik, maka ini adalah langkah baru.
+                // Namun, jika id_step seharusnya dari server, ini anomali.
+                // Untuk kasus umum di mana id_step baru ada setelah dibuat di server,
+                // kondisi `!userStep.id_step` sudah menangani penambahan.
+                // Jika Anda mengizinkan id_step client-side sebelum create, logika ini mungkin perlu penyesuaian.
+                // Berdasarkan deskripsi masalah, kita asumsikan id_step adalah pengenal dari server.
+                // Jika userStep.id_step ada tapi tidak di server, ini bisa dianggap sebagai data baru jika id_step unik.
+                // Namun, karena sudah ada filter `!userStep.id_step` untuk data baru,
+                // kita bisa asumsikan ini adalah kasus yang tidak diharapkan atau id_step yang "yatim".
+                // Untuk skenario umum, jika id_step ada, seharusnya ada di server atau akan diupdate.
+                // Jika tidak ada di server, dan bukan baru (karena punya id_step), ini bisa jadi error data.
+                // Untuk saat ini, jika punya id_step tapi tidak di server, kita tidak menambahkannya ke `stepsToAdd` di sini
+                // karena sudah ditangani oleh `!userStep.id_step`.
+            }
         }
     });
 
-    // Cari langkah yang perlu dihapus
+    // Cari langkah yang perlu dihapus (langkah yang ada di server tapi tidak ada lagi di user)
     serverSteps.forEach(serverStep => {
-        if (!userMap.has(serverStep.id_step)) {
+        if (!userStepsWithIdMap.has(serverStep.id_step)) {
             stepsToDelete.push(serverStep.id_step);
         }
     });
@@ -567,14 +605,14 @@ onMounted(fetchAllData);
                 Pratinjau
             </li>
         </ol>
-    
+
         <!-- tampilan data -->
         <div class="my-8">
             <FirstStep v-if="currentStep == 1" ref="firstStepRef" />
             <SecondStep v-else-if="currentStep == 2" />
             <ThirdStep v-else-if="currentStep == 3" />
         </div>
-    
+
         <div class="flex justify-between mb-8 px-6 max-w-3xl mx-auto print:hidden">
             <button type="button" :disabled="currentStep == 1"
                 class="w-1/4 text-white bg-gray-500 hover:bg-gray-600 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
@@ -597,7 +635,7 @@ onMounted(fetchAllData);
                     <CircleArrowRight class="fill-current w-5 ml-2 mt-1" />
             </button>
         </div>
-    
+
         <!-- Floating feedback button and panel -->
         <div class="fixed bottom-6 right-6 z-50 print:hidden">
             <div v-if="showFeedback && draftFeedback && draftFeedback.length > 0" 
@@ -632,7 +670,7 @@ onMounted(fetchAllData);
                     </div>
                 </div>
             </div>
-            
+
             <!-- Floating feedback button with badge -->
             <button 
                 v-if="draftFeedback && draftFeedback.length > 0"

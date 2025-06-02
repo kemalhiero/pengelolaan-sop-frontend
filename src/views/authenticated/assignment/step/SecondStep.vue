@@ -174,8 +174,7 @@ updateSequenceNumbers();
                         </td>
                         <td class="px-2 py-3">
                             <select v-model="step.id_implementer" class="w-full p-2 border border-gray-300 rounded-md disabled:opacity-100" :disabled="isDisabled">
-                                <option v-for="(item, index) in formData.implementer" :value="item.id" :key="index">{{
-                                    item.name }}</option>
+                                <option v-for="(item, index) in formData.implementer" :value="item.id" :key="index">{{ item.name }}</option>
                             </select>
                         </td>
                         <td class="px-2 py-3">
@@ -183,9 +182,8 @@ updateSequenceNumbers();
                         </td>
                         <td class="px-2 py-3">
                             <div class="flex items-center">
-                                <input type="number" v-model="step.time" min="0" :readonly="isDisabled"
-                                    class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 rounded-l-md w-14"
-                                    placeholder="">
+                                <input type="number" v-model="step.time" min="0" :readonly="isDisabled" placeholder=""
+                                    class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 rounded-l-md w-14">
                                 <select v-model="step.time_unit" class="p-2 border border-gray-300 rounded-r-md w-20 disabled:opacity-100" :disabled="isDisabled">
                                     <option value="m">Menit</option>
                                     <option value="h">Jam</option>
