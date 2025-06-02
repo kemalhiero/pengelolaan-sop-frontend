@@ -292,8 +292,7 @@ onMounted(async () => {
 
 <template>
     <div class="flex flex-col gap-8">
-        <div v-for="(pageSteps, pageIndex) in allPages" :key="pageIndex"
-             class="print-page w-[calc(297mm-3cm)] min-w-[calc(297mm-3cm)] mx-auto">
+        <div v-for="(pageSteps, pageIndex) in allPages" :key="pageIndex" class="print-page w-[calc(297mm-3cm)] min-w-[calc(297mm-3cm)] mx-auto">
             <div :id="`${mainSopAreaId}-${pageIndex}`" class="relative">
                 
                 <!-- Incoming OPCs Area -->
@@ -345,14 +344,15 @@ onMounted(async () => {
                         <tr v-for="step in pageSteps" :key="step.id_step">
                             <td class="border-2 border-black py-0.5 text-center">{{ step.seq_number }}</td>
                             <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.name }}</td>
-                            <td v-for="impl in props.implementer" :key="impl.id"
-                                class="border-2 border-black p-0 text-center align-middle relative"
-                                :data-implementer-id="impl.id">
+                            <td v-for="impl in props.implementer" :key="impl.id" :data-implementer-id="impl.id"
+                                class="border-2 border-black p-0 text-center align-middle relative">
                                 <div v-if="step.id_implementer === impl.id" 
                                      class="flex flex-col justify-around items-center px-2 py-5 min-h-[70px]">
-                                    <component :is="getShapeComponent(step.type)" 
-                                             :id="`sop-step-${step.seq_number}`"
-                                             class="relative z-10" />
+                                    <component 
+                                        :is="getShapeComponent(step.type)" 
+                                        :id="`sop-step-${step.seq_number}`"
+                                        class="relative z-10" 
+                                    />
                                 </div>
                             </td>
                             <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.fittings }}</td>
@@ -382,7 +382,7 @@ onMounted(async () => {
                         :key="`${pageIndex}-${index}`"
                         :idarrow="`${pageIndex}-${index}`" 
                         :idcontainer="`${mainSopAreaId}-${pageIndex}`"
-                        :connection="connection" 
+                        :connection="connection"
                     />
                 </svg>
             </div>

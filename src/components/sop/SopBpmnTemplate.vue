@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, computed, onUnmounted } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import BpmnLaneRow from '@/components/sop/shape/bpmn/BpmnLaneRow.vue';
 import ArrowConnector from '@/components/sop/shape/ArrowConnector.vue';
 import { capitalizeWords } from '@/utils/text';
@@ -166,12 +166,12 @@ const calculateGlobalLayout = () => {
     return {
       impId: imp.id,
       steps: globalLayout.value.steps
-              .filter(step => step.lane === index)
-              .map(step => ({ 
-                ...step, 
-                y: step.y - laneTopOffset,
-                id: `bpmn-step-${step.seq}` // Tambahkan ID untuk referensi ArrowConnector
-              }))
+        .filter(step => step.lane === index)
+        .map(step => ({
+          ...step,
+          y: step.y - laneTopOffset,
+          id: `bpmn-step-${step.seq}` // Tambahkan ID untuk referensi ArrowConnector
+        }))
     };
   });
 };
@@ -243,9 +243,7 @@ const dynamicTitleWidth = computed(() => {
         <div class="print-page print:absolute print:inset-0 print:flex print:items-center print:justify-center">
           <!-- Container untuk konten dengan auto scaling -->
           <div class="print:flex print:justify-center print:items-center w-full" :style="printScaleStyle">
-            <table class="border-2 border-black relative z-10 w-full md:my-5" 
-                   :style="{ minWidth: `${diagramWidth}px` }" 
-                   id="bpmn-container">
+            <table class="border-2 border-black relative z-10 w-full md:my-5" :style="{ minWidth: `${diagramWidth}px` }" id="bpmn-container">
               <tbody>
                 <tr>
                   <td v-if="props.name" class="border-2 border-black w-0 relative" :rowspan="implementer.length">
@@ -275,8 +273,7 @@ const dynamicTitleWidth = computed(() => {
             </table>
             
             <!-- Arrows SVG -->
-            <svg class="absolute inset-0 h-full pointer-events-none z-20 w-fit" 
-                 :style="{ minWidth: `${diagramWidth}px` }">
+            <svg class="absolute inset-0 h-full pointer-events-none z-20 w-fit" :style="{ minWidth: `${diagramWidth}px` }">
               <ArrowConnector
                 v-for="(connection, index) in bpmnConnections" 
                 :idarrow="index + 100"

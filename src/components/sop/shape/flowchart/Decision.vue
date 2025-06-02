@@ -1,6 +1,6 @@
 <template>
-    <svg width="122" height="122" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="61,2 120,61 61,120 2,60" fill="none" stroke="black" stroke-width="2"></polygon>
-        <!-- <text x="50%" y="50%" font-family="Arial" font-size="16" text-anchor="middle" dy=".3em">Keputusan</text> -->
+    <svg width="97.6" height="97.6" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="48.8,1.6 96,48.8 48.8,96 1.6,48" fill="none" stroke="black" stroke-width="1.6"></polygon>
+        <!-- <text x="50%" y="50%" font-family="Arial" font-size="12.8" text-anchor="middle" dy=".3em">Keputusan</text> -->
     </svg>
 </template>
