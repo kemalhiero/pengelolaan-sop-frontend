@@ -29,13 +29,16 @@ if (authStore.userRole === 'kadep') {
     dataGuide = [
         {
             q: 'Bagaimana cara PJ mengajukan SOP baru?',
-            a: 'PJ dapat mengajukan SOP baru dengan mengeklik tombol "Tambah SOP" pada halaman dokumen, lalu mengisi formulir pengajuan . Pastikan semua informasi yang diperlukan sudah lengkap.'
+            a: 'PJ dapat mengajukan SOP baru dengan mengeklik tombol "Tambah SOP" pada halaman dokumen, lalu mengisi formulir pengajuan. Pastikan semua informasi yang diperlukan sudah lengkap.'
         }, {
             q: 'Apakah PJ bisa mengedit info penugasan SOP yang sudah diajukan?',
             a: 'Masih bisa selagi SOP masih dalam tahap penyusunan.'
         }, {
             q: 'Bagaimana cara PJ melihat status SOP yang diajukan?',
             a: 'PJ dapat memantau status SOP yang diajukan pada halaman dokumen, termasuk apakah SOP sedang diproses atau sudah disetujui. Perlu diketahui bahwa SOP yang ditampilkan hanya SOP yang ada di organisasi masing-masing.'
+        }, {
+            q: 'Bagaimana cara PJ menyetujui dan mengesahkan SOP untuk organisasinya (selain DSI)?',
+            a: 'PJ dapat melihat daftar SOP yang menunggu persetujuan pada halaman dokumen. Klik SOP yang ingin ditinjau, baca detailnya, lalu berikan umpan balik "Setujui". Jika disetujui, PJ akan diarahkan ke halaman pengesahan untuk menandatangani dan mengesahkan SOP tersebut.'
         }
     ];
 }

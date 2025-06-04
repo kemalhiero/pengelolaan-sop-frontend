@@ -159,9 +159,7 @@ onMounted(() => {
     <div v-show="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
         <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showAddModal = false"></div>
         <div class="relative w-full max-w-2xl max-h-full">
-            <!-- Modal content -->
             <div v-show="changeHodStep == 1" class="relative bg-white rounded-lg shadow">
-                <!-- Modal header -->
                 <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
                     <h3 class="text-xl font-medium text-gray-900">
                         Pilih user yang akan ditugaskan menjadi kadep
@@ -173,19 +171,19 @@ onMounted(() => {
                         <span class="sr-only">Tutup</span>
                     </button>
                 </div>
-                <!-- Modal body -->
                 <form @submit.prevent="changeHodStep = 2">
                     <div class="p-4 md:p-5 space-y-4">
-                        <DataTable :data="dataCandidate" :columns="[
-                            { field: 'id_number', label: 'NIP', sortable: true, searchable: true },
-                            { field: 'name', label: 'Nama', sortable: true, searchable: true },
-                        ]" :radio-column="[
-                            { field: 'id', label: 'Pilih' }
-                        ]" value-field="id" v-model="selectedHod" />
+                        <DataTable 
+                            :data="dataCandidate" :columns="[
+                                { field: 'id_number', label: 'NIP', sortable: true, searchable: true },
+                                { field: 'name', label: 'Nama', sortable: true, searchable: true },
+                            ]" 
+                            :radio-column="[{ field: 'id', label: 'Pilih' }]" 
+                            value-field="id" 
+                            v-model="selectedHod" 
+                        />
                     </div>
-                    <!-- Modal footer -->
-                    <div
-                        class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
+                    <div class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
                         <button type="submit" :disabled="!selectedHod"
                             class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">
                             Pilih

@@ -114,7 +114,7 @@ const router = createRouter({
       component: () => import('@/views/authenticated/docs/SopLegalization.vue'),
       meta: {
         requiresAuth: true,
-        roles: ['kadep']
+        roles: ['pj', 'kadep']
       }
     },
     {
@@ -177,7 +177,7 @@ const router = createRouter({
     },
     {
       path: '/app/role',
-      redirect: { name: 'KaprodiManagement' }
+      redirect: { name: 'DrafterManagement' }
     },
     {
       path: '/app/role/hod',

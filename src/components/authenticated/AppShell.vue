@@ -8,7 +8,7 @@ import { logoutUser } from '@/api/authApi';
 import { useAuthStore } from '@/stores/auth';
 import getToken from '@/utils/getToken';
 
-import NavbarNotification from './NavbarNotification.vue';
+// import NavbarNotification from './NavbarNotification.vue';
 
 // icon svg
 import PageIcon from '@/assets/icons/PageIcon.vue'
@@ -74,7 +74,7 @@ onMounted(() => {
             <div class="flex items-center lg:order-2">
 
                 <!-- Notifications -->
-                <NavbarNotification />
+                <!-- <NavbarNotification /> -->
 
                 <!-- Tombol User -->
                 <button type="button" @click="showDropdown = !showDropdown"
@@ -124,7 +124,7 @@ onMounted(() => {
                         active-class="bg-gray-200">
                         <DashboardIcon
                             class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 fill-current" />
-                        <span class="ml-3">Dashboard</span>
+                        <span class="ml-3">Dasbor</span>
                     </RouterLink>
                 </li>
                 <li>
@@ -142,7 +142,7 @@ onMounted(() => {
                         active-class="bg-gray-200">
                         <PeopleGroupIcon
                             class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 fill-current" />
-                        <span class="flex-1 ml-3 whitespace-nowrap">Pelaksana</span>
+                        <span class="flex-1 ml-3 whitespace-nowrap">Pelaksana SOP</span>
                     </RouterLink>
                 </li>
                 <li v-if="authStore.userRole === 'kadep'">
@@ -160,7 +160,7 @@ onMounted(() => {
                         aria-controls="dropdown-law" data-collapse-toggle="dropdown-law">
                         <ScaleBalanced
                             class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 fill-current" />
-                        <span class="flex-1 ml-3 text-left whitespace-nowrap">Hukum</span>
+                        <span class="flex-1 ml-3 text-left whitespace-nowrap">Hukum SOP</span>
                         <AngleDownIcon />
                     </button>
                     <ul id="dropdown-law" class="hidden py-2 space-y-2">
@@ -184,7 +184,7 @@ onMounted(() => {
                         aria-controls="dropdown-roles" data-collapse-toggle="dropdown-roles">
                         <UserGearIcon
                             class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 fill-current" />
-                        <span class="flex-1 ml-3 text-left whitespace-nowrap">Role User</span>
+                        <span class="flex-1 ml-3 text-left whitespace-nowrap">Pengguna Aplikasi</span>
                         <AngleDownIcon />
                     </button>
                     <ul id="dropdown-roles" class="hidden py-2 space-y-2">

@@ -3,6 +3,7 @@ import { inject, onMounted, ref } from 'vue';
 import { toast } from 'vue3-toastify';
 
 import { addPic, getAllPic, getPicCandidate, getPicDetail } from '@/api/userApi';
+import { getOrg } from '@/api/orgApi';
 
 import Error from '@/components/Error.vue';
 import DataTable from '@/components/DataTable.vue';
@@ -11,6 +12,7 @@ import TableSkeleton from '@/components/TableSkeleton.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import AddDataButton from '@/components/modal/AddDataButton.vue';
+import { useToastPromise } from '@/utils/toastPromiseHandler';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -18,11 +20,15 @@ layoutType.value = 'admin';
 const dataPic = ref([]);
 const dataCandidate = ref([]);
 const showAddModal = ref(false);
-const selectedPic = ref([]);
+const selectedPic = ref();
 const isLoading = ref(true);
 const hasError = ref(false);
 const selectedDataDetail = ref(null);
 const showDetailModal = ref(false);
+
+const picModalStep = ref(1);
+const dataOrganization = ref([]);
+const selectedOrg = ref('');
 
 const fetchPic = async () => {
     try {
@@ -58,39 +64,58 @@ const fetchPicCandidate = async () => {
     }
 };
 
-const submitPic = async () => {
+const fetchOrg = async () => {
     try {
-        console.log('mengirim data pj', selectedPic.value);
-
-        await Promise.all(
-            selectedPic.value.map(async (pic) => {
-                return await addPic({
-                    id: pic.id
-                });
-            })
+        const result = await getOrg();
+        // Ambil nama organisasi yang sudah ada di dataPic
+        const existingOrgNames = dataPic.value.map(pic => pic.org);
+        // Filter organisasi: id !== 0 (dsi) dan nama belum ada di dataPic
+        dataOrganization.value = result.data.filter(
+            org => org.id !== 0 && !existingOrgNames.includes(org.name)
         );
-
-        fetchPic();
-        fetchPicCandidate();
-
-        toast('Berhasil menambahkan penanggung jawab', {
-            type: "success",
-            autoClose: 3000
-        });
-        showAddModal.value = false;
     } catch (error) {
         console.error('Fetch error:', error);
-        toast(`Data gagal ditambahkan! <br> ${error} `, {
-            type: "error",
-            autoClose: 5000,
-            dangerouslyHTMLString: true
-        });
+    }
+};
+
+const submitPic = async () => {
+    try {
+        await useToastPromise(
+            new Promise((resolve, reject) => {
+                addPic({ id: selectedPic.value, org: selectedOrg.value })
+                    .then((res) => {
+                        // Reset selectedPic and selectedOrg after submission
+                        selectedPic.value = null;
+                        selectedOrg.value = null;
+                        showAddModal.value = false;
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 3000);
+                        resolve(res);
+                    })
+                    .catch((err) => {
+                        reject(err);
+                    });
+            }),
+            {
+                messages: {
+                    success: "Berhasil menambahkan Penanggung Jawab!",
+                    error: (err) => `Gagal menghapus data! <br> ${err}`
+                },
+                toastOptions: { 
+                    autoClose: 3000, 
+                    dangerouslyHTMLString: true 
+                }
+            }
+        );
+    } catch (error) {
+        console.error('Fetch error:', error);
     }
 };
 
 const handleRowClick = async (id) => {
     const response = await getPicDetail(id);
-    selectedDataDetail.value =  response.data;
+    selectedDataDetail.value = response.data;
 
     // ubah nilai
     if (response.data.gender == 'pria') {
@@ -111,9 +136,27 @@ const closeModal = () => {
     selectedDataDetail.value = null;
 };
 
+const nextModalStep = () => {
+    if (picModalStep.value === 1) {
+        if (selectedOrg.value === undefined || selectedOrg.value === null) {
+            toast('Pilih organisasi terlebih dahulu!', {
+                type: "warning",
+                autoClose: 3000
+            });
+            return;
+        }
+        picModalStep.value = 2;
+    } else if (picModalStep.value === 2) {
+        submitPic();
+        showAddModal.value = false;
+        picModalStep.value = 1;
+    }
+};
+
 onMounted(() => {
     fetchPic();
     fetchPicCandidate();
+    fetchOrg();
 })
 </script>
 
@@ -125,7 +168,6 @@ onMounted(() => {
             <AddDataButton btnLabel="Tambah PJ Baru" btn-title="Tambah penanggung jawab baru"
                 @click="showAddModal = true" />
         </div>
-
         <div>
             <TableSkeleton v-if="isLoading" :columns="5" :rows="5" />
             <Error v-else-if="hasError" @click="fetchPic" />
@@ -133,14 +175,14 @@ onMounted(() => {
                 message="Belum ada data penanggung jawab yang tersedia atau anda belum terdaftar di organisasi yang ada."
                 @click="fetchPic" />
             <DataTable v-else 
-                :data="dataPic" 
+                :data="dataPic"
                 :columns="[
                     { field: 'id_number', label: 'NIM/NIP', sortable: true, searchable: true },
                     { field: 'name', label: 'Nama', sortable: true, searchable: true },
                     { field: 'org', label: 'Organisasi', sortable: true, searchable: true },
-                ]" 
-                :detail-column="true" 
-                @click="handleRowClick" 
+                ]"
+                :detail-column="true"
+                @click="handleRowClick"
             />
         </div>
     </div>
@@ -149,12 +191,10 @@ onMounted(() => {
         <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showAddModal = false"></div>
 
         <div class="relative w-full max-w-2xl max-h-full">
-            <!-- Modal content -->
             <div class="relative bg-white rounded-lg shadow">
-                <!-- Modal header -->
                 <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
                     <h3 class="text-xl font-medium text-gray-900">
-                        Centang user yang akan ditugaskan menjadi penanggung jawab
+                        Tambahkan Penanggung Jawab Baru
                     </h3>
                     <button type="button"
                         class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
@@ -163,127 +203,145 @@ onMounted(() => {
                         <span class="sr-only">Tutup</span>
                     </button>
                 </div>
-                <!-- Modal body -->
+
+                <ol class="flex items-center w-full px-3 pt-2 space-x-2 text-sm font-medium text-center text-gray-500 sm:text-base sm:px-4 sm:space-x-4 justify-center">
+                    <li class="flex items-center text-blue-600">
+                        <span class="flex items-center justify-center w-5 h-5 me-2 text-xs border border-blue-600 rounded-full shrink-0">
+                            1
+                        </span>
+                        Pilih Organisasi
+                        <svg class="w-3 h-3 ms-2 sm:ms-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 12 10">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="m7 9 4-4-4-4M1 9l4-4-4-4" />
+                        </svg>
+                    </li>
+                    <li class="flex items-center" :class="{ 'text-blue-600': picModalStep == 2 }">
+                        <span class="flex items-center justify-center w-5 h-5 me-2 text-xs border rounded-full shrink-0"
+                            :class="picModalStep == 2 ? 'border-blue-600' : 'border-gray-500' ">
+                            2
+                        </span>
+                        Pilih PJ {{ selectedOrg ? `${dataOrganization.find(org => org.id == selectedOrg)?.name}` : '' }}
+                    </li>
+                </ol>
 
                 <div class="p-4 md:p-5 space-y-4">
-                    <DataTable 
-                        :data="dataCandidate" 
-                        :columns="[
-                            { field: 'id_number', label: 'NIP', sortable: true, searchable: true },
-                            { field: 'name', label: 'Nama', sortable: true, searchable: true },
-                        ]" 
-                        :check-column="true" 
-                        v-model="selectedPic" 
-                    />
-                </div>
-                <!-- Modal footer -->
-                <div
-                    class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                    <form @submit.prevent="submitPic">
-                        <button type="submit" :disabled="selectedPic.length == 0"
-                            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">
-                            Pilih
+                    <div v-show="picModalStep == 1">
+                        <select required v-model="selectedOrg" v-if="dataOrganization"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
+                            <option selected disabled value="">Pilih organisasi</option>    
+                            <option 
+                                v-for="(item, index) in dataOrganization" 
+                                :value="item?.id" 
+                                :key="`org-${index}`"
+                            >
+                                {{ item.name }}
+                            </option>
+                        </select>
+                    </div>
+                    <div v-show="picModalStep == 2">
+                        <DataTable 
+                            :data="dataCandidate" 
+                            :columns="[
+                                { field: 'id_number', label: 'NIP', sortable: true, searchable: true },
+                                { field: 'name', label: 'Nama', sortable: true, searchable: true },
+                            ]" 
+                            :radio-column="[{ field: 'id', label: 'Pilih' }]" 
+                            v-model="selectedPic" 
+                            value-field="id" 
+                        />
+                    </div>
+
+                    <div class="flex justify-between items-center">
+                        <button :disabled="picModalStep == 1" @click="picModalStep--"
+                            class="text-white inline-flex items-center focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center bg-blue-700 hover:bg-blue-800 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Kembali
                         </button>
-                    </form>
+                        <button @click="nextModalStep" :disabled="!selectedOrg" :title="selectedOrg ? '' : 'Pilih organisasi terlebih dahulu'"
+                            class="text-white inline-flex items-center focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center bg-blue-700 hover:bg-blue-800 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                            {{ picModalStep == 1 ? 'Lanjut' : 'Tambah' }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-
     </div>
 
     <div v-show="showDetailModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
-
         <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="closeModal"></div>
-
-        <div class="relative w-full max-w-2xl max-h-full">
-            <div class="relative bg-white rounded-lg shadow">
-
-                <!-- Modal header -->
-                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
-                    <h3 class="text-xl font-medium text-gray-900">
-                        Detail versi SOP
-                    </h3>
-                    <button type="button"
-                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
-                        @click="closeModal">
-                        <XMarkCloseIcon class="w-3 h-3" />
-                        <span class="sr-only">Tutup modal</span>
-                    </button>
-                </div>
-
-                <!-- Modal body -->
-                <div class="p-4 md:p-5 space-y-4 max-h-[620px] overflow-y-auto">
-                    <div class="grid gap-4 grid-cols-2" v-if="selectedDataDetail">
-                        <div>
-                            <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Nama</label>
-                            <input type="text" id="name"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                v-model="selectedDataDetail.name" placeholder="belum ada data" readonly>
-                        </div>
-                        <div>
-                            <label for="id-number" class="block mb-2 text-sm font-medium text-gray-900">NIM/NIP</label>
-                            <input type="text" id="id-number"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                v-model="selectedDataDetail.id_number" placeholder="belum ada data" readonly>
-                        </div>
-                        <div>
-                            <label for="gender" class="block mb-2 text-sm font-medium text-gray-900">Jenis Kelamin</label>
-                            <input type="text" id="gender"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                v-model="selectedDataDetail.gender" placeholder="belum ada data" readonly>
-                        </div>
-                        <div>
-                            <label for="role" class="block mb-2 text-sm font-medium text-gray-900">Role</label>
-                            <input type="text" id="role"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                v-model="selectedDataDetail.role" placeholder="belum ada data" readonly>
-                        </div>
-                        <div>
-                            <label for="email" class="block mb-2 text-sm font-medium text-gray-900">Email</label>
-                            <input type="text" id="email"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                v-model="selectedDataDetail.email" placeholder="belum ada data" readonly>
-                        </div>
-                        <div>
-                            <label for="org" class="block mb-2 text-sm font-medium text-gray-900">Organisasi</label>
-                            <input type="text" id="org"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                                v-model="selectedDataDetail.org" placeholder="belum ada data" readonly>
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block mb-2 text-sm font-medium text-gray-900">Anggota tim</label>
-                            <ul class="max-w-2xl space-y-1 list-disc list-inside">
-                                <li v-if="selectedDataDetail.team_member.length > 0" v-for="(member, index) in selectedDataDetail.team_member"
-                                    :key="index" class="text-sm">
-                                    {{ member.id_number }} - {{ member.name }}
-                                </li>
-                                <p v-else class="italic text-gray-400 text-sm">belum ada data!</p>
-                            </ul>
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block mb-2 text-sm font-medium text-gray-900">Sop yang dikelola</label>
-                            <ul class="max-w-2xl space-y-1 list-disc list-inside">
-                                <li v-if="selectedDataDetail.sop.length > 0" v-for="(s, index) in selectedDataDetail.sop"
-                                    :key="index" class="text-sm">
-                                    {{ s.number }} - {{ s.name }}
-                                </li>
-                                <p v-else class="italic text-gray-400 text-sm">belum ada data!</p>
-                            </ul>
-                        </div>
+        <div class="relative bg-white w-full max-w-2xl max-h-full rounded-lg shadow ">
+            <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
+                <h3 class="text-xl font-medium text-gray-900">
+                    Detail versi SOP
+                </h3>
+                <button type="button"
+                    class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+                    @click="closeModal">
+                    <XMarkCloseIcon class="w-3 h-3" />
+                    <span class="sr-only">Tutup modal</span>
+                </button>
+            </div>
+            <div class="p-4 md:p-5 space-y-4 max-h-[620px] overflow-y-auto">
+                <div class="grid gap-4 grid-cols-2" v-if="selectedDataDetail">
+                    <div>
+                        <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Nama</label>
+                        <input type="text" id="name"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
+                            v-model="selectedDataDetail.name" placeholder="belum ada data" readonly>
                     </div>
-                    <p class="text-center" v-else>Belum ada data!</p>
+                    <div>
+                        <label for="id-number" class="block mb-2 text-sm font-medium text-gray-900">NIM/NIP</label>
+                        <input type="text" id="id-number"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
+                            v-model="selectedDataDetail.id_number" placeholder="belum ada data" readonly>
+                    </div>
+                    <div>
+                        <label for="gender" class="block mb-2 text-sm font-medium text-gray-900">Jenis Kelamin</label>
+                        <input type="text" id="gender"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
+                            v-model="selectedDataDetail.gender" placeholder="belum ada data" readonly>
+                    </div>
+                    <div>
+                        <label for="role" class="block mb-2 text-sm font-medium text-gray-900">Role</label>
+                        <input type="text" id="role"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
+                            v-model="selectedDataDetail.role" placeholder="belum ada data" readonly>
+                    </div>
+                    <div>
+                        <label for="email" class="block mb-2 text-sm font-medium text-gray-900">Email</label>
+                        <input type="text" id="email"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
+                            v-model="selectedDataDetail.email" placeholder="belum ada data" readonly>
+                    </div>
+                    <div>
+                        <label for="org" class="block mb-2 text-sm font-medium text-gray-900">Organisasi</label>
+                        <input type="text" id="org"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
+                            v-model="selectedDataDetail.org" placeholder="belum ada data" readonly>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block mb-2 text-sm font-medium text-gray-900">Anggota tim</label>
+                        <ul class="max-w-2xl space-y-1 list-disc list-inside">
+                            <li v-if="selectedDataDetail.team_member.length > 0"
+                                v-for="(member, index) in selectedDataDetail.team_member" :key="index" class="text-sm">
+                                {{ member.id_number }} - {{ member.name }}
+                            </li>
+                            <p v-else class="italic text-gray-400 text-sm">belum ada data!</p>
+                        </ul>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block mb-2 text-sm font-medium text-gray-900">Sop yang dikelola</label>
+                        <ul class="max-w-2xl space-y-1 list-disc list-inside">
+                            <li v-if="selectedDataDetail.sop.length > 0" v-for="(s, index) in selectedDataDetail.sop"
+                                :key="index" class="text-sm">
+                                {{ s.number }} - {{ s.name }}
+                            </li>
+                            <p v-else class="italic text-gray-400 text-sm">belum ada data!</p>
+                        </ul>
+                    </div>
                 </div>
-
-                <!-- Modal footer -->
-                <div
-                    class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                    <!-- <button type="button"
-                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">
-                        Lihat Progres Terkini
-                    </button> -->
-                </div>
+                <p class="text-center" v-else>Belum ada data!</p>
             </div>
         </div>
-
     </div>
 </template>
