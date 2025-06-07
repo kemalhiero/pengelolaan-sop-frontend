@@ -181,8 +181,8 @@ const router = createRouter({
     },
     {
       path: '/app/role/hod',
-      name: 'KaprodiManagement',
-      component: () => import('@/views/authenticated/role/DepartementHead.vue'),
+      name: 'KadepManagement',
+      component: () => import('@/views/authenticated/role/HoD.vue'),
       meta: {
         requiresAuth: true,
         roles: ['kadep']

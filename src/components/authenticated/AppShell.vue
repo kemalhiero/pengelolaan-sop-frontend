@@ -1,5 +1,5 @@
 <script setup>
-import { initCollapses } from 'flowbite';
+import { initCollapses, initDrawers } from 'flowbite';
 import { onMounted, ref } from 'vue';
 import { toast } from 'vue3-toastify';
 import { useRouter } from 'vue-router';
@@ -39,6 +39,7 @@ const handleLogout = async () => {
 
 onMounted(() => {
     initCollapses();
+    initDrawers();
 });
 </script>
 
@@ -189,7 +190,7 @@ onMounted(() => {
                     </button>
                     <ul id="dropdown-roles" class="hidden py-2 space-y-2">
                         <li v-if="authStore.userRole === 'kadep'">
-                            <RouterLink :to="{ name: 'KaprodiManagement' }" active-class="bg-gray-200"
+                            <RouterLink :to="{ name: 'KadepManagement' }" active-class="bg-gray-200"
                                 class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200">
                                 Ketua Departemen
                             </RouterLink>
