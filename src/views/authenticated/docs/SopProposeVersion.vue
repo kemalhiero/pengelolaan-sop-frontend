@@ -1,5 +1,5 @@
 <script setup>
-import { inject, onMounted, ref } from 'vue';
+import { computed, inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import useToastPromise from '@/utils/toastPromiseHandler';
@@ -11,7 +11,7 @@ import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import DataTable from '@/components/DataTable.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import WarningText from '@/components/validation/WarningText.vue';
-import letterCode from '@/data/letterCode.js';
+import { general, department, laboratory } from '@/data/letterCode';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -25,9 +25,9 @@ const form = ref({
     number: '',
     drafter: [],
     version: null,
-    description: ''
+    description: '',
+    id_org: null,
 });
-let sopYear;
 let latestSopNumber = 0;
 const dataDrafter = ref([]);
 const showWarning = ref({
@@ -39,7 +39,7 @@ const fetchData = async () => {
   try {
     const response = await getOneSop(route.params.id);
     form.value.name = response.data.name;
-    sopYear = parseInt(response.data.creation_date.split(' ')[0].split('/')[2]);
+    form.value.id_org = response.data.organization.id;
   } catch (error) {
     console.error('Fetch error:', error);
   }
@@ -47,7 +47,7 @@ const fetchData = async () => {
 
 const fetchLatestSopInYear = async () => {
   try {
-    const response = await getLatestSopInYear(sopYear);
+    const response = await getLatestSopInYear(currentYear);
     latestSopNumber = parseInt(response.data.number.split("/")[1]);
     form.value.number = latestSopNumber + 1;
     form.value.version = response.data.version;
@@ -82,7 +82,7 @@ const submitSop = async () => {
                 const resultSopdetail = await createSopDetail(
                     route.params.id,
                     {
-                        number: `T/${String(form.value.number).padStart(3, '0')}/${letterCode}/${currentYear}`,
+                        number: `T/${String(form.value.number).padStart(3, '0')}/${letterCode.value}/${currentYear}`,
                         description: form.value.description,
                         version: parseInt(form.value.version) + 1,
                         signer_id: null,
@@ -111,7 +111,7 @@ const submitSop = async () => {
                     error: (msg) => msg,
                 },
                 toastOptions: {
-                    autoClose: 5000,
+                    autoClose: 2000,
                 }
             }
         );
@@ -124,6 +124,14 @@ const submitSop = async () => {
         console.error('Error saat mengirim data:', error);
     }
 };
+
+const letterCode = computed(() => {
+    if (form.value.id_org !== null && form.value.id_org !== '') {
+        return form.value.id_org === 0 ? department : laboratory;
+    } else {
+        return general;
+    }
+})
 
 onMounted( async() => {
     await fetchData();

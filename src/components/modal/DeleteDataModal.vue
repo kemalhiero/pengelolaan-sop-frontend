@@ -44,7 +44,7 @@ const props = defineProps({
         required: true
     },
     selectedId: {
-        type: Number
+        type: [Number, String]
     },
     text: {
         type: String,

@@ -1,5 +1,5 @@
 <script setup>
-import { inject, onMounted, ref } from 'vue';
+import { inject, onMounted, ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 
 import useToastPromise from '@/utils/toastPromiseHandler';
@@ -7,7 +7,7 @@ import { useAuthStore } from '@/stores/auth';
 import { getOrg } from '@/api/orgApi';
 import { createSopDrafter, getUserByRole, getUserProfile } from '@/api/userApi';
 import { createSop, createSopDetail, deleteSop, getLatestSopInYear } from '@/api/sopApi';
-import letterCode from '@/data/letterCode.js';
+import { general, department, laboratory } from '@/data/letterCode.js';
 
 import DataTable from '@/components/DataTable.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
@@ -96,7 +96,7 @@ const submitSop = async () => {
                     let resultSopdetail = await createSopDetail(
                         dataSop.data.id_sop,
                         {
-                            number: `T/${String(form.value.number).padStart(3, '0')}/${letterCode}/${currentYear}`,
+                            number: `T/${String(form.value.number).padStart(3, '0')}/${letterCode.value}/${currentYear}`,
                             description: form.value.description,
                             version: 1,
                             signer_id: null,
@@ -152,6 +152,14 @@ const fetchProfile = async () => {
         console.error('Fetch error:', error);
     }
 };
+
+const letterCode = computed(() => {
+    if (form.value.id_org !== null && form.value.id_org !== '') {
+        return form.value.id_org === 0 ? department : laboratory;
+    } else {
+        return general;
+    }
+})
 
 onMounted(() => {
     fetchOrg();

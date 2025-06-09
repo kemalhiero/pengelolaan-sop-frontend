@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import MermaidDiagram from '@/components/sop/MermaidDiagram.vue';
-import letterCode from '@/data/letterCode.js';
+import { general } from '@/data/letterCode.js';
 
 // Define the Mermaid diagram string
 const mermaidChart = ref(`
@@ -48,7 +48,7 @@ const mermaidChart = ref(`
         <div class="step-card">
             <h4>Nomor SOP</h4>
             <h6 class="text-sm font-bold">
-                T/00213/{{ letterCode }}/2023
+                T/00213/{{ general }}/2023
             </h6>
             <!-- <h5 class="text-xl font-bold"></h5> -->
         </div>

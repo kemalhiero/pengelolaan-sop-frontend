@@ -82,7 +82,7 @@ const props = defineProps({
         required: true
     },
     selectedId: {
-        type: Number,
+        type: [Number, String],
         required: true
     },
     updateData: {

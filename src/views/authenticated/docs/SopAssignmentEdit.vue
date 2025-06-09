@@ -5,13 +5,13 @@ import useToastPromise from '@/utils/toastPromiseHandler';
 
 import { createSopDrafter, getUserByRole, deleteSopDrafter } from '@/api/userApi';
 import { getSopVersion, updateSopDetail } from '@/api/sopApi';
+import { general, department, laboratory } from '@/data/letterCode.js';
 
 import WarningText from '@/components/validation/WarningText.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import DataTable from '@/components/DataTable.vue';
-import letterCode from '@/data/letterCode.js';
 import Error from '@/components/Error.vue';
 
 const layoutType = inject('layoutType');
@@ -41,6 +41,14 @@ const isDataError = computed(() => {
     return !form.value || !form.value.name || !dataDrafter.value || !dataDrafter.value[0].name;
 });
 
+const letterCode = computed(() => {
+    if (form.value.id_org !== null && form.value.id_org !== '') {
+        return form.value.id_org === 0 ? department : laboratory;
+    } else {
+        return general;
+    }
+})
+
 const fetchDrafter = async () => {
     try {
         const result = await getUserByRole('penyusun');
@@ -66,7 +74,7 @@ const submitSop = async () => {
                     let apdetSopDetail = await updateSopDetail(
                         route.params.id,
                         {
-                            number: `T/${String(form.value.number).padStart(3, '0')}/${letterCode}/${form.value.year}`,
+                            number: `T/${String(form.value.number).padStart(3, '0')}/${letterCode.value}/${form.value.year}`,
                             description: form.value.description,
                         }
                     );

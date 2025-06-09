@@ -27,7 +27,6 @@ const props = defineProps({
     },
     section: {
         type: String,
-        required: true
     },
     lawBasis: {
         type: Array,
