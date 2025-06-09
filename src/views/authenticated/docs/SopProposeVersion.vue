@@ -2,7 +2,7 @@
 import { inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { useToastPromise } from '@/utils/toastPromiseHandler';
+import useToastPromise from '@/utils/toastPromiseHandler';
 import { createSopDrafter, getUserByRole } from '@/api/userApi';
 import { createSopDetail, getLatestSopInYear, getOneSop } from '@/api/sopApi';
 

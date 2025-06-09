@@ -3,7 +3,7 @@ import { ref, reactive, inject, onMounted, computed } from 'vue';
 import { toast } from 'vue3-toastify';
 
 import { useAuthStore } from '@/stores/auth';
-import { useToastPromise } from '@/utils/toastPromiseHandler';
+import useToastPromise from '@/utils/toastPromiseHandler';
 import { sendCode, updateEmail, updatePw, verifCode } from '@/api/authApi';
 import { addProfilePhoto, addSignatureFile, deleteSignatureFile, deleteUserProfile, getUserProfile } from '@/api/userApi';
 

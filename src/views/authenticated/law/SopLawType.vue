@@ -1,6 +1,6 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
-import { useToastPromise } from "@/utils/toastPromiseHandler";
+import useToastPromise from "@/utils/toastPromiseHandler";
 import { getLawType, createLawType, updateLawType, deleteLawType } from '@/api/lawTypeApi';
 
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';

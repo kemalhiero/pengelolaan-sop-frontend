@@ -12,25 +12,25 @@ import { deleteSopLawBasis } from '@/api/lawBasisApi';
 import { deleteSopRecord } from '@/api/recordApi';
 import { deleteSopDrafter } from '@/api/userApi';
 
-import { useToastPromise } from '@/utils/toastPromiseHandler';
+import useToastPromise from '@/utils/toastPromiseHandler';
 import { switchStatusSopDetail } from '@/utils/getStatus';
 import { useSopData } from '@/composables/useSopData';
+import roleAbbreviation from '@/data/roleAbbrv.json';
 import { useAuthStore } from '@/stores/auth';
 
 import YellowBadgeIndicator from '@/components/indicator/YellowBadgeIndicator.vue';
 import GreenBadgeIndicator from '@/components/indicator/GreenBadgeIndicator.vue';
+import BlueBadgeIndicator from '@/components/indicator/BlueBadgeIndicator.vue';
 import ExclamationMarkIcon from '@/assets/icons/ExclamationMarkIcon.vue';
 import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
 import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
 import SopInfoTemplate from '@/components/sop/SopInfoTemplate.vue';
+import SopStepTemplate from '@/components/sop/SopStepTemplate.vue';
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
-import SopStepTemplate from '@/components/sop/SopStepTemplate.vue';
 import Error from '@/components/Error.vue';
-import roleAbbreviation from '@/data/roleAbbrv.json';
-import BlueBadgeIndicator from '@/components/indicator/BlueBadgeIndicator.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -114,36 +114,31 @@ const processSubmitFeedback = async (feedbackData) => {
                 success: 'Umpan balik berhasil dikirim!',
             },
             toastOptions: {
-                autoClose: 3000,
+                autoClose: 2000,
             },
         }
     );
-
-    // Jika feedback adalah catatan, reload halaman setelah submit
-    if (feedbackData.type == 3) {
-        setTimeout(() => {
-            window.location.reload();
-        }, 3000);
-        return;
-    }
-
+    
     // Tentukan status baru dan redirect path berdasarkan pilihan dan role
     let newStatus = null;
     let redirectPath = `/app/docs/${sopData.value.id_sop}`;
-
+    
     if (feedbackData.type == 1) {         // setuju
         // cek dulu lingkup organisasinya apakah dsi atau tidak
-        const isDSI = sopData.value.organization.name === 'Departemen Sistem Informasi' ||
-            sopData.value.organization.id === 0;
+        const isDSI = sopData.value.organization.id === 0;
 
         if (isDSI || authStore.userRole === 'kadep') {
             newStatus = 7; // Sedang disahkan oleh Kadep
-            redirectPath = `/app/docs/draft/${route.params.id}/legal`;
         } else if (authStore.userRole === 'pj') {
-            newStatus = 5; // Sedang direview Kadep
+            newStatus = 8; // Sedang disahkan oleh PJ (kenapa 8? karena status ini baru ditambahkan)
         }
+        redirectPath = `/app/docs/draft/${route.params.id}/legal`;
     } else if (feedbackData.type == 2) {  // perlu revisi
         newStatus = authStore.userRole === 'kadep' ? 6 : 4; // 6 for Kadep, 4 for PJ
+    } else if (feedbackData.type == 3) { // catatan
+        // tidak mengubah status, hanya menambahkan catatan
+        setTimeout(() => location.reload(), 2000);
+        return;
     }
 
     // Update status dan redirect
@@ -151,7 +146,7 @@ const processSubmitFeedback = async (feedbackData) => {
         await updateSopDetail(route.params.id, { status: newStatus });
         setTimeout(() => {
             router.push(redirectPath);
-        }, 3000);
+        }, 2000);
     }
 };
 

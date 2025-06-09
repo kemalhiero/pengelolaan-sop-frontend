@@ -252,6 +252,19 @@ const goToPage = (page) => {
     }
 };
 
+const aksiPaddingClass = computed(() => {
+    // Jika tidak ada data, default ke px-4
+    if (!props.editDeleteColumn || !paginatedData.value.length) return 'px-4';
+
+    // Cek apakah ada baris yang menampilkan kedua tombol
+    const adaDuaTombol = paginatedData.value.some(item => {
+        const showEdit = props.showEditButton ? props.showEditButton(item) : true;
+        const showDelete = props.showDeleteButton ? props.showDeleteButton(item) : true;
+        return showEdit && showDelete;
+    });
+
+    return adaDuaTombol ? 'px-11' : 'px-4';
+});
 </script>
 
 <template>
@@ -274,48 +287,36 @@ const goToPage = (page) => {
         <table class="w-full text-sm text-left text-gray-500">
             <thead class="text-xs text-gray-900 uppercase bg-gray-50">
                 <tr>
-                    <th scope="col" class="px-6 py-3">No.</th>
-                    <th v-for="column in columns" :key="column.field" class="px-6 py-3" scope="col">
+                    <th scope="col" class="p-3">No.</th>
+                    <th v-for="column in columns" :key="column.field" class="p-3" scope="col">
                         <div class="flex items-center">
                             {{ column.label }}
-                            <div v-if="column.sortable" @click="sortData(column.field)" class="ml-2 cursor-pointer">
-                                <SortIcon />
-                            </div>
+                            <SortIcon v-if="column.sortable" @click="sortData(column.field)" class="ml-2 cursor-pointer"/>
                         </div>
                     </th>
-                    <th v-for="column in statusColumns" :key="column.field" class="px-6 py-3" scope="col">
-                        <div class="flex items-center">
-                            {{ column.label }}
-                        </div>
+                    <th v-for="column in statusColumns" :key="column.field" class="p-3" scope="col">
+                        {{ column.label }}
                     </th>
-                    <th v-for="column in radioColumn" :key="column.field" class="px-6 py-3" scope="col">
-                        <div class="flex items-center">
-                            {{ column.label }}
-                        </div>
+                    <th v-for="column in radioColumn" :key="column.field" class="p-3 inline-flex justify-center" scope="col">
+                        {{ column.label }}
                     </th>
-                    <th v-if="checkColumn || linkColumn" class="px-6 py-3" scope="col">
-                        <div class="flex items-center">
-                            Pilih
-                        </div>
+                    <th v-if="checkColumn || linkColumn" class="p-3 inline-flex justify-center" scope="col">
+                        Pilih
                     </th>
-                    <th v-if="editDeleteColumn || otherColumn" class="px-6 py-3" scope="col">
-                        <div class="flex items-center">
-                            Aksi
-                        </div>
+                    <th v-if="editDeleteColumn || otherColumn" :class="['py-3 inline-flex', aksiPaddingClass]" >
+                        Aksi
                     </th>
-                    <th v-if="detailColumn" class="px-6 py-3" scope="col">
-                        <div class="flex items-center">
-                            Detail
-                        </div>
+                    <th v-if="detailColumn" class="px-4 py-3 inline-flex">
+                        Detail
                     </th>
                 </tr>
             </thead>
             <tbody>
                 <tr v-for="(item, index) in paginatedData" :key="index" class="bg-white border-b">
-                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap"> <!-- nomor urut -->
+                    <th scope="row" class="p-3 font-medium text-gray-900 whitespace-nowrap"> <!-- nomor urut -->
                         {{ (currentPage - 1) * itemsPerPage + index + 1 }}
                     </th>
-                    <td v-for="column in columns" :key="column.field" class="px-6 py-4 text-black">
+                    <td v-for="column in columns" :key="column.field" class="p-3 text-black">
                         <template v-if="item[column.field]">
                             {{ item[column.field] }}
                         </template>
@@ -325,49 +326,49 @@ const goToPage = (page) => {
                     </td>
 
                     <!-- kolom kostum -->
-                    <td v-for="column in statusColumns" :key="column.field" class="px-6 py-4 text-black">
+                    <td v-for="column in statusColumns" :key="column.field" class="p-3 max-w-48 text-black">
                         <GreenBadgeIndicator v-if="[1].includes(item[column.field])"
                             :teks="badgeText[item[column.field]]" />
                         <YellowBadgeIndicator v-else-if="[2, 3, 4, 5, 6, 7].includes(item[column.field])"
                             :teks="badgeText[item[column.field]]" />
                         <RedBadgeIndicator v-else :teks="badgeText[item[column.field]]" />
                     </td>
-                    <td v-for="column in radioColumn" :key="column.field" class="px-6 py-4 text-black">
+                    <td v-for="column in radioColumn" :key="column.field" class="p-3 inline-flex justify-center">
                         <input type="radio" :name="column.field" :value="item[props.valueField]"
                             :checked="modelValue === item[props.valueField]"
                             @change="$emit('update:modelValue', item[props.valueField])"
                             class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500">
                     </td>
-                    <td v-if="props.checkColumn == true" class="px-6 py-4 text-black">
+                    <td v-if="props.checkColumn == true" class="p-3 inline-flex justify-center">
                         <input type="checkbox" :checked="isItemSelected(item)" @change="toggleItem(item)"
                             class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
                     </td>
-                    <td class="px-6 py-4 flex justify-center" v-if="props.editDeleteColumn == true">
+                    <td class="p-3 inline-flex justify-center space-x-3" v-if="props.editDeleteColumn == true">
                         <button :title="`Edit item ${index + 1}`" @click="$emit('edit', item.id)"
                             v-if="showEditButton ? showEditButton(item) : true"
-                            class="px-3 py-2 h-9 mx-2 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
+                            class="px-3 py-2 h-9 text-white bg-yellow-400 rounded-lg hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 inline-flex">
                             <PenToSquareIcon class="fill-current w-4" />
                         </button>
                         <button :title="`Hapus item ${index + 1}`" @click="$emit('delete', item.id)"
                             v-if="showDeleteButton ? showDeleteButton(item) : true"
-                            class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
+                            class="px-3 py-2 h-9 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex">
                             <TrashCanIcon class="fill-current w-4" />
                         </button>
                     </td>
-                    <td class="px-6 py-4" v-if="props.detailColumn == true">
+                    <td class="p-3 inline-flex justify-center" v-if="props.detailColumn == true">
                         <button :title="`Detail item ${index + 1}`" @click="$emit('click', item.id)"
-                            class="bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 me-2 mb-2 focus:outline-none">
+                            class="bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 focus:outline-none">
                             <EyeIcon class="fill-white w-5" />
                         </button>
                     </td>
-                    <td class="px-6 py-4" v-if="props.linkColumn == true">
+                    <td class="p-3" v-if="props.linkColumn == true">
                         <button @click="router.push({ name: detailLink, params: { id: item.id } })"
-                            class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center me-2 mb-2">
+                            class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center">
                             <EyeIcon class="w-5 mr-3 fill-current" />
                             Lihat
                         </button>
                     </td>
-                    <td class="px-6 py-4" v-if="props.otherColumn == true">
+                    <td class="p-3" v-if="props.otherColumn == true">
                         <slot name="link"></slot>
                     </td>
                     <!-- ------------ -->

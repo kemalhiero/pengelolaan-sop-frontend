@@ -1,18 +1,18 @@
 <script setup>
 import { computed, inject, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useToastPromise } from '@/utils/toastPromiseHandler';
+import useToastPromise from '@/utils/toastPromiseHandler';
 
 import { createSopDrafter, getUserByRole, deleteSopDrafter } from '@/api/userApi';
 import { getSopVersion, updateSopDetail } from '@/api/sopApi';
 
-import DataTable from '@/components/DataTable.vue';
+import WarningText from '@/components/validation/WarningText.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
-import WarningText from '@/components/validation/WarningText.vue';
-import Error from '@/components/Error.vue';
+import DataTable from '@/components/DataTable.vue';
 import letterCode from '@/data/letterCode.js';
+import Error from '@/components/Error.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';

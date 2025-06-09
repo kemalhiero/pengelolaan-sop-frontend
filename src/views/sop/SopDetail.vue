@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useSopData } from '@/composables/useSopData';
 
-import { useToastPromise } from '@/utils/toastPromiseHandler';
+import useToastPromise from '@/utils/toastPromiseHandler';
 import { addDraftFeedback, deleteDraftFeedback, getGeneralFeedback } from '@/api/feedbackApi';
 import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
 import SopInfoTemplate from '@/components/sop/SopInfoTemplate.vue';
@@ -123,7 +123,7 @@ const deleteFeedback = async (feedbackId) => {
 };
 
 const reloadPage = () => {
-    window.location.reload();
+    location.reload();
 };
 
 const fetchAllData = async () => {

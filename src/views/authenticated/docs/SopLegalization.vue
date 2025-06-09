@@ -5,7 +5,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useSopData } from '@/composables/useSopData';
 import { getUserProfile } from '@/api/userApi';
 import { confirmSopandBpmn } from '@/api/sopApi';
-import { useToastPromise } from '@/utils/toastPromiseHandler';
+import useToastPromise from '@/utils/toastPromiseHandler';
 
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import SopInfoTemplate from '@/components/sop/SopInfoTemplate.vue';

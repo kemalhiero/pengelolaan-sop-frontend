@@ -32,6 +32,9 @@ const getUnassignedPic = () => getRequest('user/pic/unassigned', getToken());
 const getCurrentPic = () => getRequest('user/pic/current', getToken());
 const getPicDetail = (id) => getRequest(`user/pic/${id}`, getToken());
 
+const downgradeRole = (data) => patchRequest('user/downgrade-role', data, getToken());
+const changeOrganization = (data) => patchRequest('user/change-org', data, getToken());
+
 export {
     getUserByRole, getUserProfile, 
     addProfilePhoto, deleteUserProfile,
@@ -39,5 +42,6 @@ export {
     getAllDrafter, getDrafterByIdDetail, createSopDrafter, deleteSopDrafter, addDrafter, getDrafterDetail,
     updateHod, getHodCandidate, getCurrentHod,
     getSigner,
-    getAllPic, addPic, getUnassignedPic, getPicCandidate, getPicDetail, getCurrentPic, updatePic
+    getAllPic, addPic, getUnassignedPic, getPicCandidate, getPicDetail, getCurrentPic, updatePic,
+    downgradeRole, changeOrganization
 };

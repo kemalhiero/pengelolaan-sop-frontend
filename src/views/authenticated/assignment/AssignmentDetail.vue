@@ -10,7 +10,7 @@ import { createEquipment, getSopEquipment, deleteSopEquipment } from '@/api/equi
 import { createRelatedSop, getRelatedSop, deleteRelatedSop } from '@/api/relatedSopApi';
 import { createRecord, getSopRecord, deleteSopRecord } from '@/api/recordApi';
 import { createIQ, getIQ, deleteIQ } from '@/api/implementQualificationApi';
-import { useToastPromise } from '@/utils/toastPromiseHandler';
+import useToastPromise from '@/utils/toastPromiseHandler';
 import { getDraftFeedback } from '@/api/feedbackApi';
 import { getCurrentHod } from '@/api/userApi';
 

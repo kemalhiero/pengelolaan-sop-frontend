@@ -2,13 +2,14 @@
 import { inject, onMounted, ref } from 'vue';
 import { toast } from 'vue3-toastify';
 import { useAuthStore } from '@/stores/auth';
-import { useToastPromise } from '@/utils/toastPromiseHandler';
+import useToastPromise from '@/utils/toastPromiseHandler';
 import { useRouter } from 'vue-router';
 import getToken from '@/utils/getToken';
 
 import { logoutUser } from '@/api/authApi';
-import { addPic, getAllPic, getPicCandidate, getPicDetail, getCurrentPic, updatePic } from '@/api/userApi';
+import { addPic, getAllPic, getPicCandidate, getPicDetail, getCurrentPic, updatePic, downgradeRole, changeOrganization } from '@/api/userApi';
 import { getOrg } from '@/api/orgApi';
+import roleAbbreviation from '@/data/roleAbbrv.json';
 
 import Error from '@/components/Error.vue';
 import DataTable from '@/components/DataTable.vue';
@@ -18,6 +19,7 @@ import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import AddDataButton from '@/components/modal/AddDataButton.vue';
 import ExclamationMarkIcon from '@/assets/icons/ExclamationMarkIcon.vue';
+import { computed } from 'vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -35,6 +37,7 @@ const changePicStep = ref(1);
 
 const picModalStep = ref(1);
 const dataOrganization = ref([]);
+const allOrganization = ref([]);
 const selectedOrg = ref('');
 const authStore = useAuthStore();
 const router = useRouter();
@@ -43,7 +46,7 @@ const fetchPic = async () => {
     try {
         isLoading.value = true;
         hasError.value = false;
-        
+
         let result;
         if (authStore.userRole === 'kadep') {
             result = await getAllPic();
@@ -85,6 +88,9 @@ const fetchOrg = async () => {
         dataOrganization.value = result.data.filter(
             org => org.id !== 0 && !existingOrgNames.includes(org.name)
         );
+        allOrganization.value = result.data.filter(
+            org => org.id !== 0
+        );
     } catch (error) {
         console.error('Fetch error:', error);
     }
@@ -100,9 +106,7 @@ const submitPic = async () => {
                         selectedPic.value = null;
                         selectedOrg.value = null;
                         showAddModal.value = false;
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 3000);
+                        setTimeout(() => location.reload(), 2000);
                         resolve(res);
                     })
                     .catch((err) => {
@@ -114,9 +118,9 @@ const submitPic = async () => {
                     success: "Berhasil menambahkan Penanggung Jawab!",
                     error: (err) => `Gagal menghapus data! <br> ${err}`
                 },
-                toastOptions: { 
-                    autoClose: 3000, 
-                    dangerouslyHTMLString: true 
+                toastOptions: {
+                    autoClose: 2000,
+                    dangerouslyHTMLString: true
                 }
             }
         );
@@ -152,9 +156,9 @@ const transferRole = async () => {
                     success: "Berhasil memperbarui Penanggung Jawab!",
                     error: (err) => `Gagal memperbarui data! <br> ${err}`
                 },
-                toastOptions: { 
-                    autoClose: 3000, 
-                    dangerouslyHTMLString: true 
+                toastOptions: {
+                    autoClose: 3000,
+                    dangerouslyHTMLString: true
                 }
             }
         );
@@ -163,7 +167,7 @@ const transferRole = async () => {
     }
 };
 
-const handleRowClick = async (id) => {
+const handleDetailClick = async (id) => {
     const response = await getPicDetail(id);
     selectedDataDetail.value = response.data;
 
@@ -181,12 +185,12 @@ const handleRowClick = async (id) => {
     showDetailModal.value = true;
 };
 
-const closeModal = () => {
+const closeDetailModal = () => {
     showDetailModal.value = false;
     selectedDataDetail.value = null;
 };
 
-const nextModalStep = () => {
+const nextAddModalStep = () => {
     if (picModalStep.value === 1) {
         if (selectedOrg.value === undefined || selectedOrg.value === null) {
             toast('Pilih organisasi terlebih dahulu!', {
@@ -203,6 +207,78 @@ const nextModalStep = () => {
     }
 };
 
+const showEditModal = ref(false);
+const editData = ref({
+    id: '', // default id, sesuaikan dengan data jika ada field id
+    name: '', // default name, sesuaikan dengan data jika ada field name
+    role: 'pj', // default role, sesuaikan dengan data jika ada field role
+    org: '' // default org, sesuaikan dengan data jika ada field org_id
+});
+
+let foundToEdit = null;
+const handleEditClick = (id) => {
+    foundToEdit = dataPic.value.find(item => item.id === id);
+    if (foundToEdit) {
+        editData.value.id = foundToEdit.id;
+        editData.value.name = foundToEdit.name;
+        editData.value.org = allOrganization.value.find(org => org.name === foundToEdit.org)?.id || '';
+    }
+    showEditModal.value = true;
+};
+
+const isOrgChanged = computed(() => {
+    if (!foundToEdit) return false;
+    const originalOrgId = allOrganization.value.find(org => org.name === foundToEdit.org)?.id || '';
+    return editData.value.org !== originalOrgId;
+});
+
+const closeEditModal = () => {
+    showEditModal.value = false;
+    Object.assign(editData.value, { id: '', name: '', org: '', role: 'pj' });
+};
+
+const submitEdit = async () => {
+    try {
+        await useToastPromise(
+            new Promise(async (resolve, reject) => {
+                try {
+                    if (editData.value.role !== 'pj') {
+                        await downgradeRole({
+                            id: editData.value.id,
+                            role: editData.value.role
+                        });
+                    } else if (editData.value.role === 'pj' && isOrgChanged.value) {
+                        await changeOrganization({
+                            id: editData.value.id,
+                            org: editData.value.org
+                        });
+                    }
+                    closeEditModal();
+                    setTimeout(() => location.reload(), 1500);
+                    resolve();
+                } catch (err) {
+                    reject(err);
+                }
+            }),
+            {
+                messages: {
+                    success: "Berhasil memperbarui data Penanggung Jawab!",
+                    error: (err) => `Gagal memperbarui data! <br> ${err}`
+                },
+                toastOptions: {
+                    autoClose: 1500,
+                    dangerouslyHTMLString: true
+                }
+            }
+        );
+    } catch (error) {
+        console.error(error);
+    }
+};
+
+const shouldShowEditButton = () => true;
+const shouldShowDeleteButton = () => false;
+
 onMounted(() => {
     fetchPicCandidate();
     fetchPic();
@@ -216,10 +292,9 @@ onMounted(() => {
     <PageTitle judul="Kelola Penanggung Jawab" class="mt-3 mb-7" />
 
     <template v-if="authStore.userRole === 'kadep'">
-        <div class="container mx-auto p-8 lg:px-16">
+        <div class="container mx-auto p-8 lg:py-5 lg:px-16">
             <div class="flex justify-end mb-4">
-                <AddDataButton btnLabel="Tambah PJ Baru" btn-title="Tambah penanggung jawab baru"
-                    @click="showAddModal = true" />
+                <AddDataButton btnLabel="Tambah PJ Baru" btn-title="Tambah penanggung jawab baru" @click="showAddModal = true" />
             </div>
             <div>
                 <TableSkeleton v-if="isLoading" :columns="5" :rows="5" />
@@ -227,7 +302,7 @@ onMounted(() => {
                 <EmptyState v-else-if="!hasError && dataPic.length === 0" title="Tidak ada data penanggung jawab!"
                     message="Belum ada data penanggung jawab yang tersedia atau anda belum terdaftar di organisasi yang ada."
                     @click="fetchPic" />
-                <DataTable v-else 
+                <DataTable v-else
                     :data="dataPic"
                     :columns="[
                         { field: 'id_number', label: 'NIM/NIP', sortable: true, searchable: true },
@@ -235,14 +310,18 @@ onMounted(() => {
                         { field: 'org', label: 'Organisasi', sortable: true, searchable: true },
                     ]"
                     :detail-column="true"
-                    @click="handleRowClick"
+                    @click="handleDetailClick"
+                    :edit-delete-column="true"
+                    :show-edit-button="shouldShowEditButton"
+                    :show-delete-button="shouldShowDeleteButton"
+                    @edit="handleEditClick"
                 />
             </div>
         </div>
 
         <div v-show="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
             <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showAddModal = false"></div>
-    
+
             <div class="relative w-full max-w-2xl max-h-full">
                 <div class="relative bg-white rounded-lg shadow">
                     <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
@@ -256,25 +335,25 @@ onMounted(() => {
                             <span class="sr-only">Tutup</span>
                         </button>
                     </div>
-    
+
                     <ol class="flex items-center w-full px-3 pt-2 space-x-2 text-sm font-medium text-center text-gray-500 sm:text-base sm:px-4 sm:space-x-4 justify-center">
                         <li class="flex items-center text-blue-600">
                             <span class="flex items-center justify-center w-5 h-5 me-2 text-xs border border-blue-600 rounded-full shrink-0">
                                 1
                             </span>
                             Pilih Organisasi
-                            <svg class="w-3 h-3 ms-2 sm:ms-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                fill="none" viewBox="0 0 12 10">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="m7 9 4-4-4-4M1 9l4-4-4-4" />
+                            <svg class="w-3 h-3 ms-2 sm:ms-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 12 10">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m7 9 4-4-4-4M1 9l4-4-4-4" />
                             </svg>
                         </li>
                         <li class="flex items-center" :class="{ 'text-blue-600': picModalStep == 2 }">
-                            <span class="flex items-center justify-center w-5 h-5 me-2 text-xs border rounded-full shrink-0"
-                                :class="picModalStep == 2 ? 'border-blue-600' : 'border-gray-500' ">
+                            <span :class="[
+                                'flex items-center justify-center w-5 h-5 me-2 text-xs border rounded-full shrink-0', 
+                                picModalStep == 2 ? 'border-blue-600' : 'border-gray-500'
+                                ]">
                                 2
                             </span>
-                            Pilih PJ {{ selectedOrg ? `${dataOrganization.find(org => org.id == selectedOrg)?.name}` : '' }}
+                            Pilih PJ {{selectedOrg ? `${dataOrganization.find(org => org.id == selectedOrg)?.name}` : '' }}
                         </li>
                     </ol>
 
@@ -282,12 +361,8 @@ onMounted(() => {
                         <div v-show="picModalStep == 1">
                             <select required v-model="selectedOrg" v-if="dataOrganization"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                                <option selected disabled value="">Pilih organisasi</option>    
-                                <option 
-                                    v-for="(item, index) in dataOrganization" 
-                                    :value="item?.id" 
-                                    :key="`org-${index}`"
-                                >
+                                <option selected disabled value="">Pilih organisasi</option>
+                                <option v-for="(item, index) in dataOrganization" :value="item?.id" :key="`org-${index}`">
                                     {{ item.name }}
                                 </option>
                             </select>
@@ -300,17 +375,16 @@ onMounted(() => {
                                     { field: 'name', label: 'Nama', sortable: true, searchable: true },
                                 ]" 
                                 :radio-column="[{ field: 'id', label: 'Pilih' }]" 
-                                v-model="selectedPic" 
+                                v-model="selectedPic"
                                 value-field="id" 
                             />
                         </div>
-    
                         <div class="flex justify-between items-center">
                             <button :disabled="picModalStep == 1" @click="picModalStep--"
                                 class="text-white inline-flex items-center focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center bg-blue-700 hover:bg-blue-800 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed">
                                 Kembali
                             </button>
-                            <button @click="nextModalStep" :disabled="!selectedOrg" :title="selectedOrg ? '' : 'Pilih organisasi terlebih dahulu'"
+                            <button @click="nextAddModalStep" :disabled="!selectedOrg" :title="selectedOrg ? '' : 'Pilih organisasi terlebih dahulu'"
                                 class="text-white inline-flex items-center focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center bg-blue-700 hover:bg-blue-800 focus:ring-blue-300 disabled:opacity-50 disabled:cursor-not-allowed">
                                 {{ picModalStep == 1 ? 'Lanjut' : 'Tambah' }}
                             </button>
@@ -320,8 +394,63 @@ onMounted(() => {
             </div>
         </div>
 
+        <div v-show="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
+            <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="closeEditModal"></div>
+            <div class="relative w-full max-w-lg max-h-full">
+                <div class="relative bg-white rounded-lg shadow">
+                    <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
+                        <h3 class="text-xl font-medium text-gray-900">
+                            Edit Penanggung Jawab
+                        </h3>
+                        <button type="button" @click="closeEditModal"
+                            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">
+                            <XMarkCloseIcon class="w-3 h-3" />
+                            <span class="sr-only">Tutup</span>
+                        </button>
+                    </div>
+                    <div class="p-4 md:p-5 space-y-4">
+                        <div>
+                            <label class="block mb-2 text-sm font-medium text-gray-900">Nama <span class="text-xs text-gray-400">(tidak dapat diubah)</span></label>
+                            <input type="text" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5" :value="editData?.name" disabled>
+                        </div>
+                        <div>
+                            <label class="block mb-2 text-sm font-medium text-gray-900">Role</label>
+                            <select v-model="editData.role"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
+                                <option value="pj">Penanggung Jawab</option>
+                                <option value="penyusun">Penyusun</option>
+                                <option value="sivitas-akademika">Civitas Akademika</option>
+                            </select>
+                        </div>
+                        <div v-if="editData.role === 'pj'">
+                            <label class="block mb-2 text-sm font-medium text-gray-900">Organisasi</label>
+                            <select v-model="editData.org"
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
+                                <option disabled value="">Pilih organisasi</option>
+                                <option v-for="org in allOrganization" :key="org.id" :value="org.id">
+                                    {{ org.name }}
+                                </option>
+                            </select>
+                        </div>
+                        <div v-else class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+                            <p class="text-yellow-700 font-semibold mb-2">Konfirmasi</p>
+                            <p>Anda yakin ingin mengganti role user ini dari <b>Penanggung Jawab</b> menjadi <b>{{ roleAbbreviation[editData.role] }}</b>?</p>
+                        </div>
+                        <div class="flex justify-end gap-2 mt-4">
+                            <button @click="closeEditModal"
+                                class="py-2 px-4 bg-gray-200 rounded-lg hover:bg-gray-300 text-gray-700">Batal</button>
+                            <button @click="submitEdit" :disabled="editData.role === 'pj' && (!editData.org || !isOrgChanged)"
+                                class="py-2 px-4 bg-yellow-400 text-white rounded-lg hover:bg-yellow-500 disabled:opacity-70 disabled:cursor-not-allowed">
+                                Perbarui
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div v-show="showDetailModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
-            <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="closeModal"></div>
+            <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="closeDetailModal"></div>
             <div class="relative bg-white w-full max-w-2xl max-h-full rounded-lg shadow ">
                 <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
                     <h3 class="text-xl font-medium text-gray-900">
@@ -329,7 +458,7 @@ onMounted(() => {
                     </h3>
                     <button type="button"
                         class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
-                        @click="closeModal">
+                        @click="closeDetailModal">
                         <XMarkCloseIcon class="w-3 h-3" />
                         <span class="sr-only">Tutup modal</span>
                     </button>
@@ -385,8 +514,7 @@ onMounted(() => {
                         <div class="col-span-2">
                             <label class="block mb-2 text-sm font-medium text-gray-900">Sop yang dikelola</label>
                             <ul class="max-w-2xl space-y-1 list-disc list-inside">
-                                <li v-if="selectedDataDetail.sop.length > 0" v-for="(s, index) in selectedDataDetail.sop"
-                                    :key="index" class="text-sm">
+                                <li v-if="selectedDataDetail.sop.length > 0" v-for="(s, index) in selectedDataDetail.sop" :key="index" class="text-sm">
                                     {{ s.number }} - {{ s.name }}
                                 </li>
                                 <p v-else class="italic text-gray-400 text-sm">belum ada data!</p>
@@ -399,7 +527,7 @@ onMounted(() => {
         </div>
     </template>
     <template v-else-if="authStore.userRole === 'pj'">
-        <div class="container mx-auto p-10 lg:px-16 lg:col-span-2" v-if="dataPic">
+        <div class="container mx-auto p-8 lg:py-5 lg:px-16 lg:col-span-2" v-if="dataPic">
             <h2 class="text-2xl font-bold text-gray-800 mb-6">PJ {{ dataPic.org }} saat ini:</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="space-y-2">
@@ -436,7 +564,7 @@ onMounted(() => {
                 </button>
             </div>
         </div>
-    
+
         <div v-show="showChangePicModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
             <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showChangePicModal = false"></div>
             <div class="relative w-full max-w-2xl max-h-full">
@@ -455,12 +583,13 @@ onMounted(() => {
                     <form @submit.prevent="changePicStep = 2">
                         <div class="p-4 md:p-5 space-y-4">
                             <DataTable 
-                                :data="dataCandidate" :columns="[
+                                :data="dataCandidate"
+                                :columns="[
                                     { field: 'id_number', label: 'NIP', sortable: true, searchable: true },
                                     { field: 'name', label: 'Nama', sortable: true, searchable: true },
                                 ]" 
                                 :radio-column="[{ field: 'id', label: 'Pilih' }]" 
-                                value-field="id" 
+                                value-field="id"
                                 v-model="selectedPic" 
                             />
                         </div>
@@ -472,7 +601,7 @@ onMounted(() => {
                         </div>
                     </form>
                 </div>
-    
+
                 <div v-show="changePicStep == 2" class="relative bg-white rounded-lg shadow">
                     <button type="button" @click="showChangePicModal = false"
                         class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center">
@@ -485,7 +614,8 @@ onMounted(() => {
                             Anda yakin ingin mengganti penanggung jawab?
                         </h3>
                         <p class="text-gray-500 mb-1">
-                            Role anda otomatis akan diubah menjadi penyusun di organisasi ini dan anda tidak bisa lagi mengakses menu khusus penanggung jawab!
+                            Role anda otomatis akan diubah menjadi penyusun di organisasi ini dan anda tidak bisa lagi
+                            mengakses menu khusus penanggung jawab!
                         </p>
                         <p class="text-gray-600 mb-5">
                             <span class="text-red-600">*</span>

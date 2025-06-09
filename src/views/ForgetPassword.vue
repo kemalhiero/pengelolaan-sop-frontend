@@ -1,7 +1,7 @@
 <script setup>
 import { inject, ref } from 'vue';
 import { forgetPw } from '@/api/authApi';
-import { useToastPromise } from '@/utils/toastPromiseHandler';
+import useToastPromise from '@/utils/toastPromiseHandler';
 
 const layoutType = inject('layoutType');
 layoutType.value = null;

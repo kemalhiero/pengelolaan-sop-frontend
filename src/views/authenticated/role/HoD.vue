@@ -4,7 +4,7 @@ import { toast } from 'vue3-toastify';
 import { useRouter } from 'vue-router';
 
 import { updateHod, getCurrentHod, getHodCandidate } from '@/api/userApi';
-import { useToastPromise } from '@/utils/toastPromiseHandler';
+import useToastPromise from '@/utils/toastPromiseHandler';
 import { useAuthStore } from '@/stores/auth';
 import { logoutUser } from '@/api/authApi';
 import getToken from '@/utils/getToken';

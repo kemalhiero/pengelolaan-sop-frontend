@@ -15,7 +15,7 @@ import { toast } from 'vue3-toastify';
  * @param {Object} options.toastOptions - Opsi tambahan untuk toast
  * @returns {Promise} - Promise asli yang dibungkus dengan toast
  */
-export const useToastPromise = (promiseCallback, options = {}) => {
+const toastPromise = (promiseCallback, options = {}) => {
     const {
         messages = {},
         icons = {},
@@ -86,3 +86,5 @@ export const useToastPromise = (promiseCallback, options = {}) => {
         }
     );
 };
+
+export default toastPromise;

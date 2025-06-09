@@ -2,7 +2,7 @@
 import { inject, onMounted, ref } from "vue";
 
 import { deleteDraftFeedback, getAllDraftFeedback } from "@/api/feedbackApi";
-import { useToastPromise } from "@/utils/toastPromiseHandler";
+import useToastPromise from "@/utils/toastPromiseHandler";
 import DataTable from "@/components/DataTable.vue";
 import PageTitle from "@/components/authenticated/PageTitle.vue";
 import DeleteDataModal from "@/components/modal/DeleteDataModal.vue";

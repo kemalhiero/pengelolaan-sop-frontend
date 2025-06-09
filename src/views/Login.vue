@@ -79,8 +79,8 @@ const login = async () => {
 
         } else {
             toast("NIM-NIP atau password anda salah!", {
-                "type": "error",
-                "autoClose": 5000,
+                type: "error",
+                autoClose: 5000,
             });
             // form.value.password = '';
         }
