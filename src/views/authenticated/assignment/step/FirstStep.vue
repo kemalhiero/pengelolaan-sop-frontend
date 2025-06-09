@@ -127,7 +127,6 @@ onMounted(() => {
             <CircleInfoIcon class="w-5 mr-2" />
             Informasi dari Penanggung Jawab, tidak bisa diubah!
         </div>
-
         <template v-if="picInfo">
             <div class="mb-4">
                 <label for="sop-name" class="block mb-2 text-sm font-medium ">
@@ -190,9 +189,7 @@ onMounted(() => {
                 </div>
                 <div class="w-1/2">
                     <h2 class="mb-2 text-sm font-semibold">Penanggung Jawab:</h2>
-                    <ul class="space-y-1 list-disc list-inside text-sm">
-                        <li v-for="(item, index) in picInfo.pic" :key="index">({{ item.id_number }}) {{ item.name }}</li>
-                    </ul>
+                    <p class="text-sm">{{ picInfo.pic.name }}</p>
                 </div>
             </div>
         </template>
@@ -393,9 +390,8 @@ onMounted(() => {
                         Centang peraturan yang akan ditambahkan ke SOP
                     </h3>
                     <!-- <Tooltip field="law-modal" text="Misal: Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses kerja praktik mahasiswa." /> -->
-                    <button type="button"
-                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
-                        >
+                    <button type="button" @click="showModal.legalBasis = false"
+                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">
                         <XMarkCloseIcon class="w-3 h-3" />
                         <span class="sr-only">Tutup modal</span>
                     </button>

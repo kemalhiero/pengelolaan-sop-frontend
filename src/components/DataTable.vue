@@ -329,7 +329,7 @@ const aksiPaddingClass = computed(() => {
                     <td v-for="column in statusColumns" :key="column.field" class="p-3 max-w-48 text-black">
                         <GreenBadgeIndicator v-if="[1].includes(item[column.field])"
                             :teks="badgeText[item[column.field]]" />
-                        <YellowBadgeIndicator v-else-if="[2, 3, 4, 5, 6, 7].includes(item[column.field])"
+                        <YellowBadgeIndicator v-else-if="[2, 3, 4, 5, 6, 7, 8].includes(item[column.field])"
                             :teks="badgeText[item[column.field]]" />
                         <RedBadgeIndicator v-else :teks="badgeText[item[column.field]]" />
                     </td>

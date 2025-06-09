@@ -217,10 +217,10 @@ onMounted(() => {
 
         <!-- Komponen AddDataModal -->
         <AddDataModal
-            modalTitle="Tambahkan jenis peraturan baru" 
+            modalTitle="Tambahkan Jenis Peraturan Baru" 
             :showModal="showAddModal" 
             :formFields="[
-                { id: 'law_type', label: 'Jenis peraturan', type: 'text', placeholder: 'Mis. Peraturan Presiden', required: true, minlength: 5, maxlength: 100 },
+                { id: 'law_type', label: 'Jenis Peraturan', type: 'text', placeholder: 'Mis. Peraturan Presiden', required: true, minlength: 5, maxlength: 100 },
                 { id: 'description', label: 'Deskripsi', type: 'textarea', placeholder: 'ketikkan deskripsi disini...' }
             ]" 
             :formData="form" 
@@ -308,10 +308,10 @@ onMounted(() => {
 
     <!-- Komponen EditDataModal -->
     <EditDataModal 
-        modalTitle="Perbarui jenis peraturan" 
+        modalTitle="Perbarui Jenis Peraturan" 
         :showModal="showModalUpdate" 
         :formFields="[
-            { id: 'law_type', label: 'Jenis peraturan', type: 'text', colSpan: 'full', placeholder: 'Mis. Peraturan Presiden', required: true },
+            { id: 'law_type', label: 'Jenis Peraturan', type: 'text', colSpan: 'full', placeholder: 'Mis. Peraturan Presiden', required: true },
             { id: 'description', label: 'Deskripsi', type: 'textarea', colSpan: 'full', placeholder: 'ketikkan deskripsi disini...' }
         ]" 
         :formData="form" 

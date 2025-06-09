@@ -12,6 +12,16 @@ layoutType.value = 'admin';
 const authStore = useAuthStore();
 let dataGuide = [];
 
+const commonGuide = [
+    {
+        q: 'Apakah ada ketentuan khusus dalam menyusun tahapan SOP?',
+        a: 'Setiap tahapan hanya memiliki satu komponen pada kolom pelaksana, mengikuti aktor yang menjalankan tahapan tersebut. Untuk kolom kegiatan, gunakan kalimat aktif, misalnya "Membuat Surat", "Merevisi SOP", atau "Menyusun Barang". Khusus untuk tahap bertipe kuputusan/decision, kolom kegiatan harus diisi dengan pertanyaan yang memerlukan jawaban ya atau tidak, seperti "Apakah SOP sudah lengkap?" atau "Apakah dokumen sudah ditandatangani?".'
+    }, {
+        q: 'Bagaimana cara menyusun tahapan SOP?',
+        a: 'Anda dapat menyusun tahapan SOP dengan mengklik tombol "Tambah Tahapan" pada halaman dokumen, lalu mengisi formulir yang disediakan. Pastikan semua kolom wajib (ditandai karakter bintang (*) berwarna merah) sudah terisi.'
+    }
+];
+
 if (authStore.userRole === 'kadep') {
     dataGuide = [
         {
@@ -23,7 +33,8 @@ if (authStore.userRole === 'kadep') {
         }, {
             q: 'Bagaimana Kadep memantau status SOP di departemen?',
             a: 'Kadep dapat melihat status seluruh SOP pada halaman dokumen, termasuk SOP yang sedang diproses, disetujui, atau sudah kadaluarsa.'
-        }
+        },
+        ...commonGuide
     ];
 } else if (authStore.userRole === 'pj') {
     dataGuide = [
@@ -39,7 +50,8 @@ if (authStore.userRole === 'kadep') {
         }, {
             q: 'Bagaimana cara PJ menyetujui dan mengesahkan SOP untuk organisasinya (selain DSI)?',
             a: 'PJ dapat melihat daftar SOP yang menunggu persetujuan pada halaman dokumen. Klik SOP yang ingin ditinjau, baca detailnya, lalu berikan umpan balik "Setujui". Jika disetujui, PJ akan diarahkan ke halaman pengesahan untuk menandatangani dan mengesahkan SOP tersebut.'
-        }
+        },
+        ...commonGuide
     ];
 }
 

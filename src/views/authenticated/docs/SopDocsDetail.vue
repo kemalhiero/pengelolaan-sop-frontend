@@ -6,7 +6,7 @@ import { toast } from 'vue3-toastify';
 import { deleteSop, getOneSop, updateSop } from '@/api/sopApi';
 import { getOrg } from '@/api/orgApi';
 import { switchStatusIsActive } from '@/utils/getStatus';
-import { useAuthStore } from '@/stores/auth';
+// import { useAuthStore } from '@/stores/auth';
 import statusTexts from '@/data/statusTexts.json';
 
 import Error from '@/components/Error.vue';
@@ -29,7 +29,7 @@ const sopData = ref({});
 const isLoading = ref(true);
 const dataOrganization = ref([]);
 const hasError = ref(false);
-const authStore = useAuthStore();
+// const authStore = useAuthStore();
 const showModal = ref({
   edit: false,
   delete: false,
@@ -69,7 +69,7 @@ const fetchOrg = async () => {
 
 const isUpdateDisabled = computed(() => {
   // Periksa apakah ada status 2, 3, 4, 5, 6, atau 7 di dalam array versi SOP
-  return sopData.value.version?.some(version => [2, 3, 4, 5, 6, 7].includes(version.status)) || false;
+  return sopData.value.version?.some(version => [2, 3, 4, 5, 6, 7, 8].includes(version.status)) || false;
 });
 
 const handleRowClick = (id) => {
@@ -175,7 +175,7 @@ onMounted(async () => {
           {{ sopData.creation_date }}
         </h5>
       </div>
-      <div class="bg-gray-200 p-5 rounded-xl shadow-md">
+      <div class="bg-gray-200 p-5 rounded-xl shadow-md md:col-span-2 lg:col-span-1">
         <h4 class="mb-2.5 text-lg">Status</h4>
         <h5 class="text-xl font-bold">
           {{ switchStatusIsActive(sopData.is_active) }}
@@ -249,7 +249,7 @@ onMounted(async () => {
                               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                               placeholder="belum ada data" v-model="sopData.name"  />
                       </div>
-                      <div class="col-span-2 sm:col-span-1">
+                      <!-- <div class="col-span-2 sm:col-span-1">
                           <label for="org" class="block mb-2 text-sm font-medium text-gray-900">
                               Organisasi
                           </label>
@@ -260,8 +260,8 @@ onMounted(async () => {
                                   {{ item.name }}
                               </option>
                           </select>
-                      </div>
-                      <div class="col-span-2 sm:col-span-1">
+                      </div> -->
+                      <div class="col-span-2">
                           <label for="org" class="block mb-2 text-sm font-medium text-gray-900">
                               Status
                           </label>

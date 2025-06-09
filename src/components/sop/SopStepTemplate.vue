@@ -332,7 +332,7 @@ onMounted(async () => {
                     </thead>
                     <colgroup>
                         <col class="w-[5%]"> <!-- NO -->
-                        <col class="w-[20%]"> <!-- KEGIATAN -->
+                        <col class="w-[23%]"> <!-- KEGIATAN -->
                         <col v-for="impl in props.implementer" :key="impl.id" 
                              :style="{ width: `${70 / props.implementer.length}%` }"> <!-- PELAKSANA -->
                         <col class="w-[19%]"> <!-- KELENGKAPAN -->

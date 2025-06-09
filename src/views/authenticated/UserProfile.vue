@@ -56,7 +56,12 @@ const showPw = ref({
 const toggleCurrentPassword = () => { showPw.value.current = !showPw.value.current };
 const toggleNewPassword = () => { showPw.value.new = !showPw.value.new };
 const toggleConfirmPassword = () => { showPw.value.confirm_new = !showPw.value.confirm_new };
-const showSignatureForm = computed(() => ['pj', 'kadep'].includes(authStore.userRole));
+const showSignatureForm = computed(() => {
+    return (
+        ['pj', 'kadep'].includes(authStore.userRole) ||
+        !!signatureImage.value?.preview
+    );
+});
 
 const fetchProfile = async () => {
     try {
@@ -516,8 +521,7 @@ onMounted(() => {
                             class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition disabled:cursor-not-allowed disabled:bg-opacity-60">
                             Hapus
                         </button>
-                        <button type="submit"
-                            :disabled="!signatureImage.preview || typeof signatureImage.file == 'string'"
+                        <button type="submit" :disabled="!signatureImage.preview || typeof signatureImage.file == 'string'"
                             class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition disabled:cursor-not-allowed disabled:bg-opacity-60">
                             Unggah
                         </button>

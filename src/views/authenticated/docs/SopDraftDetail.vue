@@ -214,7 +214,7 @@ const deleteData = async (id) => {
 
 // Tambahkan fungsi pengecekan status
 const isFeedbackFormDisabled = () => {
-    return [1, 2, 7].includes(sopData.value.status);
+    return [1, 2, 7, 8].includes(sopData.value.status);
 };
 
 // Fungsi untuk menentukan apakah hanya opsi "Catatan" yang boleh dipilih
@@ -309,8 +309,8 @@ onMounted(fetchAllData);
                 :related-sop="sopData.relatedSop.map(item => item.related_sop)"
                 :equipment="sopData.equipment.map(item => item.equipment)"
                 :record-data="sopData.record.map(item => item.data_record)"
-                :signature="sopData.status === 1 ? `${cdnUrl}/${sopData.signature_url}` : null" />
-
+                :signature="sopData.status === 1 ? `${cdnUrl}/${sopData.signature_url}` : null" 
+            />
             <SopStepTemplate :implementer="sopData.implementer" :steps="sopData.steps" />
         </div>
 
@@ -378,7 +378,7 @@ onMounted(fetchAllData);
             </form>
         </div>
 
-        <div class="flex justify-center mt-8 mb-12" v-if="sopData.status === 7 && authStore.userRole === 'kadep'">
+        <div class="flex justify-center mt-8 mb-12" v-if="sopData.status === 7 || sopData.status === 8">
             <button type="button" @click="router.push({ name: 'SopLegalization', params: { id: route.params.id } })"
                 class="w-2/5 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5">
                 <p>Lanjut ke Pengesahan SOP ==></p>
