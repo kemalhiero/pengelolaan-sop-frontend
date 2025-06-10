@@ -61,9 +61,9 @@ const props = defineProps({
 
 <template>
     <div class="flex justify-center">
-        <div class="overflow-x-auto px-4 lg:px-0 print:px-0">
+        <div class="px-4 lg:px-0 print:px-0 mx-auto overflow-x-auto">
             <div class="print-page print-break-after-page w-[calc(297mm-3cm)] min-w-[calc(297mm-3cm)] max-w-[calc(297mm-3cm)] box-border">
-                <table class="w-full border-collapse border-2 border-black mb-8">
+                <table class="w-full border-collapse border-2 border-black mb-8 text-sm">
                     <tbody>
                         <tr>
                             <th rowspan="8" class="w-[47%] border-2 py-0.5 px-2 border-black">
@@ -161,7 +161,7 @@ const props = defineProps({
                         </tr>
                         <tr>
                             <td class="align-top border-2 py-0.5 px-2 border-black">
-                                <ol class="list-decimal list-outside ml-5">
+                                <ol class="list-decimal list-outside ml-5 columns-2">
                                     <template v-if="props.relatedSop && props.relatedSop.length > 0">
                                         <li v-for="(item, index) in props.relatedSop" :key="index">
                                             {{ item }}
@@ -192,7 +192,7 @@ const props = defineProps({
                             </td>
                             <td class="border-2 py-0.5 px-2 border-black" v-else> - </td>
                             <td colspan="3" class="align-top border-2 py-0.5 px-2 border-black">
-                                <ol class="list-decimal list-outside ml-5 columns-3">
+                                <ol class="list-decimal list-outside ml-5 columns-2">
                                     <template v-if="props.recordData && props.recordData.length > 0">
                                         <li v-for="(item, index) in props.recordData" :key="index">
                                             {{ item }}

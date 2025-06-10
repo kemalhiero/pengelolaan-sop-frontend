@@ -189,7 +189,7 @@ onMounted(() => {
                 </div>
                 <div class="w-1/2">
                     <h2 class="mb-2 text-sm font-semibold">Penanggung Jawab:</h2>
-                    <p class="text-sm">{{ picInfo.pic.name }}</p>
+                    <p class="text-sm">{{ picInfo.pic }}</p>
                 </div>
             </div>
         </template>

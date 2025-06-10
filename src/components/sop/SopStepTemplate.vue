@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, nextTick, watch } from 'vue';
+import { computed, onMounted, ref, nextTick, watch, inject } from 'vue';
 
 import Process from '@/components/sop/shape/flowchart/Process.vue';
 import StartEnd from '@/components/sop/shape/flowchart/StartEnd.vue';
@@ -19,10 +19,21 @@ const props = defineProps({
     }
 });
 
-const BASE_STEPS_PER_PAGE = 6;
-const STEPS_WITH_BOTH_OPC = 5;
+const sopConfig = inject('sopConfig');
+
+const BASE_STEPS_PER_PAGE = computed(() => sopConfig?.firstPageSteps) || 6;
+const STEPS_WITH_BOTH_OPC = computed(() => sopConfig?.nextPageSteps) || 5;
 const connectorChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const mainSopAreaId = 'main-sop-area'; // ID untuk container utama
+
+// lebar kolom dalam persentase
+const columnWidth = computed(() => ({
+    activity: sopConfig?.widthKegiatan || 23,
+    completeness: sopConfig?.widthKelengkapan || 19,
+    time: sopConfig?.widthWaktu || 11,
+    output: sopConfig?.widthOutput || 18,
+    notes: sopConfig?.widthKeterangan || 28
+}));
 
 // --- Refs for column positioning ---
 const implementerHeaderRefs = ref({});
@@ -214,13 +225,13 @@ const getOutgoingOPCForPage = (pageIndex) => {
 const getStepsPerPage = (pageIndex) => {
     const totalSteps = props.steps.length;
     if (pageIndex === 0) {
-        return BASE_STEPS_PER_PAGE;
+        return BASE_STEPS_PER_PAGE.value;
     }
-    const stepsLeft = totalSteps - BASE_STEPS_PER_PAGE - (pageIndex - 1) * STEPS_WITH_BOTH_OPC;
-    if (stepsLeft <= BASE_STEPS_PER_PAGE) {
+    const stepsLeft = totalSteps - BASE_STEPS_PER_PAGE.value - (pageIndex - 1) * STEPS_WITH_BOTH_OPC.value;
+    if (stepsLeft <= BASE_STEPS_PER_PAGE.value) {
         return stepsLeft;
     }
-    return STEPS_WITH_BOTH_OPC;
+    return STEPS_WITH_BOTH_OPC.value;
 };
 
 const allPages = computed(() => {
@@ -279,6 +290,26 @@ const recalculateOPCPositions = async () => {
     opcMounted.value = true;
 };
 
+const orderedImplementer = computed(() => {
+    // Ambil urutan id_implementer sesuai kemunculan pertama di steps
+    const seen = new Set();
+    const order = [];
+    props.steps.forEach(step => {
+        if (step.id_implementer && !seen.has(step.id_implementer)) {
+            seen.add(step.id_implementer);
+            order.push(step.id_implementer);
+        }
+    });
+    // Tambahkan implementer yang belum muncul di steps (agar tetap muncul semua)
+    props.implementer.forEach(impl => {
+        if (!seen.has(impl.id)) {
+            order.push(impl.id);
+        }
+    });
+    // Kembalikan array implementer sesuai urutan
+    return order.map(id => props.implementer.find(impl => impl.id === id));
+});
+
 watch(props.steps, async () => {
     await recalculateOPCPositions();
 }, { deep: true });
@@ -292,99 +323,101 @@ onMounted(async () => {
 
 <template>
     <div class="flex flex-col gap-8">
-        <div v-for="(pageSteps, pageIndex) in allPages" :key="pageIndex" class="print-page w-[calc(297mm-3cm)] min-w-[calc(297mm-3cm)] mx-auto">
-            <div :id="`${mainSopAreaId}-${pageIndex}`" class="relative">
-                
-                <!-- Incoming OPCs Area -->
-                <div v-if="getIncomingOPCForPage(pageIndex).length" 
-                     class="relative w-full h-[70px] mb-2">
-                    <template v-for="opc in getIncomingOPCForPage(pageIndex)" :key="opc.id">
-                        <OffPageConnector
-                            v-show="opcMounted"
-                            :id="opc.id"
-                            :letter="opc.letter"
-                            :style="getOpcStyle(opc)"
+        <div class="px-4 lg:px-0 print:px-0 overflow-x-auto mx-auto">
+            <div v-for="(pageSteps, pageIndex) in allPages" :key="pageIndex" class="print-page w-[calc(297mm-3cm)] min-w-[calc(297mm-3cm)]">
+                <div :id="`${mainSopAreaId}-${pageIndex}`" class="relative">
+
+                    <!-- Incoming OPCs Area -->
+                    <div v-if="getIncomingOPCForPage(pageIndex).length" 
+                         class="relative w-full h-[70px] mb-2">
+                        <template v-for="opc in getIncomingOPCForPage(pageIndex)" :key="opc.id">
+                            <OffPageConnector
+                                v-show="opcMounted"
+                                :id="opc.id"
+                                :letter="opc.letter"
+                                :style="getOpcStyle(opc)"
+                            />
+                        </template>
+                    </div>
+
+                    <!-- Table content -->
+                    <table class="w-full border-collapse border-2 border-black table-fixed text-sm" :id="`sop-container-${pageIndex}`">
+                        <!-- Header only for first page -->
+                        <thead v-if="pageIndex === 0">
+                            <tr class="bg-[#D9D9D9]">
+                                <th rowspan="2" class="border-2 py-0.5 border-black">NO</th>
+                                <th rowspan="2" class="border-2 py-0.5 border-black">KEGIATAN</th>
+                                <th :colspan="orderedImplementer.length || 1" class="border-2 py-0.5 px-1 border-black">PELAKSANA</th>
+                                <th colspan="3" class="border-2 py-0.5 px-1 border-black">MUTU BAKU</th>
+                                <th rowspan="2" class="border-2 py-0.5 px-1 border-black">KET</th>
+                            </tr>
+                            <tr class="bg-[#D9D9D9]">
+                                <th v-for="impl in orderedImplementer" :key="impl.id" 
+                                    :ref="el => setImplementerHeaderRef(el, impl.id)"
+                                    class="border-2 py-0.5 px-1 border-black">
+                                    {{ impl.name.toUpperCase() }}
+                                </th>
+                                <th class="border-2 py-0.5 border-black">KELENGKAPAN</th>
+                                <th class="border-2 py-0.5 border-black">WAKTU</th>
+                                <th class="border-2 py-0.5 border-black">OUTPUT</th>
+                            </tr>
+                        </thead>
+                        <colgroup>
+                            <col class="w-[5%]"> <!-- NO -->
+                            <col :style="{ width: columnWidth.activity + '%' }"> <!-- KEGIATAN -->
+                            <col v-for="impl in orderedImplementer" :key="impl.id" 
+                                 :style="{ width: `${70 / orderedImplementer.length}%` }"> <!-- PELAKSANA -->
+                            <col :style="{ width: columnWidth.completeness + '%' }"> <!-- KELENGKAPAN -->
+                            <col :style="{ width: columnWidth.time + '%' }"> <!-- WAKTU -->
+                            <col :style="{ width: columnWidth.output + '%' }"> <!-- OUTPUT -->
+                            <col :style="{ width: columnWidth.notes + '%' }"> <!-- KET -->
+                        </colgroup>
+                        <tbody>
+                            <tr v-for="step in pageSteps" :key="step.id_step">
+                                <td class="border-2 border-black py-0.5 text-center">{{ step.seq_number }}</td>
+                                <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.name }}</td>
+                                <td v-for="impl in orderedImplementer" :key="impl.id" :data-implementer-id="impl.id"
+                                    class="border-2 border-black p-0 text-center align-middle relative">
+                                    <div v-if="step.id_implementer === impl.id" 
+                                         class="flex flex-col justify-around items-center px-2 py-5 min-h-[70px]">
+                                        <component 
+                                            :is="getShapeComponent(step.type)" 
+                                            :id="`sop-step-${step.seq_number}`"
+                                            class="relative z-10" 
+                                        />
+                                    </div>
+                                </td>
+                                <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.fittings }}</td>
+                                <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ `${step.time} ${getFullTimeUnit(step.time_unit)}` }}</td>
+                                <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.output }}</td>
+                                <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.description }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Outgoing OPCs Area -->
+                    <div v-if="getOutgoingOPCForPage(pageIndex).length" class="relative w-full h-[70px] mt-6">
+                        <template v-for="opc in getOutgoingOPCForPage(pageIndex)" :key="opc.id">
+                            <OffPageConnector
+                                v-show="opcMounted"
+                                :id="opc.id"
+                                :letter="opc.letter"
+                                :style="getOpcStyle(opc)"
+                            />
+                        </template>
+                    </div>
+
+                    <!-- SVG arrows layer -->
+                    <svg class="absolute inset-0 w-full h-full pointer-events-none z-20">
+                        <arrow-connector 
+                            v-for="(connection, index) in getConnectionsForPage(pageIndex)" 
+                            :key="`${pageIndex}-${index}`"
+                            :idarrow="`${pageIndex}-${index}`" 
+                            :idcontainer="`${mainSopAreaId}-${pageIndex}`"
+                            :connection="connection"
                         />
-                    </template>
+                    </svg>
                 </div>
-
-                <!-- Table content -->
-                <table class="w-full border-collapse border-2 border-black table-fixed" :id="`sop-container-${pageIndex}`">
-                    <!-- Header only for first page -->
-                    <thead v-if="pageIndex === 0">
-                        <tr class="bg-[#D9D9D9]">
-                            <th rowspan="2" class="border-2 py-0.5 border-black">NO</th>
-                            <th rowspan="2" class="border-2 py-0.5 border-black">KEGIATAN</th>
-                            <th :colspan="implementer.length || 1" class="border-2 py-0.5 px-1 border-black">PELAKSANA</th>
-                            <th colspan="3" class="border-2 py-0.5 px-1 border-black">MUTU BAKU</th>
-                            <th rowspan="2" class="border-2 py-0.5 px-1 border-black">KET</th>
-                        </tr>
-                        <tr class="bg-[#D9D9D9]">
-                            <th v-for="impl in props.implementer" :key="impl.id" 
-                                :ref="el => setImplementerHeaderRef(el, impl.id)"
-                                class="border-2 py-0.5 px-2 border-black">
-                                {{ impl.name.toUpperCase() }}
-                            </th>
-                            <th class="border-2 py-0.5 border-black">KELENGKAPAN</th>
-                            <th class="border-2 py-0.5 border-black">WAKTU</th>
-                            <th class="border-2 py-0.5 border-black">OUTPUT</th>
-                        </tr>
-                    </thead>
-                    <colgroup>
-                        <col class="w-[5%]"> <!-- NO -->
-                        <col class="w-[23%]"> <!-- KEGIATAN -->
-                        <col v-for="impl in props.implementer" :key="impl.id" 
-                             :style="{ width: `${70 / props.implementer.length}%` }"> <!-- PELAKSANA -->
-                        <col class="w-[19%]"> <!-- KELENGKAPAN -->
-                        <col class="w-[11%]"> <!-- WAKTU -->
-                        <col class="w-[15%]"> <!-- OUTPUT -->
-                        <col class="w-[15%]"> <!-- KET -->
-                    </colgroup>
-                    <tbody>
-                        <tr v-for="step in pageSteps" :key="step.id_step">
-                            <td class="border-2 border-black py-0.5 text-center">{{ step.seq_number }}</td>
-                            <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.name }}</td>
-                            <td v-for="impl in props.implementer" :key="impl.id" :data-implementer-id="impl.id"
-                                class="border-2 border-black p-0 text-center align-middle relative">
-                                <div v-if="step.id_implementer === impl.id" 
-                                     class="flex flex-col justify-around items-center px-2 py-5 min-h-[70px]">
-                                    <component 
-                                        :is="getShapeComponent(step.type)" 
-                                        :id="`sop-step-${step.seq_number}`"
-                                        class="relative z-10" 
-                                    />
-                                </div>
-                            </td>
-                            <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.fittings }}</td>
-                            <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ `${step.time} ${getFullTimeUnit(step.time_unit)}` }}</td>
-                            <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.output }}</td>
-                            <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.description }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <!-- Outgoing OPCs Area -->
-                <div v-if="getOutgoingOPCForPage(pageIndex).length" class="relative w-full h-[70px] mt-6">
-                    <template v-for="opc in getOutgoingOPCForPage(pageIndex)" :key="opc.id">
-                        <OffPageConnector
-                            v-show="opcMounted"
-                            :id="opc.id"
-                            :letter="opc.letter"
-                            :style="getOpcStyle(opc)"
-                        />
-                    </template>
-                </div>
-
-                <!-- SVG arrows layer -->
-                <svg class="absolute inset-0 w-full h-full pointer-events-none z-20">
-                    <arrow-connector 
-                        v-for="(connection, index) in getConnectionsForPage(pageIndex)" 
-                        :key="`${pageIndex}-${index}`"
-                        :idarrow="`${pageIndex}-${index}`" 
-                        :idcontainer="`${mainSopAreaId}-${pageIndex}`"
-                        :connection="connection"
-                    />
-                </svg>
             </div>
         </div>
     </div>
