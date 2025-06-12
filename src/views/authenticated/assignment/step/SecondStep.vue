@@ -112,6 +112,26 @@ watch(() => formData.value.implementer,
 
 // Initialize sequence numbers when component is loaded
 updateSequenceNumbers();
+
+const showTextEditModal = ref(false);
+const editingField = ref('');
+const editingIndex = ref(null);
+const editingValue = ref('');
+
+function openTextEditModal(field, index, value) {
+    if (isDisabled.value) return; // Cegah buka modal jika disabled
+    editingField.value = field;
+    editingIndex.value = index;
+    editingValue.value = value;
+    showTextEditModal.value = true;
+}
+
+function saveTextEditModal() {
+    if (editingIndex.value !== null && editingField.value) {
+        sopStep.value[editingIndex.value][editingField.value] = editingValue.value;
+    }
+    showTextEditModal.value = false;
+}
 </script>
 
 <template>
@@ -138,7 +158,14 @@ updateSequenceNumbers();
                         </th>
                         <td class="px-2 py-3">
                             <input type="hidden" v-model="step.id_step">
-                            <input v-model="step.name" class="w-full p-2 border border-gray-300 rounded-md" :readonly="isDisabled" />
+                            <input
+                                v-model="step.name"
+                                class="w-full p-2 border border-gray-300 rounded-md"
+                                :readonly="true"
+                                :disabled="isDisabled"
+                                :class="{ 'cursor-pointer': !isDisabled }"
+                                @click="!isDisabled && openTextEditModal('name', index, step.name)"
+                            />
                         </td>
                         <td class="px-2 py-3">
                             <select v-model="step.type" class="w-full p-2 border border-gray-300 rounded-md disabled:opacity-100" :disabled="isDisabled">
@@ -178,7 +205,14 @@ updateSequenceNumbers();
                             </select>
                         </td>
                         <td class="px-2 py-3">
-                            <input v-model="step.fittings" class="w-full p-2 border border-gray-300 rounded-md" :readonly="isDisabled" />
+                            <input
+                                v-model="step.fittings"
+                                class="w-full p-2 border border-gray-300 rounded-md"
+                                :readonly="true"
+                                :disabled="isDisabled"
+                                :class="{ 'cursor-pointer': !isDisabled }"
+                                @click="!isDisabled && openTextEditModal('fittings', index, step.fittings)"
+                            />
                         </td>
                         <td class="px-2 py-3">
                             <div class="flex items-center">
@@ -195,10 +229,24 @@ updateSequenceNumbers();
                             </div>
                         </td>
                         <td class="px-2 py-3">
-                            <input v-model="step.output" class="w-full p-2 border border-gray-300 rounded-md" :readonly="isDisabled" />
+                            <input
+                                v-model="step.output"
+                                class="w-full p-2 border border-gray-300 rounded-md"
+                                :readonly="true"
+                                :disabled="isDisabled"
+                                :class="{ 'cursor-pointer': !isDisabled }"
+                                @click="!isDisabled && openTextEditModal('output', index, step.output)"
+                            />
                         </td>
                         <td class="px-2 py-3">
-                            <input v-model="step.description" class="w-full p-2 border border-gray-300 rounded-md " :readonly="isDisabled" />
+                            <input
+                                v-model="step.description"
+                                class="w-full p-2 border border-gray-300 rounded-md"
+                                :readonly="true"
+                                :disabled="isDisabled"
+                                :class="{ 'cursor-pointer': !isDisabled }"
+                                @click="!isDisabled && openTextEditModal('description', index, step.description)"
+                            />
                         </td>
                         <td class="px-2 py-3">
                             <div class="flex gap-2">
@@ -221,8 +269,7 @@ updateSequenceNumbers();
 
         <!-- Tombol Tambah -->
         <div class="flex justify-center mt-4">
-            <button @click="addStep" :disabled="isDisabled"
-                :title="isDisabled ? 'Tidak dapat menambah tahapan!' : 'Tambah Tahapan'"
+            <button @click="addStep" :disabled="isDisabled" :title="isDisabled ? 'Tidak dapat menambah tahapan!' : 'Tambah Tahapan'"
                 class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 inline-flex disabled:cursor-not-allowed disabled:bg-opacity-60">
                 <CirclePlusIcon class="fill-current w-6 mr-2" />
                 Tambah Tahapan
@@ -230,18 +277,15 @@ updateSequenceNumbers();
         </div>
 
         <!-- Branch Configuration Modal -->
-        <div v-if="showBranchModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
-            @click="showBranchModal = false">
+        <div v-if="showBranchModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" @click="showBranchModal = false">
             <div class="bg-white p-6 rounded-lg w-96" @click.stop>
                 <h3 class="text-lg font-semibold mb-4">Atur Cabang Keputusan - Tahap {{ selectedStepIndex + 1 }}</h3>
 
                 <div class="mb-4">
                     <label class="block mb-2">❌Tahap Jika Salah:</label>
-                    <select v-model="tempBranchConfig.id_next_step_if_no"
-                        class="w-full p-2 border border-gray-300 rounded-md">
+                    <select v-model="tempBranchConfig.id_next_step_if_no" class="w-full p-2 border border-gray-300 rounded-md">
                         <option value="">Pilih tahap</option>
-                        <option v-for="(step, idx) in sopStep" :key="idx" :value="step.id_step"
-                            :disabled="idx === selectedStepIndex">
+                        <option v-for="(step, idx) in sopStep" :key="idx" :value="step.id_step" :disabled="idx === selectedStepIndex">
                             {{ `${idx + 1}. ${step.name}` }}
                         </option>
                     </select>
@@ -249,23 +293,42 @@ updateSequenceNumbers();
 
                 <div class="mb-4">
                     <label class="block mb-2">✅Tahap Jika Benar:</label>
-                    <select v-model="tempBranchConfig.id_next_step_if_yes"
-                        class="w-full p-2 border border-gray-300 rounded-md">
+                    <select v-model="tempBranchConfig.id_next_step_if_yes" class="w-full p-2 border border-gray-300 rounded-md">
                         <option value="">Pilih tahap</option>
-                        <option v-for="(step, idx) in sopStep" :key="idx" :value="step.id_step"
-                            :disabled="idx === selectedStepIndex">
+                        <option v-for="(step, idx) in sopStep" :key="idx" :value="step.id_step" :disabled="idx === selectedStepIndex">
                             {{ `${idx + 1}. ${step.name}` }}
                         </option>
                     </select>
                 </div>
 
                 <div class="flex justify-end gap-2">
-                    <button @click="showBranchModal = false"
-                        class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    <button @click="showBranchModal = false" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
                         Batal
                     </button>
-                    <button @click="saveBranchConfig"
-                        class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                    <button @click="saveBranchConfig" class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                        Simpan
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Editor Teks -->
+        <div v-if="showTextEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click="showTextEditModal = false">
+            <div class="bg-white p-6 rounded-lg w-[90vw] max-w-xl" @click.stop>
+                <h3 class="text-lg font-semibold mb-4">
+                    Edit {{ 
+                        editingField === 'name' ? 'Kegiatan' : 
+                        editingField === 'fittings' ? 'Kelengkapan' : 
+                        editingField === 'output' ? 'Output' : 
+                        editingField === 'description' ? 'Keterangan' : editingField 
+                    }} - Tahapan {{ (editingIndex !== null ? editingIndex + 1 : '') }}
+                </h3>
+                <textarea v-model="editingValue" rows="8" class="w-full p-2 border border-gray-300 rounded-md resize-vertical"></textarea>
+                <div class="flex justify-end gap-2 mt-4">
+                    <button @click="showTextEditModal = false" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        Batal
+                    </button>
+                    <button @click="saveTextEditModal" class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700">
                         Simpan
                     </button>
                 </div>
