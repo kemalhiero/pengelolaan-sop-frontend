@@ -21,18 +21,31 @@ const props = defineProps({
 
 const sopConfig = inject('sopConfig');
 
-const BASE_STEPS_PER_PAGE = computed(() => sopConfig?.firstPageSteps) || 6;
-const STEPS_WITH_BOTH_OPC = computed(() => sopConfig?.nextPageSteps) || 5;
+// Definisikan nilai default yang jelas
+const DEFAULT_FIRST_PAGE_STEPS = 6;
+const DEFAULT_NEXT_PAGE_STEPS = 5;
+const DEFAULT_WIDTH_KEGIATAN = 23;
+const DEFAULT_WIDTH_KELENGKAPAN = 19;
+const DEFAULT_WIDTH_WAKTU = 11;
+const DEFAULT_WIDTH_OUTPUT = 18;
+const DEFAULT_WIDTH_KETERANGAN = 28;
+
+const BASE_STEPS_PER_PAGE = computed(() => {
+    return sopConfig.value?.firstPageSteps || DEFAULT_FIRST_PAGE_STEPS;
+});
+const STEPS_WITH_BOTH_OPC = computed(() => {
+    return sopConfig.value?.nextPageSteps || DEFAULT_NEXT_PAGE_STEPS;
+});
 const connectorChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const mainSopAreaId = 'main-sop-area'; // ID untuk container utama
 
 // lebar kolom dalam persentase
 const columnWidth = computed(() => ({
-    activity: sopConfig?.widthKegiatan || 23,
-    completeness: sopConfig?.widthKelengkapan || 19,
-    time: sopConfig?.widthWaktu || 11,
-    output: sopConfig?.widthOutput || 18,
-    notes: sopConfig?.widthKeterangan || 28
+    activity: sopConfig.value?.widthKegiatan || DEFAULT_WIDTH_KEGIATAN,
+    completeness: sopConfig.value?.widthKelengkapan || DEFAULT_WIDTH_KELENGKAPAN,
+    time: sopConfig.value?.widthWaktu || DEFAULT_WIDTH_WAKTU,
+    output: sopConfig.value?.widthOutput || DEFAULT_WIDTH_OUTPUT,
+    notes: sopConfig.value?.widthKeterangan || DEFAULT_WIDTH_KETERANGAN
 }));
 
 // --- Refs for column positioning ---

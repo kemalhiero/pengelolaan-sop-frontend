@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue';
 
-import { getSopVersion, getSectionandWarning, getSopStep } from '@/api/sopApi';
+import { getSopVersion, getSectionandWarning, getSopStep, getSopDisplayConfig } from '@/api/sopApi';
 import { getSopImplementer } from '@/api/implementerApi';
 import { getIQ } from '@/api/implementQualificationApi';
 import { getSopEquipment } from '@/api/equipmentApi';
@@ -9,7 +9,7 @@ import { getSopLawBasis } from '@/api/lawBasisApi';
 import { getSopRecord } from '@/api/recordApi';
 import { getCurrentHod, getSigner } from '@/api/userApi';
 
-export function useSopData(route) {
+export default function useSopData(route) {
     const sopData = ref({
         id: null,
         id_sop: null,
@@ -133,6 +133,43 @@ export function useSopData(route) {
         return !sopData.value || !sopData.value.name || !signer.value || !signer.value.name;
     });
 
+    const sopConfig = ref({
+        firstPageSteps: null,
+        nextPageSteps: null,
+        widthKegiatan: null,
+        widthKelengkapan: null,
+        widthWaktu: null,
+        widthOutput: null,
+        widthKeterangan: null,
+    });
+
+    const fetchSopDisplayConfig = async () => {
+        try {
+            const response = await getSopDisplayConfig(route);
+            if (response.success) {
+                sopConfig.value.firstPageSteps = response.data.nominal_basic_page_steps;
+                sopConfig.value.nextPageSteps = response.data.nominal_steps_both_opc;
+                sopConfig.value.widthKegiatan = response.data.kegiatan_width;
+                sopConfig.value.widthKelengkapan = response.data.kelengkapan_width;
+                sopConfig.value.widthWaktu = response.data.waktu_width;
+                sopConfig.value.widthOutput = response.data.output_width;
+                sopConfig.value.widthKeterangan = response.data.ket_width;
+            } else {
+                console.warn('Konfigurasi tampilan SOP belum ada:', response.message);
+                // Set default values if API fails
+                sopConfig.value.firstPageSteps = 5;
+                sopConfig.value.nextPageSteps = 6;
+                sopConfig.value.widthKegiatan = 23;
+                sopConfig.value.widthKelengkapan = 19;
+                sopConfig.value.widthWaktu = 11;
+                sopConfig.value.widthOutput = 18;
+                sopConfig.value.widthKeterangan = 28;
+            }
+        } catch (error) {
+            console.error('Fetch SOP display config error:', error);
+        }
+    };
+
     return {
         signer,
         sopData,
@@ -142,5 +179,7 @@ export function useSopData(route) {
         fetchCurrentHod,
         fetchSigner,
         isDataError,
+        fetchSopDisplayConfig,
+        sopConfig,
     };
 }

@@ -3,7 +3,7 @@ import { ref, provide, onMounted, watch, inject, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 
-import { createSopStep, getAssignmentDetail, getSectionandWarning, getSopStep, updateSopDetail, updateSopStep, deleteSopStep, saveSopDisplayConfig, getSopDisplayConfig } from '@/api/sopApi';
+import { createSopStep, getAssignmentDetail, getSectionandWarning, getSopStep, updateSopDetail, updateSopStep, deleteSopStep, saveSopDisplayConfig } from '@/api/sopApi';
 import { createSopLawBasis, getLawBasis, getSopLawBasis, deleteSopLawBasis } from '@/api/lawBasisApi';
 import { createSopImplementer, getSopImplementer, deleteSopImplementer } from '@/api/implementerApi';
 import { createEquipment, getSopEquipment, deleteSopEquipment } from '@/api/equipmentApi';
@@ -13,6 +13,7 @@ import { createIQ, getIQ, deleteIQ } from '@/api/implementQualificationApi';
 import useToastPromise from '@/utils/toastPromiseHandler';
 import { getDraftFeedback } from '@/api/feedbackApi';
 import { getCurrentHod } from '@/api/userApi';
+import useSopData from '@/composables/useSopData';
 
 import NumberOneCircleIcon from '@/assets/icons/NumberOneCircleIcon.vue';
 import NumberTwoCircleIcon from '@/assets/icons/NumberTwoCircleIcon.vue';
@@ -69,6 +70,8 @@ const isDataError = computed(() => {
     return !picInfo.value || !picInfo.value.name || !picInfo.value.number;
 });
 
+const { fetchSopDisplayConfig, sopConfig } = useSopData(idsopdetail);
+
 provide('picData', picInfo);
 provide('sopStep', sopStep);
 provide('legalBasisData', legalBasisData);
@@ -80,6 +83,7 @@ provide('sopFormData', {
     }
 });
 provide('isDisabled', isDisabled);
+provide('sopConfig', sopConfig);
 
 const fetchPicInfo = async () => {
     try {
@@ -560,43 +564,6 @@ const prevStep = () => {
 };
 
 const showConfigPanel = ref(false);
-const sopConfig = ref({
-    firstPageSteps: null,
-    nextPageSteps: null,
-    widthKegiatan: null,
-    widthKelengkapan: null,
-    widthWaktu: null,
-    widthOutput: null,
-    widthKeterangan: null,
-});
-provide('sopConfig', sopConfig.value);
-
-const fetchSopDisplayConfig = async () => {
-    try {
-        const response = await getSopDisplayConfig(idsopdetail);
-        if (response.success) {
-            sopConfig.value.firstPageSteps = response.data.nominal_basic_page_steps;
-            sopConfig.value.nextPageSteps = response.data.nominal_steps_both_opc;
-            sopConfig.value.widthKegiatan = response.data.kegiatan_width;
-            sopConfig.value.widthKelengkapan = response.data.kelengkapan_width;
-            sopConfig.value.widthWaktu = response.data.waktu_width;
-            sopConfig.value.widthOutput = response.data.output_width;
-            sopConfig.value.widthKeterangan = response.data.ket_width;
-        } else {
-            console.error('Gagal mendapatkan konfigurasi tampilan SOP:', response.message);
-            // Set default values if API fails
-            sopConfig.value.firstPageSteps = 5;
-            sopConfig.value.nextPageSteps = 6;
-            sopConfig.value.widthKegiatan = 23;
-            sopConfig.value.widthKelengkapan = 19;
-            sopConfig.value.widthWaktu = 11;
-            sopConfig.value.widthOutput = 18;
-            sopConfig.value.widthKeterangan = 28;
-        }
-    } catch (error) {
-        console.error('Fetch SOP display config error:', error);
-    }
-};
 
 // Fungsi simpan ke API (ganti dengan API Anda)
 const saveSopConfig = async () => {

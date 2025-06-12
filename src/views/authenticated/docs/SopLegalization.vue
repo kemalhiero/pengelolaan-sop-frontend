@@ -1,10 +1,10 @@
 <script setup>
-import { inject, onMounted, ref } from 'vue';
+import { inject, onMounted, provide, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
-import { useSopData } from '@/composables/useSopData';
 import { getUserProfile } from '@/api/userApi';
 import { confirmSopandBpmn } from '@/api/sopApi';
+import useSopData from '@/composables/useSopData';
 import useToastPromise from '@/utils/toastPromiseHandler';
 
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
@@ -23,7 +23,8 @@ const activeTab = ref('document');
 const router = useRouter();
 const route = useRoute();
 
-const { sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchCurrentHod, isDataError } = useSopData(route.params.id);
+const { sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchCurrentHod, isDataError, fetchSopDisplayConfig, sopConfig } = useSopData(route.params.id);
+provide('sopConfig', sopConfig);
 
 const confirm = () => {
     try {
@@ -81,11 +82,11 @@ const fetchAllData = async () => {
 
     // Periksa apakah data HOD sudah ada
     if (!signer.value.id_number) {
-        console.log('hod', signer.value)
         console.log('Data HOD tidak ditemukan, mengambil ulang dari API...');
         await fetchCurrentHod();
     }
     await fetchProfile();
+    await fetchSopDisplayConfig();
 }
 
 onMounted(fetchAllData);

@@ -1,5 +1,5 @@
 <script setup>
-import { inject, onMounted, ref } from 'vue';
+import { inject, onMounted, provide, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { addDraftFeedback, deleteDraftFeedback, getDraftFeedback } from '@/api/feedbackApi';
@@ -14,9 +14,9 @@ import { deleteSopDrafter } from '@/api/userApi';
 
 import useToastPromise from '@/utils/toastPromiseHandler';
 import { switchStatusSopDetail } from '@/utils/getStatus';
-import { useSopData } from '@/composables/useSopData';
-import roleAbbreviation from '@/data/roleAbbrv.json';
+import useSopData from '@/composables/useSopData';
 import { useAuthStore } from '@/stores/auth';
+import roleAbbreviation from '@/data/roleAbbrv.json';
 
 import YellowBadgeIndicator from '@/components/indicator/YellowBadgeIndicator.vue';
 import GreenBadgeIndicator from '@/components/indicator/GreenBadgeIndicator.vue';
@@ -50,7 +50,8 @@ const showModal = ref({
     deleteAssignment: false,
 });
 
-const { sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchCurrentHod, isDataError } = useSopData(route.params.id);
+const { sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchCurrentHod, isDataError, fetchSopDisplayConfig, sopConfig } = useSopData(route.params.id);
+provide('sopConfig', sopConfig);
 
 const fetchFeedback = async () => {
     try {
@@ -234,6 +235,7 @@ const fetchAllData = async () => {
     await fetchSopStep();
     await fetchCurrentHod();
     await fetchFeedback();
+    await fetchSopDisplayConfig();
 };
 
 onMounted(fetchAllData);

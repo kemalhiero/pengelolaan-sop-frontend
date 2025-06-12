@@ -1,8 +1,8 @@
 <script setup>
-import { computed, inject, onMounted, ref } from 'vue';
+import { computed, inject, onMounted, provide, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-import { useSopData } from '@/composables/useSopData';
+import useSopData from '@/composables/useSopData';
 
 import useToastPromise from '@/utils/toastPromiseHandler';
 import { addDraftFeedback, deleteDraftFeedback, getGeneralFeedback } from '@/api/feedbackApi';
@@ -19,7 +19,8 @@ layoutType.value = 'guest';
 const route = useRoute();
 const authStore = useAuthStore();
 
-const { sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchSigner, isDataError } = useSopData(route.params.id);
+const { sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchSigner, isDataError, fetchSopDisplayConfig, sopConfig } = useSopData(route.params.id);
+provide('sopConfig', sopConfig);
 
 const activeTab = ref('document');
 const cdnUrl = import.meta.env.VITE_CDN_URL; // URL untuk CDN
@@ -132,6 +133,7 @@ const fetchAllData = async () => {
     await fetchSopStep();
     await fetchSigner(sopData.value.signer_id);
     await fetchFeedback();
+    await fetchSopDisplayConfig();
 };
 
 onMounted(fetchAllData);
