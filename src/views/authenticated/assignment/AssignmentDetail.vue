@@ -763,31 +763,35 @@ onMounted(fetchAllData);
                         <!-- Bagian Bawah: Lebar Kolom -->
                         <div class="flex items-center gap-3">
                             <label class="block text-gray-700 font-medium mb-0.5 w-2/3">Kegiatan</label>
-                            <input type="number" min="1" max="100" v-model.number="sopConfig.widthKegiatan"
+                            <input type="number" min="11" max="100" v-model.number="sopConfig.widthKegiatan"
                                 class="w-1/3 border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:border-blue-300 text-sm" />
                         </div>
                         <div class="flex items-center gap-3">
                             <label class="block text-gray-700 font-medium mb-0.5 w-2/3">Kelengkapan</label>
-                            <input type="number" min="1" max="100" v-model.number="sopConfig.widthKelengkapan"
+                            <input type="number" min="16" max="100" v-model.number="sopConfig.widthKelengkapan"
                                 class="w-1/3 border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:border-blue-300 text-sm" />
                         </div>
                         <div class="flex items-center gap-3">
                             <label class="block text-gray-700 font-medium mb-0.5 w-2/3">Waktu</label>
-                            <input type="number" min="1" max="100" v-model.number="sopConfig.widthWaktu"
+                            <input type="number" min="9" max="100" v-model.number="sopConfig.widthWaktu"
                                 class="w-1/3 border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:border-blue-300 text-sm" />
                         </div>
                         <div class="flex items-center gap-3">
                             <label class="block text-gray-700 font-medium mb-0.5 w-2/3">Output</label>
-                            <input type="number" min="1" max="100" v-model.number="sopConfig.widthOutput"
+                            <input type="number" min="9" max="100" v-model.number="sopConfig.widthOutput"
                                 class="w-1/3 border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:border-blue-300 text-sm" />
                         </div>
                         <div class="flex items-center gap-3">
                             <label class="block text-gray-700 font-medium mb-0.5 w-2/3">Keterangan</label>
-                            <input type="number" min="1" max="100" v-model.number="sopConfig.widthKeterangan"
+                            <input type="number" min="5" max="100" v-model.number="sopConfig.widthKeterangan"
                                 class="w-1/3 border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:border-blue-300 text-sm" />
                         </div>
                     </div>
                     <div class="flex justify-end p-3 border-t">
+                        <button type="button" @click="fetchSopDisplayConfig"
+                            class="bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg px-5 py-2 font-semibold shadow focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-300 text-sm mr-2">
+                            Reset
+                        </button>
                         <button type="submit"
                             class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-5 py-2 font-semibold shadow focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transition-all duration-300 text-sm">
                             Simpan

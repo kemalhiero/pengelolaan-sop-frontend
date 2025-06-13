@@ -54,6 +54,11 @@ const fetchPic = async () => {
         } else {
             result = await getCurrentPic();
             dataPic.value = result?.data || null;
+            if (result.data.gender == 'pria') {
+                dataPic.value.gender = 'Laki-laki'
+            } else if (result.data.gender == 'wanita') {
+                dataPic.value.gender = 'Perempuan'
+            }
         }
         if (!result?.success) {
             hasError.value = true;

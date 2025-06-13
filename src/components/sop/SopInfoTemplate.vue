@@ -63,7 +63,7 @@ const props = defineProps({
     <div class="flex justify-center">
         <div class="px-4 lg:px-0 print:px-0 mx-auto overflow-x-auto">
             <div class="print-page print-break-after-page w-[calc(297mm-3cm)] min-w-[calc(297mm-3cm)] max-w-[calc(297mm-3cm)] box-border">
-                <table class="w-full border-collapse border-2 border-black mb-8 text-sm">
+                <table class="w-full border-collapse border-2 border-black text-sm">
                     <tbody>
                         <tr>
                             <th rowspan="8" class="w-[47%] border-2 py-0.5 px-2 border-black">

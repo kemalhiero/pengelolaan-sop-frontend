@@ -62,7 +62,7 @@ const activeTab = ref('document');
                 :warning="formData.warning"
                 :record-data="formData.record"
             />
-            
+            <div class="py-4"></div>
             <SopStepTemplate
                 :implementer="formData.implementer"
                 :steps="sopStep"

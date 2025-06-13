@@ -1,5 +1,5 @@
 <script setup>
-import { inject, ref, watch } from 'vue';
+import { inject, ref, watch, nextTick, onBeforeUnmount } from 'vue';
 import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import GearIcon from '@/assets/icons/GearIcon.vue';
@@ -117,13 +117,17 @@ const showTextEditModal = ref(false);
 const editingField = ref('');
 const editingIndex = ref(null);
 const editingValue = ref('');
+const textAreaRef = ref(null);
 
 function openTextEditModal(field, index, value) {
-    if (isDisabled.value) return; // Cegah buka modal jika disabled
+    if (isDisabled.value) return;
     editingField.value = field;
     editingIndex.value = index;
     editingValue.value = value;
     showTextEditModal.value = true;
+    nextTick(() => {
+        if (textAreaRef.value) textAreaRef.value.focus();
+    });
 }
 
 function saveTextEditModal() {
@@ -132,6 +136,34 @@ function saveTextEditModal() {
     }
     showTextEditModal.value = false;
 }
+
+function handleKey(e) {
+    if (e.key === 'Escape' && showTextEditModal.value) {
+        showTextEditModal.value = false;
+    }
+    // Simpan dengan Ctrl+Enter
+    if (
+        showTextEditModal.value &&
+        (e.ctrlKey || e.metaKey) &&
+        e.key === 'Enter'
+    ) {
+        saveTextEditModal();
+    }
+}
+
+// Tambahkan watch untuk showTextEditModal
+watch(showTextEditModal, (val) => {
+    if (val) {
+        window.addEventListener('keydown', handleKey);
+    } else {
+        window.removeEventListener('keydown', handleKey);
+    }
+});
+
+// Pastikan event listener dibersihkan saat komponen unmount
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', handleKey);
+});
 </script>
 
 <template>
@@ -165,6 +197,7 @@ function saveTextEditModal() {
                                 :disabled="isDisabled"
                                 :class="{ 'cursor-pointer': !isDisabled }"
                                 @click="!isDisabled && openTextEditModal('name', index, step.name)"
+                                @keydown.enter="!isDisabled && openTextEditModal('name', index, step.name)"
                             />
                         </td>
                         <td class="px-2 py-3">
@@ -212,6 +245,7 @@ function saveTextEditModal() {
                                 :disabled="isDisabled"
                                 :class="{ 'cursor-pointer': !isDisabled }"
                                 @click="!isDisabled && openTextEditModal('fittings', index, step.fittings)"
+                                @keydown.enter="!isDisabled && openTextEditModal('fittings', index, step.fittings)"
                             />
                         </td>
                         <td class="px-2 py-3">
@@ -236,6 +270,7 @@ function saveTextEditModal() {
                                 :disabled="isDisabled"
                                 :class="{ 'cursor-pointer': !isDisabled }"
                                 @click="!isDisabled && openTextEditModal('output', index, step.output)"
+                                @keydown.enter="!isDisabled && openTextEditModal('output', index, step.output)"
                             />
                         </td>
                         <td class="px-2 py-3">
@@ -246,6 +281,7 @@ function saveTextEditModal() {
                                 :disabled="isDisabled"
                                 :class="{ 'cursor-pointer': !isDisabled }"
                                 @click="!isDisabled && openTextEditModal('description', index, step.description)"
+                                @keydown.enter="!isDisabled && openTextEditModal('description', index, step.description)"
                             />
                         </td>
                         <td class="px-2 py-3">
@@ -313,26 +349,73 @@ function saveTextEditModal() {
         </div>
 
         <!-- Modal Editor Teks -->
-        <div v-if="showTextEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click="showTextEditModal = false">
-            <div class="bg-white p-6 rounded-lg w-[90vw] max-w-xl" @click.stop>
-                <h3 class="text-lg font-semibold mb-4">
-                    Edit {{ 
-                        editingField === 'name' ? 'Kegiatan' : 
-                        editingField === 'fittings' ? 'Kelengkapan' : 
-                        editingField === 'output' ? 'Output' : 
-                        editingField === 'description' ? 'Keterangan' : editingField 
-                    }} - Tahapan {{ (editingIndex !== null ? editingIndex + 1 : '') }}
-                </h3>
-                <textarea v-model="editingValue" rows="8" class="w-full p-2 border border-gray-300 rounded-md resize-vertical"></textarea>
-                <div class="flex justify-end gap-2 mt-4">
-                    <button @click="showTextEditModal = false" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
-                        Batal
+        <div v-if="showTextEditModal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50" @click="showTextEditModal = false">
+            <div class="bg-white p-0 rounded-2xl shadow-2xl w-[95vw] max-w-lg relative animate-fadeIn" @click.stop>
+                <!-- Header -->
+                <div class="flex items-center justify-between px-6 py-4">
+                    <h3 class="text-base font-semibold">
+                        Edit {{
+                                editingField === 'name' ? 'Kegiatan' :
+                                editingField === 'fittings' ? 'Kelengkapan' :
+                                editingField === 'output' ? 'Output' :
+                                editingField === 'description' ? 'Keterangan' : editingField
+                        }}
+                        Tahap {{ (editingIndex !== null ? editingIndex + 1 : '') }}
+                    </h3>
+                    <button @click="showTextEditModal = false" class="text-gray-400 hover:text-red-500 transition p-1 rounded-full focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                     </button>
-                    <button @click="saveTextEditModal" class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700">
-                        Simpan
-                    </button>
+                </div>
+                <!-- Body -->
+                <div class="px-6">
+                    <textarea
+                        v-model="editingValue"
+                        rows="8"
+                        ref="textAreaRef"
+                        class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition resize-vertical text-sm placeholder-gray-400"
+                        placeholder="Tulis di sini..."
+                    ></textarea>
+                </div>
+                <!-- Footer -->
+                <div class="flex justify-between items-center gap-2 px-6 py-4 bg-gray-50 rounded-b-2xl">
+                    <p class="text-xs text-gray-500 flex items-center gap-2 m-0">
+                        <span class="inline-flex items-center gap-1">
+                            <kbd class="px-1 py-0.5 bg-gray-100 border rounded text-xs font-mono">Esc</kbd>
+                            tutup
+                        </span>
+                        <span class="inline-flex items-center gap-1 ml-4">
+                            <kbd class="px-1 py-0.5 bg-gray-100 border rounded text-xs font-mono">Ctrl</kbd>
+                            <span class="mx-1">/</span>
+                            <kbd class="px-1 py-0.5 bg-gray-100 border rounded text-xs font-mono">Cmd</kbd>
+                            +
+                            <kbd class="px-1 py-0.5 bg-gray-100 border rounded text-xs font-mono">Enter</kbd>
+                            simpan
+                        </span>
+                    </p>
+                    <div class="flex gap-2">
+                        <button @click="showTextEditModal = false"
+                            class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100 transition text-sm">
+                            Batal
+                        </button>
+                        <button @click="saveTextEditModal"
+                            class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition text-sm shadow">
+                            Simpan
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </template>
+
+<style scoped>
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(24px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+.animate-fadeIn {
+  animation: fadeIn 0.25s cubic-bezier(.4,0,.2,1);
+}
+</style>

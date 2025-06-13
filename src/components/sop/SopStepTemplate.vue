@@ -51,6 +51,7 @@ const columnWidth = computed(() => ({
 // --- Refs for column positioning ---
 const implementerHeaderRefs = ref({});
 const opcMounted = ref(false);
+const redrawKey = ref(Date.now());
 
 const setImplementerHeaderRef = (el, implementerId) => {
     if (el) {
@@ -325,6 +326,12 @@ const orderedImplementer = computed(() => {
 
 watch(props.steps, async () => {
     await recalculateOPCPositions();
+    redrawKey.value = Date.now(); // trigger ArrowConnector re-render
+}, { deep: true });
+
+watch(sopConfig, async () => {
+    await recalculateOPCPositions();
+    redrawKey.value = Date.now(); // trigger ArrowConnector re-render
 }, { deep: true });
 
 // Mounting lifecycle hook
@@ -428,6 +435,7 @@ onMounted(async () => {
                             :idarrow="`${pageIndex}-${index}`" 
                             :idcontainer="`${mainSopAreaId}-${pageIndex}`"
                             :connection="connection"
+                            :redraw-key="redrawKey"
                         />
                     </svg>
                 </div>

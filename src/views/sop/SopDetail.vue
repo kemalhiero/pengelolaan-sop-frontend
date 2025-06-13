@@ -183,7 +183,7 @@ onMounted(fetchAllData);
                             :record-data="sopData.record.map(item => item.data_record)"
                             :signature="`${cdnUrl}/${sopData.signature_url}`"
                         />
-                            
+                        <div class="py-4"></div>
                         <SopStepTemplate :implementer="sopData.implementer" :steps="sopData.steps" />
                     </div>
                 </div>

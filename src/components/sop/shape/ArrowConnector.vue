@@ -13,6 +13,10 @@ const props = defineProps({
   idcontainer: {
     type: String,
     required: true
+  },
+  redrawKey: {
+    type: [String, Number],
+    default: 0
   }
 });
 
@@ -313,6 +317,11 @@ onMounted(() => {
 watch(() => props.connection, () => {
   calculatePath();
 }, { deep: true });
+
+// Tambahkan watch untuk redrawKey
+watch(() => props.redrawKey, () => {
+  calculatePath();
+});
 </script>
 
 <template>
