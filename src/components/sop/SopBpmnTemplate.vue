@@ -19,10 +19,70 @@ const props = defineProps({
   }
 });
 
+// Constants for sizing tasks within SopBpmnTemplate
+const TASK_MIN_WIDTH = 90;
+const TASK_MIN_HEIGHT = 50;
+const TASK_CHAR_WIDTH_APPROX = 8; // Must match or be consistent with BpmnTask.vue
+const TASK_LINE_HEIGHT_FOR_SIZING = 15; // Must match or be consistent with BpmnTask.vue
+const TASK_HORIZONTAL_PADDING = 20; // Must match or be consistent with BpmnTask.vue
+const TASK_VERTICAL_PADDING = 20;   // Must match or be consistent with BpmnTask.vue
+const TASK_MAX_LINE_LENGTH_TARGET = 15; // Must match or be consistent with BpmnTask.vue
+
+// Helper function to get step dimensions
+function getStepDimensions(stepName, stepType) {
+  // For now, only 'task' type is dynamic. Other types like 'terminator', 'decision' use fixed sizes.
+  // You can extend this for other types if needed.
+  if (stepType !== 'task') {
+    // Default fixed size for non-tasks (e.g., terminators, decisions)
+    // Decisions might also need dynamic sizing if their text varies significantly.
+    // For simplicity, keeping decision fixed for now.
+    if (stepType === 'terminator') return { width: 120, height: 60 }; // Example fixed
+    if (stepType === 'decision') return { width: 120, height: 80 }; // Example fixed for decision
+    return { width: TASK_MIN_WIDTH, height: TASK_MIN_HEIGHT };
+  }
+
+  if (!stepName) return { width: TASK_MIN_WIDTH, height: TASK_MIN_HEIGHT };
+
+  const lines = [];
+  const words = stepName.split(' ');
+  let currentLine = '';
+
+  for (const word of words) {
+    if (currentLine === '') {
+      currentLine = word;
+    } else if (currentLine.length + 1 + word.length <= TASK_MAX_LINE_LENGTH_TARGET) {
+      currentLine += ' ' + word;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
+    }
+  }
+  if (currentLine !== '') {
+    lines.push(currentLine);
+  }
+  
+  const actualTextLines = lines.length > 0 ? lines : (stepName ? [stepName] : []);
+
+  let requiredTextWidth = 0;
+  if (actualTextLines.length > 0) {
+    const longestLineLength = actualTextLines.reduce((max, line) => Math.max(max, line.length), 0);
+    requiredTextWidth = longestLineLength * TASK_CHAR_WIDTH_APPROX;
+  }
+  const calculatedWidth = Math.max(TASK_MIN_WIDTH, requiredTextWidth + TASK_HORIZONTAL_PADDING);
+  
+  const requiredTextHeight = actualTextLines.length * TASK_LINE_HEIGHT_FOR_SIZING;
+  const calculatedHeight = Math.max(TASK_MIN_HEIGHT, requiredTextHeight + TASK_VERTICAL_PADDING);
+
+  return { width: calculatedWidth, height: calculatedHeight };
+}
+
+
 // Layout global dan lane
 const globalLayout = ref({
   steps: [],
-  connections: []
+  connections: [],
+  columnStartXs: [], // To store X positions of column starts
+  maxColumnWidths: [] // To store max width for each column
 });
 
 const svgRefs = ref([]);
@@ -128,49 +188,142 @@ const handleArrowMounted = () => {
 // Function yang menghitung layout untuk setiap lane
 const calculateGlobalLayout = () => {
   if (processedSteps.value.length === 0) return;
+
+  const baseX = 10; // Left margin
+  // const shapeWidth = 120; // No longer fixed for all shapes
+  // const shapeHeight = 60; // No longer fixed for all shapes
+  const spacing = 50; // Jarak horizontal antar kolom bentuk (edge to edge)
+  const rowHeight = 120; // Tinggi visual satu lane (untuk kalkulasi Y dan layout per lane)
+  const rowSpacing = 100; // Jarak vertikal antar lane (dari pusat bentuk ke pusat bentuk di lane berikutnya)
   
-  // Konfigurasi diagram dengan spacing yang optimal
-  const baseX = 70; // jarak x awal dari kiri
-  const shapeWidth = 120;
-  const shapeHeight = 60;
-  const spacing = 50; // Jarak standar antar langkah
-  const rowHeight = 120;
-  const rowSpacing = 100;
-  const laneY = rowHeight + rowSpacing;
+  globalLayout.value = { steps: [], connections: [], columnStartXs: [], maxColumnWidths: [] };
 
-  // Reset global layout
-  globalLayout.value = { steps: [], connections: [] };
+  const stepDimensionsCache = new Map();
+  processedSteps.value.forEach(step => {
+    const dims = getStepDimensions(step.name, step.type);
+    stepDimensionsCache.set(step.id_step, dims);
+  });
 
-  // Kalkulasi posisi tiap langkah (step)
-  processedSteps.value.forEach((step, i) => {
-    const laneIndex = props.implementer.findIndex(imp => imp.id === step.id_implementer) || 0;
-    const x = baseX + i * (shapeWidth + spacing);   // posisi x dihitung berdasarkan urutan global
-    const y = laneIndex * laneY + (rowHeight / 2);  // posisi y berdasarkan lane (pusat shape)
+  const stepColumnMap = new Map(); 
+  const numLanes = Math.max(1, orderedImplementer.value.length);
+  const laneMaxColumn = new Array(numLanes).fill(-1); 
+
+  processedSteps.value.forEach((step) => {
+    const currentStepId = step.id_step;
+    let currentLaneIndex = -1;
+
+    if (orderedImplementer.value.length > 0) {
+      currentLaneIndex = orderedImplementer.value.findIndex(imp => imp.id === step.id_implementer);
+    }
+    if (currentLaneIndex === -1) currentLaneIndex = 0;
+
+    let calculatedColumnIndex = 0;
+    const predecessors = [];
+    bpmnConnections.value.forEach(conn => {
+      if (`bpmn-step-${step.seq_number}` === conn.to) {
+        const fromStepSeq = parseInt(conn.from.replace('bpmn-step-', ''));
+        const predStep = processedSteps.value.find(s => s.seq_number === fromStepSeq);
+        if (predStep) predecessors.push(predStep);
+      }
+    });
+
+    if (predecessors.length > 0) {
+      predecessors.forEach(pred => {
+        const predColumn = stepColumnMap.get(pred.id_step);
+        if (predColumn === undefined) return;
+
+        let predLaneIndex = -1;
+        if (orderedImplementer.value.length > 0) {
+            predLaneIndex = orderedImplementer.value.findIndex(imp => imp.id === pred.id_implementer);
+        }
+        if (predLaneIndex === -1) predLaneIndex = 0;
+
+        if (predLaneIndex === currentLaneIndex) {
+          calculatedColumnIndex = Math.max(calculatedColumnIndex, predColumn + 1);
+        } else { 
+          calculatedColumnIndex = Math.max(calculatedColumnIndex, predColumn);
+        }
+      });
+    } else {
+      calculatedColumnIndex = 0;
+    }
+
+    calculatedColumnIndex = Math.max(calculatedColumnIndex, laneMaxColumn[currentLaneIndex] + 1);
+    stepColumnMap.set(currentStepId, calculatedColumnIndex);
+    laneMaxColumn[currentLaneIndex] = Math.max(laneMaxColumn[currentLaneIndex], calculatedColumnIndex);
+  });
+
+  const maxColIdx = processedSteps.value.length > 0 ? Math.max(0, ...Array.from(stepColumnMap.values())) : -1;
+  const tempMaxColumnWidths = new Array(maxColIdx + 1).fill(0);
+
+  processedSteps.value.forEach(step => {
+    const columnIndex = stepColumnMap.get(step.id_step);
+    if (columnIndex !== undefined) {
+      const dims = stepDimensionsCache.get(step.id_step);
+      if (dims) {
+        tempMaxColumnWidths[columnIndex] = Math.max(tempMaxColumnWidths[columnIndex], dims.width);
+      }
+    }
+  });
+  globalLayout.value.maxColumnWidths = tempMaxColumnWidths;
+
+  const tempColumnStartXs = [];
+  let currentX = baseX;
+  for (let i = 0; i <= maxColIdx; i++) {
+    tempColumnStartXs[i] = currentX;
+    currentX += tempMaxColumnWidths[i] + spacing;
+  }
+  globalLayout.value.columnStartXs = tempColumnStartXs;
+  
+  processedSteps.value.forEach((step) => {
+    let layoutLaneIndex = -1;
+    if (orderedImplementer.value.length > 0) {
+        layoutLaneIndex = orderedImplementer.value.findIndex(imp => imp.id === step.id_implementer);
+    }
+    if (layoutLaneIndex === -1) layoutLaneIndex = 0;
+
+    const columnIndex = stepColumnMap.get(step.id_step) || 0;
+    const dims = stepDimensionsCache.get(step.id_step) || getStepDimensions(null, 'task'); // Fallback
+
+    // const x_shape_left = globalLayout.value.columnStartXs[columnIndex] !== undefined ? globalLayout.value.columnStartXs[columnIndex] : baseX;
+    // const x_center = x_shape_left + dims.width / 2;
+    
+    // Modifikasi perhitungan x_center:
+    // Gunakan titik tengah dari lebar kolom maksimum untuk alignment tengah.
+    const columnActualStart = globalLayout.value.columnStartXs[columnIndex] !== undefined 
+                              ? globalLayout.value.columnStartXs[columnIndex] 
+                              : baseX;
+    const columnActualMaxWidth = globalLayout.value.maxColumnWidths[columnIndex] !== undefined 
+                                 ? globalLayout.value.maxColumnWidths[columnIndex] 
+                                 : dims.width; // Fallback jika maxColumnWidths tidak ada untuk kolom ini
+
+    const x_center = columnActualStart + columnActualMaxWidth / 2;
+    
+    const y_global_center = layoutLaneIndex * (rowHeight + rowSpacing) + (rowHeight / 2);
 
     globalLayout.value.steps.push({
       id: step.id_step,
       type: step.type,
-      x: x,
-      y: y,
-      width: shapeWidth,
-      height: shapeHeight,
+      x: x_center,
+      y: y_global_center,
+      width: dims.width,
+      height: dims.height,
       name: step.name,
       seq: step.seq_number,
-      lane: laneIndex
+      lane: layoutLaneIndex,
+      columnIndex: columnIndex
     });
   });
 
-  // Pisahkan layout tiap lane untuk shape
-  laneLayouts.value = props.implementer.map((imp, index) => {
-    const laneTopOffset = index * laneY;
+  laneLayouts.value = orderedImplementer.value.map((imp, index) => {
     return {
       impId: imp.id,
       steps: globalLayout.value.steps
-        .filter(step => step.lane === index)
-        .map(step => ({
-          ...step,
-          y: step.y - laneTopOffset,
-          id: `bpmn-step-${step.seq}` // Tambahkan ID untuk referensi ArrowConnector
+        .filter(gStep => gStep.lane === index)
+        .map(gStep => ({
+          ...gStep,
+          y: rowHeight / 2, 
+          id: `bpmn-step-${gStep.seq}`
         }))
     };
   });
@@ -180,23 +333,66 @@ const setSvgRef = (el, index) => {
   if (el) svgRefs.value[index] = el;
 };
 
-// Computed property untuk estimasi total width diagram berdasarkan jumlah langkah
+// Computed property untuk estimasi total width diagram berdasarkan jumlah kolom maksimum
+const maxColumnIndex = computed(() => {
+  if (!globalLayout.value.steps || globalLayout.value.steps.length === 0) return -1;
+  const columnIndices = globalLayout.value.steps.map(step => step.columnIndex).filter(ci => typeof ci === 'number');
+  if (columnIndices.length === 0) return -1;
+  return Math.max(...columnIndices);
+});
+
 const diagramWidth = computed(() => {
-  if (processedSteps.value.length === 0) return 0;
+  const localBaseX = 100; // Margin on the right
+  if (maxColumnIndex.value === -1 || 
+      !globalLayout.value.columnStartXs || globalLayout.value.columnStartXs.length === 0 ||
+      !globalLayout.value.maxColumnWidths || globalLayout.value.maxColumnWidths.length === 0) {
+    return localBaseX + TASK_MIN_WIDTH + localBaseX; // Default width
+  }
+
+  const lastColIdx = maxColumnIndex.value;
+  if (lastColIdx < 0 || lastColIdx >= globalLayout.value.columnStartXs.length || lastColIdx >= globalLayout.value.maxColumnWidths.length) {
+      // Fallback if indices are out of bounds, though should not happen with correct maxColIdx
+      return localBaseX + TASK_MIN_WIDTH + localBaseX;
+  }
+
+  const lastColStartX = globalLayout.value.columnStartXs[lastColIdx];
+  const lastColWidth = globalLayout.value.maxColumnWidths[lastColIdx];
   
-  const baseX = 60;
-  const shapeWidth = 120;
-  const spacing = 50;
+  return lastColStartX + lastColWidth + localBaseX; // Add right margin
+});
+
+const orderedImplementer = computed(() => {
+  // Pastikan props.implementer adalah array dan tidak kosong sebelum digunakan lebih lanjut
+  if (!props.implementer || props.implementer.length === 0) {
+    // Jika tidak ada implementer yang didefinisikan, kembalikan array kosong.
+    // Langkah-langkah akan default ke lane 0 secara konseptual dalam calculateGlobalLayout.
+    // Template mungkin perlu menangani kasus ini (misalnya, tidak merender lane).
+    return [];
+  }
+
+  const implementerMap = new Map(props.implementer.map(impl => [impl.id, impl]));
+  const orderFromSteps = [];
+  const seenInSteps = new Set();
+
+  // Ambil urutan implementer berdasarkan kemunculan pertama di props.steps
+  // dan pastikan implementer tersebut ada di props.implementer
+  props.steps.forEach(step => {
+    if (step.id_implementer && implementerMap.has(step.id_implementer) && !seenInSteps.has(step.id_implementer)) {
+      seenInSteps.add(step.id_implementer);
+      orderFromSteps.push(implementerMap.get(step.id_implementer));
+    }
+  });
+
+  // Tambahkan implementer dari props.implementer yang belum ada di orderFromSteps
+  const remainingImplementers = props.implementer.filter(impl => !seenInSteps.has(impl.id));
   
-  // Total width adalah posisi x langkah terakhir + lebar langkah + margin tambahan
-  const totalSteps = processedSteps.value.length;
-  return baseX + totalSteps * (shapeWidth + spacing) + 0; // tambahkan margin kanan 60px
+  return [...orderFromSteps, ...remainingImplementers];
 });
 
 // Update computed property untuk print scaling
 const printScaleStyle = computed(() => {
   const contentWidth = diagramWidth.value;
-  const contentHeight = (props.implementer.length * rowHeight) + 20; // Total tinggi konten
+  const contentHeight = (orderedImplementer.value.length * rowHeight) + 20; // Total tinggi konten
   
   // Ukuran area cetak A4 landscape (dalam mm)
   const pageWidth = 277; // 297mm - 20mm margin
@@ -228,7 +424,7 @@ const rowHeight = 120; // Asumsi setiap implementer memiliki tinggi 120px
 const safetyFactor = 1; // Faktor keamanan untuk lebar teks
 
 const dynamicTitleWidth = computed(() => {
-  const maxWidth = props.implementer.length * rowHeight * safetyFactor;
+  const maxWidth = orderedImplementer.value.length * rowHeight * safetyFactor;
   const textWidth = props.name.length * charWidth;  // Hitung lebar text
   const lineCount = textWidth <= maxWidth ? 1 : Math.ceil(textWidth / maxWidth);
   return (lineCount * 30) + 20; // padding 20px supaya teks tidak terlalu mepet
@@ -246,22 +442,22 @@ const dynamicTitleWidth = computed(() => {
             <table class="border-2 border-black relative z-10 w-full md:my-5" :style="{ minWidth: `${diagramWidth}px` }" id="bpmn-container">
               <tbody>
                 <tr>
-                  <td v-if="props.name" class="border-2 border-black w-0 relative" :rowspan="implementer.length">
+                  <td v-if="props.name" class="border-2 border-black w-0 relative" :rowspan="orderedImplementer.length">
                     <div class="relative h-full" :style="`width: ${dynamicTitleWidth}px;`">
                       <p class="font-bold text-lg -rotate-90 text-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-                        :class="(props.name.length * charWidth) > (props.implementer.length * rowHeight * safetyFactor) ? 'whitespace-normal' : 'whitespace-nowrap'">
+                        :class="(props.name.length * charWidth) > (orderedImplementer.length * rowHeight * safetyFactor) ? 'whitespace-normal' : 'whitespace-nowrap'">
                         {{ capitalizeWords(props.name) }}
                       </p>
                     </div>
                   </td>
                   <BpmnLaneRow
-                    :implementer="implementer[0]"
+                    :implementer="orderedImplementer[0]"
                     :layout="laneLayouts[0] || { steps: [] }"
                     :svg-ref="setSvgRef"
                     :index="0"
                   />
                 </tr>
-                <tr v-for="(imp, index) in implementer.slice(1)" :key="imp.id">
+                <tr v-for="(imp, index) in orderedImplementer.slice(1)" :key="imp.id">
                   <BpmnLaneRow
                     :implementer="imp"
                     :layout="laneLayouts[index + 1] || { steps: [] }"
@@ -271,7 +467,7 @@ const dynamicTitleWidth = computed(() => {
                 </tr>
               </tbody>
             </table>
-            
+
             <!-- Arrows SVG -->
             <svg class="absolute inset-0 h-full pointer-events-none z-20 w-fit" :style="{ minWidth: `${diagramWidth}px` }">
               <ArrowConnector

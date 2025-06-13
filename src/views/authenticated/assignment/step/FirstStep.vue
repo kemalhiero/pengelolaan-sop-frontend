@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, inject } from 'vue';
+import { onMounted, ref, inject, onBeforeUnmount, watch } from 'vue';
 import { getImplementer } from '@/api/implementerApi';
 
 import CircleInfoIcon from '@/assets/icons/CircleInfoIcon.vue';
@@ -119,6 +119,34 @@ onMounted(() => {
     fetchImplementer();
 });
 
+// Handler untuk tombol ESC pada modal legalBasis dan executor
+function handleModalEscKey(e) {
+    if (e.key === 'Escape') {
+        if (showModal.value.legalBasis) showModal.value.legalBasis = false;
+        if (showModal.value.executor) showModal.value.executor = false;
+    }
+}
+
+// Watcher untuk menambah/menghapus event listener saat modal dibuka/ditutup
+watch(() => showModal.value.legalBasis, (val) => {
+    if (val) {
+        window.addEventListener('keydown', handleModalEscKey);
+    } else {
+        window.removeEventListener('keydown', handleModalEscKey);
+    }
+});
+watch(() => showModal.value.executor, (val) => {
+    if (val) {
+        window.addEventListener('keydown', handleModalEscKey);
+    } else {
+        window.removeEventListener('keydown', handleModalEscKey);
+    }
+});
+
+// Bersihkan event listener saat komponen unmount
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', handleModalEscKey);
+});
 </script>
 
 <template>
@@ -380,69 +408,94 @@ onMounted(() => {
     </div>
 
     <!-- Large Modal -->
-    <div v-show="showModal.legalBasis" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
-        <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showModal.legalBasis = false"></div>
+     <transition name="fade-modal">
+         <div v-show="showModal.legalBasis" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
+             <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showModal.legalBasis = false"></div>
+     
+             <div class="relative w-full max-w-4xl max-h-full">
+                 <div class="relative bg-white rounded-lg shadow">
+                     <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
+                         <h3 class="text-xl font-medium text-gray-900 dark:text-white">
+                             Centang peraturan yang akan ditambahkan ke SOP
+                         </h3>
+                         <!-- <Tooltip field="law-modal" text="Misal: Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses kerja praktik mahasiswa." /> -->
+                         <button type="button" @click="showModal.legalBasis = false"
+                             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">
+                             <XMarkCloseIcon class="w-3 h-3" />
+                             <span class="sr-only">Tutup modal</span>
+                         </button>
+                     </div>
+                     <div class="p-4 md:p-5 space-y-4">
+                         <DataTable v-if="legalBasisData"
+                             :data="legalBasisData" 
+                             :columns="[{ field: 'legal', label: 'Peraturan', sortable: true, searchable: true }]" 
+                             :check-column="true"
+                             v-model="formData.legalBasis" 
+                         />
+                         <PulseLoading v-else />
+                     </div>
+                     <div class="flex items-center justify-between p-4 md:p-5 space-x-3 border-t border-gray-200 rounded-b">
+                         <span class="text-xs text-gray-500">
+                             Tekan <kbd class="px-1 py-0.5 bg-gray-100 border rounded text-xs font-mono">Esc</kbd> untuk menutup
+                         </span>
+                         <button :disabled="formData.legalBasis.length == 0" @click="showModal.legalBasis = false" type="button"
+                             class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">
+                             Pilih
+                         </button>
+                     </div>
+                 </div>
+             </div>
+         </div>
+     </transition>
 
-        <div class="relative w-full max-w-4xl max-h-full">
-            <div class="relative bg-white rounded-lg shadow">
-                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
-                    <h3 class="text-xl font-medium text-gray-900 dark:text-white">
-                        Centang peraturan yang akan ditambahkan ke SOP
-                    </h3>
-                    <!-- <Tooltip field="law-modal" text="Misal: Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses kerja praktik mahasiswa." /> -->
-                    <button type="button" @click="showModal.legalBasis = false"
-                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">
-                        <XMarkCloseIcon class="w-3 h-3" />
-                        <span class="sr-only">Tutup modal</span>
-                    </button>
-                </div>
-                <div class="p-4 md:p-5 space-y-4">
-                    <DataTable v-if="legalBasisData"
-                        :data="legalBasisData" 
-                        :columns="[{ field: 'legal', label: 'Peraturan', sortable: true, searchable: true }]" 
-                        :check-column="true"
-                        v-model="formData.legalBasis" 
-                    />
-                    <PulseLoading v-else />
-                </div>
-                <div class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                    <button :disabled="formData.legalBasis.length == 0" @click="showModal.legalBasis = false" type="button"
-                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">
-                        Pilih</button>
+    <transition name="fade-modal">
+        <div v-show="showModal.executor" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
+            <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showModal.executor = false"></div>
+            <div class="relative w-full max-w-xl max-h-full">
+                <div class="relative bg-white rounded-lg shadow">
+                    <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
+                        <h3 class="text-xl font-medium text-gray-900">
+                            Centang pelaksana yang akan ditambahkan ke SOP
+                        </h3>
+                        <button type="button"
+                            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+                            @click="showModal.executor = false">
+                            <XMarkCloseIcon class="w-3 h-3" />
+                            <span class="sr-only">Tutup modal</span>
+                        </button>
+                    </div>
+                    <div class="p-4 md:p-5 space-y-4">
+                        <DataTable
+                            :data="dataImplementer" 
+                            :columns="[{ field: 'name', label: 'Nama', sortable: true, searchable: true }]" 
+                            :check-column="true"
+                            v-model="formData.implementer"
+                        />
+                    </div>
+                    <div class="flex items-center justify-between p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
+                        <span class="text-xs text-gray-500">
+                            Tekan <kbd class="px-1 py-0.5 bg-gray-100 border rounded text-xs font-mono">Esc</kbd> untuk menutup
+                        </span>
+                        <button :disabled="formData.implementer.length == 0" @click="showModal.executor = false" type="button"
+                            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Pilih</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <div v-show="showModal.executor" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
-        <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showModal.executor = false"></div>
-        <div class="relative w-full max-w-xl max-h-full">
-            <div class="relative bg-white rounded-lg shadow">
-                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
-                    <h3 class="text-xl font-medium text-gray-900">
-                        Centang pelaksana yang akan ditambahkan ke SOP
-                    </h3>
-                    <button type="button"
-                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
-                        @click="showModal.executor = false">
-                        <XMarkCloseIcon class="w-3 h-3" />
-                        <span class="sr-only">Tutup modal</span>
-                    </button>
-                </div>
-                <div class="p-4 md:p-5 space-y-4">
-                    <DataTable
-                        :data="dataImplementer" 
-                        :columns="[{ field: 'name', label: 'Nama', sortable: true, searchable: true }]" 
-                        :check-column="true"
-                        v-model="formData.implementer"
-                    />
-                </div>
-                <div class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                    <button :disabled="formData.implementer.length == 0" @click="showModal.executor = false" type="button"
-                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Pilih</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    </transition>
 
 </template>
+
+<style scoped>
+.fade-modal-enter-active, .fade-modal-leave-active {
+  transition: opacity 0.25s cubic-bezier(.4,0,.2,1), transform 0.25s cubic-bezier(.4,0,.2,1);
+}
+.fade-modal-enter-from, .fade-modal-leave-to {
+  opacity: 0;
+  transform: translateY(24px);
+}
+.fade-modal-enter-to, .fade-modal-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+</style>
