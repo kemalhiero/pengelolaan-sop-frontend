@@ -69,29 +69,50 @@ const calculatePath = async () => {
     }
 
     let calculatedPath = '';
-    let finalStart = {}; // Untuk posisi label
-    let finalEnd = {};   // Untuk posisi label
-    let pathType = ''; // Untuk posisi label: 'direct', 'one_bend_vh', 'one_bend_hv', 'two_bend_vhv', 'two_bend_hvh'
-    let bendPoints = []; // Untuk posisi label
+    let finalStart = {}; 
+    let finalEnd = {};   
+    let pathType = ''; 
+    let bendPoints = [];
 
-    if (props.connection.isOpcConnection) {
-      // Logika OPC Connection tetap sama
-      if (props.connection.direction === 'down') {
+    // Check if this is a segment of an OPC connection
+    if (props.connection.isOpcConnectionSegment) {
+      // Determine actual start and end points based on attachment hints
+      // For 'from' element (source of this arrow segment)
+      if (props.connection.from.startsWith('opc-')) { // If the source is an OPC
+        finalStart = {
+          x: fromPos.left + fromPos.width / 2,
+          y: props.connection.sourceAttachment === 'T' ? fromPos.top : fromPos.bottom
+        };
+      } else { // If the source is a regular shape (arrow always leaves from bottom of shape towards an OPC)
         finalStart = { x: fromPos.left + fromPos.width / 2, y: fromPos.bottom };
-        finalEnd = { x: toPos.left + toPos.width / 2, y: toPos.top };
-        const midY = (finalStart.y + finalEnd.y) / 2;
-        calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${finalStart.x} ${midY} L ${finalEnd.x} ${midY} L ${finalEnd.x} ${finalEnd.y}`;
-      } else {
-        finalStart = { x: fromPos.left + fromPos.width / 2, y: fromPos.bottom }; // Perlu penyesuaian jika OPC atas
-        finalEnd = { x: toPos.left + toPos.width / 2, y: toPos.top };
-        const midY = (finalStart.y + finalEnd.y) / 2;
-        calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${finalStart.x} ${midY} L ${finalEnd.x} ${midY} L ${finalEnd.x} ${finalEnd.y}`;
       }
-      pathType = 'two_bend_vhv'; // Asumsi OPC selalu VHV
-      bendPoints = [{x: finalStart.x, y: (finalStart.y + finalEnd.y) / 2}, {x: finalEnd.x, y: (finalStart.y + finalEnd.y) / 2}];
+
+      // For 'to' element (target of this arrow segment)
+      if (props.connection.to.startsWith('opc-')) { // If the target is an OPC
+        finalEnd = {
+          x: toPos.left + toPos.width / 2,
+          y: props.connection.targetAttachment === 'T' ? toPos.top : toPos.bottom
+        };
+      } else { // If the target is a regular shape (arrow always arrives at top of shape from an OPC)
+        finalEnd = { x: toPos.left + toPos.width / 2, y: toPos.top };
+      }
+      
+      // Standard VHV path for OPC connections using the calculated finalStart and finalEnd
+      const midY = (finalStart.y + finalEnd.y) / 2;
+      calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${finalStart.x} ${midY} L ${finalEnd.x} ${midY} L ${finalEnd.x} ${finalEnd.y}`;
+      pathType = 'two_bend_vhv'; // For label positioning, OPCs typically use VHV
+      bendPoints = [{x: finalStart.x, y: midY}, {x: finalEnd.x, y: midY}];
+      
+      // OPC segments usually don't have labels themselves, but if they did, this would be the logic
+      if (props.connection.label) {
+        labelPosition.value = { x: (bendPoints[0].x + bendPoints[1].x) / 2, y: midY - 15 };
+      } else {
+        labelPosition.value = null;
+      }
+
     } else {
-      // Koneksi Normal - Logika Refaktorisasi
-      const alignmentTolerance = 10; // Toleransi yang lebih ketat mungkin lebih baik
+      // Koneksi Normal - Logika Refaktorisasi (existing logic for non-OPC connections)
+      const alignmentTolerance = 10; 
 
       const fromPoints = {
         top: { x: fromPos.left + fromPos.width / 2, y: fromPos.top },
@@ -106,205 +127,139 @@ const calculatePath = async () => {
         right: { x: toPos.right, y: toPos.top + toPos.height / 2 }
       };
 
-      // Pusat elemen
       const fromCenter = { x: fromPos.left + fromPos.width / 2, y: fromPos.top + fromPos.height / 2 };
       const toCenter = { x: toPos.left + toPos.width / 2, y: toPos.top + toPos.height / 2 };
-
-      // Perbedaan posisi pusat
       const deltaX = toCenter.x - fromCenter.x;
       const deltaY = toCenter.y - fromCenter.y;
 
       // 1. Coba Jalur Langsung (0 belokan)
-      if (Math.abs(fromCenter.x - toCenter.x) < alignmentTolerance && toPos.top >= fromPos.bottom - alignmentTolerance) { // Langsung di bawah
+      if (Math.abs(fromCenter.x - toCenter.x) < alignmentTolerance && toPos.top >= fromPos.bottom - alignmentTolerance) { 
         finalStart = fromPoints.bottom;
         finalEnd = toPoints.top;
         calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${finalEnd.x} ${finalEnd.y}`;
         pathType = 'direct';
-      } else if (Math.abs(fromCenter.x - toCenter.x) < alignmentTolerance && fromPos.top >= toPos.bottom - alignmentTolerance) { // Langsung di atas
+      } else if (Math.abs(fromCenter.x - toCenter.x) < alignmentTolerance && fromPos.top >= toPos.bottom - alignmentTolerance) { 
         finalStart = fromPoints.top;
         finalEnd = toPoints.bottom;
         calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${finalEnd.x} ${finalEnd.y}`;
         pathType = 'direct';
-      } else if (Math.abs(fromCenter.y - toCenter.y) < alignmentTolerance && toPos.left >= fromPos.right - alignmentTolerance) { // Langsung di kanan
+      } else if (Math.abs(fromCenter.y - toCenter.y) < alignmentTolerance && toPos.left >= fromPos.right - alignmentTolerance) { 
         finalStart = fromPoints.right;
         finalEnd = toPoints.left;
         calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${finalEnd.x} ${finalEnd.y}`;
         pathType = 'direct';
-      } else if (Math.abs(fromCenter.y - toCenter.y) < alignmentTolerance && fromPos.left >= toPos.right - alignmentTolerance) { // Langsung di kiri
+      } else if (Math.abs(fromCenter.y - toCenter.y) < alignmentTolerance && fromPos.left >= toPos.right - alignmentTolerance) { 
         finalStart = fromPoints.left;
         finalEnd = toPoints.right;
         calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${finalEnd.x} ${finalEnd.y}`;
         pathType = 'direct';
       }
 
-      // 2. Coba Jalur Satu Belokan (jika tidak ada jalur langsung)
+      // 2. Coba Jalur Satu Belokan
       if (!calculatedPath) {
-        // Coba V-H (Vertikal dulu, lalu Horizontal)
-        if (deltaY > 0) { // Target di bawah
-          finalStart = fromPoints.bottom;
-          if (deltaX > 0) { // Target di kanan bawah
-            finalEnd = toPoints.left;
-            calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${finalStart.x} ${finalEnd.y} L ${finalEnd.x} ${finalEnd.y}`;
-            bendPoints = [{x: finalStart.x, y: finalEnd.y}];
-          } else { // Target di kiri bawah
-            finalEnd = toPoints.right;
-            calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${finalStart.x} ${finalEnd.y} L ${finalEnd.x} ${finalEnd.y}`;
-            bendPoints = [{x: finalStart.x, y: finalEnd.y}];
-          }
-          pathType = 'one_bend_vh';
-        } else if (deltaY < 0) { // Target di atas
-          finalStart = fromPoints.top;
-          if (deltaX > 0) { // Target di kanan atas
-            finalEnd = toPoints.left;
-            calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${finalStart.x} ${finalEnd.y} L ${finalEnd.x} ${finalEnd.y}`;
-            bendPoints = [{x: finalStart.x, y: finalEnd.y}];
-          } else { // Target di kiri atas
-            finalEnd = toPoints.right;
-            calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${finalStart.x} ${finalEnd.y} L ${finalEnd.x} ${finalEnd.y}`;
-            bendPoints = [{x: finalStart.x, y: finalEnd.y}];
-          }
-          pathType = 'one_bend_vh';
+        let vhPath = '', hvPath = '';
+        let vhStart, vhEnd, vhBend, hvStart, hvEnd, hvBend;
+
+        // Try V-H
+        if (deltaY > 0) { 
+          vhStart = fromPoints.bottom;
+          vhEnd = (deltaX > 0) ? toPoints.left : toPoints.right;
+        } else if (deltaY < 0) {
+          vhStart = fromPoints.top;
+          vhEnd = (deltaX > 0) ? toPoints.left : toPoints.right;
+        }
+        if (vhStart && vhEnd) {
+            vhPath = `M ${vhStart.x} ${vhStart.y} L ${vhStart.x} ${vhEnd.y} L ${vhEnd.x} ${vhEnd.y}`;
+            vhBend = {x: vhStart.x, y: vhEnd.y};
         }
 
-        // Coba H-V (Horizontal dulu, lalu Vertikal) - Jika V-H tidak cocok atau sebagai alternatif
-        // Kondisi ini mungkin perlu disempurnakan agar tidak selalu menimpa V-H jika V-H sudah valid
-        // Untuk sekarang, kita coba jika V-H belum menghasilkan path atau jika H-V lebih "langsung"
-        let canTryHV = false;
-        if (!calculatedPath) canTryHV = true;
-        // Heuristik: jika perpindahan horizontal lebih dominan, H-V mungkin lebih baik
-        else if (Math.abs(deltaX) > Math.abs(deltaY) * 1.5) canTryHV = true;
-
-
-        if (canTryHV) {
-            let tempHVPath = '';
-            let tempHVStart = {};
-            let tempHVEnd = {};
-            let tempHVBend = {};
-
-            if (deltaX > 0) { // Target di kanan
-              tempHVStart = fromPoints.right;
-              if (deltaY > 0) { // Target di kanan bawah
-                tempHVEnd = toPoints.top;
-                tempHVPath = `M ${tempHVStart.x} ${tempHVStart.y} L ${tempHVEnd.x} ${tempHVStart.y} L ${tempHVEnd.x} ${tempHVEnd.y}`;
-                tempHVBend = {x: tempHVEnd.x, y: tempHVStart.y};
-              } else { // Target di kanan atas
-                tempHVEnd = toPoints.bottom;
-                tempHVPath = `M ${tempHVStart.x} ${tempHVStart.y} L ${tempHVEnd.x} ${tempHVStart.y} L ${tempHVEnd.x} ${tempHVEnd.y}`;
-                tempHVBend = {x: tempHVEnd.x, y: tempHVStart.y};
-              }
-            } else if (deltaX < 0) { // Target di kiri
-              tempHVStart = fromPoints.left;
-              if (deltaY > 0) { // Target di kiri bawah
-                tempHVEnd = toPoints.top;
-                tempHVPath = `M ${tempHVStart.x} ${tempHVStart.y} L ${tempHVEnd.x} ${tempHVStart.y} L ${tempHVEnd.x} ${tempHVEnd.y}`;
-                tempHVBend = {x: tempHVEnd.x, y: tempHVStart.y};
-              } else { // Target di kiri atas
-                tempHVEnd = toPoints.bottom;
-                tempHVPath = `M ${tempHVStart.x} ${tempHVStart.y} L ${tempHVEnd.x} ${tempHVStart.y} L ${tempHVEnd.x} ${tempHVEnd.y}`;
-                tempHVBend = {x: tempHVEnd.x, y: tempHVStart.y};
-              }
+        // Try H-V
+        if (deltaX > 0) {
+            hvStart = fromPoints.right;
+            hvEnd = (deltaY > 0) ? toPoints.top : toPoints.bottom;
+        } else if (deltaX < 0) {
+            hvStart = fromPoints.left;
+            hvEnd = (deltaY > 0) ? toPoints.top : toPoints.bottom;
+        }
+        if (hvStart && hvEnd) {
+            hvPath = `M ${hvStart.x} ${hvStart.y} L ${hvEnd.x} ${hvStart.y} L ${hvEnd.x} ${hvEnd.y}`;
+            hvBend = {x: hvEnd.x, y: hvStart.y};
+        }
+        
+        // Prefer path with shorter first segment or based on dominant direction
+        if (vhPath && hvPath) {
+            if (Math.abs(deltaY) >= Math.abs(deltaX)) { // Vertical move is dominant or equal
+                calculatedPath = vhPath; finalStart = vhStart; finalEnd = vhEnd; bendPoints = [vhBend]; pathType = 'one_bend_vh';
+            } else { // Horizontal move is dominant
+                calculatedPath = hvPath; finalStart = hvStart; finalEnd = hvEnd; bendPoints = [hvBend]; pathType = 'one_bend_hv';
             }
-            if (tempHVPath) {
-                // Jika V-H belum ada, atau jika H-V dianggap lebih baik (misal, lebih pendek - logika ini belum ada)
-                // Untuk sekarang, jika V-H ada, kita tidak menimpaanya kecuali ada kriteria kuat.
-                // Jika V-H tidak ada, kita gunakan H-V.
-                if(!calculatedPath || (calculatedPath && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) ){ // Prefer H-V if more horizontal
-                    calculatedPath = tempHVPath;
-                    finalStart = tempHVStart;
-                    finalEnd = tempHVEnd;
-                    bendPoints = [tempHVBend];
-                    pathType = 'one_bend_hv';
-                }
-            }
+        } else if (vhPath) {
+            calculatedPath = vhPath; finalStart = vhStart; finalEnd = vhEnd; bendPoints = [vhBend]; pathType = 'one_bend_vh';
+        } else if (hvPath) {
+            calculatedPath = hvPath; finalStart = hvStart; finalEnd = hvEnd; bendPoints = [hvBend]; pathType = 'one_bend_hv';
         }
       }
 
-      // 3. Jalur Dua Belokan (Fallback jika 0 atau 1 belokan tidak ditemukan/cocok)
+      // 3. Jalur Dua Belokan (Fallback)
       if (!calculatedPath) {
-        // Pilih antara V-H-V atau H-V-H berdasarkan perpindahan dominan
-        if (Math.abs(deltaY) >= Math.abs(deltaX)) { // Perpindahan vertikal dominan atau sama -> V-H-V
-          if (deltaY >= 0) { // Target di bawah (atau sejajar secara vertikal tapi beda kolom)
-            finalStart = fromPoints.bottom;
-            finalEnd = toPoints.top;
-          } else { // Target di atas
-            finalStart = fromPoints.top;
-            finalEnd = toPoints.bottom;
-          }
+        if (Math.abs(deltaY) >= Math.abs(deltaX)) { 
+          finalStart = (deltaY >= 0) ? fromPoints.bottom : fromPoints.top;
+          finalEnd = (deltaY >= 0) ? toPoints.top : toPoints.bottom;
           const midY = (finalStart.y + finalEnd.y) / 2;
-          // Tambahkan sedikit offset jika midY terlalu dekat dengan start atau end untuk menghindari garis pendek
-          let effectiveMidY = midY;
-          if (Math.abs(finalStart.y - midY) < 10 && finalStart.y !== finalEnd.y) effectiveMidY = finalStart.y + Math.sign(finalEnd.y - finalStart.y) * 20;
-          else if (Math.abs(finalEnd.y - midY) < 10 && finalStart.y !== finalEnd.y) effectiveMidY = finalEnd.y - Math.sign(finalEnd.y - finalStart.y) * 20;
-
-
-          calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${finalStart.x} ${effectiveMidY} L ${finalEnd.x} ${effectiveMidY} L ${finalEnd.x} ${finalEnd.y}`;
+          calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${finalStart.x} ${midY} L ${finalEnd.x} ${midY} L ${finalEnd.x} ${finalEnd.y}`;
           pathType = 'two_bend_vhv';
-          bendPoints = [{x: finalStart.x, y: effectiveMidY}, {x: finalEnd.x, y: effectiveMidY}];
-        } else { // Perpindahan horizontal dominan -> H-V-H
-          if (deltaX >= 0) { // Target di kanan (atau sejajar secara horizontal tapi beda baris)
-            finalStart = fromPoints.right;
-            finalEnd = toPoints.left;
-          } else { // Target di kiri
-            finalStart = fromPoints.left;
-            finalEnd = toPoints.right;
-          }
+          bendPoints = [{x: finalStart.x, y: midY}, {x: finalEnd.x, y: midY}];
+        } else { 
+          finalStart = (deltaX >= 0) ? fromPoints.right : fromPoints.left;
+          finalEnd = (deltaX >= 0) ? toPoints.left : toPoints.right;
           const midX = (finalStart.x + finalEnd.x) / 2;
-          let effectiveMidX = midX;
-          if (Math.abs(finalStart.x - midX) < 10 && finalStart.x !== finalEnd.x) effectiveMidX = finalStart.x + Math.sign(finalEnd.x - finalStart.x) * 20;
-          else if (Math.abs(finalEnd.x - midX) < 10 && finalStart.x !== finalEnd.x) effectiveMidX = finalEnd.x - Math.sign(finalEnd.x - finalStart.x) * 20;
-
-          calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${effectiveMidX} ${finalStart.y} L ${effectiveMidX} ${finalEnd.y} L ${finalEnd.x} ${finalEnd.y}`;
+          calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${midX} ${finalStart.y} L ${midX} ${finalEnd.y} L ${finalEnd.x} ${finalEnd.y}`;
           pathType = 'two_bend_hvh';
-          bendPoints = [{x: effectiveMidX, y: finalStart.y}, {x: effectiveMidX, y: finalEnd.y}];
+          bendPoints = [{x: midX, y: finalStart.y}, {x: midX, y: finalEnd.y}];
         }
       }
-    }
+      
+      // Label positioning for normal connections
+      if (props.connection.label && finalStart.x !== undefined) {
+        const offset = 15; 
+        let lx = 0, ly = 0;
 
-    pathData.value = calculatedPath;
-
-    // Sesuaikan posisi label
-    if (props.connection.label && finalStart.x !== undefined) {
-      const offset = 15; // Jarak label dari garis
-      let lx = 0, ly = 0;
-
-      if (pathType === 'direct') {
-        lx = (finalStart.x + finalEnd.x) / 2;
-        ly = (finalStart.y + finalEnd.y) / 2;
-        // Geser label sedikit dari garis lurus
-        if (Math.abs(finalStart.x - finalEnd.x) < Math.abs(finalStart.y - finalEnd.y)) { // Garis lebih vertikal
-          lx += offset;
-        } else { // Garis lebih horizontal
-          ly -= offset;
-        }
-      } else if (pathType === 'one_bend_vh' || pathType === 'one_bend_hv' && bendPoints.length > 0) {
-        // Dekat titik belokan
-        lx = bendPoints[0].x;
-        ly = bendPoints[0].y;
-        if (pathType === 'one_bend_vh') { // Belokan dari vertikal ke horizontal
-            lx += (finalEnd.x > finalStart.x ? offset : -offset); // Geser horizontal dari segmen vertikal
-            ly += (finalEnd.y > finalStart.y ? offset/2 : -offset/2); // Sedikit vertikal
-        } else { // Belokan dari horizontal ke vertikal
-            lx += (finalEnd.x > finalStart.x ? offset/2 : -offset/2);
-            ly += (finalEnd.y > finalStart.y ? offset : -offset); // Geser vertikal dari segmen horizontal
-        }
-      } else if ((pathType === 'two_bend_vhv' || pathType === 'two_bend_hvh') && bendPoints.length === 2) {
-        // Di tengah segmen tengah
-        lx = (bendPoints[0].x + bendPoints[1].x) / 2;
-        ly = (bendPoints[0].y + bendPoints[1].y) / 2;
-        if (pathType === 'two_bend_vhv') { // Segmen tengah horizontal
-          ly -= offset; // Di atas segmen tengah
-        } else { // Segmen tengah vertikal
-          lx += offset; // Di kanan segmen tengah
-        }
-      } else { // Fallback jika pathType tidak dikenali atau bendPoints kosong
+        if (pathType === 'direct') {
           lx = (finalStart.x + finalEnd.x) / 2;
-          ly = (finalStart.y + finalEnd.y) / 2 - offset;
+          ly = (finalStart.y + finalEnd.y) / 2;
+          if (Math.abs(finalStart.x - finalEnd.x) < Math.abs(finalStart.y - finalEnd.y)) { 
+            lx += offset * (finalStart.x < fromCenter.x ? -1 : 1); // Offset perpendicular to line
+          } else { 
+            ly -= offset; // Default above horizontal line
+          }
+        } else if ((pathType === 'one_bend_vh' || pathType === 'one_bend_hv') && bendPoints.length > 0) {
+          lx = bendPoints[0].x;
+          ly = bendPoints[0].y;
+          if (pathType === 'one_bend_vh') { 
+              lx += (finalEnd.x > finalStart.x ? offset : -offset); 
+              ly += (finalEnd.y > finalStart.y ? offset/2 : -offset/2) * Math.sign(finalEnd.y - bendPoints[0].y);
+          } else { 
+              lx += (finalEnd.x > finalStart.x ? offset/2 : -offset/2) * Math.sign(finalEnd.x - bendPoints[0].x);
+              ly += (finalEnd.y > finalStart.y ? offset : -offset); 
+          }
+        } else if ((pathType === 'two_bend_vhv' || pathType === 'two_bend_hvh') && bendPoints.length === 2) {
+          lx = (bendPoints[0].x + bendPoints[1].x) / 2;
+          ly = (bendPoints[0].y + bendPoints[1].y) / 2;
+          if (pathType === 'two_bend_vhv') { 
+            ly -= offset; 
+          } else { 
+            lx += offset; 
+          }
+        } else { 
+            lx = (finalStart.x + finalEnd.x) / 2;
+            ly = (finalStart.y + finalEnd.y) / 2 - offset;
+        }
+        labelPosition.value = { x: lx, y: ly };
+      } else {
+        labelPosition.value = null;
       }
-      labelPosition.value = { x: lx, y: ly };
-    } else {
-      labelPosition.value = null;
     }
-
+    pathData.value = calculatedPath;
     emit('mounted');
   });
 };

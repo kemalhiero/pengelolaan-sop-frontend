@@ -61,7 +61,7 @@ const props = defineProps({
 
 <template>
     <div class="flex justify-center">
-        <div class="px-4 lg:px-0 print:px-0 mx-auto overflow-x-auto">
+        <div class="px-4 lg:px-0 print:px-0 overflow-x-auto">
             <div class="print-page print-break-after-page w-[calc(297mm-3cm)] min-w-[calc(297mm-3cm)] max-w-[calc(297mm-3cm)] box-border">
                 <table class="w-full border-collapse border-2 border-black text-sm">
                     <tbody>

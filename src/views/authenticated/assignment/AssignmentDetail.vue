@@ -749,12 +749,12 @@ onMounted(fetchAllData);
                         <!-- Bagian Atas: Jumlah Tahapan -->
                         <div class="flex items-center gap-3">
                             <label class="block text-gray-700 font-medium mb-0.5 w-2/3">Hal. 1</label>
-                            <input type="number" min="1" v-model.number="sopConfig.firstPageSteps"
+                            <input type="number" min="3" v-model.number="sopConfig.firstPageSteps"
                                 class="w-1/3 border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:border-blue-300 text-sm" />
                         </div>
                         <div class="flex items-center gap-3">
                             <label class="block text-gray-700 font-medium mb-0.5 w-2/3">Hal. Berikutnya</label>
-                            <input type="number" min="1" v-model.number="sopConfig.nextPageSteps"
+                            <input type="number" min="3" v-model.number="sopConfig.nextPageSteps"
                                 class="w-1/3 border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:border-blue-300 text-sm" />
                         </div>
                         <hr class="my-2" />
