@@ -784,7 +784,11 @@ onMounted(fetchAllData);
                         <div class="flex items-center gap-3">
                             <label class="block text-gray-700 font-medium mb-0.5 w-2/3">Keterangan</label>
                             <input type="number" min="5" max="100" v-model.number="sopConfig.widthKeterangan"
-                                class="w-1/3 border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:border-blue-300 text-sm" />
+                            class="w-1/3 border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:border-blue-300 text-sm" />
+                        </div>
+                        <!-- Keterangan lebar kolom pelaksana -->
+                        <div class="text-xs text-gray-500 mb-2">
+                            <span class="font-semibold">Catatan:</span> Lebar kolom <span class="font-semibold">Pelaksana</span> akan dibagi rata berdasarkan jumlah pelaksana yang dipilih. Setiap kolom memiliki lebar: 70 dibagi jumlah pelaksana (%).
                         </div>
                     </div>
                     <div class="flex justify-end p-3 border-t">

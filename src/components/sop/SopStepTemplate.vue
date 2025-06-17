@@ -123,10 +123,9 @@ const connections = computed(() => {
                 allConnections.push({ 
                     from: sourceId, 
                     to: `opc-out-${baseConnectorId}`,
-                    label, 
-                    condition,
+                    // label, condition,
                     isOpcConnectionSegment: true, // Tandai sebagai bagian dari link OPC
-                    targetAttachment: flowDirection === 'down' ? 'T' : 'B', // 'T' untuk Top, 'B' untuk Bottom
+                    flowDirection,
                     sourcePage, // Halaman dari shape sumber
                     targetPage: sourcePage // Halaman dari elemen opc-out (sama dengan shape sumber)
                 });
@@ -137,7 +136,7 @@ const connections = computed(() => {
                     to: targetElementId,
                     // label dan condition biasanya tidak pada segmen ini
                     isOpcConnectionSegment: true, // Tandai sebagai bagian dari link OPC
-                    sourceAttachment: flowDirection === 'down' ? 'B' : 'T', // 'T' untuk Top, 'B' untuk Bottom
+                    flowDirection,
                     sourcePage: targetPage, // Halaman dari elemen opc-in
                     targetPage // Halaman dari shape target
                 });
@@ -482,8 +481,7 @@ onMounted(async () => {
                 <div :id="`${mainSopAreaId}-${pageIndex}`" class="relative sop-page-container">
 
                     <!-- Area for OPCs at the TOP of the page -->
-                     <!-- v-if="pageIndex > 0" is handled by getOPCForPageArea, so it can be removed if desired, but kept for clarity -->
-                    <div class="relative w-full h-[70px] mb-1" v-if="getStyledOpcGroups(pageIndex, 'top').length > 0">
+                    <div class="relative w-full h-[70px] mb-4" v-if="getStyledOpcGroups(pageIndex, 'top').length > 0">
                         <template v-for="styledOpc in getStyledOpcGroups(pageIndex, 'top')" :key="styledOpc.id">
                             <OffPageConnector
                                 v-show="opcMounted"
@@ -550,7 +548,7 @@ onMounted(async () => {
                     </table>
 
                     <!-- Area for OPCs at the BOTTOM of the page -->
-                    <div class="relative w-full h-[70px] mt-1" v-if="getStyledOpcGroups(pageIndex, 'bottom').length > 0">
+                    <div class="relative w-full h-[70px] mt-4" v-if="getStyledOpcGroups(pageIndex, 'bottom').length > 0">
                         <template v-for="styledOpc in getStyledOpcGroups(pageIndex, 'bottom')" :key="styledOpc.id">
                             <OffPageConnector
                                 v-show="opcMounted"

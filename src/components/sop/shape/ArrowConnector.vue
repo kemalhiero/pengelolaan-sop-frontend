@@ -76,26 +76,14 @@ const calculatePath = async () => {
 
     // Check if this is a segment of an OPC connection
     if (props.connection.isOpcConnectionSegment) {
-      // Determine actual start and end points based on attachment hints
-      // For 'from' element (source of this arrow segment)
-      if (props.connection.from.startsWith('opc-')) { // If the source is an OPC
         finalStart = {
           x: fromPos.left + fromPos.width / 2,
-          y: props.connection.sourceAttachment === 'T' ? fromPos.top : fromPos.bottom
+          y: props.connection.flowDirection === 'up' ? fromPos.top : fromPos.bottom
         };
-      } else { // If the source is a regular shape (arrow always leaves from bottom of shape towards an OPC)
-        finalStart = { x: fromPos.left + fromPos.width / 2, y: fromPos.bottom };
-      }
-
-      // For 'to' element (target of this arrow segment)
-      if (props.connection.to.startsWith('opc-')) { // If the target is an OPC
         finalEnd = {
           x: toPos.left + toPos.width / 2,
-          y: props.connection.targetAttachment === 'T' ? toPos.top : toPos.bottom
+          y: props.connection.flowDirection === 'down' ? toPos.top : toPos.bottom
         };
-      } else { // If the target is a regular shape (arrow always arrives at top of shape from an OPC)
-        finalEnd = { x: toPos.left + toPos.width / 2, y: toPos.top };
-      }
       
       // Standard VHV path for OPC connections using the calculated finalStart and finalEnd
       const midY = (finalStart.y + finalEnd.y) / 2;
