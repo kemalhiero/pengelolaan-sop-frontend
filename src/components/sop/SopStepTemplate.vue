@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, nextTick, watch, inject } from 'vue';
+import PF from 'pathfinding';
 
 import Process from '@/components/sop/shape/flowchart/Process.vue';
 import StartEnd from '@/components/sop/shape/flowchart/StartEnd.vue';
@@ -305,18 +306,15 @@ const allPages = computed(() => {
 });
 
 const getConnectionsForPage = (pageIndex) => {
-    return connections.value.filter(conn => {
-        // Perbaikan: Menggunakan isOpcConnectionSegment yang sudah ada
-        if (conn.isOpcConnectionSegment) {
-            // Tampilkan koneksi OPC hanya di halaman di mana segmen tersebut relevan
-            // Segmen dari shape ke opc-out ada di sourcePage OPC tersebut
-            // Segmen dari opc-in ke shape ada di targetPage OPC tersebut (yang juga merupakan sourcePage dari opc-in)
-            return conn.sourcePage === pageIndex;
-        } else {
-            // Untuk koneksi normal, tampilkan hanya di halaman sumber
-            return conn.sourcePage === pageIndex;
-        }
-    });
+  const pageConns = connections.value.filter(conn => {
+    if (conn.isOpcConnectionSegment) {
+      return conn.sourcePage === pageIndex;
+    } else {
+      return conn.sourcePage === pageIndex;
+    }
+  });
+  // Tambahkan distribusi panah
+  return getArrowDistribution(pageConns, props.steps);
 };
 
 const getStyledOpcGroups = (pageIndex, area) => { // Tidak lagi butuh opcType
@@ -472,6 +470,155 @@ onMounted(async () => {
     await nextTick();
     opcMounted.value = true;
 });
+
+const GRID_CELL_SIZE = 10; // px, sesuaikan sesuai kebutuhan
+const GRID_WIDTH = 120;    // jumlah cell horizontal (misal 1200px / 10)
+const GRID_HEIGHT = 60;    // jumlah cell vertikal (misal 600px / 10)
+
+// Membuat grid kosong
+const createGrid = () => new PF.Grid(GRID_WIDTH, GRID_HEIGHT);
+
+// Konversi pixel ke grid cell
+const toGrid = (x, y) => [
+  Math.floor(x / GRID_CELL_SIZE),
+  Math.floor(y / GRID_CELL_SIZE)
+];
+
+// Ambil obstacles dari semua shape
+const getObstacles = () => {
+  const obstacles = [];
+  const uniqueObstacles = new Set();
+  const BUFFER_PIXELS = 5; // Tambahkan buffer 5px di sekeliling shape
+
+  props.steps.forEach(step => {
+    const el = document.getElementById(`sop-step-${step.seq_number}`);
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      // Container rect
+      const pageIndex = getPageNumber(step.seq_number);
+      const container = document.getElementById(`${mainSopAreaId}-${pageIndex}`);
+      if (!container) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const left = rect.left - containerRect.left;
+      const top = rect.top - containerRect.top;
+      const right = left + rect.width;
+      const bottom = top + rect.height;
+      
+      // Loop semua cell dalam bounding box dengan buffer
+      for (let x = left - BUFFER_PIXELS; x < right + BUFFER_PIXELS; x += GRID_CELL_SIZE) {
+        for (let y = top - BUFFER_PIXELS; y < bottom + BUFFER_PIXELS; y += GRID_CELL_SIZE) {
+          const [gx, gy] = toGrid(x, y);
+          const key = `${gx},${gy}`;
+          if (gx >= 0 && gx < GRID_WIDTH && gy >= 0 && gy < GRID_HEIGHT && !uniqueObstacles.has(key)) {
+            obstacles.push([gx, gy]);
+            uniqueObstacles.add(key);
+          }
+        }
+      }
+    }
+  });
+  return obstacles;
+};
+
+// Pass grid info ke ArrowConnector
+const gridData = ref({
+  width: GRID_WIDTH,
+  height: GRID_HEIGHT,
+  cellSize: GRID_CELL_SIZE,
+  obstacles: []
+});
+
+watch(props.steps, async () => {
+  await nextTick();
+  gridData.value.obstacles = getObstacles();
+}, { deep: true });
+
+// Fungsi untuk menentukan sisi prioritas pada decision
+function getDecisionSide(usedSides, isOutgoing) {
+  // Prioritas: atas, kanan, bawah, kiri
+  const allSides = ['top', 'right', 'bottom', 'left'];
+  for (const side of allSides) {
+    if (!usedSides[side]) return side;
+  }
+  // Jika semua sudah dipakai, cari sisi yang sudah dipakai oleh panah sejenis (keluar/masuk)
+  for (const side of allSides) {
+    if (usedSides[side] && usedSides[side].type === (isOutgoing ? 'out' : 'in')) return side;
+  }
+  // Fallback
+  return 'bottom';
+}
+
+// Hitung distribusi panah pada setiap sisi shape
+function getArrowDistribution(connections, steps) {
+  // Map: shapeId -> { side -> [connIndex, ...] }
+  const shapeSideMap = {};
+  const connMeta = [];
+
+  connections.forEach((conn, idx) => {
+    // Dapatkan tipe shape sumber & tujuan
+    const fromStep = steps.find(s => `sop-step-${s.seq_number}` === conn.from);
+    const toStep = steps.find(s => `sop-step-${s.seq_number}` === conn.to);
+
+    // Tentukan tipe shape
+    const fromType = fromStep?.type === 'decision' ? 'decision' : 'rect';
+    const toType = toStep?.type === 'decision' ? 'decision' : 'rect';
+
+    // Tentukan sisi (untuk decision gunakan prioritas)
+    let fromSide = 'bottom', toSide = 'top';
+    if (fromType === 'decision') {
+      // Hitung sisi yang sudah dipakai
+      const used = shapeSideMap[conn.from] || {};
+      fromSide = getDecisionSide(used, true);
+      shapeSideMap[conn.from] = { ...used, [fromSide]: { type: 'out', idx } };
+    } else {
+      // Default: gunakan sisi terdekat (nanti ArrowConnector akan cek ulang jika perlu)
+      fromSide = null;
+    }
+    if (toType === 'decision') {
+      const used = shapeSideMap[conn.to] || {};
+      toSide = getDecisionSide(used, false);
+      shapeSideMap[conn.to] = { ...used, [toSide]: { type: 'in', idx } };
+    } else {
+      toSide = null;
+    }
+
+    connMeta.push({
+      ...conn,
+      fromType,
+      toType,
+      fromSide,
+      toSide,
+      fromIdx: 0, fromTotal: 1, // default, akan diisi di bawah
+      toIdx: 0, toTotal: 1
+    });
+  });
+
+  // Untuk shape non-decision, distribusi panah di sisi shape
+  // Kumpulkan semua koneksi keluar/masuk per shape+sisi
+  const sideCountMap = {};
+  connMeta.forEach((conn, idx) => {
+    // Sumber
+    const fromKey = `${conn.from}|${conn.fromSide || 'auto'}`;
+    sideCountMap[fromKey] = sideCountMap[fromKey] || [];
+    sideCountMap[fromKey].push(idx);
+    // Tujuan
+    const toKey = `${conn.to}|${conn.toSide || 'auto'}`;
+    sideCountMap[toKey] = sideCountMap[toKey] || [];
+    sideCountMap[toKey].push(idx);
+  });
+  // Set idx dan total
+  connMeta.forEach((conn, idx) => {
+    const fromKey = `${conn.from}|${conn.fromSide || 'auto'}`;
+    conn.fromTotal = sideCountMap[fromKey].length;
+    conn.fromIdx = sideCountMap[fromKey].indexOf(idx);
+    const toKey = `${conn.to}|${conn.toSide || 'auto'}`;
+    conn.toTotal = sideCountMap[toKey].length;
+    conn.toIdx = sideCountMap[toKey].indexOf(idx);
+  });
+
+  return connMeta;
+}
 </script>
 
 <template>
@@ -530,8 +677,7 @@ onMounted(async () => {
                                 <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.name }}</td>
                                 <td v-for="impl in orderedImplementer" :key="impl.id" :data-implementer-id="impl.id"
                                     class="border-2 border-black p-0 text-center align-middle relative">
-                                    <div v-if="step.id_implementer === impl.id" 
-                                         class="flex flex-col justify-around items-center px-2 py-5 min-h-[70px]">
+                                    <div v-if="step.id_implementer === impl.id" class="flex flex-col justify-around items-center px-2 py-5 min-h-[70px]">
                                         <component 
                                             :is="getShapeComponent(step.type)" 
                                             :id="`sop-step-${step.seq_number}`"
@@ -561,15 +707,25 @@ onMounted(async () => {
 
                     <!-- SVG arrows layer -->
                     <svg class="absolute inset-0 w-full h-full pointer-events-none z-20">
-                        <arrow-connector 
-                            v-for="(connection, connIndex) in getConnectionsForPage(pageIndex)" 
-                            :key="`conn-${pageIndex}-${connIndex}-${redrawKey}`"
-                            :idarrow="`arrow-${pageIndex}-${connIndex}`" 
-                            :idcontainer="`${mainSopAreaId}-${pageIndex}`"
-                            :connection="connection"
-                            :redraw-key="redrawKey"
-                        />
+                      <arrow-connector 
+                        v-for="(connection, connIndex) in getConnectionsForPage(pageIndex)" 
+                        :key="`conn-${pageIndex}-${connIndex}-${redrawKey}`"
+                        :idarrow="`arrow-${pageIndex}-${connIndex}`" 
+                        :idcontainer="`${mainSopAreaId}-${pageIndex}`"
+                        :connection="connection"
+                        :redraw-key="redrawKey"
+                        :gridData="gridData"
+                        :from-type="connection.fromType"
+                        :to-type="connection.toType"
+                        :from-side-prop="connection.fromSide"
+                        :to-side-prop="connection.toSide"
+                        :from-idx="connection.fromIdx"
+                        :from-total="connection.fromTotal"
+                        :to-idx="connection.toIdx"
+                        :to-total="connection.toTotal"
+                      />
                     </svg>
+                    <!-- ...existing code... -->
                 </div>
             </div>
         </div>

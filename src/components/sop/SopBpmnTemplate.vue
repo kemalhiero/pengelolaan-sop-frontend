@@ -1,8 +1,9 @@
 <script setup>
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, ref, computed, watch, nextTick } from 'vue'; // Tambahkan watch dan nextTick
 import BpmnLaneRow from '@/components/sop/shape/bpmn/BpmnLaneRow.vue';
 import ArrowConnector from '@/components/sop/shape/ArrowConnector.vue';
 import { capitalizeWords } from '@/utils/text';
+import PF from 'pathfinding'; // Import pathfinding
 
 const props = defineProps({
   name: {
@@ -17,6 +18,16 @@ const props = defineProps({
     type: Array,
     required: true
   }
+});
+
+// --- Refs and Constants for Arrow Routing ---
+const redrawKey = ref(Date.now());
+const GRID_CELL_SIZE = 10;
+const gridData = ref({
+  width: 200, // initial, will be updated
+  height: 150, // initial, will be updated
+  cellSize: GRID_CELL_SIZE,
+  obstacles: []
 });
 
 // Constants for sizing tasks within SopBpmnTemplate
@@ -429,6 +440,125 @@ const dynamicTitleWidth = computed(() => {
   const lineCount = textWidth <= maxWidth ? 1 : Math.ceil(textWidth / maxWidth);
   return (lineCount * 30) + 20; // padding 20px supaya teks tidak terlalu mepet
 });
+
+// --- NEW: Computed property untuk koneksi dengan data distribusi ---
+const processedConnectionsWithDistribution = computed(() => {
+    const connections = bpmnConnections.value;
+    if (!connections.length || !globalLayout.value.steps.length) return [];
+
+    const allSteps = globalLayout.value.steps;
+
+    const getStepTypeBySeq = (seq) => {
+        const step = allSteps.find(s => s.seq === seq);
+        return step ? step.type : 'task';
+    };
+
+    const connMeta = [];
+    connections.forEach((conn) => {
+        const fromSeq = parseInt(conn.from.replace('bpmn-step-', ''));
+        const toSeq = parseInt(conn.to.replace('bpmn-step-', ''));
+        const fromType = getStepTypeBySeq(fromSeq);
+
+        // Atur sisi keluar untuk decision
+        let fromSide = null;
+        if (fromType === 'decision') {
+            fromSide = conn.condition === 'yes' ? 'right' : 'bottom';
+        }
+
+        connMeta.push({
+            ...conn,
+            fromType,
+            toType: getStepTypeBySeq(toSeq),
+            fromSideProp: fromSide,
+            toSideProp: null, // Biarkan ArrowConnector yang menentukan sisi masuk terbaik
+            fromIdx: 0, fromTotal: 1,
+            toIdx: 0, toTotal: 1
+        });
+    });
+
+    // Hitung distribusi untuk setiap sisi shape
+    const sideCountMap = {};
+    connMeta.forEach((conn, idx) => {
+        const fromKey = `${conn.from}|${conn.fromSideProp || 'auto'}`;
+        sideCountMap[fromKey] = sideCountMap[fromKey] || [];
+        sideCountMap[fromKey].push(idx);
+        
+        const toKey = `${conn.to}|${conn.toSideProp || 'auto'}`;
+        sideCountMap[toKey] = sideCountMap[toKey] || [];
+        sideCountMap[toKey].push(idx);
+    });
+
+    // Atur index dan total untuk setiap koneksi
+    connMeta.forEach((conn, idx) => {
+        const fromKey = `${conn.from}|${conn.fromSideProp || 'auto'}`;
+        conn.fromTotal = sideCountMap[fromKey].length;
+        conn.fromIdx = sideCountMap[fromKey].indexOf(idx);
+
+        const toKey = `${conn.to}|${conn.toSideProp || 'auto'}`;
+        conn.toTotal = sideCountMap[toKey].length;
+        conn.toIdx = sideCountMap[toKey].indexOf(idx);
+    });
+
+    return connMeta;
+});
+
+// --- NEW: Fungsi untuk update grid dan obstacles ---
+const updateGridAndObstacles = async () => {
+  await nextTick(); // Tunggu DOM diperbarui setelah layout dihitung
+
+  const container = document.getElementById('bpmn-container');
+  if (!container) return;
+
+  const containerRect = container.getBoundingClientRect();
+  const diagramWidthPx = containerRect.width;
+  const diagramHeightPx = containerRect.height;
+
+  const gridWidth = Math.ceil(diagramWidthPx / GRID_CELL_SIZE);
+  const gridHeight = Math.ceil(diagramHeightPx / GRID_CELL_SIZE);
+
+  const toGrid = (x, y) => [
+    Math.floor(x / GRID_CELL_SIZE),
+    Math.floor(y / GRID_CELL_SIZE)
+  ];
+
+  const obstacles = [];
+  const uniqueObstacles = new Set();
+  const BUFFER_PIXELS = 5; // Buffer di sekeliling shape
+
+  globalLayout.value.steps.forEach(step => {
+    const el = document.getElementById(`bpmn-step-${step.seq}`);
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      const left = rect.left - containerRect.left;
+      const top = rect.top - containerRect.top;
+      const right = left + rect.width;
+      const bottom = top + rect.height;
+
+      for (let x = left - BUFFER_PIXELS; x < right + BUFFER_PIXELS; x += GRID_CELL_SIZE) {
+        for (let y = top - BUFFER_PIXELS; y < bottom + BUFFER_PIXELS; y += GRID_CELL_SIZE) {
+          const [gx, gy] = toGrid(x, y);
+          const key = `${gx},${gy}`;
+          if (gx >= 0 && gx < gridWidth && gy >= 0 && gy < gridHeight && !uniqueObstacles.has(key)) {
+            obstacles.push([gx, gy]);
+            uniqueObstacles.add(key);
+          }
+        }
+      }
+    }
+  });
+
+  gridData.value = {
+    width: gridWidth,
+    height: gridHeight,
+    cellSize: GRID_CELL_SIZE,
+    obstacles: obstacles
+  };
+  
+  redrawKey.value = Date.now(); // Memicu penggambaran ulang panah
+};
+
+// --- NEW: Watcher untuk memperbarui grid saat layout berubah ---
+watch(globalLayout, updateGridAndObstacles, { deep: true });
 </script>
 
 <template>
@@ -471,12 +601,21 @@ const dynamicTitleWidth = computed(() => {
             <!-- Arrows SVG -->
             <svg class="absolute inset-0 h-full pointer-events-none z-20 w-fit" :style="{ minWidth: `${diagramWidth}px` }">
               <ArrowConnector
-                v-for="(connection, index) in bpmnConnections" 
-                :idarrow="index + 100"
+                v-for="(connection, index) in processedConnectionsWithDistribution" 
+                :key="`${connection.from}-${connection.to}-${redrawKey}`"
+                :idarrow="`arrow-${index}`"
                 idcontainer="bpmn-container"
-                :key="`${connection.from}-${connection.to}`"
                 :connection="connection"
-                @mounted="handleArrowMounted"
+                :gridData="gridData"
+                :redraw-key="redrawKey"
+                :from-type="connection.fromType"
+                :to-type="connection.toType"
+                :from-side-prop="connection.fromSideProp"
+                :to-side-prop="connection.toSideProp"
+                :from-idx="connection.fromIdx"
+                :from-total="connection.fromTotal"
+                :to-idx="connection.toIdx"
+                :to-total="connection.toTotal"
               />
             </svg>
           </div>
