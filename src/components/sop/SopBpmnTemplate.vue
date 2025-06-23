@@ -147,7 +147,8 @@ const bpmnConnections = computed(() => {
             from: `bpmn-step-${step.seq_number}`,
             to: `bpmn-step-${targetStep.seq_number}`,
             label: 'Ya',
-            condition: 'yes'
+            condition: 'yes',
+            sourceType: step.type
           });
         }
       }
@@ -160,7 +161,8 @@ const bpmnConnections = computed(() => {
             from: `bpmn-step-${step.seq_number}`,
             to: `bpmn-step-${targetStep.seq_number}`,
             label: 'Tidak',
-            condition: 'no'
+            condition: 'no',
+            sourceType: step.type
           });
         }
       }
@@ -170,7 +172,8 @@ const bpmnConnections = computed(() => {
       if (nextStep) {
         allConnections.push({
           from: `bpmn-step-${step.seq_number}`,
-          to: `bpmn-step-${nextStep.seq_number}`
+          to: `bpmn-step-${nextStep.seq_number}`,
+          sourceType: step.type
         });
       }
     }
@@ -190,8 +193,6 @@ const calculateGlobalLayout = () => {
   if (processedSteps.value.length === 0) return;
 
   const baseX = 10; // Left margin
-  // const shapeWidth = 120; // No longer fixed for all shapes
-  // const shapeHeight = 60; // No longer fixed for all shapes
   const spacing = 50; // Jarak horizontal antar kolom bentuk (edge to edge)
   const rowHeight = 120; // Tinggi visual satu lane (untuk kalkulasi Y dan layout per lane)
   const rowSpacing = 100; // Jarak vertikal antar lane (dari pusat bentuk ke pusat bentuk di lane berikutnya)
@@ -474,8 +475,9 @@ const dynamicTitleWidth = computed(() => {
                 v-for="(connection, index) in bpmnConnections" 
                 :idarrow="index + 100"
                 idcontainer="bpmn-container"
-                :key="`${connection.from}-${connection.to}`"
+                :key="`${connection.from}-${connection.to}-${index}`"
                 :connection="connection"
+                :obstacles="processedSteps.map(step => ({ id: `bpmn-step-${step.seq_number}` }))"
                 @mounted="handleArrowMounted"
               />
             </svg>

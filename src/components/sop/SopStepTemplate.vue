@@ -106,6 +106,7 @@ const connections = computed(() => {
     props.steps.forEach((step) => {
         const sourceId = `sop-step-${step.seq_number}`;
         const sourcePage = getPageNumber(step.seq_number);
+        const sourceStepType = step.type; // Ambil tipe shape sumber
 
         const createConnectionEntries = (targetStepId, label = null, condition = null) => {
             if (!targetStepId) return;
@@ -114,31 +115,35 @@ const connections = computed(() => {
 
             const targetElementId = `sop-step-${targetStep.seq_number}`;
             const targetPage = getPageNumber(targetStep.seq_number);
-            const baseConnectorId = `step-${step.seq_number}-to-step-${targetStep.seq_number}`; // Digunakan untuk ID OPC
+            const targetStepType = targetStep.type; // <-- DAPATKAN TIPE SHAPE TUJUAN
+            const baseConnectorId = `step-${step.seq_number}-to-step-${targetStep.seq_number}`;
 
             if (sourcePage !== targetPage) {
-                const flowDirection = sourcePage < targetPage ? 'down' : 'up'; // Arah aliran keseluruhan antar halaman
+                const flowDirection = sourcePage < targetPage ? 'down' : 'up';
 
                 // Koneksi dari shape sumber ke OPC outgoing-nya
                 allConnections.push({ 
                     from: sourceId, 
                     to: `opc-out-${baseConnectorId}`,
                     label, condition,
-                    isOpcConnectionSegment: true, // Tandai sebagai bagian dari link OPC
+                    sourceType: sourceStepType,
+                    targetType: 'connector', // <-- Targetnya adalah OPC
+                    isOpcConnectionSegment: true,
                     flowDirection,
-                    sourcePage, // Halaman dari shape sumber
-                    targetPage: sourcePage // Halaman dari elemen opc-out (sama dengan shape sumber)
+                    sourcePage,
+                    targetPage: sourcePage
                 });
                 
                 // Koneksi dari OPC incoming ke shape targetnya
                 allConnections.push({ 
                     from: `opc-in-${baseConnectorId}`,
                     to: targetElementId,
-                    // label, condition,
-                    isOpcConnectionSegment: true, // Tandai sebagai bagian dari link OPC
+                    sourceType: 'connector', // <-- Sumbernya adalah OPC
+                    targetType: targetStepType, // <-- Targetnya adalah shape tujuan
+                    isOpcConnectionSegment: true,
                     flowDirection,
-                    sourcePage: targetPage, // Halaman dari elemen opc-in
-                    targetPage // Halaman dari shape target
+                    sourcePage: targetPage,
+                    targetPage
                 });
             } else {
                 // Koneksi standar dalam satu halaman
@@ -147,6 +152,8 @@ const connections = computed(() => {
                     to: targetElementId, 
                     label, 
                     condition,
+                    sourceType: sourceStepType,
+                    targetType: targetStepType, // <-- Tambahkan tipe target di sini
                     sourcePage,
                     targetPage 
                 });
@@ -304,6 +311,26 @@ const allPages = computed(() => {
     return pages;
 });
 
+const pageObstacles = computed(() => {
+    const obstaclesByPage = {};
+    allPages.value.forEach((pageSteps, pageIndex) => {
+        // 1. Tambahkan semua step di halaman ini sebagai obstacle
+        const stepObstacles = pageSteps.map(step => ({
+            id: `sop-step-${step.seq_number}`
+        }));
+
+        // 2. Tambahkan semua OPC di bagian atas dan bawah halaman ini sebagai obstacle
+        const topOpcs = getStyledOpcGroups(pageIndex, 'top');
+        const bottomOpcs = getStyledOpcGroups(pageIndex, 'bottom');
+        const opcObstacles = [...topOpcs, ...bottomOpcs].map(opc => ({
+            id: opc.id
+        }));
+
+        obstaclesByPage[pageIndex] = [...stepObstacles, ...opcObstacles];
+    });
+    return obstaclesByPage;
+});
+
 const getConnectionsForPage = (pageIndex) => {
     return connections.value.filter(conn => {
         // Perbaikan: Menggunakan isOpcConnectionSegment yang sudah ada
@@ -319,7 +346,7 @@ const getConnectionsForPage = (pageIndex) => {
     });
 };
 
-const getStyledOpcGroups = (pageIndex, area) => { // Tidak lagi butuh opcType
+const getStyledOpcGroups = (pageIndex, area) => {
     const incomingOpcs = getOPCForPageArea(pageIndex, 'incoming', area);
     const outgoingOpcs = getOPCForPageArea(pageIndex, 'outgoing', area);
     const allOpcsForArea = [...incomingOpcs, ...outgoingOpcs];
@@ -392,7 +419,7 @@ const getOpcStyle = (opc, indexInColumn = 0, totalInColumn = 1, areaOnPage = 'to
 
     const containerRect = containerDiv.getBoundingClientRect(); // rect of the page container
     const opcWidth = 50; 
-    const opcGap = 10; // The actual visual gap between OPCs
+    const opcGap = 5; // The actual visual gap between OPCs
     const opcSpacing = opcWidth + opcGap; // Distance from start of one OPC to start of next
 
     let leftPosition;
@@ -478,7 +505,7 @@ onMounted(async () => {
     <div class="flex flex-col gap-8 overflow-x-auto">
         <div class="px-4 lg:px-0 print:px-0 mx-auto">
             <div v-for="(pageSteps, pageIndex) in allPages" :key="pageIndex" class="print-page w-[calc(297mm-3cm)] min-w-[calc(297mm-3cm)] print:min-w-[calc(297mm-4cm)]">
-                <div :id="`${mainSopAreaId}-${pageIndex}`" class="relative sop-page-container">
+                <div :id="`${mainSopAreaId}-${pageIndex}`" class="relative">
 
                     <!-- Area for OPCs at the TOP of the page -->
                     <div class="relative w-full h-[70px] mb-4" v-if="getStyledOpcGroups(pageIndex, 'top').length > 0">
@@ -568,6 +595,7 @@ onMounted(async () => {
                             :idcontainer="`${mainSopAreaId}-${pageIndex}`"
                             :connection="connection"
                             :redraw-key="redrawKey"
+                            :obstacles="pageObstacles[pageIndex] || []"
                         />
                     </svg>
                 </div>
