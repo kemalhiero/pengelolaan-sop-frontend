@@ -1,5 +1,5 @@
 <script setup>
-import { ref, provide, onMounted, watch, inject, computed } from 'vue';
+import { ref, provide, onMounted, watch, inject, computed, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 
@@ -612,6 +612,25 @@ const fetchAllData = async () => {
 };
 
 onMounted(fetchAllData);
+
+function handleEscClose(e) {
+    if (e.key === 'Escape') {
+        if (showConfigPanel.value) showConfigPanel.value = false;
+        if (showFeedback.value) showFeedback.value = false;
+    }
+}
+
+watch([showConfigPanel, showFeedback], ([valConfig, valFeedback]) => {
+    if (valConfig || valFeedback) {
+        window.addEventListener('keydown', handleEscClose);
+    } else {
+        window.removeEventListener('keydown', handleEscClose);
+    }
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', handleEscClose);
+});
 </script>
 
 <template>

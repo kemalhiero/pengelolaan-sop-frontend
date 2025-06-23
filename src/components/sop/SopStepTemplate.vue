@@ -123,18 +123,18 @@ const connections = computed(() => {
                 allConnections.push({ 
                     from: sourceId, 
                     to: `opc-out-${baseConnectorId}`,
-                    // label, condition,
+                    label, condition,
                     isOpcConnectionSegment: true, // Tandai sebagai bagian dari link OPC
                     flowDirection,
                     sourcePage, // Halaman dari shape sumber
                     targetPage: sourcePage // Halaman dari elemen opc-out (sama dengan shape sumber)
                 });
-
+                
                 // Koneksi dari OPC incoming ke shape targetnya
                 allConnections.push({ 
                     from: `opc-in-${baseConnectorId}`,
                     to: targetElementId,
-                    // label dan condition biasanya tidak pada segmen ini
+                    // label, condition,
                     isOpcConnectionSegment: true, // Tandai sebagai bagian dari link OPC
                     flowDirection,
                     sourcePage: targetPage, // Halaman dari elemen opc-in
@@ -496,18 +496,18 @@ onMounted(async () => {
                     <table class="w-full border-collapse border-2 border-black table-fixed text-sm" :id="`sop-container-${pageIndex}`">
                         <!-- Header only for first page -->
                         <thead v-if="pageIndex === 0">
-                            <tr class="bg-[#D9D9D9]">
+                            <tr class="!bg-[#D9D9D9]">
                                 <th rowspan="2" class="border-2 py-0.5 border-black">NO</th>
                                 <th rowspan="2" class="border-2 py-0.5 border-black">KEGIATAN</th>
                                 <th :colspan="orderedImplementer.length || 1" class="border-2 py-0.5 px-1 border-black">PELAKSANA</th>
                                 <th colspan="3" class="border-2 py-0.5 px-1 border-black">MUTU BAKU</th>
                                 <th rowspan="2" class="border-2 py-0.5 px-1 border-black">KET</th>
                             </tr>
-                            <tr class="bg-[#D9D9D9]">
-                                <th v-for="impl in orderedImplementer" :key="impl.id" 
-                                    :ref="el => setImplementerHeaderRef(el, impl.id)"
+                            <tr class="!bg-[#D9D9D9]">
+                                <th v-for="(impl, idx) in orderedImplementer" :key="`impl-${idx}`" 
+                                    :ref="el => setImplementerHeaderRef(el, impl?.id)"
                                     class="border-2 py-0.5 px-1 border-black">
-                                    {{ impl.name.toUpperCase() }}
+                                    {{ impl?.name.toUpperCase() }}
                                 </th>
                                 <th class="border-2 py-0.5 border-black">KELENGKAPAN</th>
                                 <th class="border-2 py-0.5 border-black">WAKTU</th>
@@ -517,7 +517,7 @@ onMounted(async () => {
                         <colgroup>
                             <col class="w-[5%]"> <!-- NO -->
                             <col :style="{ width: columnWidth.activity + '%' }"> <!-- KEGIATAN -->
-                            <col v-for="impl in orderedImplementer" :key="impl.id" 
+                            <col v-for="(impl, idx) in orderedImplementer" :key="`impl-${idx}`" 
                                  :style="{ width: `${70 / orderedImplementer.length}%` }"> <!-- PELAKSANA -->
                             <col :style="{ width: columnWidth.completeness + '%' }"> <!-- KELENGKAPAN -->
                             <col :style="{ width: columnWidth.time + '%' }"> <!-- WAKTU -->
@@ -528,9 +528,9 @@ onMounted(async () => {
                             <tr v-for="step in pageSteps" :key="step.id_step">
                                 <td class="border-2 border-black py-0.5 text-center">{{ step.seq_number }}</td>
                                 <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.name }}</td>
-                                <td v-for="impl in orderedImplementer" :key="impl.id" :data-implementer-id="impl.id"
+                                <td v-for="(impl, idx) in orderedImplementer" :key="`impl-${idx}`" :data-implementer-id="impl?.id"
                                     class="border-2 border-black p-0 text-center align-middle relative">
-                                    <div v-if="step.id_implementer === impl.id" 
+                                    <div v-if="step.id_implementer === impl?.id" 
                                          class="flex flex-col justify-around items-center px-2 py-5 min-h-[70px]">
                                         <component 
                                             :is="getShapeComponent(step.type)" 

@@ -69,38 +69,56 @@ const calculatePath = async () => {
     }
 
     let calculatedPath = '';
-    let finalStart = {}; 
-    let finalEnd = {};   
-    let pathType = ''; 
+    let finalStart = {};
+    let finalEnd = {};
+    let pathType = '';
     let bendPoints = [];
 
     // Check if this is a segment of an OPC connection
     if (props.connection.isOpcConnectionSegment) {
-        finalStart = {
-          x: fromPos.left + fromPos.width / 2,
-          y: props.connection.flowDirection === 'up' ? fromPos.top : fromPos.bottom
-        };
-        finalEnd = {
-          x: toPos.left + toPos.width / 2,
-          y: props.connection.flowDirection === 'down' ? toPos.top : toPos.bottom
-        };
-      
+      finalStart = {
+        x: fromPos.left + fromPos.width / 2,
+        y: props.connection.flowDirection === 'up' ? fromPos.top : fromPos.bottom
+      };
+      finalEnd = {
+        x: toPos.left + toPos.width / 2,
+        y: props.connection.flowDirection === 'down' ? toPos.top : toPos.bottom
+      };
+
       // Standard VHV path for OPC connections using the calculated finalStart and finalEnd
       const midY = (finalStart.y + finalEnd.y) / 2;
       calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${finalStart.x} ${midY} L ${finalEnd.x} ${midY} L ${finalEnd.x} ${finalEnd.y}`;
       pathType = 'two_bend_vhv'; // For label positioning, OPCs typically use VHV
-      bendPoints = [{x: finalStart.x, y: midY}, {x: finalEnd.x, y: midY}];
-      
-      // OPC segments usually don't have labels themselves, but if they did, this would be the logic
+      bendPoints = [{ x: finalStart.x, y: midY }, { x: finalEnd.x, y: midY }];
+
+      // === Perbaiki penempatan label agar konsisten ===
       if (props.connection.label) {
-        labelPosition.value = { x: (bendPoints[0].x + bendPoints[1].x) / 2, y: midY - 15 };
+        const labelDistance = 30; // Atur sesuai kebutuhan
+        const offset = 19;
+        // Gunakan segmen pertama: dari finalStart ke bendPoints[0]
+        function getFixedDistancePoint(start, target, distance, offset = 19) {
+          const dx = target.x - start.x;
+          const dy = target.y - start.y;
+          const length = Math.sqrt(dx * dx + dy * dy);
+          if (length === 0) return { x: start.x, y: start.y };
+          const px = start.x + (dx / length) * distance;
+          const py = start.y + (dy / length) * distance;
+          if (Math.abs(dx) > Math.abs(dy)) {
+            return { x: px, y: py - offset };
+          } else {
+            return { x: px + offset, y: py };
+          }
+        }
+        const targetPoint = bendPoints[0];
+        const p = getFixedDistancePoint(finalStart, targetPoint, labelDistance, offset);
+        labelPosition.value = { x: p.x, y: p.y };
       } else {
         labelPosition.value = null;
       }
 
     } else {
       // Koneksi Normal - Logika Refaktorisasi (existing logic for non-OPC connections)
-      const alignmentTolerance = 10; 
+      const alignmentTolerance = 10;
 
       const fromPoints = {
         top: { x: fromPos.left + fromPos.width / 2, y: fromPos.top },
@@ -121,22 +139,22 @@ const calculatePath = async () => {
       const deltaY = toCenter.y - fromCenter.y;
 
       // 1. Coba Jalur Langsung (0 belokan)
-      if (Math.abs(fromCenter.x - toCenter.x) < alignmentTolerance && toPos.top >= fromPos.bottom - alignmentTolerance) { 
+      if (Math.abs(fromCenter.x - toCenter.x) < alignmentTolerance && toPos.top >= fromPos.bottom - alignmentTolerance) {
         finalStart = fromPoints.bottom;
         finalEnd = toPoints.top;
         calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${finalEnd.x} ${finalEnd.y}`;
         pathType = 'direct';
-      } else if (Math.abs(fromCenter.x - toCenter.x) < alignmentTolerance && fromPos.top >= toPos.bottom - alignmentTolerance) { 
+      } else if (Math.abs(fromCenter.x - toCenter.x) < alignmentTolerance && fromPos.top >= toPos.bottom - alignmentTolerance) {
         finalStart = fromPoints.top;
         finalEnd = toPoints.bottom;
         calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${finalEnd.x} ${finalEnd.y}`;
         pathType = 'direct';
-      } else if (Math.abs(fromCenter.y - toCenter.y) < alignmentTolerance && toPos.left >= fromPos.right - alignmentTolerance) { 
+      } else if (Math.abs(fromCenter.y - toCenter.y) < alignmentTolerance && toPos.left >= fromPos.right - alignmentTolerance) {
         finalStart = fromPoints.right;
         finalEnd = toPoints.left;
         calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${finalEnd.x} ${finalEnd.y}`;
         pathType = 'direct';
-      } else if (Math.abs(fromCenter.y - toCenter.y) < alignmentTolerance && fromPos.left >= toPos.right - alignmentTolerance) { 
+      } else if (Math.abs(fromCenter.y - toCenter.y) < alignmentTolerance && fromPos.left >= toPos.right - alignmentTolerance) {
         finalStart = fromPoints.left;
         finalEnd = toPoints.right;
         calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${finalEnd.x} ${finalEnd.y}`;
@@ -149,7 +167,7 @@ const calculatePath = async () => {
         let vhStart, vhEnd, vhBend, hvStart, hvEnd, hvBend;
 
         // Try V-H
-        if (deltaY > 0) { 
+        if (deltaY > 0) {
           vhStart = fromPoints.bottom;
           vhEnd = (deltaX > 0) ? toPoints.left : toPoints.right;
         } else if (deltaY < 0) {
@@ -157,91 +175,86 @@ const calculatePath = async () => {
           vhEnd = (deltaX > 0) ? toPoints.left : toPoints.right;
         }
         if (vhStart && vhEnd) {
-            vhPath = `M ${vhStart.x} ${vhStart.y} L ${vhStart.x} ${vhEnd.y} L ${vhEnd.x} ${vhEnd.y}`;
-            vhBend = {x: vhStart.x, y: vhEnd.y};
+          vhPath = `M ${vhStart.x} ${vhStart.y} L ${vhStart.x} ${vhEnd.y} L ${vhEnd.x} ${vhEnd.y}`;
+          vhBend = { x: vhStart.x, y: vhEnd.y };
         }
 
         // Try H-V
         if (deltaX > 0) {
-            hvStart = fromPoints.right;
-            hvEnd = (deltaY > 0) ? toPoints.top : toPoints.bottom;
+          hvStart = fromPoints.right;
+          hvEnd = (deltaY > 0) ? toPoints.top : toPoints.bottom;
         } else if (deltaX < 0) {
-            hvStart = fromPoints.left;
-            hvEnd = (deltaY > 0) ? toPoints.top : toPoints.bottom;
+          hvStart = fromPoints.left;
+          hvEnd = (deltaY > 0) ? toPoints.top : toPoints.bottom;
         }
         if (hvStart && hvEnd) {
-            hvPath = `M ${hvStart.x} ${hvStart.y} L ${hvEnd.x} ${hvStart.y} L ${hvEnd.x} ${hvEnd.y}`;
-            hvBend = {x: hvEnd.x, y: hvStart.y};
+          hvPath = `M ${hvStart.x} ${hvStart.y} L ${hvEnd.x} ${hvStart.y} L ${hvEnd.x} ${hvEnd.y}`;
+          hvBend = { x: hvEnd.x, y: hvStart.y };
         }
-        
+
         // Prefer path with shorter first segment or based on dominant direction
         if (vhPath && hvPath) {
-            if (Math.abs(deltaY) >= Math.abs(deltaX)) { // Vertical move is dominant or equal
-                calculatedPath = vhPath; finalStart = vhStart; finalEnd = vhEnd; bendPoints = [vhBend]; pathType = 'one_bend_vh';
-            } else { // Horizontal move is dominant
-                calculatedPath = hvPath; finalStart = hvStart; finalEnd = hvEnd; bendPoints = [hvBend]; pathType = 'one_bend_hv';
-            }
-        } else if (vhPath) {
+          if (Math.abs(deltaY) >= Math.abs(deltaX)) { // Vertical move is dominant or equal
             calculatedPath = vhPath; finalStart = vhStart; finalEnd = vhEnd; bendPoints = [vhBend]; pathType = 'one_bend_vh';
-        } else if (hvPath) {
+          } else { // Horizontal move is dominant
             calculatedPath = hvPath; finalStart = hvStart; finalEnd = hvEnd; bendPoints = [hvBend]; pathType = 'one_bend_hv';
+          }
+        } else if (vhPath) {
+          calculatedPath = vhPath; finalStart = vhStart; finalEnd = vhEnd; bendPoints = [vhBend]; pathType = 'one_bend_vh';
+        } else if (hvPath) {
+          calculatedPath = hvPath; finalStart = hvStart; finalEnd = hvEnd; bendPoints = [hvBend]; pathType = 'one_bend_hv';
         }
       }
 
       // 3. Jalur Dua Belokan (Fallback)
       if (!calculatedPath) {
-        if (Math.abs(deltaY) >= Math.abs(deltaX)) { 
+        if (Math.abs(deltaY) >= Math.abs(deltaX)) {
           finalStart = (deltaY >= 0) ? fromPoints.bottom : fromPoints.top;
           finalEnd = (deltaY >= 0) ? toPoints.top : toPoints.bottom;
           const midY = (finalStart.y + finalEnd.y) / 2;
           calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${finalStart.x} ${midY} L ${finalEnd.x} ${midY} L ${finalEnd.x} ${finalEnd.y}`;
           pathType = 'two_bend_vhv';
-          bendPoints = [{x: finalStart.x, y: midY}, {x: finalEnd.x, y: midY}];
-        } else { 
+          bendPoints = [{ x: finalStart.x, y: midY }, { x: finalEnd.x, y: midY }];
+        } else {
           finalStart = (deltaX >= 0) ? fromPoints.right : fromPoints.left;
           finalEnd = (deltaX >= 0) ? toPoints.left : toPoints.right;
           const midX = (finalStart.x + finalEnd.x) / 2;
           calculatedPath = `M ${finalStart.x} ${finalStart.y} L ${midX} ${finalStart.y} L ${midX} ${finalEnd.y} L ${finalEnd.x} ${finalEnd.y}`;
           pathType = 'two_bend_hvh';
-          bendPoints = [{x: midX, y: finalStart.y}, {x: midX, y: finalEnd.y}];
+          bendPoints = [{ x: midX, y: finalStart.y }, { x: midX, y: finalEnd.y }];
         }
       }
-      
-      // Label positioning for normal connections
-      if (props.connection.label && finalStart.x !== undefined) {
-        const offset = 15; 
-        let lx = 0, ly = 0;
 
-        if (pathType === 'direct') {
-          lx = (finalStart.x + finalEnd.x) / 2;
-          ly = (finalStart.y + finalEnd.y) / 2;
-          if (Math.abs(finalStart.x - finalEnd.x) < Math.abs(finalStart.y - finalEnd.y)) { 
-            lx += offset * (finalStart.x < fromCenter.x ? -1 : 1); // Offset perpendicular to line
-          } else { 
-            ly -= offset; // Default above horizontal line
+      // Tempatkan label di sepertiga jarak dari garis lurus pertama, dengan sedikit offset dari garis
+      if (props.connection.label && finalStart.x !== undefined && finalEnd.x !== undefined) {
+        const labelDistance = 30; // Jarak label dari shape asal dalam piksel (ubah sesuai kebutuhan)
+        let lx = 0, ly = 0;
+      
+        // Fungsi untuk menghitung titik offset dari garis (finalStart ke target) sejauh labelDistance piksel
+        function getFixedDistancePoint(start, target, distance, offset = 19) {
+          const dx = target.x - start.x;
+          const dy = target.y - start.y;
+          const length = Math.sqrt(dx * dx + dy * dy);
+          if (length === 0) return { x: start.x, y: start.y };
+      
+          // Ambil titik sejauh 'distance' piksel dari start ke target
+          const px = start.x + (dx / length) * distance;
+          const py = start.y + (dy / length) * distance;
+      
+          // Offset label agar tidak menumpuk garis
+          if (Math.abs(dx) > Math.abs(dy)) {
+            return { x: px, y: py - offset }; // Garis horizontal, offset vertikal
+          } else {
+            return { x: px + offset, y: py }; // Garis vertikal, offset horizontal
           }
-        } else if ((pathType === 'one_bend_vh' || pathType === 'one_bend_hv') && bendPoints.length > 0) {
-          lx = bendPoints[0].x;
-          ly = bendPoints[0].y;
-          if (pathType === 'one_bend_vh') { 
-              lx += (finalEnd.x > finalStart.x ? offset : -offset); 
-              ly += (finalEnd.y > finalStart.y ? offset/2 : -offset/2) * Math.sign(finalEnd.y - bendPoints[0].y);
-          } else { 
-              lx += (finalEnd.x > finalStart.x ? offset/2 : -offset/2) * Math.sign(finalEnd.x - bendPoints[0].x);
-              ly += (finalEnd.y > finalStart.y ? offset : -offset); 
-          }
-        } else if ((pathType === 'two_bend_vhv' || pathType === 'two_bend_hvh') && bendPoints.length === 2) {
-          lx = (bendPoints[0].x + bendPoints[1].x) / 2;
-          ly = (bendPoints[0].y + bendPoints[1].y) / 2;
-          if (pathType === 'two_bend_vhv') { 
-            ly -= offset; 
-          } else { 
-            lx += offset; 
-          }
-        } else { 
-            lx = (finalStart.x + finalEnd.x) / 2;
-            ly = (finalStart.y + finalEnd.y) / 2 - offset;
         }
+      
+        // Selalu gunakan segmen pertama (dari finalStart ke bendPoints[0] jika ada, jika tidak ke finalEnd)
+        const targetPoint = bendPoints.length > 0 ? bendPoints[0] : finalEnd;
+        const p = getFixedDistancePoint(finalStart, targetPoint, labelDistance, 19);
+        lx = p.x;
+        ly = p.y;
+      
         labelPosition.value = { x: lx, y: ly };
       } else {
         labelPosition.value = null;
