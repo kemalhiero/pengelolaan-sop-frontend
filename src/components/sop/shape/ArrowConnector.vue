@@ -21,10 +21,14 @@ const props = defineProps({
   obstacles: {
     type: Array,
     default: () => []
+  },
+  usedSides: {
+    type: Object,
+    default: () => ({})
   }
 });
 
-const emit = defineEmits(['mounted']);
+const emit = defineEmits(['mounted', 'path-updated']);
 
 // State untuk menyimpan path data
 const pathData = ref('');
@@ -184,7 +188,7 @@ const calculatePath = async () => {
     const deltaY = toCenter.y - fromCenter.y;
     const alignmentTolerance = 5;
 
-    const startSides = ['bottom', 'right', 'top', 'left'];
+    const startSides = ['bottom', 'right', 'left', 'top'];
     const endSides = ['top', 'left', 'bottom', 'right'];
 
     for (const sSide of startSides) {
@@ -251,17 +255,42 @@ const calculatePath = async () => {
       // Jika target di ATAS (deltaY < 0), mendarat di sisi ATAS itu aneh.
       if (p.eSide === 'top' && deltaY < -10) score += 100;
 
-      // Prioritas khusus untuk shape Decision
-      if (props.connection.sourceType === 'decision') {
-        if (props.connection.label === 'Ya') { // 'Ya' sangat prefer keluar dari bawah
-            if (p.sSide === 'bottom') score -= 50; else score += 50;
-        } else if (props.connection.label === 'Tidak') { // 'Tidak' sangat prefer keluar dari kanan
-            if (p.sSide === 'right') score -= 50; else score += 50;
+      // Prioritas khusus untuk shape Decision berdasarkan sisi yang sudah digunakan
+      const sourceIsDecision = props.connection.sourceType === 'decision';
+      const targetIsDecision = props.connection.targetType === 'decision';
+
+      if (sourceIsDecision) {
+        const sourceUsed = props.usedSides[props.connection.from] || { in: {}, out: {} };
+        // Penalti TINGGI jika sisi KELUAR (p.sSide) ini dipakai oleh panah MASUK
+        if (p.sSide in sourceUsed.in) {
+          score += 500; 
         }
-      } else {
+        // Penalti SEDANG jika sisi KELUAR ini sudah dipakai panah KELUAR lain (mendorong cari sisi kosong dulu)
+        if (p.sSide in sourceUsed.out) {
+          score += 100;
+        }
+      }
+      
+      if (targetIsDecision) {
+        const targetUsed = props.usedSides[props.connection.to] || { in: {}, out: {} };
+        // Penalti TINGGI jika sisi MASUK (p.eSide) ini dipakai oleh panah KELUAR
+        if (p.eSide in targetUsed.out) {
+          score += 500;
+        }
+        // Penalti SEDANG jika sisi MASUK ini sudah dipakai panah MASUK lain
+        if (p.eSide in targetUsed.in) {
+          score += 100;
+        }
+      }
+
+      // Jika bukan decision, atau jika decision tapi tidak ada aturan khusus, gunakan prioritas umum
+      if (!sourceIsDecision) {
         // Prioritas umum: keluar dari bawah jika target di bawah, keluar dari kanan jika target di kanan
         if (p.sSide === 'bottom' && deltaY > 0) score -= 10;
+        if (p.sSide === 'top' && deltaY < 0) score -= 10;
         if (p.sSide === 'right' && deltaX > 0) score -= 10;
+        if (p.sSide === 'left' && deltaX < 0) score -= 10;
+        // console.log(fromOffsets, toOffsets)
       }
       p.score = score;
     });
@@ -286,6 +315,12 @@ const calculatePath = async () => {
 
     // 7. Atur data path final dari jalur terbaik yang ditemukan
     if (bestPath) {
+      emit('path-updated', {
+        connectionId: props.connection.id,
+        sSide: bestPath.sSide,
+        eSide: bestPath.eSide
+      });
+
       finalStart = bestPath.start;
       finalEnd = bestPath.end;
       bendPoints = bestPath.bendPoints || [];

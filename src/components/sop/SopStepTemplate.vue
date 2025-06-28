@@ -52,6 +52,7 @@ const columnWidth = computed(() => ({
 const implementerHeaderRefs = ref({});
 const opcMounted = ref(false);
 const redrawKey = ref(Date.now());
+const arrowsReady = ref(false); // <-- TAMBAHKAN STATE BARU INI
 
 const setImplementerHeaderRef = (el, implementerId) => {
     if (el) {
@@ -100,6 +101,19 @@ const getPageNumber = (stepSeq) => {
     return currentPage;
 };
 
+// --- STATE BARU UNTUK MELACAK SISI PANAH ---
+const calculatedPathSides = ref({}); // Format: { [connectionId]: { sSide, eSide } }
+
+const handlePathUpdate = (payload) => {
+    if (payload && payload.connectionId) {
+        calculatedPathSides.value[payload.connectionId] = {
+            sSide: payload.sSide,
+            eSide: payload.eSide
+        };
+    }
+};
+// -------------------------------------------
+
 const connections = computed(() => {
     const allConnections = [];
 
@@ -116,6 +130,9 @@ const connections = computed(() => {
             const targetElementId = `sop-step-${targetStep.seq_number}`;
             const targetPage = getPageNumber(targetStep.seq_number);
             const targetStepType = targetStep.type; // <-- DAPATKAN TIPE SHAPE TUJUAN
+            
+            // --- PENAMBAHAN ID UNIK ---
+            const uniqueId = `conn-${step.seq_number}-to-${targetStep.seq_number}-${condition || 'next'}`;
             const baseConnectorId = `step-${step.seq_number}-to-step-${targetStep.seq_number}`;
 
             if (sourcePage !== targetPage) {
@@ -123,6 +140,7 @@ const connections = computed(() => {
 
                 // Koneksi dari shape sumber ke OPC outgoing-nya
                 allConnections.push({ 
+                    id: `${uniqueId}-out`, // ID Unik
                     from: sourceId, 
                     to: `opc-out-${baseConnectorId}`,
                     label, condition,
@@ -136,6 +154,7 @@ const connections = computed(() => {
                 
                 // Koneksi dari OPC incoming ke shape targetnya
                 allConnections.push({ 
+                    id: `${uniqueId}-in`, // ID Unik
                     from: `opc-in-${baseConnectorId}`,
                     to: targetElementId,
                     sourceType: 'connector', // <-- Sumbernya adalah OPC
@@ -148,6 +167,7 @@ const connections = computed(() => {
             } else {
                 // Koneksi standar dalam satu halaman
                 allConnections.push({ 
+                    id: uniqueId, // ID Unik
                     from: sourceId, 
                     to: targetElementId, 
                     label, 
@@ -230,6 +250,32 @@ const allOffPageConnectors = computed(() => {
     });
     return connectors;
 });
+
+// --- COMPUTED PROPERTY BARU UNTUK usedSides ---
+const usedSides = computed(() => {
+    const used = {}; // Format: { [shapeId]: { in: { [side]: connId[] }, out: { [side]: connId[] } } }
+
+    connections.value.forEach(conn => {
+        const pathInfo = calculatedPathSides.value[conn.id];
+        if (!pathInfo) return; // Lewati jika panah belum dikalkulasi
+
+        // Lacak sisi KELUAR dari sumber
+        if (!used[conn.from]) used[conn.from] = { in: {}, out: {} };
+        if (!used[conn.from].out[pathInfo.sSide]) used[conn.from].out[pathInfo.sSide] = [];
+        if (!used[conn.from].out[pathInfo.sSide].includes(conn.id)) {
+            used[conn.from].out[pathInfo.sSide].push(conn.id);
+        }
+
+        // Lacak sisi MASUK ke tujuan
+        if (!used[conn.to]) used[conn.to] = { in: {}, out: {} };
+        if (!used[conn.to].in[pathInfo.eSide]) used[conn.to].in[pathInfo.eSide] = [];
+        if (!used[conn.to].in[pathInfo.eSide].includes(conn.id)) {
+            used[conn.to].in[pathInfo.eSide].push(conn.id);
+        }
+    });
+    return used;
+});
+// ---------------------------------------------
 
 // Helper: filter OPC by area (top/bottom) and direction
 const getOPCForPageArea = (pageIndex, opcType, area) => {
@@ -419,7 +465,7 @@ const getOpcStyle = (opc, indexInColumn = 0, totalInColumn = 1, areaOnPage = 'to
 
     const containerRect = containerDiv.getBoundingClientRect(); // rect of the page container
     const opcWidth = 50; 
-    const opcGap = 5; // The actual visual gap between OPCs
+    const opcGap = 8; // The actual visual gap between OPCs
     const opcSpacing = opcWidth + opcGap; // Distance from start of one OPC to start of next
 
     let leftPosition;
@@ -485,19 +531,34 @@ const orderedImplementer = computed(() => {
 });
 
 watch(props.steps, async () => {
+    arrowsReady.value = false; // 1. Sembunyikan panah lama
+    calculatedPathSides.value = {}; // 2. Reset state sisi yang digunakan
     await recalculateOPCPositions();
-    redrawKey.value = Date.now(); // trigger ArrowConnector re-render
+    redrawKey.value = Date.now(); // 3. Picu kalkulasi ulang
+    
+    // 4. Tunggu sebentar agar semua kalkulasi selesai, lalu tampilkan panah baru
+    setTimeout(() => {
+        arrowsReady.value = true;
+    }, 100);
 }, { deep: true });
 
 watch(sopConfig, async () => {
+    arrowsReady.value = false;
+    calculatedPathSides.value = {};
     await recalculateOPCPositions();
-    redrawKey.value = Date.now(); // trigger ArrowConnector re-render
+    redrawKey.value = Date.now();
+
+    await nextTick(); // Tunggu DOM update
+    arrowsReady.value = true;
 }, { deep: true });
 
 // Mounting lifecycle hook
 onMounted(async () => {
     await nextTick();
     opcMounted.value = true;
+
+    await nextTick(); // Tunggu DOM update
+    arrowsReady.value = true;
 });
 </script>
 
@@ -587,7 +648,7 @@ onMounted(async () => {
                     </div>
 
                     <!-- SVG arrows layer -->
-                    <svg class="absolute inset-0 w-full h-full pointer-events-none z-20">
+                    <svg v-if="arrowsReady" class="absolute inset-0 w-full h-full pointer-events-none z-20">
                         <arrow-connector 
                             v-for="(connection, connIndex) in getConnectionsForPage(pageIndex)" 
                             :key="`conn-${pageIndex}-${connIndex}-${redrawKey}`"
@@ -596,6 +657,8 @@ onMounted(async () => {
                             :connection="connection"
                             :redraw-key="redrawKey"
                             :obstacles="pageObstacles[pageIndex] || []"
+                            :used-sides="usedSides"
+                            @path-updated="handlePathUpdate"
                         />
                     </svg>
                 </div>

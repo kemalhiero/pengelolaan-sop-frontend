@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, computed } from 'vue';
+import { onMounted, ref, computed, watch, nextTick } from 'vue'; // <-- Tambahkan 'watch'
 import BpmnLaneRow from '@/components/sop/shape/bpmn/BpmnLaneRow.vue';
 import ArrowConnector from '@/components/sop/shape/ArrowConnector.vue';
 import { capitalizeWords } from '@/utils/text';
@@ -18,6 +18,20 @@ const props = defineProps({
     required: true
   }
 });
+
+// --- STATE BARU UNTUK MANAJEMEN PANAH ---
+const calculatedPathSides = ref({}); // Format: { [connectionId]: { sSide, eSide } }
+const arrowsReady = ref(false);
+
+const handlePathUpdate = (payload) => {
+    if (payload && payload.connectionId) {
+        calculatedPathSides.value[payload.connectionId] = {
+            sSide: payload.sSide,
+            eSide: payload.eSide
+        };
+    }
+};
+// -------------------------------------------
 
 // Constants for sizing tasks within SopBpmnTemplate
 const TASK_MIN_WIDTH = 90;
@@ -138,17 +152,21 @@ const bpmnConnections = computed(() => {
   const allConnections = [];
   
   processedSteps.value.forEach((step) => {
+    const targetTypeForConn = (targetStep) => targetStep ? targetStep.type : 'task';
+
     if (step.type === 'decision') {
       // Koneksi untuk kondisi "Yes"
       if (step.id_next_step_if_yes) {
         const targetStep = processedSteps.value.find(s => s.id_step === step.id_next_step_if_yes);
         if (targetStep) {
           allConnections.push({
+            id: `conn-${step.seq_number}-to-${targetStep.seq_number}-yes`, // ID Unik
             from: `bpmn-step-${step.seq_number}`,
             to: `bpmn-step-${targetStep.seq_number}`,
             label: 'Ya',
             condition: 'yes',
-            sourceType: step.type
+            sourceType: step.type,
+            targetType: targetTypeForConn(targetStep)
           });
         }
       }
@@ -158,11 +176,13 @@ const bpmnConnections = computed(() => {
         const targetStep = processedSteps.value.find(s => s.id_step === step.id_next_step_if_no);
         if (targetStep) {
           allConnections.push({
+            id: `conn-${step.seq_number}-to-${targetStep.seq_number}-no`, // ID Unik
             from: `bpmn-step-${step.seq_number}`,
             to: `bpmn-step-${targetStep.seq_number}`,
             label: 'Tidak',
             condition: 'no',
-            sourceType: step.type
+            sourceType: step.type,
+            targetType: targetTypeForConn(targetStep)
           });
         }
       }
@@ -171,9 +191,11 @@ const bpmnConnections = computed(() => {
       const nextStep = processedSteps.value.find(s => s.seq_number === step.seq_number + 1);
       if (nextStep) {
         allConnections.push({
+          id: `conn-${step.seq_number}-to-${nextStep.seq_number}`, // ID Unik
           from: `bpmn-step-${step.seq_number}`,
           to: `bpmn-step-${nextStep.seq_number}`,
-          sourceType: step.type
+          sourceType: step.type,
+          targetType: targetTypeForConn(nextStep)
         });
       }
     }
@@ -181,6 +203,32 @@ const bpmnConnections = computed(() => {
   
   return allConnections;
 });
+
+// --- COMPUTED PROPERTY BARU UNTUK usedSides ---
+const usedSides = computed(() => {
+    const used = {}; // Format: { [shapeId]: { in: { [side]: connId[] }, out: { [side]: connId[] } } }
+
+    bpmnConnections.value.forEach(conn => {
+        const pathInfo = calculatedPathSides.value[conn.id];
+        if (!pathInfo) return;
+
+        // Lacak sisi KELUAR dari sumber
+        if (!used[conn.from]) used[conn.from] = { in: {}, out: {} };
+        if (!used[conn.from].out[pathInfo.sSide]) used[conn.from].out[pathInfo.sSide] = [];
+        if (!used[conn.from].out[pathInfo.sSide].includes(conn.id)) {
+            used[conn.from].out[pathInfo.sSide].push(conn.id);
+        }
+
+        // Lacak sisi MASUK ke tujuan
+        if (!used[conn.to]) used[conn.to] = { in: {}, out: {} };
+        if (!used[conn.to].in[pathInfo.eSide]) used[conn.to].in[pathInfo.eSide] = [];
+        if (!used[conn.to].in[pathInfo.eSide].includes(conn.id)) {
+            used[conn.to].in[pathInfo.eSide].push(conn.id);
+        }
+    });
+    return used;
+});
+// ---------------------------------------------
 
 // Track mounting status arrows
 const arrowsMounted = ref(new Set());
@@ -417,8 +465,21 @@ const printScaleStyle = computed(() => {
 onMounted(() => {
   if (props.steps.length > 0) {
     calculateGlobalLayout();
+    arrowsReady.value = false;
+    nextTick(() => {
+      arrowsReady.value = true;
+    });
   }
 });
+
+watch(() => props.steps, () => {
+  arrowsReady.value = false;
+  calculatedPathSides.value = {};
+  calculateGlobalLayout();
+  nextTick(() => {
+    arrowsReady.value = true;
+  });
+}, { deep: true });
 
 const charWidth = 9; // Base width untuk single character (dalam pixels)
 const rowHeight = 120; // Asumsi setiap implementer memiliki tinggi 120px
@@ -470,7 +531,7 @@ const dynamicTitleWidth = computed(() => {
             </table>
 
             <!-- Arrows SVG -->
-            <svg class="absolute inset-0 h-full pointer-events-none z-20 w-fit" :style="{ minWidth: `${diagramWidth}px` }">
+            <svg v-if="arrowsReady" class="absolute inset-0 h-full pointer-events-none z-20 w-fit" :style="{ minWidth: `${diagramWidth}px` }">
               <ArrowConnector
                 v-for="(connection, index) in bpmnConnections" 
                 :idarrow="index + 100"
@@ -478,7 +539,8 @@ const dynamicTitleWidth = computed(() => {
                 :key="`${connection.from}-${connection.to}-${index}`"
                 :connection="connection"
                 :obstacles="processedSteps.map(step => ({ id: `bpmn-step-${step.seq_number}` }))"
-                @mounted="handleArrowMounted"
+                :used-sides="usedSides"
+                @path-updated="handlePathUpdate"
               />
             </svg>
           </div>
