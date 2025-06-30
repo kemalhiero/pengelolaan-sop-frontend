@@ -40,13 +40,13 @@ const activeTab = ref('document');
             </div>
         </div>
 
-        <!-- TODO pic ganti jadi kadep -->
         <div v-if="activeTab === 'document'">
             <SopInfoTemplate
                 :name="assignmentInfo.name" :number="assignmentInfo.number"
                 :created-date="assignmentInfo.creation_date" :revision-date="assignmentInfo.last_update_date"
                 :section="formData.section" :warning="formData.warning"
-                :pic-name="assignmentInfo.pic.name" :pic-number="assignmentInfo.pic.id_number" :pic-role="roleAbbreviation[assignmentInfo.pic.role]"
+                :pic-name="assignmentInfo.pic.name" :pic-number="assignmentInfo.pic.id_number"
+                :pic-role="roleAbbreviation[assignmentInfo.pic_position || assignmentInfo.pic.role]"
                 :law-basis="formData.legalBasis.map(item => item.legal)"
                 :implement-qualification="formData.implementQualification"
                 :related-sop="formData.relatedSop"

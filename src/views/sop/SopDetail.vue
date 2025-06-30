@@ -172,7 +172,8 @@ onMounted(fetchAllData);
                     <div class="print:block print:bg-white">
                         <SopInfoTemplate
                             :name="sopData.name" :number="sopData.number"
-                            :pic-name="signer.name" :pic-number="signer.id_number"
+                            :pic-name="signer.name" :pic-number="signer.id_number" 
+                            :pic-role="roleAbbreviation[sopData.pic_position || signer.role]"
                             :created-date="sopData.creation_date" :revision-date="sopData.revision_date"
                             :effective-date="sopData.status == 0 ? `${sopData.effective_date} (Kadaluarsa)`: sopData.effective_date"
                             :section="sopData.section" :warning="sopData.warning"

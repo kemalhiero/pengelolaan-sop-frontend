@@ -3,7 +3,7 @@ import { getRequest, postRequest, patchRequest, deleteRequest } from "./apiClien
 
 const getAllSop = () => getRequest('sop');
 const createSop = (data) => postRequest('sop', data, getToken());
-const getOneSop = (idSop) => getRequest(`sop/${idSop}`);
+const getOneSop = (id) => getRequest(`sop/${id}`);
 const updateSop = (id, data) => patchRequest(`sop/${id}`, data, getToken());
 const deleteSop = (id) => deleteRequest(`sop/${id}`, getToken());
 

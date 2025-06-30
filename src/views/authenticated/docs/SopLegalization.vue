@@ -138,7 +138,8 @@ onMounted(fetchAllData);
         <div v-if="activeTab === 'document'">
             <SopInfoTemplate
                 :name="sopData.name" :number="sopData.number"
-                :pic-name="signer.name" :pic-number="signer.id_number" :pic-role="roleAbbreviation[signer.role]"
+                :pic-name="signer.name" :pic-number="signer.id_number" 
+                :pic-role="roleAbbreviation[sopData.pic_position || signer.role]"
                 :created-date="sopData.creation_date" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
                 :section="sopData.section" :warning="sopData.warning"
                 :law-basis="sopData.legalBasis.map(item => item.legal)"
