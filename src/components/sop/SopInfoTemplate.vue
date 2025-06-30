@@ -25,6 +25,10 @@ const props = defineProps({
         type: String,
         required: true
     },
+    picRole: {
+        type: String,
+        default: 'Penanggung Jawab'
+    },
     section: {
         type: String,
     },
@@ -76,34 +80,30 @@ const props = defineProps({
                             </th>
                         </tr>
                         <tr>
-                            <td class="font-bold border-2 py-0.5 px-2 border-black">NOMOR POS</td>
+                            <td class="font-bold border-2 py-0.5 px-2 border-black whitespace-nowrap">NOMOR POS</td>
                             <td class="border-2 py-0.5 px-2 border-black">:</td>
-                            <td class="border-2 py-0.5 px-2 border-black" v-if="props.number">{{ props.number }}</td>
-                            <td class="border-2 py-0.5 px-2 border-black" v-else> - </td>
+                            <td class="border-2 py-0.5 px-2 border-black">{{ props.number || ' - ' }}</td>
                         </tr>
                         <tr>
-                            <td class="font-bold border-2 py-0.5 px-2 border-black">TANGGAL PEMBUATAN</td>
+                            <td class="font-bold border-2 py-0.5 px-2 border-black whitespace-nowrap">TANGGAL PEMBUATAN</td>
                             <td class="border-2 py-0.5 px-2 border-black">:</td>
-                            <td class="border-2 py-0.5 px-2 border-black" v-if="props.createdDate">{{ props.createdDate }}</td>
-                            <td class="border-2 py-0.5 px-2 border-black" v-else> - </td>
+                            <td class="border-2 py-0.5 px-2 border-black">{{ props.createdDate || ' - ' }}</td>
                         </tr>
                         <tr>
-                            <td class="font-bold border-2 py-0.5 px-2 border-black">TANGGAL REVISI</td>
+                            <td class="font-bold border-2 py-0.5 px-2 border-black whitespace-nowrap">TANGGAL REVISI</td>
                             <td class="border-2 py-0.5 px-2 border-black">:</td>
-                            <td class="border-2 py-0.5 px-2 border-black" v-if="props.revisionDate">{{ props.revisionDate }}</td>
-                            <td class="border-2 py-0.5 px-2 border-black" v-else> - </td>
+                            <td class="border-2 py-0.5 px-2 border-black">{{ props.revisionDate || ' - ' }}</td>
                         </tr>
                         <tr>
-                            <td class="font-bold border-2 py-0.5 px-2 border-black">TANGGAL EFEKTIF</td>
+                            <td class="font-bold border-2 py-0.5 px-2 border-black whitespace-nowrap">TANGGAL EFEKTIF</td>
                             <td class="border-2 py-0.5 px-2 border-black">:</td>
-                            <td class="border-2 py-0.5 px-2 border-black" v-if="props.effectiveDate">{{ props.effectiveDate }}</td>
-                            <td class="border-2 py-0.5 px-2 border-black" v-else> - </td>
+                            <td class="border-2 py-0.5 px-2 border-black">{{ props.effectiveDate || ' - ' }}</td>
                         </tr>
                         <tr>
-                            <td class="font-bold align-top border-2 py-0.5 px-2 border-black">DISAHKAN OLEH</td>
+                            <td class="font-bold align-top border-2 py-0.5 px-2 border-black whitespace-nowrap">DISAHKAN OLEH</td>
                             <td class="align-top border-2 py-0.5 px-2 border-black">:</td>
                             <td class="text-center font-bold border-2 py-0.5 px-2 border-black">
-                                <p>Ketua Departemen,</p>
+                                <p>{{ props.picRole }},</p>
                                 <div class="flex justify-center h-24">
                                     <img :src="signature" alt="Tanda Tangan" class="max-w-full" v-if="props.signature" />
                                 </div>
@@ -112,16 +112,14 @@ const props = defineProps({
                             </td>
                         </tr>
                         <tr>
-                            <td class="font-bold border-2 py-0.5 px-2 border-black">NAMA POS</td>
+                            <td class="font-bold align-top border-2 py-0.5 px-2 border-black whitespace-nowrap">NAMA POS</td>
                             <td class="border-2 py-0.5 px-2 border-black">:</td>
-                            <td class="font-bold border-2 py-0.5 px-2 border-black" v-if="props.name">{{ props.name }}</td>
-                            <td class="border-2 py-0.5 px-2 border-black" v-else> - </td>
+                            <td class="font-bold border-2 py-0.5 px-2 border-black">{{ props.name || ' - ' }}</td>
                         </tr>
                         <tr>
                             <td class="font-bold align-top border-2 py-0.5 px-2 border-black">SEKSI</td>
                             <td class="border-2 py-0.5 px-2 border-black">:</td>
-                            <td class="border-2 py-0.5 px-2 border-black" v-if="props.section">{{ props.section }}</td>
-                            <td class="border-2 py-0.5 px-2 border-black" v-else> - </td>
+                            <td class="border-2 py-0.5 px-2 border-black">{{ props.section || ' - ' }}</td>
                         </tr>
                         <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
                         <tr>
@@ -161,7 +159,7 @@ const props = defineProps({
                         </tr>
                         <tr>
                             <td class="align-top border-2 py-0.5 px-2 border-black">
-                                <ol class="list-decimal list-outside ml-5 columns-2">
+                                <ol class="list-decimal list-outside ml-5">
                                     <template v-if="props.relatedSop && props.relatedSop.length > 0">
                                         <li v-for="(item, index) in props.relatedSop" :key="index">
                                             {{ item }}

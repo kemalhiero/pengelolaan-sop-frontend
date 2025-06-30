@@ -1,8 +1,11 @@
 <script setup>
 import { onMounted, ref, computed, watch, nextTick } from 'vue'; // <-- Tambahkan 'watch'
-import BpmnLaneRow from '@/components/sop/shape/bpmn/BpmnLaneRow.vue';
-import ArrowConnector from '@/components/sop/shape/ArrowConnector.vue';
 import { capitalizeWords } from '@/utils/text';
+
+import ArrowConnector from '@/components/sop/shape/ArrowConnector.vue';
+import BpmnTerminator from '@/components/sop/shape/bpmn/BpmnTerminator.vue';
+import BpmnTask from '@/components/sop/shape/bpmn/BpmnTask.vue';
+import BpmnDecision from '@/components/sop/shape/bpmn/BpmnDecision.vue';
 
 const props = defineProps({
   name: {
@@ -512,20 +515,88 @@ const dynamicTitleWidth = computed(() => {
                       </p>
                     </div>
                   </td>
-                  <BpmnLaneRow
-                    :implementer="orderedImplementer[0]"
-                    :layout="laneLayouts[0] || { steps: [] }"
-                    :svg-ref="setSvgRef"
-                    :index="0"
-                  />
+                  <td class="border-2 border-black w-8">
+                    <div class="flex items-center justify-center w-8">
+                      <p class="-rotate-90 origin-center whitespace-nowrap font-medium">
+                        {{ orderedImplementer[0].name }}
+                      </p>
+                    </div>
+                  </td>
+                  <td class="border-2 border-black p-0">
+                    <div class="relative overflow-x-auto min-h-[120px]">
+                      <svg :ref="el => setSvgRef(el, 0)" class="w-full h-full">
+                        <template v-if="laneLayouts[0] && laneLayouts[0].steps">
+                          <template v-for="step in laneLayouts[0].steps" :key="step.id">
+                            <BpmnTerminator 
+                              v-if="step.type === 'terminator'"
+                              :x="step.x"
+                              :y="step.y"
+                              :id="`bpmn-step-${step.seq}`"
+                              :text="step.seq === 0 ? 'Mulai' : 'Selesai'"
+                            />
+                            <BpmnTask
+                              v-else-if="step.type === 'task'"
+                              :x="step.x"
+                              :y="step.y"
+                              :width="step.width"
+                              :height="step.height"
+                              :name="step.name"
+                              :id="`bpmn-step-${step.seq}`"
+                            />
+                            <BpmnDecision
+                              v-else-if="step.type === 'decision'"
+                              :x="step.x"
+                              :y="step.y"
+                              :name="step.name"
+                              :id="`bpmn-step-${step.seq}`"
+                            />
+                          </template>
+                        </template>
+                      </svg>
+                    </div>
+                  </td>
                 </tr>
                 <tr v-for="(imp, index) in orderedImplementer.slice(1)" :key="imp.id">
-                  <BpmnLaneRow
-                    :implementer="imp"
-                    :layout="laneLayouts[index + 1] || { steps: [] }"
-                    :svg-ref="setSvgRef"
-                    :index="index + 1"
-                  />
+                  <td class="border-2 border-black w-8">
+                    <div class="flex items-center justify-center w-8">
+                      <p class="-rotate-90 origin-center whitespace-nowrap font-medium">
+                        {{ imp.name }}
+                      </p>
+                    </div>
+                  </td>
+                  <td class="border-2 border-black p-0">
+                    <div class="relative overflow-x-auto min-h-[120px]">
+                      <svg :ref="el => setSvgRef(el, index + 1)" class="w-full h-full">
+                        <template v-if="laneLayouts[index + 1] && laneLayouts[index + 1].steps">
+                          <template v-for="step in laneLayouts[index + 1].steps" :key="step.id">
+                            <BpmnTerminator 
+                              v-if="step.type === 'terminator'"
+                              :x="step.x"
+                              :y="step.y"
+                              :id="`bpmn-step-${step.seq}`"
+                              :text="step.seq === 0 ? 'Mulai' : 'Selesai'"
+                            />
+                            <BpmnTask
+                              v-else-if="step.type === 'task'"
+                              :x="step.x"
+                              :y="step.y"
+                              :width="step.width"
+                              :height="step.height"
+                              :name="step.name"
+                              :id="`bpmn-step-${step.seq}`"
+                            />
+                            <BpmnDecision
+                              v-else-if="step.type === 'decision'"
+                              :x="step.x"
+                              :y="step.y"
+                              :name="step.name"
+                              :id="`bpmn-step-${step.seq}`"
+                            />
+                          </template>
+                        </template>
+                      </svg>
+                    </div>
+                  </td>
                 </tr>
               </tbody>
             </table>

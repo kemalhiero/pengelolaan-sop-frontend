@@ -99,7 +99,6 @@ const submitSop = async () => {
                             number: `T/${String(form.value.number).padStart(3, '0')}/${letterCode.value}/${currentYear}`,
                             description: form.value.description,
                             version: 1,
-                            signer_id: null,
                         }
                     ) || null;
 

@@ -50,7 +50,7 @@ const showModal = ref({
     deleteAssignment: false,
 });
 
-const { sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchCurrentHod, isDataError, fetchSopDisplayConfig, sopConfig } = useSopData(route.params.id);
+const { sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchSigner, isDataError, fetchSopDisplayConfig, sopConfig } = useSopData(route.params.id);
 provide('sopConfig', sopConfig);
 
 const fetchFeedback = async () => {
@@ -233,7 +233,7 @@ const fetchAllData = async () => {
     await fetchSopVersion();
     await fetchInfoSop();
     await fetchSopStep();
-    await fetchCurrentHod();
+    await fetchSigner(sopData.value.signer_id);
     await fetchFeedback();
     await fetchSopDisplayConfig();
 };
@@ -303,9 +303,11 @@ onMounted(fetchAllData);
         </div>
 
         <div class="mt-8" v-if="activeTab === 'document'">
-            <SopInfoTemplate :name="sopData.name" :number="sopData.number" :pic-name="signer.name"
-                :pic-number="signer.id_number" created-date="-" :revision-date="sopData.revision_date"
-                :effective-date="sopData.effective_date" :section="sopData.section" :warning="sopData.warning"
+            <SopInfoTemplate 
+                :name="sopData.name" :number="sopData.number" 
+                :pic-name="signer.name" :pic-number="signer.id_number" :pic-role="roleAbbreviation[signer.role]"
+                :created-date="sopData.creation_date" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date" 
+                :section="sopData.section" :warning="sopData.warning"
                 :law-basis="sopData.legalBasis.map(item => item.legal)"
                 :implement-qualification="sopData.implementQualification.map(item => item.qualification)"
                 :related-sop="sopData.relatedSop.map(item => item.related_sop)"

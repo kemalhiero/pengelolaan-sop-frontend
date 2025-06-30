@@ -120,7 +120,7 @@ const connections = computed(() => {
     props.steps.forEach((step) => {
         const sourceId = `sop-step-${step.seq_number}`;
         const sourcePage = getPageNumber(step.seq_number);
-        const sourceStepType = step.type; // Ambil tipe shape sumber
+        const sourceStepType = step.type;
 
         const createConnectionEntries = (targetStepId, label = null, condition = null) => {
             if (!targetStepId) return;
@@ -129,7 +129,7 @@ const connections = computed(() => {
 
             const targetElementId = `sop-step-${targetStep.seq_number}`;
             const targetPage = getPageNumber(targetStep.seq_number);
-            const targetStepType = targetStep.type; // <-- DAPATKAN TIPE SHAPE TUJUAN
+            const targetStepType = targetStep.type;
             
             // --- PENAMBAHAN ID UNIK ---
             const uniqueId = `conn-${step.seq_number}-to-${targetStep.seq_number}-${condition || 'next'}`;
@@ -173,7 +173,7 @@ const connections = computed(() => {
                     label, 
                     condition,
                     sourceType: sourceStepType,
-                    targetType: targetStepType, // <-- Tambahkan tipe target di sini
+                    targetType: targetStepType,
                     sourcePage,
                     targetPage 
                 });
@@ -251,23 +251,24 @@ const allOffPageConnectors = computed(() => {
     return connectors;
 });
 
-// --- COMPUTED PROPERTY BARU UNTUK usedSides ---
 const usedSides = computed(() => {
     const used = {}; // Format: { [shapeId]: { in: { [side]: connId[] }, out: { [side]: connId[] } } }
 
     connections.value.forEach(conn => {
         const pathInfo = calculatedPathSides.value[conn.id];
-        if (!pathInfo) return; // Lewati jika panah belum dikalkulasi
+        if (!pathInfo || !pathInfo.sSide || !pathInfo.eSide) return;
+
+        // Inisialisasi jika belum ada
+        if (!used[conn.from]) used[conn.from] = { in: {}, out: {} };
+        if (!used[conn.to]) used[conn.to] = { in: {}, out: {} };
 
         // Lacak sisi KELUAR dari sumber
-        if (!used[conn.from]) used[conn.from] = { in: {}, out: {} };
         if (!used[conn.from].out[pathInfo.sSide]) used[conn.from].out[pathInfo.sSide] = [];
         if (!used[conn.from].out[pathInfo.sSide].includes(conn.id)) {
             used[conn.from].out[pathInfo.sSide].push(conn.id);
         }
 
         // Lacak sisi MASUK ke tujuan
-        if (!used[conn.to]) used[conn.to] = { in: {}, out: {} };
         if (!used[conn.to].in[pathInfo.eSide]) used[conn.to].in[pathInfo.eSide] = [];
         if (!used[conn.to].in[pathInfo.eSide].includes(conn.id)) {
             used[conn.to].in[pathInfo.eSide].push(conn.id);
@@ -275,7 +276,6 @@ const usedSides = computed(() => {
     });
     return used;
 });
-// ---------------------------------------------
 
 // Helper: filter OPC by area (top/bottom) and direction
 const getOPCForPageArea = (pageIndex, opcType, area) => {
@@ -378,18 +378,7 @@ const pageObstacles = computed(() => {
 });
 
 const getConnectionsForPage = (pageIndex) => {
-    return connections.value.filter(conn => {
-        // Perbaikan: Menggunakan isOpcConnectionSegment yang sudah ada
-        if (conn.isOpcConnectionSegment) {
-            // Tampilkan koneksi OPC hanya di halaman di mana segmen tersebut relevan
-            // Segmen dari shape ke opc-out ada di sourcePage OPC tersebut
-            // Segmen dari opc-in ke shape ada di targetPage OPC tersebut (yang juga merupakan sourcePage dari opc-in)
-            return conn.sourcePage === pageIndex;
-        } else {
-            // Untuk koneksi normal, tampilkan hanya di halaman sumber
-            return conn.sourcePage === pageIndex;
-        }
-    });
+    return connections.value.filter(conn => conn.sourcePage === pageIndex);
 };
 
 const getStyledOpcGroups = (pageIndex, area) => {

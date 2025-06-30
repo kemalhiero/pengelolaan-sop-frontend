@@ -85,7 +85,6 @@ const submitSop = async () => {
                         number: `T/${String(form.value.number).padStart(3, '0')}/${letterCode.value}/${currentYear}`,
                         description: form.value.description,
                         version: parseInt(form.value.version) + 1,
-                        signer_id: null,
                     }
                 );
                 if (!resultSopdetail.success) {

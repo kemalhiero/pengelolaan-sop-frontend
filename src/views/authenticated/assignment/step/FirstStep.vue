@@ -12,7 +12,7 @@ import PulseLoading from '@/components/PulseLoading.vue';
 import Divider from '@/components/Divider.vue';
 
 const legalBasisData = inject('legalBasisData');
-const picInfo = inject('picData');
+const assignmentInfo = inject('assignmentInfo');
 const isDisabled = inject('isDisabled');
 
 const showModal = ref({
@@ -155,14 +155,14 @@ onBeforeUnmount(() => {
             <CircleInfoIcon class="w-5 mr-2" />
             Informasi dari Penanggung Jawab, tidak bisa diubah!
         </div>
-        <template v-if="picInfo">
+        <template v-if="assignmentInfo">
             <div class="mb-4">
                 <label for="sop-name" class="block mb-2 text-sm font-medium ">
                     Nama
                 </label>
                 <input type="text" id="sop-name"
                     class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
-                    :value="picInfo.name" readonly />
+                    :value="assignmentInfo.name" readonly />
             </div>
     
             <div class="grid gap-4 sm:grid-cols-2 sm:gap-5 text-black mb-4">
@@ -172,31 +172,28 @@ onBeforeUnmount(() => {
                     </label>
                     <input type="text" id="sop-number"
                         class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
-                        :value="picInfo.number" readonly />
+                        :value="assignmentInfo.number" readonly />
                 </div>
                 <div>
                     <label for="sop-assignment-time" class="block mb-2 text-sm font-medium ">
                         Waktu Penugasan
                     </label>
-                    <input type="datetime" id="sop-assignment-time"
-                        class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                        :value="picInfo.creation_date" readonly />
+                    <input type="datetime" id="sop-assignment-time" :value="assignmentInfo.creation_date" readonly
+                        class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"/>
                 </div>
                 <div>
                     <label for="sop-org" class="block mb-2 text-sm font-medium ">
                         Organisasi
                     </label>
-                    <input type="text" id="sop-org"
-                        class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                        :value="picInfo.organization" readonly />
+                    <input type="text" id="sop-org" :value="assignmentInfo.organization.name" readonly
+                        class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"/>
                 </div>
                 <div>
                     <label for="sop-last-update-date" class="block mb-2 text-sm font-medium ">
                         Terakhir diperbarui
                     </label>
-                    <input type="datetime" id="sop-last-update-date"
-                        class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                        :value="picInfo.last_update_date ? picInfo.last_update_date : '-'" readonly />
+                    <input type="datetime" id="sop-last-update-date" :value="assignmentInfo.last_update_date || '-'" readonly 
+                        class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"/>
                 </div>
             </div>
     
@@ -205,19 +202,19 @@ onBeforeUnmount(() => {
                     Deskripsi
                 </label>
                 <textarea id="sop-description" disabled
-                    class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 h-48">{{ picInfo.description }}</textarea>
+                    class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 h-48">{{ assignmentInfo.description }}</textarea>
             </div>
     
             <div class="text-black flex flex-row mb-5">
                 <div class="w-1/2">
                     <h2 class="mb-2 text-sm font-semibold">User yang ditugaskan:</h2>
                     <ul class="space-y-1 list-disc list-inside text-sm">
-                        <li v-for="(item, index) in picInfo.drafter" :key="index">({{ item.id_number }}) {{ item.name }}</li>
+                        <li v-for="(item, index) in assignmentInfo.drafter" :key="index">({{ item.id_number }}) {{ item.name }}</li>
                     </ul>
                 </div>
                 <div class="w-1/2">
                     <h2 class="mb-2 text-sm font-semibold">Penanggung Jawab:</h2>
-                    <p class="text-sm">{{ picInfo.pic }}</p>
+                    <p class="text-sm">{{ assignmentInfo.pic.name }}</p>
                 </div>
             </div>
         </template>

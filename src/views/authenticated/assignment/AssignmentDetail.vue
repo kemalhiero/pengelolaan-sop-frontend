@@ -12,7 +12,6 @@ import { createRecord, getSopRecord, deleteSopRecord } from '@/api/recordApi';
 import { createIQ, getIQ, deleteIQ } from '@/api/implementQualificationApi';
 import useToastPromise from '@/utils/toastPromiseHandler';
 import { getDraftFeedback } from '@/api/feedbackApi';
-import { getCurrentHod } from '@/api/userApi';
 import useSopData from '@/composables/useSopData';
 
 import NumberOneCircleIcon from '@/assets/icons/NumberOneCircleIcon.vue';
@@ -44,7 +43,7 @@ const firstStepRef = ref(null);
 const showFeedback = ref(false)
 const draftFeedback = ref([]);
 
-const picInfo = ref();
+const assignmentInfo = ref();
 const legalBasisData = ref();
 const formData = ref({
     section: '',
@@ -57,25 +56,20 @@ const formData = ref({
     record: []
 });
 const sopStep = ref([]);
-const hodData = ref({
-    id_number: '',
-    name: '',
-});
 const isDisabled = computed(() => {
-    return picInfo.value && (picInfo.value.status === 1 || picInfo.value.status === 0);
+    return assignmentInfo.value && (assignmentInfo.value.status === 1 || assignmentInfo.value.status === 0);
 });
 
 // Fungsi untuk menentukan apakah data sudah lengkap, sekaligus mengecek apakah user iseng
 const isDataError = computed(() => {
-    return !picInfo.value || !picInfo.value.name || !picInfo.value.number;
+    return !assignmentInfo.value || !assignmentInfo.value.name || !assignmentInfo.value.number;
 });
 
-const { fetchSopDisplayConfig, sopConfig } = useSopData(idsopdetail);
+const { fetchSopDisplayConfig, fetchSigner, sopConfig, signer } = useSopData(idsopdetail);
 
-provide('picData', picInfo);
+provide('assignmentInfo', assignmentInfo);
 provide('sopStep', sopStep);
 provide('legalBasisData', legalBasisData);
-provide('hodData', hodData);
 provide('sopFormData', {
     formData,
     updateFormData(newData) {
@@ -85,10 +79,10 @@ provide('sopFormData', {
 provide('isDisabled', isDisabled);
 provide('sopConfig', sopConfig);
 
-const fetchPicInfo = async () => {
+const fetchAssignmentInfo = async () => {
     try {
         const response = await getAssignmentDetail(idsopdetail);
-        picInfo.value = response.data;
+        assignmentInfo.value = response.data;
     } catch (error) {
         console.error('Fetch error:', error);
     }
@@ -172,17 +166,6 @@ const fetchSopStep = async () => {
 
     } catch (error) {
         console.error('Fetch tahapan sop error:', error);
-    }
-};
-
-
-const fetchCurrentHod = async () => {
-    try {
-        const response = await getCurrentHod();
-        hodData.value.id_number = response.data.id_number;
-        hodData.value.name = response.data.name;
-    } catch (error) {
-        console.error('Fetch data kadep error:', error);
     }
 };
 
@@ -532,7 +515,7 @@ const nextStep = async () => {
         // jika bukan dsi maka akan di cek oleh penanggung jawab
         const promiseApdet = new Promise((resolve, reject) => {
             // Set status 5 if organization is DSI, otherwise set status 3
-            const newStatus = picInfo.value.organization === 'Departemen Sistem Informasi' ? 5 : 3;
+            const newStatus = assignmentInfo.value.organization.id_org === 0 ? 5 : 3;
 
             updateSopDetail(idsopdetail, { status: newStatus })
                 .then(response => {
@@ -596,17 +579,16 @@ const saveSopConfig = async () => {
 };
 
 const fetchAllData = async () => {
-    await fetchPicInfo();
+    await fetchAssignmentInfo();
 
     await fetchInfoSop();
     await fetchSopStep();
 
     await fetchLegalBasis();
-    await fetchCurrentHod();
 
     await fetchSopDisplayConfig();
 
-    if (picInfo.value.status !== 2) {
+    if (assignmentInfo.value.status !== 2) {
         await fetchFeedback();
     }
 };

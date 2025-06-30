@@ -6,6 +6,7 @@ import { getUserProfile } from '@/api/userApi';
 import { confirmSopandBpmn } from '@/api/sopApi';
 import useSopData from '@/composables/useSopData';
 import useToastPromise from '@/utils/toastPromiseHandler';
+import roleAbbreviation from '@/data/roleAbbrv.json';
 
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import SopInfoTemplate from '@/components/sop/SopInfoTemplate.vue';
@@ -23,7 +24,7 @@ const activeTab = ref('document');
 const router = useRouter();
 const route = useRoute();
 
-const { sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchCurrentHod, isDataError, fetchSopDisplayConfig, sopConfig } = useSopData(route.params.id);
+const { sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchSigner, isDataError, fetchSopDisplayConfig, sopConfig } = useSopData(route.params.id);
 provide('sopConfig', sopConfig);
 
 const confirm = () => {
@@ -83,7 +84,7 @@ const fetchAllData = async () => {
     // Periksa apakah data HOD sudah ada
     if (!signer.value.id_number) {
         console.log('Data HOD tidak ditemukan, mengambil ulang dari API...');
-        await fetchCurrentHod();
+        await fetchSigner(sopData.value.signer_id);
     }
     await fetchProfile();
     await fetchSopDisplayConfig();
@@ -94,10 +95,10 @@ onMounted(fetchAllData);
 
 <template>
     <h2 class="text-4xl text-center my-8 font-bold">
-        {{ isDataError ? 'Ngapain iseng iseng?🤨' : `Pengesahan SOP ${sopData.name}` }}
+        {{ isDataError || !sopData.steps.length ? 'Ngapain iseng iseng?🤨' : `Pengesahan SOP ${sopData.name}` }}
     </h2>
 
-    <template v-if="!isDataError">
+    <template v-if="!isDataError && sopData.steps.length > 0">
         <div class="lg:col-span-2 p-6">
             <h2 class="text-2xl font-bold text-gray-800 mb-1">Tanda Tangan</h2>
             <p class="text-sm mb-6">Status tanda tangan Anda.</p>
@@ -114,20 +115,18 @@ onMounted(fetchAllData);
                 Tanda tangan Anda telah diunggah. Silahkan tinjau dan sahkan SOP ini!
             </div>
         </div>
-    
+
         <div class="flex justify-center my-6">
             <div class="inline-flex rounded-md shadow-sm" role="group">
             <button 
-                @click="activeTab = 'document'" 
-                type="button" 
+                @click="activeTab = 'document'" type="button" 
                 class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-l-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
                 :class="activeTab === 'document' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'"
             >
                 Dokumen SOP
             </button>
             <button 
-                @click="activeTab = 'bpmn'" 
-                type="button" 
+                @click="activeTab = 'bpmn'" type="button" 
                 class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-r-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
                 :class="activeTab === 'bpmn' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'"
             >
@@ -135,12 +134,12 @@ onMounted(fetchAllData);
             </button>
             </div>
         </div>
-    
+
         <div v-if="activeTab === 'document'">
             <SopInfoTemplate
                 :name="sopData.name" :number="sopData.number"
-                :pic-name="signer.name" :pic-number="signer.id_number"
-                created-date="-" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
+                :pic-name="signer.name" :pic-number="signer.id_number" :pic-role="roleAbbreviation[signer.role]"
+                :created-date="sopData.creation_date" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
                 :section="sopData.section" :warning="sopData.warning"
                 :law-basis="sopData.legalBasis.map(item => item.legal)"
                 :implement-qualification="sopData.implementQualification.map(item => item.qualification)" 
@@ -154,7 +153,7 @@ onMounted(fetchAllData);
                 :implementer="sopData.implementer" :steps="sopData.steps"
             />
         </div>
-    
+
         <div v-else-if="activeTab === 'bpmn'" class="mb-10">
             <SopBpmnTemplate
                 v-if="sopData.steps && sopData.steps.length > 0 && sopData.implementer && sopData.implementer.length > 0"
@@ -166,7 +165,7 @@ onMounted(fetchAllData);
                 Belum ada tahapan yang diinputkan oleh penyusun!
             </div>
         </div>
-    
+
         <div class="my-10 flex flex-col items-center">
             <button type="button" @click="showConfirmationModal = true" :disabled="!userSignature"
                 class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-1/4 disabled:cursor-not-allowed disabled:bg-opacity-60">
@@ -182,7 +181,6 @@ onMounted(fetchAllData);
     <div v-show="showConfirmationModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full shadow-lg">
         <div class="fixed inset-0 bg-gray-800 bg-opacity-50" @click="showConfirmationModal = false"></div>
         <div class="relative w-full max-w-2xl max-h-full">
-
             <div class="relative bg-white rounded-lg shadow">
                 <button type="button" @click="showConfirmationModal = false"
                     class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 inline-flex justify-center items-center">
@@ -213,7 +211,6 @@ onMounted(fetchAllData);
                     </button>
                 </div>
             </div>
-
         </div>
     </div>
 </template>

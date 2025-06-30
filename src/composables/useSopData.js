@@ -7,7 +7,7 @@ import { getSopEquipment } from '@/api/equipmentApi';
 import { getRelatedSop } from '@/api/relatedSopApi';
 import { getSopLawBasis } from '@/api/lawBasisApi';
 import { getSopRecord } from '@/api/recordApi';
-import { getCurrentHod, getSigner } from '@/api/userApi';
+import { getSigner } from '@/api/userApi';
 
 export default function useSopData(route) {
     const sopData = ref({
@@ -104,16 +104,6 @@ export default function useSopData(route) {
         }
     };
 
-    const fetchCurrentHod = async () => {
-        try {
-            const response = await getCurrentHod();
-            signer.value = response.data;
-            console.log('Mengambil data kadep dari API...');
-        } catch (error) {
-            console.error('Fetch data kadep error:', error);
-        }
-    };
-
     const fetchSigner = async (iduser) => {
         try {
             const response = await getSigner(iduser);
@@ -176,7 +166,6 @@ export default function useSopData(route) {
         fetchSopVersion,
         fetchInfoSop,
         fetchSopStep,
-        fetchCurrentHod,
         fetchSigner,
         isDataError,
         fetchSopDisplayConfig,
