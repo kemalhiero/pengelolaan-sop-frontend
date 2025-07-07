@@ -116,44 +116,36 @@ onMounted(fetchAllData);
             </div>
         </div>
 
-        <div class="flex justify-center my-6">
+        <SopInfoTemplate class="mt-8"
+            :name="sopData.name" :number="sopData.number"
+            :pic-name="signer.name" :pic-number="signer.id_number" 
+            :pic-role="roleAbbreviation[sopData.pic_position || signer.role]"
+            :created-date="sopData.creation_date" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
+            :section="sopData.section" :warning="sopData.warning"
+            :law-basis="sopData.legalBasis.map(item => item.legal)"
+            :implement-qualification="sopData.implementQualification.map(item => item.qualification)" 
+            :related-sop="sopData.relatedSop.map(item => item.related_sop)"
+            :equipment="sopData.equipment.map(item => item.equipment)" 
+            :record-data="sopData.record.map(item => item.data_record)"
+            :signature="userSignature"
+        /> 
+
+        <div class="flex justify-center my-6 print:hidden">
             <div class="inline-flex rounded-md shadow-sm" role="group">
-            <button 
-                @click="activeTab = 'document'" type="button" 
-                class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-l-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
-                :class="activeTab === 'document' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'"
-            >
-                Dokumen SOP
-            </button>
-            <button 
-                @click="activeTab = 'bpmn'" type="button" 
-                class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-r-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
-                :class="activeTab === 'bpmn' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'"
-            >
-                Diagram BPMN
-            </button>
+                <button @click="activeTab = 'document'" type="button" 
+                    class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-l-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
+                    :class="activeTab === 'document' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'">
+                    Flowchart
+                </button>
+                <button @click="activeTab = 'bpmn'" type="button" 
+                    class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-r-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
+                    :class="activeTab === 'bpmn' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'">
+                    BPMN
+                </button>
             </div>
         </div>
 
-        <div v-if="activeTab === 'document'">
-            <SopInfoTemplate
-                :name="sopData.name" :number="sopData.number"
-                :pic-name="signer.name" :pic-number="signer.id_number" 
-                :pic-role="roleAbbreviation[sopData.pic_position || signer.role]"
-                :created-date="sopData.creation_date" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"
-                :section="sopData.section" :warning="sopData.warning"
-                :law-basis="sopData.legalBasis.map(item => item.legal)"
-                :implement-qualification="sopData.implementQualification.map(item => item.qualification)" 
-                :related-sop="sopData.relatedSop.map(item => item.related_sop)"
-                :equipment="sopData.equipment.map(item => item.equipment)" 
-                :record-data="sopData.record.map(item => item.data_record)"
-                :signature="userSignature"
-            /> 
-            <div class="py-4"></div>
-            <SopStepTemplate
-                :implementer="sopData.implementer" :steps="sopData.steps"
-            />
-        </div>
+        <SopStepTemplate v-if="activeTab === 'document'" :implementer="sopData.implementer" :steps="sopData.steps"/>
 
         <div v-else-if="activeTab === 'bpmn'" class="mb-10">
             <SopBpmnTemplate

@@ -158,14 +158,14 @@ onMounted(() => {
                         aria-controls="dropdown-law" data-collapse-toggle="dropdown-law">
                         <ScaleBalanced
                             class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 fill-current" />
-                        <span class="flex-1 ml-3 text-left whitespace-nowrap">Hukum SOP</span>
+                        <span class="flex-1 ml-3 text-left whitespace-nowrap">Peraturan SOP</span>
                         <AngleDownIcon />
                     </button>
                     <ul id="dropdown-law" class="hidden py-2 space-y-2">
                         <li>
                             <RouterLink :to="{ name: 'SopLawBasis' }" active-class="bg-gray-200"
                                 class="flex items-center p-2 pl-11 w-full text-base font-medium text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-200">
-                                Dasar Hukum
+                                Peraturan
                             </RouterLink>
                         </li>
                         <li>

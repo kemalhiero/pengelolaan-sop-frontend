@@ -33,8 +33,8 @@ const feedbackIdToDelete = ref(null); // State untuk menyimpan ID umpan balik ya
 
 // Computed property untuk menampilkan feedback yang sesuai (4 pertama atau semua)
 const displayedFeedback = computed(() => {
-    return showAllFeedback.value 
-        ? draftFeedback.value 
+    return showAllFeedback.value
+        ? draftFeedback.value
         : draftFeedback.value.slice(0, 4);
 });
 
@@ -88,7 +88,7 @@ const submitFeedback = () => {
                 },
             }
         );
-        console.log('Feedback submitted!');        
+        console.log('Feedback submitted!');
     } catch (error) {
         console.error('Error:', error.message);
     }
@@ -146,87 +146,65 @@ onMounted(fetchAllData);
 
     <template v-if="!isDataError && sopData.status == 1">
         <div>
-            <!-- Tab Buttons -->
-            <div class="flex justify-center mb-6 print:hidden">
+            <SopInfoTemplate class="mt-8" 
+                :name="sopData.name" :number="sopData.number" :pic-name="signer.name"
+                :pic-number="signer.id_number" :pic-role="roleAbbreviation[sopData.pic_position || signer.role]"
+                :created-date="sopData.creation_date" :revision-date="sopData.revision_date"
+                :effective-date="sopData.status == 0 ? `${sopData.effective_date} (Kadaluarsa)` : sopData.effective_date"
+                :section="sopData.section" :warning="sopData.warning"
+                :law-basis="sopData.legalBasis.map(item => item.legal)"
+                :implement-qualification="sopData.implementQualification.map(item => item.qualification)"
+                :related-sop="sopData.relatedSop.map(item => item.related_sop)"
+                :equipment="sopData.equipment.map(item => item.equipment)"
+                :record-data="sopData.record.map(item => item.data_record)"
+                :signature="`${cdnUrl}/${sopData.signature_url}`" />
+
+            <div class="flex justify-center my-6 print:hidden">
                 <div class="inline-flex rounded-md shadow-sm" role="group">
-                    <button 
-                        @click="activeTab = 'document'" type="button" 
+                    <button @click="activeTab = 'document'" type="button"
                         class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-l-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
-                        :class="activeTab === 'document' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'"
-                    >
-                        Dokumen SOP
+                        :class="activeTab === 'document' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'">
+                        Flowchart
                     </button>
-                    <button 
-                        @click="activeTab = 'bpmn'" type="button" 
+                    <button @click="activeTab = 'bpmn'" type="button"
                         class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-r-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
-                        :class="activeTab === 'bpmn' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'"
-                    >
-                        Diagram BPMN
+                        :class="activeTab === 'bpmn' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'">
+                        BPMN
                     </button>
                 </div>
             </div>
 
-            <!-- SOP Document Tab -->
-            <div v-if="activeTab === 'document'" class="flex flex-col items-center justify-center space-y-4">
-                <div class="w-full print:overflow-visible">
-                    <div class="print:block print:bg-white">
-                        <SopInfoTemplate
-                            :name="sopData.name" :number="sopData.number"
-                            :pic-name="signer.name" :pic-number="signer.id_number" 
-                            :pic-role="roleAbbreviation[sopData.pic_position || signer.role]"
-                            :created-date="sopData.creation_date" :revision-date="sopData.revision_date"
-                            :effective-date="sopData.status == 0 ? `${sopData.effective_date} (Kadaluarsa)`: sopData.effective_date"
-                            :section="sopData.section" :warning="sopData.warning"
-                            :law-basis="sopData.legalBasis.map(item => item.legal)"
-                            :implement-qualification="sopData.implementQualification.map(item => item.qualification)" 
-                            :related-sop="sopData.relatedSop.map(item => item.related_sop)"
-                            :equipment="sopData.equipment.map(item => item.equipment)" 
-                            :record-data="sopData.record.map(item => item.data_record)"
-                            :signature="`${cdnUrl}/${sopData.signature_url}`"
-                        />
-                        <div class="py-4"></div>
-                        <SopStepTemplate :implementer="sopData.implementer" :steps="sopData.steps" />
-                    </div>
+            <div v-if="activeTab === 'document'" class="w-full print:overflow-visible">
+                <div class="print:block print:bg-white">
+                    <SopStepTemplate :implementer="sopData.implementer" :steps="sopData.steps" />
                 </div>
-            
-                <button @click="printSop"
-                    class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-base py-3 px-6 flex items-center justify-center print:hidden">
-                    <PrintIcon class="w-5 mr-3 fill-current" />
-                    Cetak SOP (Ukuran A4)
-                </button>            
             </div>
-            
-            <!-- BPMN Diagram Tab -->
+
             <div v-else-if="activeTab === 'bpmn'">
-                <div v-if="sopData.steps && sopData.steps.length > 0 && sopData.implementer && sopData.implementer.length > 0" 
-                    class="flex flex-col items-center justify-center space-y-4">
-                    <div class="w-full print:overflow-visible">
-                        <div class="print:block print:bg-white">
-                            <SopBpmnTemplate
-                                :name="sopData.name" 
-                                :steps="sopData.steps || []" 
-                                :implementer="sopData.implementer || []" 
-                            />
-                        </div>
+                <div v-if="sopData.steps && sopData.steps.length > 0 && sopData.implementer && sopData.implementer.length > 0"
+                    class="w-full print:overflow-visible">
+                    <div class="print:block print:bg-white">
+                        <SopBpmnTemplate :name="sopData.name" :steps="sopData.steps || []"
+                            :implementer="sopData.implementer || []" />
                     </div>
-            
-                    <button @click="printSop"
-                        class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-base py-3 px-6 flex items-center justify-center print:hidden">
-                        <PrintIcon class="w-5 mr-3 fill-current" />
-                        Cetak BPMN (A4)
-                    </button>
                 </div>
-                <div v-else class="my-4 p-4 bg-gray-100 rounded text-center">
+                <div v-else class="my-4 p-4 bg-gray-100 rounded text-center mx-auto">
                     Belum ada tahapan yang diinputkan oleh penyusun!
                 </div>
             </div>
+
+            <button @click="printSop"
+                class="mx-auto text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-base py-3 px-6 flex items-center justify-center print:hidden mt-6">
+                <PrintIcon class="w-5 mr-3 fill-current" />
+                Cetak SOP (Ukuran A4)
+            </button>
 
             <div class="mx-4 sm:mx-10 lg:w-2/3 lg:mx-auto mt-10 mb-6 print:hidden">
                 <div class="border-b-2 border-blue-500 pb-2 mb-4 flex justify-between items-center">
                     <h2 class="text-2xl font-bold">Umpan Balik Pengguna</h2>
                     <span v-if="draftFeedback && draftFeedback.length > 0" class="text-sm text-gray-500">{{ draftFeedback.length }} komentar</span>
                 </div>
-                
+
                 <div v-if="draftFeedback && draftFeedback.length > 0" class="space-y-2">
                     <!-- Menampilkan hanya 4 feedback pertama -->
                     <div v-for="(feedback, index) in displayedFeedback" :key="index"
@@ -243,14 +221,12 @@ onMounted(fetchAllData);
                                 <span class="mx-2 text-gray-400 text-xs">|</span>
                                 <span class="text-xs text-gray-600">{{ feedback?.createdAt || '-' }}</span>
                             </div>
-                            
+
                             <!-- Tombol hapus hanya muncul jika user yang login adalah pembuat komentar -->
-                            <button 
-                                v-if="authStore.userIdNumber === feedback.user.id_number"
+                            <button v-if="authStore.userIdNumber === feedback.user.id_number"
                                 @click="openDeleteModal(feedback.id)"
                                 class="text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-50"
-                                title="Hapus komentar anda"
-                            >
+                                title="Hapus komentar anda">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
@@ -258,24 +234,18 @@ onMounted(fetchAllData);
                         </div>
                         <p class="text-sm mt-1 pl-8 text-gray-700">{{ feedback?.feedback || '-' }}</p>
                     </div>
-                    
+
                     <!-- Tombol untuk menampilkan seluruh feedback -->
                     <div v-if="draftFeedback.length > 4" class="flex justify-center mt-2">
-                        <button 
-                            v-if="!showAllFeedback"
-                            @click="showAllFeedback = true" 
-                            class="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
-                        >
+                        <button v-if="!showAllFeedback" @click="showAllFeedback = true"
+                            class="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors">
                             Lihat semua {{ draftFeedback.length }} komentar
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                             </svg>
                         </button>
-                        <button 
-                            v-else
-                            @click="showAllFeedback = false" 
-                            class="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors"
-                        >
+                        <button v-else @click="showAllFeedback = false"
+                            class="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors">
                             Lihat lebih sedikit
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
@@ -283,7 +253,7 @@ onMounted(fetchAllData);
                         </button>
                     </div>
                 </div>
-                
+
                 <div v-else class="bg-gray-50 p-6 rounded-lg text-center border border-dashed border-gray-300">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -291,25 +261,20 @@ onMounted(fetchAllData);
                     <p class="text-gray-500 text-base">Belum ada umpan balik yang diberikan.</p>
                 </div>
             </div>
-            
+
             <div class="mx-4 sm:mx-10 lg:w-2/3 lg:mx-auto my-10 print:hidden">
                 <div class="border-b-2 border-blue-500 pb-2 mb-6">
                     <h2 class="text-2xl font-bold">Form Umpan Balik</h2>
                 </div>
-                
+
                 <div class="relative mb-32">
-                    <!-- Form Container -->
-                    <form class="w-full bg-white space-y-5" 
-                          :class="{ 'blur-sm pointer-events-none': !authStore.isAuthenticated }" 
-                          @submit.prevent="submitFeedback">
-                        
-                        <textarea 
-                            v-model="newFeedback" rows="4" minlength="5" maxlength="500" required
-                            class="block p-3 w-full text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 transition duration-200" 
-                            placeholder="Ketikkan kritik atau saran Anda untuk perbaikan SOP..."
-                        ></textarea>
-                        
-                        <button type="submit" 
+                    <form @submit.prevent="submitFeedback" class="w-full bg-white space-y-5"
+                        :class="{ 'blur-sm pointer-events-none': !authStore.isAuthenticated }">
+                        <textarea v-model="newFeedback" rows="4" minlength="5" maxlength="500" required
+                            class="block p-3 w-full text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                            placeholder="Ketikkan kritik atau saran Anda untuk perbaikan SOP..."></textarea>
+
+                        <button type="submit"
                             class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-3 transition duration-300 flex items-center justify-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 transform rotate-45" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -317,7 +282,7 @@ onMounted(fetchAllData);
                             Kirim Umpan Balik
                         </button>
                     </form>
-            
+
                     <!-- Overlay Login -->
                     <div v-if="!authStore.isAuthenticated" class="absolute inset-0 flex items-center justify-center">
                         <div class="bg-white/95 shadow-xl rounded-lg py-5 px-6 text-center w-5/6 max-w-lg mx-auto flex flex-col items-center">
@@ -342,13 +307,8 @@ onMounted(fetchAllData);
             </div>
         </div>
 
-        <DeleteDataModal 
-            :showModal="showModalDelete" 
-            :selected-id="feedbackIdToDelete"
-            :deleteData="deleteFeedback"
-            text="Apakah anda yakin ingin menghapus umpan balik ini?"
-            @update:showModal="showModalDelete = $event" 
-        />
+        <DeleteDataModal :showModal="showModalDelete" :selected-id="feedbackIdToDelete" :deleteData="deleteFeedback"
+            text="Apakah anda yakin ingin menghapus umpan balik ini?" @update:showModal="showModalDelete = $event" />
     </template>
 
     <Error v-else @click="reloadPage" />

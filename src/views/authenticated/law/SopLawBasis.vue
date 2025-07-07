@@ -222,12 +222,10 @@ onMounted(() => {
 
     <div class="container mx-auto p-8 lg:px-16">
 
-        <!-- modal tambah aturan -->
         <div class="flex justify-end mb-4">
             <AddDataButton btnLabel="Input Peraturan Baru" @click="openAddModal" />
         </div>
 
-        <!-- Komponen AddDataModal -->
         <AddDataModal 
             modalTitle="Tambahkan peraturan baru" 
             :showModal="showAddModal" 
@@ -284,7 +282,6 @@ onMounted(() => {
         </div>
     </div>
 
-    <!-- Komponen DeleteDataModal -->
     <DeleteDataModal 
         :showModal="showModalDelete" 
         :deleteData="deleteData" 
@@ -292,9 +289,8 @@ onMounted(() => {
         @update:showModal="showModalDelete = $event" 
     />
 
-    <!-- modal edit -->
     <EditDataModal 
-        modalTitle="Perbarui dasar hukum" 
+        modalTitle="Perbarui peraturan" 
         :showModal="showModalUpdate" 
         :formFields="[
             {

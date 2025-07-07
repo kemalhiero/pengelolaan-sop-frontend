@@ -57,7 +57,8 @@ const formData = ref({
 });
 const sopStep = ref([]);
 const isDisabled = computed(() => {
-    return assignmentInfo.value && (assignmentInfo.value.status === 1 || assignmentInfo.value.status === 0);
+    // Disabled jika status assignment adalah salah satu dari [0, 1, 3, 5, 7, 8]
+    return assignmentInfo.value && [0, 1, 3, 5, 7, 8].includes(assignmentInfo.value.status);
 });
 
 // Fungsi untuk menentukan apakah data sudah lengkap, sekaligus mengecek apakah user iseng
@@ -507,6 +508,12 @@ const nextStep = async () => {
         }
         currentStep.value++;
     } else if (currentStep.value === 3) {
+        if (isDisabled.value === true) {
+            toast.warning('Tidak dapat mengirim draft karena status assignment tidak sesuai!', {
+                autoClose: 7000,
+            });
+            return;            
+        }
         syncSopInfo();
         syncSopStep();
 
