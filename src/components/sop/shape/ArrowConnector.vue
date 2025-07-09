@@ -186,24 +186,48 @@ const calculatePath = async () => {
     const toCenter = { x: toPos.left + toPos.width / 2, y: toPos.top + toPos.height / 2 };
     const deltaX = toCenter.x - fromCenter.x;
     const deltaY = toCenter.y - fromCenter.y;
-    const alignmentTolerance = 5;
 
-    const startSides = ['bottom', 'right', 'left', 'top'];
-    const endSides = ['top', 'left', 'bottom', 'right'];
+    const startSides = ['right', 'left', 'bottom',  'top'];
+    const endSides = ['top', 'left', 'right', 'bottom'];
 
     for (const sSide of startSides) {
       for (const eSide of endSides) {
         const start = fromPoints[sSide];
         const end = toPoints[eSide];
 
-        // 0-Bend Paths (Lurus)
-        if (Math.abs(start.x - end.x) < alignmentTolerance) { // Vertikal
-          const alignedEnd = { x: start.x, y: end.y };
-          potentialPaths.push({ points: [start, alignedEnd], start, end: alignedEnd, bendPoints: [], type: 'zero_bend_v', sSide, eSide, length: Math.abs(start.y - end.y) });
+        // Tipe shape yang memerlukan koneksi di tengah
+        const centeredConnectionTypes = ['connector', 'decision'];
+        const isSourceCentered = centeredConnectionTypes.includes(props.connection.sourceType);
+        const isTargetCentered = centeredConnectionTypes.includes(props.connection.targetType);
+
+        // 0-Bend Paths (Lurus) - LOGIKA DIMODIFIKASI
+        // Cek kesejajaran vertikal (kolom yang sama)
+        if ((sSide === 'bottom' && eSide === 'top' && fromPos.bottom <= toPos.top) || (sSide === 'top' && eSide === 'bottom' && fromPos.top >= toPos.bottom)) {
+          const overlapLeft = Math.max(fromPos.left, toPos.left);
+          const overlapRight = Math.min(fromPos.right, toPos.right);
+          if (overlapRight > overlapLeft) { // Jika ada tumpang tindih horizontal
+            // Tentukan X berdasarkan tipe shape
+            const startX = isSourceCentered ? fromPoints[sSide].x : overlapLeft + (overlapRight - overlapLeft) / 2;
+            const endX = isTargetCentered ? toPoints[eSide].x : startX; // Buat lurus dengan startX jika target fleksibel
+            const finalX = isSourceCentered ? startX : endX; // Prioritaskan X dari shape yang terpusat
+
+            const points = [{ x: finalX, y: start.y }, { x: finalX, y: end.y }];
+            potentialPaths.push({ points, start: points[0], end: points[1], bendPoints: [], type: 'straight_optimal_v', sSide, eSide, length: Math.abs(start.y - end.y), score: 1 });
+          }
         }
-        if (Math.abs(start.y - end.y) < alignmentTolerance) { // Horizontal
-          const alignedEnd = { x: end.x, y: start.y };
-          potentialPaths.push({ points: [start, alignedEnd], start, end: alignedEnd, bendPoints: [], type: 'zero_bend_h', sSide, eSide, length: Math.abs(start.x - end.x) });
+        // Cek kesejajaran horizontal (baris yang sama)
+        if ((sSide === 'right' && eSide === 'left' && fromPos.right <= toPos.left) || (sSide === 'left' && eSide === 'right' && fromPos.left >= toPos.right)) {
+          const overlapTop = Math.max(fromPos.top, toPos.top);
+          const overlapBottom = Math.min(fromPos.bottom, toPos.bottom);
+          if (overlapBottom > overlapTop) { // Jika ada tumpang tindih vertikal
+            // Tentukan Y berdasarkan tipe shape
+            const startY = isSourceCentered ? fromPoints[sSide].y : overlapTop + (overlapBottom - overlapTop) / 2;
+            const endY = isTargetCentered ? toPoints[eSide].y : startY; // Buat lurus dengan startY jika target fleksibel
+            const finalY = isSourceCentered ? startY : endY; // Prioritaskan Y dari shape yang terpusat
+
+            const points = [{ x: start.x, y: finalY }, { x: end.x, y: finalY }];
+            potentialPaths.push({ points, start: points[0], end: points[1], bendPoints: [], type: 'straight_optimal_h', sSide, eSide, length: Math.abs(start.x - end.x), score: 1 });
+          }
         }
 
         // 1-Bend Paths (Bentuk L)
@@ -217,7 +241,7 @@ const calculatePath = async () => {
         }
 
         // 2-Bend Paths (Bentuk U) - Logika Baru yang Lebih Cerdas
-        const escapeOffset = 40; // Jarak "keluar" dari shape sebelum berbelok
+        const escapeOffset = 30; // Jarak "keluar" dari shape sebelum berbelok
         if (sSide === eSide) { // Hanya buat jalur U jika keluar dan masuk dari sisi yang sama (misal: right -> right)
             if (sSide === 'top' || sSide === 'bottom') { // V-H-V
                 const b1 = { x: start.x, y: sSide === 'top' ? Math.min(start.y, end.y) - escapeOffset : Math.max(start.y, end.y) + escapeOffset };
@@ -233,71 +257,75 @@ const calculatePath = async () => {
       }
     }
 
-    // 4. Beri skor pada setiap jalur untuk menemukan yang paling efisien - LOGIKA SKOR DIPERBAIKI
+    // 4. Beri skor pada setiap jalur untuk menemukan yang paling efisien
     potentialPaths.forEach(p => {
       let score = p.length; // Dasar skor adalah panjang jalur
       
-      // Penalti berdasarkan jumlah belokan
-      if (p.type.startsWith('one_bend')) score += 20;
-      if (p.type.startsWith('two_bend')) score += 50;
+      // Penalti untuk jumlah belokan (dikurangi untuk lebih fleksibel)
+      if (p.type.startsWith('one_bend')) score += 10;
+      if (p.type.startsWith('two_bend')) score += 30;
 
-      // Penalti untuk arah keluar (sSide) yang tidak wajar
+      // Penalti untuk arah yang tidak wajar
       if ((p.sSide === 'right' && deltaX < -10) || (p.sSide === 'left' && deltaX > 10)) score += 150;
       if ((p.sSide === 'bottom' && deltaY < -10) || (p.sSide === 'top' && deltaY > 10)) score += 150;
 
-      // Penalti untuk arah mendarat (eSide) yang TIDAK LOGIS - LOGIKA DIPERBAIKI
-      // Jika target di KANAN (deltaX > 0), mendarat di sisi KANAN itu aneh.
+      // Penalti untuk mendarat di sisi yang tidak logis
       if (p.eSide === 'right' && deltaX > 10) score += 100;
-      // Jika target di KIRI (deltaX < 0), mendarat di sisi KIRI itu aneh.
       if (p.eSide === 'left' && deltaX < -10) score += 100;
-      // Jika target di BAWAH (deltaY > 0), mendarat di sisi BAWAH itu aneh.
       if (p.eSide === 'bottom' && deltaY > 10) score += 100;
-      // Jika target di ATAS (deltaY < 0), mendarat di sisi ATAS itu aneh.
       if (p.eSide === 'top' && deltaY < -10) score += 100;
 
-      // Prioritas khusus untuk shape Decision berdasarkan sisi yang sudah digunakan
-      const sourceIsDecision = props.connection.sourceType === 'decision';
-      const targetIsDecision = props.connection.targetType === 'decision';
+      // BARU: Penalti tambahan berdasarkan posisi kolom
+      // Jika target ada di kolom paling kiri, jangan mendarat di kiri
+      if (props.connection.isTargetFirstColumn && p.eSide === 'left') {
+        score += 500;
+      }
+      // Jika target ada di kolom paling kanan, jangan mendarat di kanan
+      if (props.connection.isTargetLastColumn && p.eSide === 'right') {
+        score += 500;
+      }
+      // Jika target adalah langkah pertama (pojok kiri atas), beri penalti SANGAT TINGGI
+      // untuk pendaratan di sisi atas atau kiri untuk mencegah panah "mundur" yang aneh.
+      if (props.connection.isTargetFirstStep) {
+        if (p.eSide === 'left') score += 1000;
+        if (p.eSide === 'top') score += 1000;
+      }
 
-      if (sourceIsDecision) {
-        const sourceUsed = props.usedSides[props.connection.from] || { in: {}, out: {} };
-        // Penalti TINGGI jika sisi KELUAR (p.sSide) ini dipakai oleh panah MASUK
-        if (p.sSide in sourceUsed.in) {
-          score += 500; 
-        }
-        // Penalti SEDANG jika sisi KELUAR ini sudah dipakai panah KELUAR lain (mendorong cari sisi kosong dulu)
-        if (p.sSide in sourceUsed.out) {
-          score += 100;
-        }
+      // Penalti berlebih untuk sisi yang sudah digunakan
+      const sourceUsed = props.usedSides[props.connection.from] || { in: {}, out: {} };
+      const targetUsed = props.usedSides[props.connection.to] || { in: {}, out: {} };
+
+      // Penalti SANGAT TINGGI jika ada panah berlawanan arah pada sisi yang sama
+      if (sourceUsed.in && sourceUsed.in[p.sSide]) score += 800;
+      if (targetUsed.out && targetUsed.out[p.eSide]) score += 800;
+
+      // Penalti untuk sisi yang sudah dipakai dengan arah yang sama
+      if (sourceUsed.out && sourceUsed.out[p.sSide]) score += 100; // Turunkan dari 400 ke 100
+      if (targetUsed.in && targetUsed.in[p.eSide]) score += 100;   // Turunkan dari 400 ke 100
+
+      // Bonus untuk sisi yang masih kosong (tetap tinggi)
+      if (!sourceUsed.in?.[p.sSide] && !sourceUsed.out?.[p.sSide]) score -= 150;
+      if (!targetUsed.in?.[p.eSide] && !targetUsed.out?.[p.eSide]) score -= 150;
+      
+      // BARU: Bonus BESAR untuk menggunakan sisi yang sama dengan koneksi sejenis
+      // yang arahnya sama (masuk ke target atau keluar dari source)
+      if (props.connection.fromDirection === 'out' && targetUsed.in && targetUsed.in[p.eSide]) {
+        // Jika ada panah lain yang masuk ke sisi yang sama pada target
+        score -= 500; // Bonus sangat besar
       }
       
-      if (targetIsDecision) {
-        const targetUsed = props.usedSides[props.connection.to] || { in: {}, out: {} };
-        // Penalti TINGGI jika sisi MASUK (p.eSide) ini dipakai oleh panah KELUAR
-        if (p.eSide in targetUsed.out) {
-          score += 500;
-        }
-        // Penalti SEDANG jika sisi MASUK ini sudah dipakai panah MASUK lain
-        if (p.eSide in targetUsed.in) {
-          score += 100;
-        }
+      if (props.connection.fromDirection === 'in' && sourceUsed.out && sourceUsed.out[p.sSide]) {
+        // Jika ada panah lain yang keluar dari sisi yang sama pada source
+        score -= 500; // Bonus sangat besar
       }
-
-      // Jika bukan decision, atau jika decision tapi tidak ada aturan khusus, gunakan prioritas umum
-      if (!sourceIsDecision) {
-        // Prioritas umum: keluar dari bawah jika target di bawah, keluar dari kanan jika target di kanan
-        if (p.sSide === 'bottom' && deltaY > 0) score -= 10;
-        if (p.sSide === 'top' && deltaY < 0) score -= 10;
-        if (p.sSide === 'right' && deltaX > 0) score -= 10;
-        if (p.sSide === 'left' && deltaX < 0) score -= 10;
-        // console.log(fromOffsets, toOffsets)
-      }
+      
       p.score = score;
     });
 
     // Hapus duplikat dan urutkan berdasarkan skor (terendah lebih baik)
     const uniquePaths = Array.from(new Map(potentialPaths.map(p => [JSON.stringify(p.points), p])).values());
     uniquePaths.sort((a, b) => a.score - b.score);
+    // console.info('Potential paths:', uniquePaths);
 
     // 5. Cari jalur valid pertama (tidak menabrak) dari daftar kandidat
     let bestPath = null;
@@ -321,49 +349,173 @@ const calculatePath = async () => {
         eSide: bestPath.eSide
       });
 
-      finalStart = bestPath.start;
-      finalEnd = bestPath.end;
+      // Tambahkan offset untuk titik koneksi pada shape tertentu
+      const typesNeedOffset = ['terminator', 'process', 'task'];
+      const sourceType = props.connection.sourceType;
+      const targetType = props.connection.targetType;
+      
+      // Dapatkan total koneksi untuk sisi shape yang sama dan indeks koneksi ini
+      // Buat deep copy dari titik awal dan akhir untuk menghindari modifikasi objek asli
+      let finalStart = { x: bestPath.start.x, y: bestPath.start.y };
+      let finalEnd = { x: bestPath.end.x, y: bestPath.end.y };
+      
+      // Offset untuk titik awal (shape sumber)
+      if (typesNeedOffset.includes(sourceType)) {
+        const sourceShape = props.usedSides[props.connection.from] || { in: {}, out: {} };
+        const connections = sourceShape.out && sourceShape.out[bestPath.sSide] ? sourceShape.out[bestPath.sSide] : [];
+        const connCount = connections.length;
+        
+        if (connCount > 1) {
+          // Hitung posisi relatif koneksi ini 
+          const connIndex = connections.indexOf(props.connection.id);
+          if (connIndex !== -1) { // Pastikan koneksi ini ada dalam daftar
+            // Hitung offset yang lebih konsisten berdasarkan lebar/tinggi sisi
+            let offsetRatio = 0;
+            
+            if (connCount === 2) {
+              // Untuk 2 koneksi, bagi jadi -0.25 dan 0.25
+              offsetRatio = connIndex === 0 ? -0.25 : 0.25;
+            } else if (connCount > 2) {
+              // Untuk 3+ koneksi, distribusikan merata
+              offsetRatio = (connIndex / (connCount - 1) - 0.5) * 0.8;
+            }
+            
+            // Aplikasikan offset berdasarkan sisi
+            if (bestPath.sSide === 'top' || bestPath.sSide === 'bottom') {
+              finalStart.x += fromPos.width * offsetRatio;
+            } else {
+              finalStart.y += fromPos.height * offsetRatio;
+            }
+          }
+        }
+      }
+      
+      // Offset untuk titik akhir (shape target)
+      if (typesNeedOffset.includes(targetType)) {
+        const targetShape = props.usedSides[props.connection.to] || { in: {}, out: {} };
+        const connections = targetShape.in && targetShape.in[bestPath.eSide] ? targetShape.in[bestPath.eSide] : [];
+        const connCount = connections.length;
+        
+        if (connCount > 1) {
+          const connIndex = connections.indexOf(props.connection.id);
+          if (connIndex !== -1) { // Pastikan koneksi ini ada dalam daftar
+            let offsetRatio = 0;
+            
+            if (connCount === 2) {
+              // Untuk 2 koneksi, bagi jadi -0.25 dan 0.25
+              offsetRatio = connIndex === 0 ? -0.25 : 0.25;
+            } else if (connCount > 2) {
+              // Untuk 3+ koneksi, distribusikan merata
+              offsetRatio = (connIndex / (connCount - 1) - 0.5) * 0.8;
+            }
+            
+            if (bestPath.eSide === 'top' || bestPath.eSide === 'bottom') {
+              finalEnd.x += toPos.width * offsetRatio;
+            } else {
+              finalEnd.y += toPos.height * offsetRatio;
+            }
+          }
+        }
+      }
+
       bendPoints = bestPath.bendPoints || [];
 
-      calculatedPath = `M ${bestPath.points[0].x} ${bestPath.points[0].y}`;
-      for (let i = 1; i < bestPath.points.length; i++) {
-        calculatedPath += ` L ${bestPath.points[i].x} ${bestPath.points[i].y}`;
+      // Pastikan semua nilai valid sebelum membuat path
+      if (!isNaN(finalStart.x) && !isNaN(finalStart.y) && !isNaN(finalEnd.x) && !isNaN(finalEnd.y)) {
+        // Recalculate path dengan titik koneksi yang sudah di-offset
+        calculatedPath = `M ${finalStart.x} ${finalStart.y}`;
+        
+        if (bendPoints.length > 0) {
+          for (const bendPoint of bendPoints) {
+            if (!isNaN(bendPoint.x) && !isNaN(bendPoint.y)) {
+              calculatedPath += ` L ${bendPoint.x} ${bendPoint.y}`;
+            }
+          }
+        }
+        
+        calculatedPath += ` L ${finalEnd.x} ${finalEnd.y}`;
+      } else {
+        console.error('Invalid path coordinates detected:', {
+          start: finalStart,
+          end: finalEnd,
+          connection: props.connection
+        });
+        // Fallback ke path tanpa offset jika ada nilai NaN
+        calculatedPath = `M ${bestPath.start.x} ${bestPath.start.y}`;
+        if (bendPoints.length > 0) {
+          for (const bendPoint of bendPoints) {
+            calculatedPath += ` L ${bendPoint.x} ${bendPoint.y}`;
+          }
+        }
+        calculatedPath += ` L ${bestPath.end.x} ${bestPath.end.y}`;
       }
     }
 
     // Tempatkan label di sepertiga jarak dari garis lurus pertama, dengan sedikit offset dari garis
-    if (props.connection.label && finalStart.x !== undefined && finalEnd.x !== undefined) {
-      const labelDistance = 30; // Jarak label dari shape asal dalam piksel (ubah sesuai kebutuhan)
+    if (props.connection.label) {
+      const labelDistance = 30; // Jarak label dari shape asal dalam piksel
       let lx = 0, ly = 0;
+      let start = null, end = null;
 
-      // Fungsi untuk menghitung titik offset dari garis (finalStart ke target) sejauh labelDistance piksel
-      function getFixedDistancePoint(start, target, distance, offset = 19) {
-        const dx = target.x - start.x;
-        const dy = target.y - start.y;
-        const length = Math.sqrt(dx * dx + dy * dy);
-        if (length === 0) return { x: start.x, y: start.y };
+      // Gunakan bestPath points jika finalStart/finalEnd undefined
+      if (bestPath) {
+        // Pastikan start dan end tidak null dengan pengecekan yang tepat
+        start = (finalStart && !isNaN(finalStart.x) && !isNaN(finalStart.y))
+          ? finalStart
+          : bestPath.start;
+        
+        const firstBendPoint = (bendPoints && bendPoints.length > 0)
+          ? bendPoints[0] 
+          : null;
+        
+        end = (firstBendPoint && !isNaN(firstBendPoint.x) && !isNaN(firstBendPoint.y))
+          ? firstBendPoint
+          : ((finalEnd && !isNaN(finalEnd.x) && !isNaN(finalEnd.y))
+              ? finalEnd
+              : bestPath.end);
 
-        // Ambil titik sejauh 'distance' piksel dari start ke target
-        const px = start.x + (dx / length) * distance;
-        const py = start.y + (dy / length) * distance;
+        // Fungsi untuk menghitung titik offset dari garis (start ke end) sejauh labelDistance piksel
+        function getFixedDistancePoint(startPoint, endPoint, distance, offset = 19) {
+          if (!startPoint || !endPoint || 
+              isNaN(startPoint.x) || isNaN(startPoint.y) || 
+              isNaN(endPoint.x) || isNaN(endPoint.y)) {
+            return null;
+          }
+          
+          const dx = endPoint.x - startPoint.x;
+          const dy = endPoint.y - startPoint.y;
+          const length = Math.sqrt(dx * dx + dy * dy);
+          if (length === 0) return { x: startPoint.x, y: startPoint.y };
 
-        // Offset label agar tidak menumpuk garis
-        if (Math.abs(dx) > Math.abs(dy)) {
-          return { x: px, y: py - offset }; // Garis horizontal, offset vertikal
-        } else {
-          return { x: px + offset, y: py }; // Garis vertikal, offset horizontal
+          // Ambil titik sejauh 'distance' piksel dari start ke end
+          const px = startPoint.x + (dx / length) * distance;
+          const py = startPoint.y + (dy / length) * distance;
+
+          // Offset label agar tidak menumpuk garis
+          if (Math.abs(dx) > Math.abs(dy)) {
+            // Garis horizontal, offset vertikal
+            return { x: px, y: py - offset };
+          } else {
+            // Garis vertikal, offset horizontal
+            return { x: px + offset, y: py };
+          }
         }
+
+        if (start && end) {
+          const p = getFixedDistancePoint(start, end, labelDistance, 19);
+          if (p) {
+            lx = p.x;
+            ly = p.y;
+            labelPosition.value = { x: lx, y: ly };
+          } else {
+            labelPosition.value = null;
+          }
+        } else {
+          labelPosition.value = null;
+        }
+      } else {
+        labelPosition.value = null;
       }
-
-      // Selalu gunakan segmen pertama (dari finalStart ke bendPoints[0] jika ada, jika tidak ke finalEnd)
-      const targetPoint = bendPoints.length > 0 ? bendPoints[0] : finalEnd;
-      const p = getFixedDistancePoint(finalStart, targetPoint, labelDistance, 19);
-      lx = p.x;
-      ly = p.y;
-
-      labelPosition.value = { x: lx, y: ly };
-    } else {
-      labelPosition.value = null;
     }
     
     pathData.value = calculatedPath;

@@ -1,17 +1,19 @@
 <script setup>
 import { computed, inject, onMounted, provide, ref } from 'vue';
 import { useRoute } from 'vue-router';
+
 import { useAuthStore } from '@/stores/auth';
 import useSopData from '@/composables/useSopData';
-
+import roleAbbreviation from '@/data/roleAbbrv.json';
 import useToastPromise from '@/utils/toastPromiseHandler';
 import { addDraftFeedback, deleteDraftFeedback, getGeneralFeedback } from '@/api/feedbackApi';
+
+import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
 import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
 import SopInfoTemplate from '@/components/sop/SopInfoTemplate.vue';
 import SopStepTemplate from '@/components/sop/SopStepTemplate.vue';
 import PrintIcon from '@/assets/icons/PrintIcon.vue';
 import Error from '@/components/Error.vue';
-import roleAbbreviation from '@/data/roleAbbrv.json';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';

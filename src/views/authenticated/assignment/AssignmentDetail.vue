@@ -21,7 +21,6 @@ import CircleArrowRight from '@/assets/icons/CircleArrowRight.vue';
 import CircleArrowLeft from '@/assets/icons/CircleArrowLeft.vue';
 import FloppyDiskIcon from '@/assets/icons/FloppyDiskIcon.vue';
 import CheckIcon from '@/assets/icons/CheckIcon.vue';
-import GearIcon from '@/assets/icons/GearIcon.vue';
 
 import FirstStep from './step/FirstStep.vue';
 import SecondStep from './step/SecondStep.vue';
@@ -79,6 +78,8 @@ provide('sopFormData', {
 });
 provide('isDisabled', isDisabled);
 provide('sopConfig', sopConfig);
+provide('fetchSopDisplayConfig', fetchSopDisplayConfig);
+provide('idsopdetail', idsopdetail);
 
 const fetchAssignmentInfo = async () => {
     try {
@@ -436,7 +437,6 @@ const syncSopStep = async () => {
     }
 };
 
-
 // ---------- Fungsi validasi ---------------
 const validateLastStep = () => {
     if (!sopStep.value.length) return true;
@@ -512,7 +512,7 @@ const nextStep = async () => {
             toast.warning('Tidak dapat mengirim draft karena status assignment tidak sesuai!', {
                 autoClose: 7000,
             });
-            return;            
+            return;
         }
         syncSopInfo();
         syncSopStep();
@@ -553,64 +553,14 @@ const prevStep = () => {
     }
 };
 
-const showConfigPanel = ref(false);
-
-// Fungsi simpan ke API (ganti dengan API Anda)
-const saveSopConfig = async () => {
-    try {
-        const promise = new Promise(async (resolve, reject) => {
-            try {
-                await saveSopDisplayConfig(idsopdetail, {
-                    nominal_basic_page_steps: sopConfig.value.firstPageSteps,
-                    nominal_steps_both_opc: sopConfig.value.nextPageSteps,
-                    kegiatan_width: sopConfig.value.widthKegiatan,
-                    kelengkapan_width: sopConfig.value.widthKelengkapan,
-                    waktu_width: sopConfig.value.widthWaktu,
-                    output_width: sopConfig.value.widthOutput,
-                    ket_width: sopConfig.value.widthKeterangan
-                });
-                showConfigPanel.value = false;
-                resolve();
-            } catch (err) {
-                reject(err);
-            }
-        });
-
-        useToastPromise(promise, {
-            messages: { success: 'Konfigurasi berhasil disimpan!' },
-            toastOptions: { autoClose: 3000 }
-        });
-    } catch (err) {
-        toast.error('Gagal menyimpan konfigurasi!', { autoClose: 3000 });
-    }
-};
-
-const fetchAllData = async () => {
-    await fetchAssignmentInfo();
-
-    await fetchInfoSop();
-    await fetchSopStep();
-
-    await fetchLegalBasis();
-
-    await fetchSopDisplayConfig();
-
-    if (assignmentInfo.value.status !== 2) {
-        await fetchFeedback();
-    }
-};
-
-onMounted(fetchAllData);
-
 function handleEscClose(e) {
     if (e.key === 'Escape') {
-        if (showConfigPanel.value) showConfigPanel.value = false;
         if (showFeedback.value) showFeedback.value = false;
     }
 }
 
-watch([showConfigPanel, showFeedback], ([valConfig, valFeedback]) => {
-    if (valConfig || valFeedback) {
+watch([showFeedback], ([valFeedback]) => {
+    if (valFeedback) {
         window.addEventListener('keydown', handleEscClose);
     } else {
         window.removeEventListener('keydown', handleEscClose);
@@ -620,6 +570,19 @@ watch([showConfigPanel, showFeedback], ([valConfig, valFeedback]) => {
 onBeforeUnmount(() => {
     window.removeEventListener('keydown', handleEscClose);
 });
+
+const fetchAllData = async () => {
+    await fetchAssignmentInfo();
+    await fetchInfoSop();
+    await fetchSopStep();
+    await fetchLegalBasis();
+    await fetchSopDisplayConfig();
+    if (assignmentInfo.value.status !== 2) {
+        await fetchFeedback();
+    }
+};
+
+onMounted(fetchAllData);
 </script>
 
 <template>
@@ -664,22 +627,20 @@ onBeforeUnmount(() => {
             <button type="button" :disabled="currentStep == 1"
                 class="w-1/4 text-white bg-gray-500 hover:bg-gray-600 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 @click="prevStep">
-                    <CircleArrowLeft class="fill-current w-5 mr-2 mt-1" />
-                    Sebelumnya
+                <CircleArrowLeft class="fill-current w-5 mr-2 mt-1" />
+                Sebelumnya
             </button>
-            <button type="button" :disabled="isDisabled" v-if="currentStep < 3"
+            <button type="button" :disabled="isDisabled" v-if="currentStep < 3" @click="syncData"
                 :title="isDisabled ? 'Tidak dapat menyimpan progres!' : 'Klik untuk menyimpan progres saat ini ke server'"
-                class="w-[28%] text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                @click="syncData">
-                    <FloppyDiskIcon class="fill-current w-5 mr-2" />
-                    Simpan Tahap {{ currentStep }}
+                class="w-[28%] text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                <FloppyDiskIcon class="fill-current w-5 mr-2" />
+                Simpan Tahap {{ currentStep }}
             </button>
             <button type="button" @click="nextStep" :disabled="isDisabled && currentStep == 3"
                 :title="(currentStep === 3 && isDisabled) ? 'Tidak dapat mengirim draft!' : currentStep == 3 ? 'Kirim Draft' : 'Lanjut ke langkah berikutnya'"
                 class="w-1/4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
-                    <p v-if="currentStep == 3">Kirim</p>
-                    <p v-else>Lanjut</p>
-                    <CircleArrowRight class="fill-current w-5 ml-2 mt-1" />
+                <p>{{ currentStep == 3 ? 'Kirim' : 'Lanjut' }}</p>
+                <CircleArrowRight class="fill-current w-5 ml-2 mt-1" />
             </button>
         </div>
 
@@ -734,92 +695,6 @@ onBeforeUnmount(() => {
                         d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                     <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
-            </button>
-        </div>
-
-        <!-- Floating sop display config panel, only on step 3 -->
-        <div v-if="currentStep === 3" class="fixed bottom-6 right-6 z-50 print:hidden">
-            <div v-if="showConfigPanel"
-                class="absolute bottom-full right-0 mb-3 w-80 bg-white rounded-lg shadow-xl border border-gray-200 transition-all duration-300 transform origin-bottom-left text-sm">
-                <div class="flex justify-between items-center bg-blue-50 p-3 rounded-t-lg border-b border-gray-200">
-                    <span class="font-medium">Konfigurasi Tampilan SOP</span>
-                    <button @click="showConfigPanel = false" class="text-gray-500 hover:text-gray-700 focus:outline-none">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-                <form @submit.prevent="saveSopConfig">
-                    <div class="p-4 space-y-3">
-                        <!-- Judul Bagian Atas -->
-                        <div class="font-bold mb-2">Jumlah Tahapan per Halaman</div>
-                        <!-- Bagian Atas: Jumlah Tahapan -->
-                        <div class="flex items-center gap-3">
-                            <label class="block text-gray-700 font-medium mb-0.5 w-2/3">Hal. 1</label>
-                            <input type="number" min="3" v-model.number="sopConfig.firstPageSteps"
-                                class="w-1/3 border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:border-blue-300 text-sm" />
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <label class="block text-gray-700 font-medium mb-0.5 w-2/3">Hal. Berikutnya</label>
-                            <input type="number" min="3" v-model.number="sopConfig.nextPageSteps"
-                                class="w-1/3 border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:border-blue-300 text-sm" />
-                        </div>
-                        <hr class="my-2" />
-                        <!-- Judul Bagian Bawah -->
-                        <div class="font-bold mb-2">Lebar Kolom (%)</div>
-                        <!-- Bagian Bawah: Lebar Kolom -->
-                        <div class="flex items-center gap-3">
-                            <label class="block text-gray-700 font-medium mb-0.5 w-2/3">Kegiatan</label>
-                            <input type="number" min="11" max="100" v-model.number="sopConfig.widthKegiatan"
-                                class="w-1/3 border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:border-blue-300 text-sm" />
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <label class="block text-gray-700 font-medium mb-0.5 w-2/3">Kelengkapan</label>
-                            <input type="number" min="16" max="100" v-model.number="sopConfig.widthKelengkapan"
-                                class="w-1/3 border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:border-blue-300 text-sm" />
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <label class="block text-gray-700 font-medium mb-0.5 w-2/3">Waktu</label>
-                            <input type="number" min="9" max="100" v-model.number="sopConfig.widthWaktu"
-                                class="w-1/3 border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:border-blue-300 text-sm" />
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <label class="block text-gray-700 font-medium mb-0.5 w-2/3">Output</label>
-                            <input type="number" min="9" max="100" v-model.number="sopConfig.widthOutput"
-                                class="w-1/3 border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:border-blue-300 text-sm" />
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <label class="block text-gray-700 font-medium mb-0.5 w-2/3">Keterangan</label>
-                            <input type="number" min="5" max="100" v-model.number="sopConfig.widthKeterangan"
-                            class="w-1/3 border rounded-lg px-3 py-2 focus:outline-none focus:ring focus:border-blue-300 text-sm" />
-                        </div>
-                        <!-- Keterangan lebar kolom pelaksana -->
-                        <div class="text-xs text-gray-500 mb-2">
-                            <span class="font-semibold">Catatan:</span> Lebar kolom <span class="font-semibold">Pelaksana</span> akan dibagi rata berdasarkan jumlah pelaksana yang dipilih. Setiap kolom memiliki lebar: 70 dibagi jumlah pelaksana (%).
-                        </div>
-                    </div>
-                    <div class="flex justify-end p-3 border-t">
-                        <button type="button" @click="fetchSopDisplayConfig"
-                            class="bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg px-5 py-2 font-semibold shadow focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-300 text-sm mr-2">
-                            Reset
-                        </button>
-                        <button type="submit"
-                            class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-5 py-2 font-semibold shadow focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transition-all duration-300 text-sm">
-                            Simpan
-                        </button>
-                    </div>
-                </form>
-            </div>
-            <!-- Floating config button -->
-            <button @click="showConfigPanel = !showConfigPanel"
-                :title="showConfigPanel ? 'Tutup Panel Konfigurasi' : 'Atur Tampilan SOP'"
-                class="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transition-all duration-300"
-                :class="{ 'rotate-45 bg-red-600 hover:bg-red-700': showConfigPanel }">
-                    <GearIcon v-if="!showConfigPanel" class="w-6 h-6 fill-current" />
-                    <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
             </button>
         </div>
     </template>

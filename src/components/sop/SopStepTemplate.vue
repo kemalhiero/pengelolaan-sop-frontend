@@ -52,7 +52,7 @@ const columnWidth = computed(() => ({
 const implementerHeaderRefs = ref({});
 const opcMounted = ref(false);
 const redrawKey = ref(Date.now());
-const arrowsReady = ref(false); // <-- TAMBAHKAN STATE BARU INI
+const arrowsReady = ref(false);
 
 const setImplementerHeaderRef = (el, implementerId) => {
     if (el) {
@@ -116,6 +116,9 @@ const handlePathUpdate = (payload) => {
 
 const connections = computed(() => {
     const allConnections = [];
+    const implementerIds = orderedImplementer.value.map(impl => impl.id);
+    const firstImplementerId = implementerIds[0];
+    const lastImplementerId = implementerIds[implementerIds.length - 1];
 
     props.steps.forEach((step) => {
         const sourceId = `sop-step-${step.seq_number}`;
@@ -175,7 +178,13 @@ const connections = computed(() => {
                     sourceType: sourceStepType,
                     targetType: targetStepType,
                     sourcePage,
-                    targetPage 
+                    targetPage,
+                    // BARU: Tambahkan info posisi kolom & status langkah pertama
+                    // isSourceFirstColumn: step.id_implementer === firstImplementerId,
+                    // isSourceLastColumn: step.id_implementer === lastImplementerId,
+                    isTargetFirstStep: targetStep.seq_number === 1,
+                    isTargetFirstColumn: targetStep.id_implementer === firstImplementerId,
+                    isTargetLastColumn: targetStep.id_implementer === lastImplementerId,
                 });
             }
         };
@@ -595,7 +604,7 @@ onMounted(async () => {
                             <col class="w-[5%]"> <!-- NO -->
                             <col :style="{ width: columnWidth.activity + '%' }"> <!-- KEGIATAN -->
                             <col v-for="(impl, idx) in orderedImplementer" :key="`impl-${idx}`" 
-                                 :style="{ width: `${70 / orderedImplementer.length}%` }"> <!-- PELAKSANA -->
+                                 :style="{ width: `${70 / (orderedImplementer.length || 1)}%` }"> <!-- PELAKSANA -->
                             <col :style="{ width: columnWidth.completeness + '%' }"> <!-- KELENGKAPAN -->
                             <col :style="{ width: columnWidth.time + '%' }"> <!-- WAKTU -->
                             <col :style="{ width: columnWidth.output + '%' }"> <!-- OUTPUT -->
