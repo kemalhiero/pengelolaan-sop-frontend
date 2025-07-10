@@ -3,9 +3,9 @@ import { onMounted, ref, computed, watch, nextTick } from 'vue'; // <-- Tambahka
 import { capitalizeWords } from '@/utils/text';
 
 import ArrowConnector from '@/components/sop/shape/ArrowConnector.vue';
-import BpmnTerminator from '@/components/sop/shape/bpmn/BpmnTerminator.vue';
-import BpmnTask from '@/components/sop/shape/bpmn/BpmnTask.vue';
-import BpmnDecision from '@/components/sop/shape/bpmn/BpmnDecision.vue';
+import BpmnEvent from '@/components/sop/shape/bpmn/Event.vue';
+import BpmnActivity from '@/components/sop/shape/bpmn/Activity.vue';
+import BpmnGateway from '@/components/sop/shape/bpmn/Gateway.vue';
 
 const props = defineProps({
   name: {
@@ -39,11 +39,11 @@ const handlePathUpdate = (payload) => {
 // Constants for sizing tasks within SopBpmnTemplate
 const TASK_MIN_WIDTH = 90;
 const TASK_MIN_HEIGHT = 50;
-const TASK_CHAR_WIDTH_APPROX = 8; // Must match or be consistent with BpmnTask.vue
-const TASK_LINE_HEIGHT_FOR_SIZING = 15; // Must match or be consistent with BpmnTask.vue
-const TASK_HORIZONTAL_PADDING = 20; // Must match or be consistent with BpmnTask.vue
-const TASK_VERTICAL_PADDING = 20;   // Must match or be consistent with BpmnTask.vue
-const TASK_MAX_LINE_LENGTH_TARGET = 15; // Must match or be consistent with BpmnTask.vue
+const TASK_CHAR_WIDTH_APPROX = 8; // Must match or be consistent with BpmnActivity.vue
+const TASK_LINE_HEIGHT_FOR_SIZING = 15; // Must match or be consistent with BpmnActivity.vue
+const TASK_HORIZONTAL_PADDING = 20; // Must match or be consistent with BpmnActivity.vue
+const TASK_VERTICAL_PADDING = 20;   // Must match or be consistent with BpmnActivity.vue
+const TASK_MAX_LINE_LENGTH_TARGET = 15; // Must match or be consistent with BpmnActivity.vue
 
 // Helper function to get step dimensions
 function getStepDimensions(stepName, stepType) {
@@ -527,14 +527,14 @@ const dynamicTitleWidth = computed(() => {
                       <svg :ref="el => setSvgRef(el, 0)" class="w-full h-full">
                         <template v-if="laneLayouts[0] && laneLayouts[0].steps">
                           <template v-for="step in laneLayouts[0].steps" :key="step.id">
-                            <BpmnTerminator 
+                            <BpmnEvent 
                               v-if="step.type === 'terminator'"
                               :x="step.x"
                               :y="step.y"
                               :id="`bpmn-step-${step.seq}`"
                               :text="step.seq === 0 ? 'Mulai' : 'Selesai'"
                             />
-                            <BpmnTask
+                            <BpmnActivity
                               v-else-if="step.type === 'task'"
                               :x="step.x"
                               :y="step.y"
@@ -543,7 +543,7 @@ const dynamicTitleWidth = computed(() => {
                               :name="step.name"
                               :id="`bpmn-step-${step.seq}`"
                             />
-                            <BpmnDecision
+                            <BpmnGateway
                               v-else-if="step.type === 'decision'"
                               :x="step.x"
                               :y="step.y"
@@ -569,14 +569,14 @@ const dynamicTitleWidth = computed(() => {
                       <svg :ref="el => setSvgRef(el, index + 1)" class="w-full h-full">
                         <template v-if="laneLayouts[index + 1] && laneLayouts[index + 1].steps">
                           <template v-for="step in laneLayouts[index + 1].steps" :key="step.id">
-                            <BpmnTerminator 
+                            <BpmnEvent 
                               v-if="step.type === 'terminator'"
                               :x="step.x"
                               :y="step.y"
                               :id="`bpmn-step-${step.seq}`"
                               :text="step.seq === 0 ? 'Mulai' : 'Selesai'"
                             />
-                            <BpmnTask
+                            <BpmnActivity
                               v-else-if="step.type === 'task'"
                               :x="step.x"
                               :y="step.y"
@@ -585,7 +585,7 @@ const dynamicTitleWidth = computed(() => {
                               :name="step.name"
                               :id="`bpmn-step-${step.seq}`"
                             />
-                            <BpmnDecision
+                            <BpmnGateway
                               v-else-if="step.type === 'decision'"
                               :x="step.x"
                               :y="step.y"

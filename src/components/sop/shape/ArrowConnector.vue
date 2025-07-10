@@ -116,57 +116,6 @@ const calculatePath = async () => {
       return false;
     };
 
-    // --- LOGIKA BARU: Cek koneksi lurus yang optimal terlebih dahulu ---
-    const dynamicTypes = ['process', 'terminator', 'connector'];
-    const sourceType = props.connection.sourceType;
-    const targetType = props.connection.targetType;
-
-    if (sourceType && targetType && dynamicTypes.includes(sourceType) && dynamicTypes.includes(targetType)) {
-        // Cek untuk kesejajaran vertikal
-        const verticallyAligned = fromPos.left < toPos.right && fromPos.right > toPos.left;
-        if (verticallyAligned && Math.abs(fromPos.top - toPos.bottom) > 0 && Math.abs(fromPos.bottom - toPos.top) > 0) {
-            const overlapLeft = Math.max(fromPos.left, toPos.left);
-            const overlapRight = Math.min(fromPos.right, toPos.right);
-            const commonX = overlapLeft + (overlapRight - overlapLeft) / 2;
-            
-            let fromY, toY, sSide, eSide;
-            if (toPos.top > fromPos.bottom) { // Target di bawah sumber
-                fromY = fromPos.bottom; toY = toPos.top; sSide = 'bottom'; eSide = 'top';
-            } else if (fromPos.top > toPos.bottom) { // Target di atas sumber
-                fromY = fromPos.top; toY = toPos.bottom; sSide = 'top'; eSide = 'bottom';
-            }
-            
-            if (fromY && toY) {
-                const points = [{ x: commonX, y: fromY }, { x: commonX, y: toY }];
-                if (!isPathColliding(points, obstacleRects)) {
-                    potentialPaths.push({ points, start: points[0], end: points[1], bendPoints: [], type: 'straight_optimal_v', sSide, eSide, length: Math.abs(fromY - toY), score: 1 });
-                }
-            }
-        }
-
-        // Cek untuk kesejajaran horizontal
-        const horizontallyAligned = fromPos.top < toPos.bottom && fromPos.bottom > toPos.top;
-        if (horizontallyAligned && Math.abs(fromPos.left - toPos.right) > 0 && Math.abs(fromPos.right - toPos.left) > 0) {
-            const overlapTop = Math.max(fromPos.top, toPos.top);
-            const overlapBottom = Math.min(fromPos.bottom, toPos.bottom);
-            const commonY = overlapTop + (overlapBottom - overlapTop) / 2;
-
-            let fromX, toX, sSide, eSide;
-            if (toPos.left > fromPos.right) { // Target di kanan sumber
-                fromX = fromPos.right; toX = toPos.left; sSide = 'right'; eSide = 'left';
-            } else if (fromPos.left > toPos.right) { // Target di kiri sumber
-                fromX = fromPos.left; toX = toPos.right; sSide = 'left'; eSide = 'right';
-            }
-
-            if (fromX && toX) {
-                const points = [{ x: fromX, y: commonY }, { x: toX, y: commonY }];
-                if (!isPathColliding(points, obstacleRects)) {
-                    potentialPaths.push({ points, start: points[0], end: points[1], bendPoints: [], type: 'straight_optimal_h', sSide, eSide, length: Math.abs(fromX - toX), score: 1 });
-                }
-            }
-        }
-    }
-    // --- AKHIR DARI LOGIKA BARU ---
 
     const fromPoints = {
       top: { x: fromPos.left + fromPos.width / 2, y: fromPos.top },
@@ -207,9 +156,14 @@ const calculatePath = async () => {
           const overlapRight = Math.min(fromPos.right, toPos.right);
           if (overlapRight > overlapLeft) { // Jika ada tumpang tindih horizontal
             // Tentukan X berdasarkan tipe shape
-            const startX = isSourceCentered ? fromPoints[sSide].x : overlapLeft + (overlapRight - overlapLeft) / 2;
-            const endX = isTargetCentered ? toPoints[eSide].x : startX; // Buat lurus dengan startX jika target fleksibel
-            const finalX = isSourceCentered ? startX : endX; // Prioritaskan X dari shape yang terpusat
+            let finalX;
+            if (isSourceCentered) {
+              finalX = fromPoints[sSide].x; // Prioritaskan titik tengah sumber
+            } else if (isTargetCentered) {
+              finalX = toPoints[eSide].x; // Prioritaskan titik tengah target
+            } else {
+              finalX = overlapLeft + (overlapRight - overlapLeft) / 2; // Gunakan titik tengah tumpang tindih
+            }
 
             const points = [{ x: finalX, y: start.y }, { x: finalX, y: end.y }];
             potentialPaths.push({ points, start: points[0], end: points[1], bendPoints: [], type: 'straight_optimal_v', sSide, eSide, length: Math.abs(start.y - end.y), score: 1 });
@@ -221,9 +175,14 @@ const calculatePath = async () => {
           const overlapBottom = Math.min(fromPos.bottom, toPos.bottom);
           if (overlapBottom > overlapTop) { // Jika ada tumpang tindih vertikal
             // Tentukan Y berdasarkan tipe shape
-            const startY = isSourceCentered ? fromPoints[sSide].y : overlapTop + (overlapBottom - overlapTop) / 2;
-            const endY = isTargetCentered ? toPoints[eSide].y : startY; // Buat lurus dengan startY jika target fleksibel
-            const finalY = isSourceCentered ? startY : endY; // Prioritaskan Y dari shape yang terpusat
+            let finalY;
+            if (isSourceCentered) {
+              finalY = fromPoints[sSide].y; // Prioritaskan titik tengah sumber
+            } else if (isTargetCentered) {
+              finalY = toPoints[eSide].y; // Prioritaskan titik tengah target
+            } else {
+              finalY = overlapTop + (overlapBottom - overlapTop) / 2; // Gunakan titik tengah tumpang tindih
+            }
 
             const points = [{ x: start.x, y: finalY }, { x: end.x, y: finalY }];
             potentialPaths.push({ points, start: points[0], end: points[1], bendPoints: [], type: 'straight_optimal_h', sSide, eSide, length: Math.abs(start.x - end.x), score: 1 });
@@ -350,7 +309,7 @@ const calculatePath = async () => {
       });
 
       // Tambahkan offset untuk titik koneksi pada shape tertentu
-      const typesNeedOffset = ['terminator', 'process', 'task'];
+      const typesNeedOffset = ['flowchart-terminator', 'flowchart-process', 'bpmn-task'];
       const sourceType = props.connection.sourceType;
       const targetType = props.connection.targetType;
       

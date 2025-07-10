@@ -1,10 +1,10 @@
 <script setup>
 import { computed, onMounted, ref, nextTick, watch, inject } from 'vue';
 
-import Process from '@/components/sop/shape/flowchart/Process.vue';
-import StartEnd from '@/components/sop/shape/flowchart/StartEnd.vue';
-import Decision from '@/components/sop/shape/flowchart/Decision.vue';
-import OffPageConnector from '@/components/sop/shape/flowchart/OffPageConnector.vue';
+import FlowchartProcess from '@/components/sop/shape/flowchart/Process.vue';
+import FlowchartStartEnd from '@/components/sop/shape/flowchart/StartEnd.vue';
+import FlowchartDecision from '@/components/sop/shape/flowchart/Decision.vue';
+import FlowchartOffPageConnector from '@/components/sop/shape/flowchart/OffPageConnector.vue';
 import ArrowConnector from '@/components/sop/shape/ArrowConnector.vue';
 
 const props = defineProps({
@@ -65,12 +65,12 @@ const setImplementerHeaderRef = (el, implementerId) => {
 
 const getShapeComponent = (type) => {
     const shapeMap = {
-        'terminator': StartEnd,
-        'process': Process,
-        'decision': Decision,
-        'connector': OffPageConnector
+        'terminator': FlowchartStartEnd,
+        'task': FlowchartProcess,
+        'decision': FlowchartDecision,
+        'connector': FlowchartOffPageConnector
     };
-    return shapeMap[type] || Process;
+    return shapeMap[type] || FlowchartProcess;
 };
 
 const getFullTimeUnit = (unit) => {
@@ -123,16 +123,19 @@ const connections = computed(() => {
     props.steps.forEach((step) => {
         const sourceId = `sop-step-${step.seq_number}`;
         const sourcePage = getPageNumber(step.seq_number);
-        const sourceStepType = step.type;
+
+        const normalizeType = t => t === 'terminator' ? 'flowchart-terminator' : t === 'task' ? 'flowchart-task' : t;
+        let sourceStepType = normalizeType(step.type);
 
         const createConnectionEntries = (targetStepId, label = null, condition = null) => {
             if (!targetStepId) return;
             const targetStep = props.steps.find(s => s.id_step === targetStepId);
             if (!targetStep) return;
 
+            let targetStepType = normalizeType(targetStep.type);
+
             const targetElementId = `sop-step-${targetStep.seq_number}`;
             const targetPage = getPageNumber(targetStep.seq_number);
-            const targetStepType = targetStep.type;
             
             // --- PENAMBAHAN ID UNIK ---
             const uniqueId = `conn-${step.seq_number}-to-${targetStep.seq_number}-${condition || 'next'}`;
@@ -463,7 +466,7 @@ const getOpcStyle = (opc, indexInColumn = 0, totalInColumn = 1, areaOnPage = 'to
 
     const containerRect = containerDiv.getBoundingClientRect(); // rect of the page container
     const opcWidth = 50; 
-    const opcGap = 8; // The actual visual gap between OPCs
+    const opcGap = 7; // The actual visual gap between OPCs
     const opcSpacing = opcWidth + opcGap; // Distance from start of one OPC to start of next
 
     let leftPosition;
@@ -569,7 +572,7 @@ onMounted(async () => {
                     <!-- Area for OPCs at the TOP of the page -->
                     <div class="relative w-full h-[70px] mb-4" v-if="getStyledOpcGroups(pageIndex, 'top').length > 0">
                         <template v-for="styledOpc in getStyledOpcGroups(pageIndex, 'top')" :key="styledOpc.id">
-                            <OffPageConnector
+                            <FlowchartOffPageConnector
                                 v-show="opcMounted"
                                 :id="styledOpc.id"
                                 :letter="styledOpc.letter"
@@ -636,7 +639,7 @@ onMounted(async () => {
                     <!-- Area for OPCs at the BOTTOM of the page -->
                     <div class="relative w-full h-[70px] mt-4" v-if="getStyledOpcGroups(pageIndex, 'bottom').length > 0">
                         <template v-for="styledOpc in getStyledOpcGroups(pageIndex, 'bottom')" :key="styledOpc.id">
-                            <OffPageConnector
+                            <FlowchartOffPageConnector
                                 v-show="opcMounted"
                                 :id="styledOpc.id"
                                 :letter="styledOpc.letter"
