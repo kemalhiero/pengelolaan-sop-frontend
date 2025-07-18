@@ -316,12 +316,20 @@ onMounted(fetchAllData);
             </div>
         </div>
 
-        <SopStepTemplate v-if="activeTab === 'document'" :implementer="sopData.implementer" :steps="sopData.steps" />
-
-        <div v-else-if="activeTab === 'bpmn'">
-            <SopBpmnTemplate
-                v-if="sopData.steps && sopData.steps.length > 0 && sopData.implementer && sopData.implementer.length > 0"
-                :name="sopData.name" :steps="sopData.steps || []" :implementer="sopData.implementer || []" />
+        <div v-if="activeTab === 'document' || activeTab === 'bpmn'">
+            <template v-if="sopData.steps && sopData.steps.length > 0 && sopData.implementer && sopData.implementer.length > 0">
+                <SopStepTemplate
+                    v-if="activeTab === 'document'"
+                    :implementer="sopData.implementer"
+                    :steps="sopData.steps"
+                />
+                <SopBpmnTemplate
+                    v-else
+                    :name="sopData.name"
+                    :steps="sopData.steps"
+                    :implementer="sopData.implementer"
+                />
+            </template>
             <div v-else class="my-4 p-4 bg-gray-100 rounded text-center">
                 Belum ada tahapan yang diinputkan oleh penyusun!
             </div>

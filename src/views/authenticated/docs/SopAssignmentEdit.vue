@@ -130,7 +130,7 @@ const submitSop = async () => {
                     error: (msg) => msg,
                 },
                 toastOptions: {
-                    autoClose: 5000,
+                    autoClose: 2000,
                     dangerouslyHTMLString: true,
                 }
             }

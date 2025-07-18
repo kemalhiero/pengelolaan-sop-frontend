@@ -176,20 +176,24 @@ onMounted(fetchAllData);
                 </div>
             </div>
 
-            <div v-if="activeTab === 'document'" class="w-full print:overflow-visible">
-                <div class="print:block print:bg-white">
-                    <SopStepTemplate :implementer="sopData.implementer" :steps="sopData.steps" />
-                </div>
-            </div>
-
-            <div v-else-if="activeTab === 'bpmn'">
-                <div v-if="sopData.steps && sopData.steps.length > 0 && sopData.implementer && sopData.implementer.length > 0"
-                    class="w-full print:overflow-visible">
-                    <div class="print:block print:bg-white">
-                        <SopBpmnTemplate :name="sopData.name" :steps="sopData.steps || []"
-                            :implementer="sopData.implementer || []" />
+            <div v-if="activeTab === 'document' || activeTab === 'bpmn'">
+                <template v-if="sopData.steps && sopData.steps.length > 0 && sopData.implementer && sopData.implementer.length > 0">
+                    <div class="w-full print:overflow-visible">
+                        <div class="print:block print:bg-white">
+                            <SopStepTemplate
+                                v-if="activeTab === 'document'"
+                                :implementer="sopData.implementer"
+                                :steps="sopData.steps"
+                            />
+                            <SopBpmnTemplate
+                                v-else
+                                :name="sopData.name"
+                                :steps="sopData.steps"
+                                :implementer="sopData.implementer"
+                            />
+                        </div>
                     </div>
-                </div>
+                </template>
                 <div v-else class="my-4 p-4 bg-gray-100 rounded text-center mx-auto">
                     Belum ada tahapan yang diinputkan oleh penyusun!
                 </div>

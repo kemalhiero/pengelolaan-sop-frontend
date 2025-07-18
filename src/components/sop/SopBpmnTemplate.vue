@@ -14,7 +14,8 @@ const props = defineProps({
   },
   steps: {
     type: Array,
-    required: true
+    required: true,
+    default: () => []
   },
   implementer: {
     type: Array,
@@ -92,7 +93,6 @@ function getStepDimensions(stepName, stepType) {
 
   return { width: calculatedWidth, height: calculatedHeight };
 }
-
 
 // Layout global dan lane
 const globalLayout = ref({
@@ -207,7 +207,7 @@ const bpmnConnections = computed(() => {
   return allConnections;
 });
 
-// --- COMPUTED PROPERTY BARU UNTUK usedSides ---
+// untuk menghitung sisi yang sudah digunakan pada setiap koneksi
 const usedSides = computed(() => {
     const used = {}; // Format: { [shapeId]: { in: { [side]: connId[] }, out: { [side]: connId[] } } }
 
@@ -231,13 +231,6 @@ const usedSides = computed(() => {
     });
     return used;
 });
-// ---------------------------------------------
-
-// Track mounting status arrows
-const arrowsMounted = ref(new Set());
-const handleArrowMounted = () => {
-  arrowsMounted.value.add(true);
-};
 
 // Function yang menghitung layout untuk setiap lane
 const calculateGlobalLayout = () => {
@@ -336,9 +329,6 @@ const calculateGlobalLayout = () => {
 
     const columnIndex = stepColumnMap.get(step.id_step) || 0;
     const dims = stepDimensionsCache.get(step.id_step) || getStepDimensions(null, 'task'); // Fallback
-
-    // const x_shape_left = globalLayout.value.columnStartXs[columnIndex] !== undefined ? globalLayout.value.columnStartXs[columnIndex] : baseX;
-    // const x_center = x_shape_left + dims.width / 2;
     
     // Modifikasi perhitungan x_center:
     // Gunakan titik tengah dari lebar kolom maksimum untuk alignment tengah.
@@ -363,7 +353,7 @@ const calculateGlobalLayout = () => {
       name: step.name,
       seq: step.seq_number,
       lane: layoutLaneIndex,
-      columnIndex: columnIndex
+      columnIndex
     });
   });
 
@@ -385,7 +375,7 @@ const setSvgRef = (el, index) => {
   if (el) svgRefs.value[index] = el;
 };
 
-// Computed property untuk estimasi total width diagram berdasarkan jumlah kolom maksimum
+// Computed property untuk estimasi total lebar diagram berdasarkan jumlah kolom maksimum
 const maxColumnIndex = computed(() => {
   if (!globalLayout.value.steps || globalLayout.value.steps.length === 0) return -1;
   const columnIndices = globalLayout.value.steps.map(step => step.columnIndex).filter(ci => typeof ci === 'number');
@@ -417,8 +407,6 @@ const orderedImplementer = computed(() => {
   // Pastikan props.implementer adalah array dan tidak kosong sebelum digunakan lebih lanjut
   if (!props.implementer || props.implementer.length === 0) {
     // Jika tidak ada implementer yang didefinisikan, kembalikan array kosong.
-    // Langkah-langkah akan default ke lane 0 secara konseptual dalam calculateGlobalLayout.
-    // Template mungkin perlu menangani kasus ini (misalnya, tidak merender lane).
     return [];
   }
 
