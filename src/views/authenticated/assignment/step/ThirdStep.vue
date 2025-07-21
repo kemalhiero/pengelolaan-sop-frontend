@@ -21,6 +21,19 @@ const sopConfig = inject('sopConfig');
 const idsopdetail = inject('idsopdetail');
 const fetchSopDisplayConfig = inject('fetchSopDisplayConfig'); // fungsi untuk mengambil konfigurasi awal
 const isDisabled = inject('isDisabled');
+const { flowchartArrowConfig, bpmnArrowConfig } = inject('arrowConfigs');
+
+// State untuk menampung update konfigurasi panah dari komponen anak
+const flowchartArrowConfigUpdates = ref({});
+const bpmnArrowConfigUpdates = ref({});
+
+// Handler untuk menerima update dari komponen anak
+const handleFlowchartArrowUpdate = (config) => {
+    flowchartArrowConfigUpdates.value = config;
+};
+const handleBpmnArrowUpdate = (config) => {
+    bpmnArrowConfigUpdates.value = config;
+};
 
 // Handler ESC
 function handleEscClose(e) {
@@ -46,6 +59,10 @@ const saveSopConfig = async () => {
     try {
         const promise = new Promise(async (resolve, reject) => {
             try {
+                // Gabungkan konfigurasi lama dengan update baru sebelum menyimpan
+                const finalFlowchartConfig = { ...flowchartArrowConfig.value, ...flowchartArrowConfigUpdates.value };
+                const finalBpmnConfig = { ...bpmnArrowConfig.value, ...bpmnArrowConfigUpdates.value };
+
                 await saveSopDisplayConfig(idsopdetail, {
                     nominal_basic_page_steps: sopConfig.value.firstPageSteps,
                     nominal_steps_both_opc: sopConfig.value.nextPageSteps,
@@ -53,7 +70,10 @@ const saveSopConfig = async () => {
                     kelengkapan_width: sopConfig.value.widthKelengkapan,
                     waktu_width: sopConfig.value.widthWaktu,
                     output_width: sopConfig.value.widthOutput,
-                    ket_width: sopConfig.value.widthKeterangan
+                    ket_width: sopConfig.value.widthKeterangan,
+                    // Simpan sebagai string JSON
+                    flowchart_arrow_config: JSON.stringify(finalFlowchartConfig),
+                    bpmn_arrow_config: JSON.stringify(finalBpmnConfig)
                 });
                 showConfigPanel.value = false;
                 resolve();
@@ -109,15 +129,25 @@ const saveSopConfig = async () => {
             </div>
         </div>
 
-        <SopStepTemplate v-if="activeTab === 'document'" :implementer="formData.implementer" :steps="sopStep" />
+        <SopStepTemplate
+            v-if="activeTab === 'document'"
+            :implementer="formData.implementer"
+            :steps="sopStep"
+            :arrow-config="flowchartArrowConfig"
+            @arrow-config-updated="handleFlowchartArrowUpdate"
+        />
 
-        <SopBpmnTemplate v-else-if="activeTab === 'bpmn'"
-            :name="assignmentInfo.name" :steps="sopStep" 
-            :implementer="formData.implementer" 
+        <SopBpmnTemplate
+            v-else-if="activeTab === 'bpmn'"
+            :name="assignmentInfo.name"
+            :steps="sopStep"
+            :implementer="formData.implementer"
+            :arrow-config="bpmnArrowConfig"
+            @arrow-config-updated="handleBpmnArrowUpdate"
         />
 
         <!-- Floating sop display config panel -->
-        <div class="fixed bottom-6 right-6 z-50 print:hidden" v-show="activeTab === 'document'">
+        <div class="fixed bottom-6 right-6 z-50 print:hidden">
             <div v-if="showConfigPanel"
                 class="absolute bottom-full right-0 mb-3 w-80 bg-white rounded-lg shadow-xl border border-gray-200 transition-all duration-300 transform origin-bottom-left text-sm">
                 <div class="flex justify-between items-center bg-blue-50 p-3 rounded-t-lg border-b border-gray-200">

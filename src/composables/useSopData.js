@@ -131,6 +131,8 @@ export default function useSopData(route) {
         widthWaktu: null,
         widthOutput: null,
         widthKeterangan: null,
+        flowchartArrowConfig: {},
+        bpmnArrowConfig: {},
     });
 
     const fetchSopDisplayConfig = async () => {
@@ -144,6 +146,8 @@ export default function useSopData(route) {
                 sopConfig.value.widthWaktu = response.data.waktu_width;
                 sopConfig.value.widthOutput = response.data.output_width;
                 sopConfig.value.widthKeterangan = response.data.ket_width;
+                sopConfig.value.flowchartArrowConfig = response.data.flowchart_arrow_config;
+                sopConfig.value.bpmnArrowConfig = response.data.bpmn_arrow_config;
             } else {
                 console.warn('Konfigurasi tampilan SOP belum ada:', response.message);
                 // Set default values if API fails
@@ -160,6 +164,32 @@ export default function useSopData(route) {
         }
     };
 
+    const flowchartArrowConfig = computed(() => {
+        const config = sopConfig.value?.flowchartArrowConfig;
+        if (typeof config === 'string' && config) {
+            try {
+                return JSON.parse(config);
+            } catch (e) {
+                console.error("Gagal parse flowchartArrowConfig:", e);
+                return {};
+            }
+        }
+        return config || {};
+    });
+
+    const bpmnArrowConfig = computed(() => {
+        const config = sopConfig.value?.bpmnArrowConfig;
+        if (typeof config === 'string' && config) {
+            try {
+                return JSON.parse(config);
+            } catch (e) {
+                console.error("Gagal parse bpmnArrowConfig:", e);
+                return {};
+            }
+        }
+        return config || {};
+    });
+
     return {
         signer,
         sopData,
@@ -170,5 +200,7 @@ export default function useSopData(route) {
         isDataError,
         fetchSopDisplayConfig,
         sopConfig,
+        flowchartArrowConfig,
+        bpmnArrowConfig,
     };
 }

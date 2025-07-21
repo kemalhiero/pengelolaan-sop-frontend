@@ -21,7 +21,10 @@ layoutType.value = 'guest';
 const route = useRoute();
 const authStore = useAuthStore();
 
-const { sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchSigner, isDataError, fetchSopDisplayConfig, sopConfig } = useSopData(route.params.id);
+const { 
+    sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchSigner, isDataError, 
+    fetchSopDisplayConfig, sopConfig, flowchartArrowConfig, bpmnArrowConfig 
+} = useSopData(route.params.id);
 provide('sopConfig', sopConfig);
 
 const activeTab = ref('document');
@@ -184,12 +187,14 @@ onMounted(fetchAllData);
                                 v-if="activeTab === 'document'"
                                 :implementer="sopData.implementer"
                                 :steps="sopData.steps"
+                                :arrow-config="flowchartArrowConfig"
                             />
                             <SopBpmnTemplate
                                 v-else
                                 :name="sopData.name"
                                 :steps="sopData.steps"
                                 :implementer="sopData.implementer"
+                                :arrow-config="bpmnArrowConfig"
                             />
                         </div>
                     </div>

@@ -25,6 +25,10 @@ const props = defineProps({
   usedSides: {
     type: Object,
     default: () => ({})
+  },
+  manualConfig: { // <-- PROP BARU
+    type: Object,
+    default: null
   }
 });
 
@@ -65,6 +69,29 @@ const getElementPosition = (elementId) => {
 };
 
 const calculatePath = async () => {
+  // --- LOGIKA BARU: Gunakan konfigurasi manual jika ada ---
+  console.log(props.manualConfig);
+  if (props.manualConfig && props.manualConfig.startPoint && props.manualConfig.endPoint) {
+    console.log(`[ArrowConnector] ID ${props.connection.id}: Menggunakan konfigurasi dari database.`);
+    const { startPoint, endPoint, bendPoints = [] } = props.manualConfig;
+    
+    let d = `M ${startPoint.x} ${startPoint.y}`;
+    bendPoints.forEach(p => { d += ` L ${p.x} ${p.y}`; });
+    d += ` L ${endPoint.x} ${endPoint.y}`;
+    
+    pathData.value = d;
+    
+    // Emit path-updated agar parent tahu sisi mana yang digunakan
+    emit('path-updated', {
+        connectionId: props.connection.id,
+        ...props.manualConfig
+    });
+    emit('mounted');
+    return; // Hentikan eksekusi lebih lanjut
+  }
+  // ----------------------------------------------------
+
+  console.log(`[ArrowConnector] ID ${props.connection.id}: Menggunakan algoritma untuk menghitung jalur.`);
   requestAnimationFrame(() => {
     const fromPos = getElementPosition(props.connection.from);
     const toPos = getElementPosition(props.connection.to);
@@ -302,12 +329,6 @@ const calculatePath = async () => {
 
     // 7. Atur data path final dari jalur terbaik yang ditemukan
     if (bestPath) {
-      emit('path-updated', {
-        connectionId: props.connection.id,
-        sSide: bestPath.sSide,
-        eSide: bestPath.eSide
-      });
-
       // Tambahkan offset untuk titik koneksi pada shape tertentu
       const typesNeedOffset = ['flowchart-terminator', 'flowchart-process', 'bpmn-task'];
       const sourceType = props.connection.sourceType;
@@ -317,6 +338,15 @@ const calculatePath = async () => {
       // Buat deep copy dari titik awal dan akhir untuk menghindari modifikasi objek asli
       let finalStart = { x: bestPath.start.x, y: bestPath.start.y };
       let finalEnd = { x: bestPath.end.x, y: bestPath.end.y };
+
+      emit('path-updated', {
+        connectionId: props.connection.id,
+        sSide: bestPath.sSide,
+        eSide: bestPath.eSide,
+        startPoint: finalStart,
+        endPoint: finalEnd,
+        bendPoints: bestPath.bendPoints || []
+      });
       
       // Offset untuk titik awal (shape sumber)
       if (typesNeedOffset.includes(sourceType)) {

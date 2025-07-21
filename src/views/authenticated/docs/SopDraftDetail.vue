@@ -50,7 +50,10 @@ const showModal = ref({
     deleteAssignment: false,
 });
 
-const { sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchSigner, isDataError, fetchSopDisplayConfig, sopConfig } = useSopData(route.params.id);
+const { 
+    sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchSigner, isDataError, 
+    fetchSopDisplayConfig, sopConfig, flowchartArrowConfig, bpmnArrowConfig 
+} = useSopData(route.params.id);
 provide('sopConfig', sopConfig);
 
 const fetchFeedback = async () => {
@@ -322,12 +325,14 @@ onMounted(fetchAllData);
                     v-if="activeTab === 'document'"
                     :implementer="sopData.implementer"
                     :steps="sopData.steps"
+                    :arrow-config="flowchartArrowConfig"
                 />
                 <SopBpmnTemplate
                     v-else
                     :name="sopData.name"
                     :steps="sopData.steps"
                     :implementer="sopData.implementer"
+                    :arrow-config="bpmnArrowConfig"
                 />
             </template>
             <div v-else class="my-4 p-4 bg-gray-100 rounded text-center">

@@ -16,8 +16,11 @@ const props = defineProps({
     implementer: {
         type: Array,
         required: true
-    }
+    },
+    arrowConfig: { type: Object, default: () => ({}) } // Tambahkan prop baru
 });
+
+const emit = defineEmits(['arrow-config-updated']);
 
 const sopConfig = inject('sopConfig');
 
@@ -101,17 +104,25 @@ const getPageNumber = (stepSeq) => {
     return currentPage;
 };
 
-// --- STATE BARU UNTUK MELACAK SISI PANAH ---
-const calculatedPathSides = ref({}); // Format: { [connectionId]: { sSide, eSide } }
+// --- STATE BARU UNTUK MELACAK KONFIGURASI PANAH ---
+const arrowConfigs = ref({});
 
 const handlePathUpdate = (payload) => {
     if (payload && payload.connectionId) {
-        calculatedPathSides.value[payload.connectionId] = {
-            sSide: payload.sSide,
-            eSide: payload.eSide
-        };
+        // Hapus payload dari arrowConfigs jika tidak ada di props.arrowConfig
+        // Ini untuk memastikan konfigurasi yang dihapus dari DB tidak lagi digunakan
+        if (!props.arrowConfig[payload.connectionId]) {
+            delete arrowConfigs.value[payload.connectionId];
+        }
+        // Selalu update dengan payload terbaru dari ArrowConnector
+        arrowConfigs.value[payload.connectionId] = { ...payload };
     }
 };
+
+// Kirim pembaruan ke parent setiap kali konfigurasi panah berubah
+watch(arrowConfigs, (newConfig) => {
+    emit('arrow-config-updated', newConfig);
+}, { deep: true });
 // -------------------------------------------
 
 const connections = computed(() => {
@@ -267,7 +278,7 @@ const usedSides = computed(() => {
     const used = {}; // Format: { [shapeId]: { in: { [side]: connId[] }, out: { [side]: connId[] } } }
 
     connections.value.forEach(conn => {
-        const pathInfo = calculatedPathSides.value[conn.id];
+        const pathInfo = arrowConfigs.value[conn.id];
         if (!pathInfo || !pathInfo.sSide || !pathInfo.eSide) return;
 
         // Inisialisasi jika belum ada
@@ -533,7 +544,7 @@ const orderedImplementer = computed(() => {
 
 watch(props.steps, async () => {
     arrowsReady.value = false; // 1. Sembunyikan panah lama
-    calculatedPathSides.value = {}; // 2. Reset state sisi yang digunakan
+    arrowConfigs.value = {}; // 2. Reset state sisi yang digunakan
     await recalculateOPCPositions();
     redrawKey.value = Date.now(); // 3. Picu kalkulasi ulang
     
@@ -545,7 +556,7 @@ watch(props.steps, async () => {
 
 watch(sopConfig, async () => {
     arrowsReady.value = false;
-    calculatedPathSides.value = {};
+    arrowConfigs.value = {};
     await recalculateOPCPositions();
     redrawKey.value = Date.now();
 
@@ -659,6 +670,7 @@ onMounted(async () => {
                             :redraw-key="redrawKey"
                             :obstacles="pageObstacles[pageIndex] || []"
                             :used-sides="usedSides"
+                            :manual-config="arrowConfig[connection.id]"
                             @path-updated="handlePathUpdate"
                         />
                     </svg>

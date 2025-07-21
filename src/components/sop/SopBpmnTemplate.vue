@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, computed, watch, nextTick } from 'vue'; // <-- Tambahkan 'watch'
+import { onMounted, ref, computed, watch, nextTick } from 'vue';
 import { capitalizeWords } from '@/utils/text';
 
 import ArrowConnector from '@/components/sop/shape/ArrowConnector.vue';
@@ -20,21 +20,29 @@ const props = defineProps({
   implementer: {
     type: Array,
     required: true
-  }
+  },
+  arrowConfig: { type: Object, default: () => ({}) } // Tambahkan prop baru
 });
 
-// --- STATE BARU UNTUK MANAJEMEN PANAH ---
-const calculatedPathSides = ref({}); // Format: { [connectionId]: { sSide, eSide } }
+const emit = defineEmits(['arrow-config-updated']);
+
+// --- STATE BARU UNTUK MANAJEMAN PANAH ---
+const arrowConfigs = ref({});
 const arrowsReady = ref(false);
 
 const handlePathUpdate = (payload) => {
     if (payload && payload.connectionId) {
-        calculatedPathSides.value[payload.connectionId] = {
-            sSide: payload.sSide,
-            eSide: payload.eSide
-        };
+        if (!props.arrowConfig[payload.connectionId]) {
+            delete arrowConfigs.value[payload.connectionId];
+        }
+        arrowConfigs.value[payload.connectionId] = { ...payload };
     }
 };
+
+// Kirim pembaruan ke parent setiap kali konfigurasi panah berubah
+watch(arrowConfigs, (newConfig) => {
+    emit('arrow-config-updated', newConfig);
+}, { deep: true });
 // -------------------------------------------
 
 // Constants for sizing tasks within SopBpmnTemplate
@@ -212,7 +220,7 @@ const usedSides = computed(() => {
     const used = {}; // Format: { [shapeId]: { in: { [side]: connId[] }, out: { [side]: connId[] } } }
 
     bpmnConnections.value.forEach(conn => {
-        const pathInfo = calculatedPathSides.value[conn.id];
+        const pathInfo = arrowConfigs.value[conn.id];
         if (!pathInfo) return;
 
         // Lacak sisi KELUAR dari sumber
@@ -465,7 +473,7 @@ onMounted(() => {
 
 watch(() => props.steps, () => {
   arrowsReady.value = false;
-  calculatedPathSides.value = {};
+  arrowConfigs.value = {};
   calculateGlobalLayout();
   nextTick(() => {
     arrowsReady.value = true;
@@ -599,6 +607,7 @@ const dynamicTitleWidth = computed(() => {
                 :connection="connection"
                 :obstacles="processedSteps.map(step => ({ id: `bpmn-step-${step.seq_number}` }))"
                 :used-sides="usedSides"
+                :manual-config="arrowConfig[connection.id]"
                 @path-updated="handlePathUpdate"
               />
             </svg>
