@@ -17,12 +17,22 @@ const props = defineProps({
         type: Array,
         required: true
     },
-    arrowConfig: { type: Object, default: () => ({}) } // Tambahkan prop baru
+    arrowConfig: { type: Object, default: () => ({}) },
+    // BARU: Prop untuk mode edit
+    editMode: {
+        type: Boolean,
+        default: false
+    }
 });
 
-const emit = defineEmits(['arrow-config-updated']);
+const emit = defineEmits(['arrow-config-updated', 'manual-edit']);
 
 const sopConfig = inject('sopConfig');
+
+// BARU: Handler untuk edit manual dari ArrowConnector
+const handleManualEdit = (config) => {
+    emit('manual-edit', config);
+};
 
 // Definisikan nilai default yang jelas
 const DEFAULT_FIRST_PAGE_STEPS = 6;
@@ -572,6 +582,31 @@ onMounted(async () => {
     await nextTick(); // Tunggu DOM update
     arrowsReady.value = true;
 });
+
+const arrowConnectorRefs = ref({});
+
+const setArrowConnectorRef = (el, connectionId) => {
+    if (el) {
+        arrowConnectorRefs.value[connectionId] = el;
+    } else {
+        delete arrowConnectorRefs.value[connectionId];
+    }
+};
+
+// BARU: Reset arrows to last saved configuration
+const resetArrowsToLastSaved = () => {
+    arrowConfigs.value = {};
+    redrawKey.value = Date.now();
+    
+    setTimeout(() => {
+        arrowsReady.value = true;
+    }, 100);
+};
+
+// BARU: Expose functions
+defineExpose({
+    resetArrowsToLastSaved
+});
 </script>
 
 <template>
@@ -660,10 +695,12 @@ onMounted(async () => {
                     </div>
 
                     <!-- SVG arrows layer -->
-                    <svg v-if="arrowsReady" class="absolute inset-0 w-full h-full pointer-events-none z-20">
+                    <svg v-if="arrowsReady" class="absolute inset-0 w-full h-full z-20"
+                         :class="editMode ? 'pointer-events-auto' : 'pointer-events-none'">
                         <arrow-connector 
                             v-for="(connection, connIndex) in getConnectionsForPage(pageIndex)" 
                             :key="`conn-${pageIndex}-${connIndex}-${redrawKey}`"
+                            :ref="el => setArrowConnectorRef(el, connection.id)"
                             :idarrow="`arrow-${pageIndex}-${connIndex}`" 
                             :idcontainer="`${mainSopAreaId}-${pageIndex}`"
                             :connection="connection"
@@ -671,7 +708,9 @@ onMounted(async () => {
                             :obstacles="pageObstacles[pageIndex] || []"
                             :used-sides="usedSides"
                             :manual-config="arrowConfig[connection.id]"
+                            :edit-mode="editMode"
                             @path-updated="handlePathUpdate"
+                            @manual-edit="handleManualEdit"
                         />
                     </svg>
                 </div>

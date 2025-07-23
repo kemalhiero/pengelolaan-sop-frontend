@@ -81,7 +81,6 @@ const submitFeedback = async () => {
         return;
     }
     
-    console.log('feedbackData', feedbackData);
     await processSubmitFeedback(feedbackData);
 };
 

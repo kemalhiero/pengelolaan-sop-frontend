@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch, inject } from 'vue';
 
 const props = defineProps({
   connection: {
@@ -26,17 +26,31 @@ const props = defineProps({
     type: Object,
     default: () => ({})
   },
-  manualConfig: { // <-- PROP BARU
+  manualConfig: {
     type: Object,
     default: null
+  },
+  // BARU: Props untuk mode edit
+  editMode: {
+    type: Boolean,
+    default: false
   }
 });
 
-const emit = defineEmits(['mounted', 'path-updated']);
+const emit = defineEmits(['mounted', 'path-updated', 'manual-edit']);
+
+// BARU: State untuk mode edit
+const isDragging = ref(false);
+const dragTarget = ref(null);
+const dragIndex = ref(-1);
+const localPoints = ref([]);
 
 // State untuk menyimpan path data
 const pathData = ref('');
 const labelPosition = ref(null);
+
+// BARU: State untuk menyimpan konfigurasi algoritma (fallback)
+const algorithmConfig = ref(null);
 
 // Fungsi untuk mendapatkan posisi elemen dengan pengecekan null
 const getElementPosition = (elementId) => {
@@ -69,11 +83,17 @@ const getElementPosition = (elementId) => {
 };
 
 const calculatePath = async () => {
-  // --- LOGIKA BARU: Gunakan konfigurasi manual jika ada ---
-  console.log(props.manualConfig);
+  // PERBAIKAN: Jika ada konfigurasi manual, gunakan itu terlebih dahulu
   if (props.manualConfig && props.manualConfig.startPoint && props.manualConfig.endPoint) {
-    console.log(`[ArrowConnector] ID ${props.connection.id}: Menggunakan konfigurasi dari database.`);
+    console.log(`[ArrowConnector] ID ${props.connection.id}: Menggunakan konfigurasi manual.`);
     const { startPoint, endPoint, bendPoints = [] } = props.manualConfig;
+    
+    // Set local points untuk editing
+    localPoints.value = [
+      { ...startPoint, type: 'start' },
+      ...bendPoints.map(p => ({ ...p, type: 'bend' })),
+      { ...endPoint, type: 'end' }
+    ];
     
     let d = `M ${startPoint.x} ${startPoint.y}`;
     bendPoints.forEach(p => { d += ` L ${p.x} ${p.y}`; });
@@ -81,16 +101,15 @@ const calculatePath = async () => {
     
     pathData.value = d;
     
-    // Emit path-updated agar parent tahu sisi mana yang digunakan
     emit('path-updated', {
         connectionId: props.connection.id,
         ...props.manualConfig
     });
     emit('mounted');
-    return; // Hentikan eksekusi lebih lanjut
+    return;
   }
-  // ----------------------------------------------------
 
+  // Jika tidak ada konfigurasi manual, hitung jalur otomatis
   console.log(`[ArrowConnector] ID ${props.connection.id}: Menggunakan algoritma untuk menghitung jalur.`);
   requestAnimationFrame(() => {
     const fromPos = getElementPosition(props.connection.from);
@@ -339,6 +358,15 @@ const calculatePath = async () => {
       let finalStart = { x: bestPath.start.x, y: bestPath.start.y };
       let finalEnd = { x: bestPath.end.x, y: bestPath.end.y };
 
+      algorithmConfig.value = {
+        connectionId: props.connection.id,
+        sSide: bestPath.sSide,
+        eSide: bestPath.eSide,
+        startPoint: finalStart,
+        endPoint: finalEnd,
+        bendPoints: bestPath.bendPoints || []
+      };
+
       emit('path-updated', {
         connectionId: props.connection.id,
         sSide: bestPath.sSide,
@@ -408,6 +436,13 @@ const calculatePath = async () => {
       }
 
       bendPoints = bestPath.bendPoints || [];
+
+      // PERBAIKAN: Set localPoints untuk mode edit dari hasil algoritma
+      localPoints.value = [
+        { x: finalStart.x, y: finalStart.y, type: 'start' },
+        ...bendPoints.map(p => ({ x: p.x, y: p.y, type: 'bend' })),
+        { x: finalEnd.x, y: finalEnd.y, type: 'end' }
+      ];
 
       // Pastikan semua nilai valid sebelum membuat path
       if (!isNaN(finalStart.x) && !isNaN(finalStart.y) && !isNaN(finalEnd.x) && !isNaN(finalEnd.y)) {
@@ -525,6 +560,128 @@ watch(() => props.connection, () => {
 watch(() => props.redrawKey, () => {
   calculatePath();
 });
+
+// BARU: Fungsi untuk handle drag
+const startDrag = (event, pointIndex, pointType) => {
+  if (!props.editMode) return;
+  
+  event.preventDefault();
+  event.stopPropagation();
+  
+  isDragging.value = true;
+  dragTarget.value = pointType;
+  dragIndex.value = pointIndex;
+  
+  document.addEventListener('mousemove', handleDrag);
+  document.addEventListener('mouseup', stopDrag);
+};
+
+const handleDrag = (event) => {
+  if (!isDragging.value || dragIndex.value === -1) return;
+  
+  const container = document.querySelector(`#${props.idcontainer}`);
+  if (!container) return;
+  
+  const containerRect = container.getBoundingClientRect();
+  const newX = event.clientX - containerRect.left;
+  const newY = event.clientY - containerRect.top;
+  
+  // Update local points
+  localPoints.value[dragIndex.value] = {
+    ...localPoints.value[dragIndex.value],
+    x: newX,
+    y: newY
+  };
+  
+  // Update path
+  updatePathFromLocalPoints();
+};
+
+const stopDrag = () => {
+  if (!isDragging.value) return;
+  
+  isDragging.value = false;
+  dragTarget.value = null;
+  dragIndex.value = -1;
+  
+  document.removeEventListener('mousemove', handleDrag);
+  document.removeEventListener('mouseup', stopDrag);
+  
+  // Emit perubahan manual
+  emitManualEdit();
+};
+
+const updatePathFromLocalPoints = () => {
+  if (localPoints.value.length < 2) return;
+  
+  let d = `M ${localPoints.value[0].x} ${localPoints.value[0].y}`;
+  for (let i = 1; i < localPoints.value.length; i++) {
+    d += ` L ${localPoints.value[i].x} ${localPoints.value[i].y}`;
+  }
+  pathData.value = d;
+};
+
+const emitManualEdit = () => {
+  if (localPoints.value.length < 2) return;
+  
+  const startPoint = localPoints.value[0];
+  const endPoint = localPoints.value[localPoints.value.length - 1];
+  const bendPoints = localPoints.value.slice(1, -1);
+  
+  emit('manual-edit', {
+    connectionId: props.connection.id,
+    startPoint: { x: startPoint.x, y: startPoint.y },
+    endPoint: { x: endPoint.x, y: endPoint.y },
+    bendPoints: bendPoints.map(p => ({ x: p.x, y: p.y })),
+    sSide: props.manualConfig?.sSide || algorithmConfig.value?.sSide || 'right',
+    eSide: props.manualConfig?.eSide || algorithmConfig.value?.eSide || 'left'
+  });
+};
+
+// BARU: Fungsi untuk menambah titik belok
+const addBendPoint = (event) => {
+  if (!props.editMode) return;
+  
+  event.preventDefault();
+  event.stopPropagation();
+  
+  const container = document.querySelector(`#${props.idcontainer}`);
+  if (!container) return;
+  
+  const containerRect = container.getBoundingClientRect();
+  const newX = event.clientX - containerRect.left;
+  const newY = event.clientY - containerRect.top;
+  
+  // Tambah titik belok di tengah-tengah
+  const newPoint = { x: newX, y: newY, type: 'bend' };
+  localPoints.value.splice(-1, 0, newPoint);
+  
+  updatePathFromLocalPoints();
+  emitManualEdit();
+};
+
+// PERBAIKAN: Watch untuk editMode dan manualConfig
+watch(() => [props.editMode, props.manualConfig], ([newEditMode, newManualConfig]) => {
+  if (newEditMode) {
+    if (newManualConfig && newManualConfig.startPoint && newManualConfig.endPoint) {
+      // Gunakan konfigurasi manual jika ada
+      const { startPoint, endPoint, bendPoints = [] } = newManualConfig;
+      localPoints.value = [
+        { ...startPoint, type: 'start' },
+        ...bendPoints.map(p => ({ ...p, type: 'bend' })),
+        { ...endPoint, type: 'end' }
+      ];
+    } else if (algorithmConfig.value) {
+      // Fallback ke konfigurasi algoritma jika tidak ada konfigurasi manual
+      const { startPoint, endPoint, bendPoints = [] } = algorithmConfig.value;
+      localPoints.value = [
+        { ...startPoint, type: 'start' },
+        ...bendPoints.map(p => ({ ...p, type: 'bend' })),
+        { ...endPoint, type: 'end' }
+      ];
+    }
+  }
+}, { immediate: true });
 </script>
 
 <template>
@@ -537,7 +694,57 @@ watch(() => props.redrawKey, () => {
     </defs>
 
     <!-- Path panah -->
-    <path :d="pathData" fill="none" stroke="black" stroke-width="2" :marker-end="`url(#arrowhead-${idarrow})`" />
+    <path 
+      :d="pathData" 
+      fill="none" 
+      stroke="black" 
+      stroke-width="2" 
+      :marker-end="`url(#arrowhead-${idarrow})`"
+      :class="{ 'cursor-pointer': editMode }"
+      @dblclick="addBendPoint"
+    />
+
+    <!-- PERBAIKAN: Titik kontrol untuk mode edit - PASTIKAN pointer-events aktif -->
+    <template v-if="editMode && localPoints.length > 0">
+      <circle
+        v-for="(point, index) in localPoints"
+        :key="`control-${index}`"
+        :cx="point.x"
+        :cy="point.y"
+        :r="point.type === 'bend' ? 6 : 8"
+        :fill="point.type === 'start' ? '#22c55e' : point.type === 'end' ? '#ef4444' : '#3b82f6'"
+        :stroke="point.type === 'bend' ? '#1e40af' : '#ffffff'"
+        stroke-width="2"
+        class="cursor-move hover:opacity-80"
+        style="pointer-events: all;"
+        @mousedown="startDrag($event, index, point.type)"
+      />
+      
+      <!-- Tombol hapus titik belok -->
+      <g v-for="(point, index) in localPoints" :key="`delete-${index}`">
+        <circle
+          v-if="point.type === 'bend'"
+          :cx="point.x + 10"
+          :cy="point.y - 10"
+          r="8"
+          fill="#ef4444"
+          stroke="#ffffff"
+          stroke-width="1"
+          class="cursor-pointer hover:opacity-80"
+          style="pointer-events: all;"
+          @click="localPoints.splice(index, 1); updatePathFromLocalPoints(); emitManualEdit();"
+        />
+        <text
+          v-if="point.type === 'bend'"
+          :x="point.x + 10"
+          :y="point.y - 6"
+          text-anchor="middle"
+          fill="white"
+          font-size="10"
+          class="pointer-events-none"
+        >×</text>
+      </g>
+    </template>
 
     <!-- Label -->
     <text v-if="labelPosition && props.connection.label" :x="labelPosition.x" :y="labelPosition.y"

@@ -38,6 +38,7 @@ let idsopdetail = route.params.id;
 // State untuk mengatur langkah
 const currentStep = ref(1);  // Langkah sekarang
 const firstStepRef = ref(null);
+const thirdStepRef = ref(null); // BARU: Tambahkan ref untuk ThirdStep
 
 const showFeedback = ref(false)
 const draftFeedback = ref([]);
@@ -521,6 +522,16 @@ const nextStep = async () => {
         syncSopInfo();
         syncSopStep();
 
+        // BARU: Simpan konfigurasi SOP sebelum mengirim draft
+        try {
+            if (thirdStepRef.value && thirdStepRef.value.saveSopConfig) {
+                await thirdStepRef.value.saveSopConfig();
+            }
+        } catch (error) {
+            console.error('Error saving SOP config:', error);
+            // Tetap lanjutkan proses meskipun gagal menyimpan config
+        }
+
         // Update status SOP kalau sekarang sudah dikirim untuk nantinya dicek oleh penanggung jawab atau kadep
         // dicek dulu apakah organisasinya dsi atau tidak, jika dsi maka akan langsung di cek oleh kadep
         // jika bukan dsi maka akan di cek oleh penanggung jawab
@@ -533,7 +544,7 @@ const nextStep = async () => {
                     if (!response.success) {
                         throw response;
                     }
-                    resolve(response);
+                    resolve();
                 })
                 .catch(error => reject(error));
         });
@@ -624,7 +635,7 @@ onMounted(fetchAllData);
         <div class="my-8">
             <FirstStep v-if="currentStep == 1" ref="firstStepRef" />
             <SecondStep v-else-if="currentStep == 2" />
-            <ThirdStep v-else-if="currentStep == 3" />
+            <ThirdStep v-else-if="currentStep == 3" ref="thirdStepRef" />
         </div>
 
         <div class="flex justify-between mb-8 px-6 max-w-3xl mx-auto print:hidden">

@@ -21,10 +21,15 @@ const props = defineProps({
     type: Array,
     required: true
   },
-  arrowConfig: { type: Object, default: () => ({}) } // Tambahkan prop baru
+  arrowConfig: { type: Object, default: () => ({}) },
+  // BARU: Prop untuk mode edit
+  editMode: {
+    type: Boolean,
+    default: false
+  }
 });
 
-const emit = defineEmits(['arrow-config-updated']);
+const emit = defineEmits(['arrow-config-updated', 'manual-edit']);
 
 // --- STATE BARU UNTUK MANAJEMAN PANAH ---
 const arrowConfigs = ref({});
@@ -490,6 +495,36 @@ const dynamicTitleWidth = computed(() => {
   const lineCount = textWidth <= maxWidth ? 1 : Math.ceil(textWidth / maxWidth);
   return (lineCount * 30) + 20; // padding 20px supaya teks tidak terlalu mepet
 });
+
+// BARU: Handler untuk edit manual dari ArrowConnector
+const handleManualEdit = (config) => {
+    emit('manual-edit', config);
+};
+
+// BARU: Reset arrows to last saved configuration
+const resetArrowsToLastSaved = () => {
+    arrowConfigs.value = {};
+    arrowsReady.value = false;
+    nextTick(() => {
+        arrowsReady.value = true;
+    });
+};
+
+// BARU: Refs untuk ArrowConnector components
+const arrowConnectorRefs = ref({});
+
+const setArrowConnectorRef = (el, connectionId) => {
+    if (el) {
+        arrowConnectorRefs.value[connectionId] = el;
+    } else {
+        delete arrowConnectorRefs.value[connectionId];
+    }
+};
+
+// BARU: Expose functions
+defineExpose({
+    resetArrowsToLastSaved
+});
 </script>
 
 <template>
@@ -598,17 +633,22 @@ const dynamicTitleWidth = computed(() => {
             </table>
 
             <!-- Arrows SVG -->
-            <svg v-if="arrowsReady" class="absolute inset-0 h-full pointer-events-none z-20 w-fit" :style="{ minWidth: `${diagramWidth}px` }">
+            <svg v-if="arrowsReady" class="absolute inset-0 h-full z-20 w-fit" 
+                 :style="{ minWidth: `${diagramWidth}px` }"
+                 :class="editMode ? 'pointer-events-auto' : 'pointer-events-none'">
               <ArrowConnector
                 v-for="(connection, index) in bpmnConnections" 
                 :idarrow="index + 100"
                 idcontainer="bpmn-container"
                 :key="`${connection.from}-${connection.to}-${index}`"
+                :ref="el => setArrowConnectorRef(el, connection.id)"
                 :connection="connection"
                 :obstacles="processedSteps.map(step => ({ id: `bpmn-step-${step.seq_number}` }))"
                 :used-sides="usedSides"
                 :manual-config="arrowConfig[connection.id]"
+                :edit-mode="editMode"
                 @path-updated="handlePathUpdate"
+                @manual-edit="handleManualEdit"
               />
             </svg>
           </div>

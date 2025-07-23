@@ -16,6 +16,7 @@ const deleteSopDetail = (id) => deleteRequest(`sop/detail/${id}`, getToken());
 
 const saveSopDisplayConfig = (id, data) => patchRequest(`sop/detail/display/${id}`, data, getToken());
 const getSopDisplayConfig = (id) => getRequest(`sop/detail/display/${id}`, getToken());
+const clearSopDisplayConfig = (id, type) => patchRequest(`sop/detail/display/${id}/arrow?type=${type}`, null, getToken());
 
 const getManagedSop = () => getRequest('sop/managed', getToken());
 
@@ -36,5 +37,5 @@ export {
     createSopDetail, updateSopDetail, deleteSopDetail, getAssignment, getAssignmentDetail, 
     getSectionandWarning, getLatestSopInYear, getManagedSop, getSopVersion,      //tabel detail sop
     createSopStep, getSopStep, updateSopStep, deleteSopStep,    //tabel sop step
-    confirmSopandBpmn, saveSopDisplayConfig, getSopDisplayConfig
+    confirmSopandBpmn, saveSopDisplayConfig, getSopDisplayConfig, clearSopDisplayConfig
 };
