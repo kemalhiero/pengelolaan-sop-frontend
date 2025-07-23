@@ -20,7 +20,7 @@ const { formData } = inject('sopFormData');
 const sopStepRaw = inject('sopStep');
 const sopConfig = inject('sopConfig');
 const idsopdetail = inject('idsopdetail');
-const fetchSopDisplayConfig = inject('fetchSopDisplayConfig'); // fungsi untuk mengambil konfigurasi awal
+const fetchSopDisplayConfig = inject('fetchSopDisplayConfig');
 const isDisabled = inject('isDisabled');
 const { flowchartArrowConfig, bpmnArrowConfig } = inject('arrowConfigs');
 
@@ -35,10 +35,28 @@ const bpmnArrowConfigUpdates = ref({});
 const sopStepTemplateRef = ref(null);
 const sopBpmnTemplateRef = ref(null);
 
+// BARU: State untuk tracking perubahan layout
+const layoutChangeDetected = ref(false);
+const showLayoutChangeModal = ref(false);
+const pendingLayoutSave = ref(null);
+
+// BARU: Watch untuk mendeteksi perubahan yang mempengaruhi layout
+watch([
+    () => sopConfig.value?.firstPageSteps,
+    () => sopConfig.value?.nextPageSteps
+], ([newFirstPage, newNextPage], [oldFirstPage, oldNextPage]) => {
+    if (oldFirstPage !== undefined && oldNextPage !== undefined) {
+        if (newFirstPage !== oldFirstPage || newNextPage !== oldNextPage) {
+            layoutChangeDetected.value = true;
+        }
+    }
+}, { deep: true });
+
 // Handler untuk menerima update dari komponen anak
 const handleFlowchartArrowUpdate = (config) => {
     flowchartArrowConfigUpdates.value = config;
 };
+
 const handleBpmnArrowUpdate = (config) => {
     bpmnArrowConfigUpdates.value = config;
 };
@@ -46,7 +64,6 @@ const handleBpmnArrowUpdate = (config) => {
 // BARU: Handler untuk edit manual panah
 const handleFlowchartManualEdit = (config) => {
     if (config.reset) {
-        // Hapus konfigurasi untuk connection ini
         delete flowchartArrowConfigUpdates.value[config.connectionId];
     } else {
         flowchartArrowConfigUpdates.value = {
@@ -58,7 +75,6 @@ const handleFlowchartManualEdit = (config) => {
 
 const handleBpmnManualEdit = (config) => {
     if (config.reset) {
-        // Hapus konfigurasi untuk connection ini
         delete bpmnArrowConfigUpdates.value[config.connectionId];
     } else {
         bpmnArrowConfigUpdates.value = {
@@ -88,16 +104,58 @@ const resetArrowsToLastSaved = () => {
     }
 };
 
+// PERBAIKAN: Fungsi untuk menangani perubahan layout dengan invalidasi panah
+const handleLayoutChange = async (clearArrows = false) => {
+    if (clearArrows) {
+        // Hapus konfigurasi panah manual karena layout berubah
+        try {
+            await clearSopDisplayConfig(idsopdetail, 'document');
+            await clearSopDisplayConfig(idsopdetail, 'bpmn');
+            
+            flowchartArrowConfigUpdates.value = {};
+            bpmnArrowConfigUpdates.value = {};
+            
+            await fetchSopDisplayConfig();
+            
+            // BARU: Force refresh template components
+            if (sopStepTemplateRef.value) {
+                sopStepTemplateRef.value.forceRecalculation();
+            }
+            if (sopBpmnTemplateRef.value) {
+                sopBpmnTemplateRef.value.forceRecalculation();
+            }
+            
+            toast.success('Konfigurasi panah direset karena layout berubah', { autoClose: 3000 });
+        } catch (err) {
+            console.warn('Gagal menghapus konfigurasi panah:', err);
+        }
+    }
+    
+    layoutChangeDetected.value = false;
+    showLayoutChangeModal.value = false;
+    
+    if (pendingLayoutSave.value) {
+        await pendingLayoutSave.value();
+        pendingLayoutSave.value = null;
+    }
+};
+
 // Handler ESC
 function handleEscClose(e) {
-    if (e.key === 'Escape' && showConfigPanel.value) {
-        showConfigPanel.value = false;
+    if (e.key === 'Escape') {
+        if (showConfigPanel.value) {
+            showConfigPanel.value = false;
+        }
+        if (showLayoutChangeModal.value) {
+            showLayoutChangeModal.value = false;
+            pendingLayoutSave.value = null;
+        }
     }
 }
 
 // Pasang/lepas event listener saat panel dibuka/ditutup
-watch(showConfigPanel, (val) => {
-    if (val) {
+watch([showConfigPanel, showLayoutChangeModal], ([configPanel, layoutModal]) => {
+    if (configPanel || layoutModal) {
         window.addEventListener('keydown', handleEscClose);
     } else {
         window.removeEventListener('keydown', handleEscClose);
@@ -110,41 +168,54 @@ onBeforeUnmount(() => {
 
 const saveSopConfig = async () => {
     try {
-        const promise = new Promise(async (resolve, reject) => {
-            try {
-                // Gabungkan konfigurasi lama dengan update baru sebelum menyimpan
-                const finalFlowchartConfig = { ...flowchartArrowConfig.value, ...flowchartArrowConfigUpdates.value };
-                const finalBpmnConfig = { ...bpmnArrowConfig.value, ...bpmnArrowConfigUpdates.value };
-
-                await saveSopDisplayConfig(idsopdetail, {
-                    nominal_basic_page_steps: sopConfig.value.firstPageSteps,
-                    nominal_steps_both_opc: sopConfig.value.nextPageSteps,
-                    kegiatan_width: sopConfig.value.widthKegiatan,
-                    kelengkapan_width: sopConfig.value.widthKelengkapan,
-                    waktu_width: sopConfig.value.widthWaktu,
-                    output_width: sopConfig.value.widthOutput,
-                    ket_width: sopConfig.value.widthKeterangan,
-                    // Simpan sebagai string JSON
-                    flowchart_arrow_config: JSON.stringify(finalFlowchartConfig),
-                    bpmn_arrow_config: JSON.stringify(finalBpmnConfig)
-                });
-                showConfigPanel.value = false;
-                // BARU: Reset mode edit setelah simpan
-                arrowEditMode.value = false;
-                resolve();
-            } catch (err) {
-                reject(err);
-            }
-        });
-
-        useToastPromise(promise, {
-            messages: { success: 'Konfigurasi berhasil disimpan!' },
-            toastOptions: { autoClose: 3000 }
-        });
+        // PERBAIKAN: Gunakan hasAnyArrowConfig untuk deteksi
+        if (layoutChangeDetected.value && hasAnyArrowConfig.value) {
+            pendingLayoutSave.value = async () => {
+                return await executeConfigSave();
+            };
+            showLayoutChangeModal.value = true;
+            return;
+        }
+        
+        await executeConfigSave();
     } catch (err) {
         toast.error('Gagal menyimpan konfigurasi!', { autoClose: 3000 });
-        throw err; // Re-throw error agar bisa di-catch oleh parent
+        throw err;
     }
+};
+
+// BARU: Fungsi untuk eksekusi penyimpanan konfigurasi
+const executeConfigSave = async () => {
+    const promise = new Promise(async (resolve, reject) => {
+        try {
+            const finalFlowchartConfig = { ...flowchartArrowConfig.value, ...flowchartArrowConfigUpdates.value };
+            const finalBpmnConfig = { ...bpmnArrowConfig.value, ...bpmnArrowConfigUpdates.value };
+
+            await saveSopDisplayConfig(idsopdetail, {
+                nominal_basic_page_steps: sopConfig.value.firstPageSteps,
+                nominal_steps_both_opc: sopConfig.value.nextPageSteps,
+                kegiatan_width: sopConfig.value.widthKegiatan,
+                kelengkapan_width: sopConfig.value.widthKelengkapan,
+                waktu_width: sopConfig.value.widthWaktu,
+                output_width: sopConfig.value.widthOutput,
+                ket_width: sopConfig.value.widthKeterangan,
+                flowchart_arrow_config: JSON.stringify(finalFlowchartConfig),
+                bpmn_arrow_config: JSON.stringify(finalBpmnConfig)
+            });
+            
+            showConfigPanel.value = false;
+            arrowEditMode.value = false;
+            layoutChangeDetected.value = false;
+            resolve();
+        } catch (err) {
+            reject(err);
+        }
+    });
+
+    useToastPromise(promise, {
+        messages: { success: 'Konfigurasi berhasil disimpan!' },
+        toastOptions: { autoClose: 3000 }
+    });
 };
 
 // BARU: Ekspos fungsi saveSopConfig agar bisa dipanggil dari parent component
@@ -165,6 +236,13 @@ const hasArrowConfig = computed(() => {
     return false;
 });
 
+// BARU: Computed untuk mengecek apakah ada konfigurasi panah untuk layout change
+const hasAnyArrowConfig = computed(() => {
+    const flowchartHasConfig = flowchartArrowConfig.value && Object.keys(flowchartArrowConfig.value).length > 0;
+    const bpmnHasConfig = bpmnArrowConfig.value && Object.keys(bpmnArrowConfig.value).length > 0;
+    return flowchartHasConfig || bpmnHasConfig;
+});
+
 // BARU: Fungsi untuk membuka modal konfirmasi
 const openDeleteModal = () => {
     showDeleteModal.value = true;
@@ -179,22 +257,20 @@ const confirmDeleteArrowConfigs = async () => {
 // BARU: Hapus konfigurasi manual panah
 const clearArrowConfigs = async () => {
     try {
-        const type = activeTab.value; // 'document' atau 'bpmn'
+        const type = activeTab.value;
         
         const promise = new Promise(async (resolve, reject) => {
             try {
                 await clearSopDisplayConfig(idsopdetail, type);
                 console.log(`Konfigurasi panah ${idsopdetail} untuk ${type} berhasil dihapus dari database.`);
-                // Reset updates setelah hapus dari database
+                
                 if (type === 'document') {
                     flowchartArrowConfigUpdates.value = {};
                 } else {
                     bpmnArrowConfigUpdates.value = {};
                 }
                 
-                // Refresh konfigurasi dari database
                 await fetchSopDisplayConfig();
-                
                 resolve();
             } catch (err) {
                 reject(err);
@@ -296,7 +372,7 @@ const clearArrowConfigs = async () => {
             </button>
         </div>
 
-        <!-- BARU: Petunjuk mode edit -->
+        <!-- BARU: Petunjuk mode edit yang lebih informatif -->
         <div v-if="arrowEditMode" class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4 print:hidden">
             <div class="flex items-start gap-3">
                 <svg class="w-5 h-5 text-orange-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -309,8 +385,8 @@ const clearArrowConfigs = async () => {
                         <li>• <span class="font-medium">Merah:</span> Titik akhir panah (dapat digeser)</li>
                         <li>• <span class="font-medium">Biru:</span> Titik belok (dapat digeser dan dihapus)</li>
                         <li>• <span class="font-medium">Double-click pada panah:</span> Tambah titik belok baru</li>
-                        <li>• <span class="font-medium">Reset ke Kondisi Terakhir:</span> Kembalikan ke konfigurasi terakhir sebelum perubahan (tersimpan/algoritma)</li>
-                        <li v-if="hasArrowConfig">• <span class="font-medium">Hapus Konfigurasi Manual:</span> Hapus semua konfigurasi manual dan gunakan algoritma</li>
+                        <li>• <span class="font-medium">Reset ke Kondisi Terakhir:</span> Kembalikan ke konfigurasi terakhir sebelum perubahan</li>
+                        <li v-if="hasArrowConfig">• <span class="font-medium">Hapus Konfigurasi Manual:</span> Hapus semua konfigurasi panah manual dan gunakan panah otomatis</li>
                         <li v-else class="text-orange-600">• <span class="font-medium">Info:</span> Belum ada konfigurasi panah manual tersimpan untuk {{ activeTab === 'document' ? 'Flowchart' : 'BPMN' }}</li>
                     </ul>
                 </div>
@@ -340,9 +416,9 @@ const clearArrowConfigs = async () => {
             @manual-edit="handleBpmnManualEdit"
         />
 
-        <!-- Floating sop display config panel -->
+        <!-- DIPERBAIKI: Floating panel dengan positioning dan labeling yang lebih baik -->
         <div class="fixed bottom-6 right-6 z-50 print:hidden">
-            <!-- BARU: Panel edit mode indicator saat aktif -->
+            <!-- BARU: Indikator mode edit yang lebih subtle -->
             <div v-if="arrowEditMode" 
                 class="absolute bottom-full right-0 mb-3 w-64 bg-orange-50 rounded-lg shadow-lg border border-orange-200 p-3">
                 <div class="flex items-center gap-2 text-orange-800">
@@ -356,9 +432,10 @@ const clearArrowConfigs = async () => {
             </div>
 
             <div v-if="showConfigPanel"
-                class="absolute bottom-full right-0 mb-3 w-80 bg-white rounded-lg shadow-xl border border-gray-200 transition-all duration-300 transform origin-bottom-left text-sm">
+                class="absolute bottom-full right-0 mb-3 w-80 bg-white rounded-lg shadow-xl border border-gray-200 transition-all duration-300 transform origin-bottom-right text-sm">
                 <div class="flex justify-between items-center bg-blue-50 p-3 rounded-t-lg border-b border-gray-200">
-                    <span class="font-medium">Konfigurasi Tampilan SOP</span>
+                    <!-- DIPERBAIKI: Label yang lebih jelas -->
+                    <span class="font-medium">Pengaturan Layout SOP</span>
                     <button @click="showConfigPanel = false" class="text-gray-500 hover:text-gray-700 focus:outline-none">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -367,6 +444,17 @@ const clearArrowConfigs = async () => {
                 </div>
                 <form @submit.prevent="saveSopConfig">
                     <div class="p-4 space-y-3">
+                        <!-- DIPERBAIKI: Grouping yang lebih jelas -->
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
+                            <div class="flex items-center gap-2 text-yellow-800 mb-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                                <span class="text-xs font-semibold">Layout & Pagination</span>
+                            </div>
+                            <p class="text-xs text-yellow-700 mb-2">Pastikan konfigurasi manual sudah dihapus terlebih dahulu sebelum merubah layout & pagination!</p>
+                        </div>
+                        
                         <div class="font-bold mb-2">Jumlah Tahapan per Halaman</div>
                         <div class="flex items-center gap-3">
                             <label class="block text-gray-700 font-medium mb-0.5 w-2/3">Hal. 1</label>
@@ -421,16 +509,54 @@ const clearArrowConfigs = async () => {
                     </div>
                 </form>
             </div>
-            <!-- Floating config button -->
+            <!-- DIPERBAIKI: Label tombol yang lebih jelas -->
             <button @click="showConfigPanel = !showConfigPanel"
-                :title="showConfigPanel ? 'Tutup Panel Konfigurasi' : 'Atur Tampilan SOP'"
+                :title="showConfigPanel ? 'Tutup Pengaturan Layout' : 'Pengaturan Layout'"
                 class="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transition-all duration-300"
                 :class="{ 'rotate-45 bg-red-600 hover:bg-red-700': showConfigPanel }">
                     <GearIcon class="w-6 h-6 fill-current" :class="{ 'rotate-45': showConfigPanel }" />
             </button>
         </div>
 
-        <!-- BARU: Modal konfirmasi hapus konfigurasi -->
+        <!-- BARU: Modal konfirmasi perubahan layout -->
+        <DeleteDataModal
+            v-model:showModal="showLayoutChangeModal"
+            :deleteData="() => handleLayoutChange(true)"
+            :text="`Perubahan jumlah tahapan per halaman akan mereset semua konfigurasi panah manual. Apakah Anda ingin melanjutkan?`"
+        />
+        
+        <!-- BARU: Tambahan tombol untuk tetap simpan tanpa hapus panah -->
+        <div v-if="showLayoutChangeModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
+            <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showLayoutChangeModal = false"></div>
+            <div class="relative p-4 w-full max-w-md max-h-full z-10">
+                <div class="relative bg-white rounded-lg shadow">
+                    <div class="p-4 md:p-5 text-center">
+                        <svg class="mx-auto mb-4 text-yellow-400 w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
+                        </svg>
+                        <h3 class="mb-5 text-lg font-normal text-gray-500">
+                            Perubahan jumlah tahapan per halaman akan mereset semua konfigurasi panah manual. Bagaimana Anda ingin melanjutkan?
+                        </h3>
+                        <div class="flex flex-col gap-2">
+                            <button @click="handleLayoutChange(true)"
+                                class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm inline-flex items-center justify-center px-5 py-2.5">
+                                Reset Panah & Simpan Layout
+                            </button>
+                            <button @click="handleLayoutChange(false)"
+                                class="text-white bg-blue-600 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm inline-flex items-center justify-center px-5 py-2.5">
+                                Simpan Layout Saja
+                            </button>
+                            <button @click="showLayoutChangeModal = false; pendingLayoutSave = null;"
+                                class="py-2.5 px-5 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-200 focus:z-10 focus:ring-4 focus:ring-gray-100">
+                                Batal
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal konfirmasi hapus konfigurasi panah -->
         <DeleteDataModal
             v-model:showModal="showDeleteModal"
             :deleteData="confirmDeleteArrowConfigs"

@@ -52,6 +52,10 @@ const labelPosition = ref(null);
 // BARU: State untuk menyimpan konfigurasi algoritma (fallback)
 const algorithmConfig = ref(null);
 
+// BARU: State untuk menampilkan koordinat saat drag
+const showCoordinates = ref(false);
+const dragCoordinates = ref({ x: 0, y: 0 });
+
 // Fungsi untuk mendapatkan posisi elemen dengan pengecekan null
 const getElementPosition = (elementId) => {
   const element = document.getElementById(elementId);
@@ -586,6 +590,10 @@ const handleDrag = (event) => {
   const newX = event.clientX - containerRect.left;
   const newY = event.clientY - containerRect.top;
   
+  // BARU: Update koordinat untuk tooltip
+  dragCoordinates.value = { x: Math.round(newX), y: Math.round(newY) };
+  showCoordinates.value = true;
+  
   // Update local points
   localPoints.value[dragIndex.value] = {
     ...localPoints.value[dragIndex.value],
@@ -603,6 +611,9 @@ const stopDrag = () => {
   isDragging.value = false;
   dragTarget.value = null;
   dragIndex.value = -1;
+  
+  // BARU: Sembunyikan koordinat
+  showCoordinates.value = false;
   
   document.removeEventListener('mousemove', handleDrag);
   document.removeEventListener('mouseup', stopDrag);
@@ -660,6 +671,14 @@ const addBendPoint = (event) => {
   emitManualEdit();
 };
 
+// PERBAIKAN: Force recalculation saat tidak ada manual config
+watch(() => props.manualConfig, (newConfig) => {
+  if (!newConfig && props.editMode) {
+    // Jika tidak ada konfigurasi manual, force recalculation
+    calculatePath();
+  }
+}, { deep: true });
+
 // PERBAIKAN: Watch untuk editMode dan manualConfig
 watch(() => [props.editMode, props.manualConfig], ([newEditMode, newManualConfig]) => {
   if (newEditMode) {
@@ -704,7 +723,7 @@ watch(() => [props.editMode, props.manualConfig], ([newEditMode, newManualConfig
       @dblclick="addBendPoint"
     />
 
-    <!-- PERBAIKAN: Titik kontrol untuk mode edit - PASTIKAN pointer-events aktif -->
+    <!-- Titik kontrol untuk mode edit -->
     <template v-if="editMode && localPoints.length > 0">
       <circle
         v-for="(point, index) in localPoints"
@@ -715,13 +734,13 @@ watch(() => [props.editMode, props.manualConfig], ([newEditMode, newManualConfig
         :fill="point.type === 'start' ? '#22c55e' : point.type === 'end' ? '#ef4444' : '#3b82f6'"
         :stroke="point.type === 'bend' ? '#1e40af' : '#ffffff'"
         stroke-width="2"
-        class="cursor-move hover:opacity-80"
+        class="cursor-move hover:opacity-80 print:hidden"
         style="pointer-events: all;"
         @mousedown="startDrag($event, index, point.type)"
       />
       
       <!-- Tombol hapus titik belok -->
-      <g v-for="(point, index) in localPoints" :key="`delete-${index}`">
+      <g v-for="(point, index) in localPoints" :key="`delete-${index}`" class="print:hidden">
         <circle
           v-if="point.type === 'bend'"
           :cx="point.x + 10"
@@ -745,6 +764,30 @@ watch(() => [props.editMode, props.manualConfig], ([newEditMode, newManualConfig
         >×</text>
       </g>
     </template>
+
+    <!-- BARU: Tooltip koordinat saat drag -->
+    <g v-if="showCoordinates && isDragging" class="print:hidden">
+      <rect
+        :x="dragCoordinates.x + 15"
+        :y="dragCoordinates.y - 25"
+        width="80"
+        height="20"
+        fill="rgba(0, 0, 0, 0.8)"
+        rx="4"
+        ry="4"
+      />
+      <text
+        :x="dragCoordinates.x + 55"
+        :y="dragCoordinates.y - 10"
+        text-anchor="middle"
+        fill="white"
+        font-size="12"
+        font-family="monospace"
+        class="pointer-events-none"
+      >
+        {{ `${dragCoordinates.x}, ${dragCoordinates.y}` }}
+      </text>
+    </g>
 
     <!-- Label -->
     <text v-if="labelPosition && props.connection.label" :x="labelPosition.x" :y="labelPosition.y"

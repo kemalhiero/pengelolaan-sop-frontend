@@ -510,6 +510,15 @@ const resetArrowsToLastSaved = () => {
     });
 };
 
+// BARU: Force recalculation arrows
+const forceRecalculation = () => {
+    arrowConfigs.value = {};
+    arrowsReady.value = false;
+    nextTick(() => {
+        arrowsReady.value = true;
+    });
+};
+
 // BARU: Refs untuk ArrowConnector components
 const arrowConnectorRefs = ref({});
 
@@ -523,7 +532,8 @@ const setArrowConnectorRef = (el, connectionId) => {
 
 // BARU: Expose functions
 defineExpose({
-    resetArrowsToLastSaved
+    resetArrowsToLastSaved,
+    forceRecalculation
 });
 </script>
 

@@ -603,9 +603,21 @@ const resetArrowsToLastSaved = () => {
     }, 100);
 };
 
+// BARU: Force recalculation arrows
+const forceRecalculation = () => {
+    arrowConfigs.value = {};
+    arrowsReady.value = false;
+    redrawKey.value = Date.now();
+    
+    setTimeout(() => {
+        arrowsReady.value = true;
+    }, 100);
+};
+
 // BARU: Expose functions
 defineExpose({
-    resetArrowsToLastSaved
+    resetArrowsToLastSaved,
+    forceRecalculation
 });
 </script>
 
