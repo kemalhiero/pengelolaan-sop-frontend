@@ -176,7 +176,7 @@ const bpmnConnections = computed(() => {
         const targetStep = processedSteps.value.find(s => s.id_step === step.id_next_step_if_yes);
         if (targetStep) {
           allConnections.push({
-            id: `conn-${step.seq_number}-to-${targetStep.seq_number}-yes`, // ID Unik
+            id: `conn-${step.seq_number}-to-${targetStep.seq_number}-yes`,
             from: `bpmn-step-${step.seq_number}`,
             to: `bpmn-step-${targetStep.seq_number}`,
             label: 'Ya',
@@ -192,7 +192,7 @@ const bpmnConnections = computed(() => {
         const targetStep = processedSteps.value.find(s => s.id_step === step.id_next_step_if_no);
         if (targetStep) {
           allConnections.push({
-            id: `conn-${step.seq_number}-to-${targetStep.seq_number}-no`, // ID Unik
+            id: `conn-${step.seq_number}-to-${targetStep.seq_number}-no`,
             from: `bpmn-step-${step.seq_number}`,
             to: `bpmn-step-${targetStep.seq_number}`,
             label: 'Tidak',
@@ -210,6 +210,7 @@ const bpmnConnections = computed(() => {
           id: `conn-${step.seq_number}-to-${nextStep.seq_number}`, // ID Unik
           from: `bpmn-step-${step.seq_number}`,
           to: `bpmn-step-${nextStep.seq_number}`,
+          label: null, // Tidak ada label untuk koneksi biasa
           sourceType: step.type,
           targetType: targetTypeForConn(nextStep)
         });
@@ -501,21 +502,26 @@ const handleManualEdit = (config) => {
     emit('manual-edit', config);
 };
 
-// BARU: Reset arrows to last saved configuration
 const resetArrowsToLastSaved = () => {
+    console.log('BPMN Reset arrows to last saved');
+    // Hanya reset arrowConfigs internal
     arrowConfigs.value = {};
     arrowsReady.value = false;
+    
     nextTick(() => {
         arrowsReady.value = true;
     });
 };
 
-// BARU: Force recalculation arrows
 const forceRecalculation = () => {
+    console.log('BPMN Force recalculation triggered');
+    // Reset semua state yang berhubungan dengan panah
     arrowConfigs.value = {};
     arrowsReady.value = false;
+    
     nextTick(() => {
         arrowsReady.value = true;
+        console.log('BPMN Arrows ready after force recalculation');
     });
 };
 

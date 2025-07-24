@@ -271,7 +271,7 @@ const submitEdit = async () => {
                     error: (err) => `Gagal memperbarui data! <br> ${err}`
                 },
                 toastOptions: {
-                    autoClose: 1500,
+                    autoClose: 2000,
                     dangerouslyHTMLString: true
                 }
             }

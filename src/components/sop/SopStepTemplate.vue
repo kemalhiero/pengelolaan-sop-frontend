@@ -119,13 +119,28 @@ const arrowConfigs = ref({});
 
 const handlePathUpdate = (payload) => {
     if (payload && payload.connectionId) {
-        // Hapus payload dari arrowConfigs jika tidak ada di props.arrowConfig
-        // Ini untuk memastikan konfigurasi yang dihapus dari DB tidak lagi digunakan
-        if (!props.arrowConfig[payload.connectionId]) {
-            delete arrowConfigs.value[payload.connectionId];
+        // PERBAIKAN: Debug payload yang diterima
+        // console.log(`[SopStepTemplate] Receiving path update for connection ${payload.connectionId}:`, payload);
+        
+        // PERBAIKAN: Hanya update jika payload valid dan bukan dari props
+        const hasValidPayload = payload.startPoint && payload.endPoint &&
+          typeof payload.startPoint.x === 'number' &&
+          typeof payload.startPoint.y === 'number' &&
+          typeof payload.endPoint.x === 'number' &&
+          typeof payload.endPoint.y === 'number';
+        
+        if (hasValidPayload) {
+          // Hapus payload dari arrowConfigs jika tidak ada di props.arrowConfig
+          // Ini untuk memastikan konfigurasi yang dihapus dari DB tidak lagi digunakan
+          if (!props.arrowConfig[payload.connectionId]) {
+              delete arrowConfigs.value[payload.connectionId];
+            //   console.log(`[SopStepTemplate] Removed ${payload.connectionId} from internal config (not in props)`);
+          } else {
+              // Selalu update dengan payload terbaru dari ArrowConnector
+              arrowConfigs.value[payload.connectionId] = { ...payload };
+            //   console.log(`[SopStepTemplate] Updated internal config for ${payload.connectionId}`);
+          }
         }
-        // Selalu update dengan payload terbaru dari ArrowConnector
-        arrowConfigs.value[payload.connectionId] = { ...payload };
     }
 };
 
@@ -218,7 +233,6 @@ const connections = computed(() => {
             createConnectionEntries(step.id_next_step_if_no, 'Tidak', 'no');
         } else {
             // Untuk step non-decision, asumsikan mengarah ke step berikutnya secara sekuensial jika ada.
-            // Jika step non-decision bisa memiliki id_next_step eksplisit, logika ini perlu disesuaikan.
             const nextStepInSequence = props.steps.find(s => s.seq_number === step.seq_number + 1);
             if (nextStepInSequence) {
                 createConnectionEntries(nextStepInSequence.id_step);
@@ -593,24 +607,36 @@ const setArrowConnectorRef = (el, connectionId) => {
     }
 };
 
-// BARU: Reset arrows to last saved configuration
-const resetArrowsToLastSaved = () => {
-    arrowConfigs.value = {};
-    redrawKey.value = Date.now();
-    
-    setTimeout(() => {
-        arrowsReady.value = true;
-    }, 100);
-};
-
-// BARU: Force recalculation arrows
+// PERBAIKAN: Force recalculation yang lebih thorough
 const forceRecalculation = () => {
+    console.log('[SopStepTemplate] Force recalculation triggered');
+    console.log('[SopStepTemplate] Current props.arrowConfig:', props.arrowConfig);
+    console.log('[SopStepTemplate] Current internal arrowConfigs:', arrowConfigs.value);
+    
+    // Reset semua state yang berhubungan dengan panah
     arrowConfigs.value = {};
     arrowsReady.value = false;
     redrawKey.value = Date.now();
     
+    // Tunggu sebentar untuk memastikan DOM terupdate
     setTimeout(() => {
         arrowsReady.value = true;
+        console.log('[SopStepTemplate] Arrows ready after force recalculation');
+    }, 200);
+};
+
+// PERBAIKAN: Reset arrows yang lebih clean
+const resetArrowsToLastSaved = () => {
+    console.log('[SopStepTemplate] Reset arrows to last saved');
+    console.log('[SopStepTemplate] Current props.arrowConfig:', props.arrowConfig);
+    
+    // Hanya reset arrowConfigs internal
+    arrowConfigs.value = {};
+    redrawKey.value = Date.now();
+    
+    setTimeout(() => {
+        arrowsReady.value = true;
+        console.log('[SopStepTemplate] Arrows ready after reset');
     }, 100);
 };
 
@@ -619,6 +645,15 @@ defineExpose({
     resetArrowsToLastSaved,
     forceRecalculation
 });
+
+// PERBAIKAN: Watch untuk props.arrowConfig dengan debug
+watch(() => props.arrowConfig, (newConfig, oldConfig) => {
+    console.log('[SopStepTemplate] Props arrowConfig changed from:', oldConfig, 'to:', newConfig);
+    if (Object.keys(newConfig).length === 0 && Object.keys(arrowConfigs.value).length > 0) {
+        console.log('[SopStepTemplate] Props config is empty but internal config exists, forcing recalculation');
+        forceRecalculation();
+    }
+}, { deep: true });
 </script>
 
 <template>

@@ -20,7 +20,7 @@ const handleLogout = async () => {
 
   toast("Berhasil keluar!", {
     type: "success",
-    autoClose: 3000,
+    autoClose: 2000,
   });
 
   setTimeout(() => {

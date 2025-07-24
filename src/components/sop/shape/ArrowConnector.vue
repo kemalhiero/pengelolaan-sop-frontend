@@ -87,8 +87,22 @@ const getElementPosition = (elementId) => {
 };
 
 const calculatePath = async () => {
-  // PERBAIKAN: Jika ada konfigurasi manual, gunakan itu terlebih dahulu
-  if (props.manualConfig && props.manualConfig.startPoint && props.manualConfig.endPoint) {
+  // console.log(`[ArrowConnector] ID ${props.connection.id}: Checking manual config:`, props.manualConfig);
+  
+  // PERBAIKAN: Validasi konfigurasi manual lebih ketat
+  const hasValidManualConfig = props.manualConfig && 
+    props.manualConfig.startPoint && 
+    props.manualConfig.endPoint &&
+    typeof props.manualConfig.startPoint.x === 'number' &&
+    typeof props.manualConfig.startPoint.y === 'number' &&
+    typeof props.manualConfig.endPoint.x === 'number' &&
+    typeof props.manualConfig.endPoint.y === 'number' &&
+    !isNaN(props.manualConfig.startPoint.x) &&
+    !isNaN(props.manualConfig.startPoint.y) &&
+    !isNaN(props.manualConfig.endPoint.x) &&
+    !isNaN(props.manualConfig.endPoint.y);
+
+  if (hasValidManualConfig) {
     console.log(`[ArrowConnector] ID ${props.connection.id}: Menggunakan konfigurasi manual.`);
     const { startPoint, endPoint, bendPoints = [] } = props.manualConfig;
     
@@ -105,6 +119,20 @@ const calculatePath = async () => {
     
     pathData.value = d;
     
+    // PERBAIKAN: Hitung posisi label untuk konfigurasi manual
+    if (props.connection.label) {
+      const labelDistance = 30;
+      const start = startPoint;
+      const end = bendPoints.length > 0 ? bendPoints[0] : endPoint;
+      
+      const p = getFixedDistancePoint(start, end, labelDistance, 19);
+      if (p) {
+        labelPosition.value = { x: p.x, y: p.y };
+      } else {
+        labelPosition.value = null;
+      }
+    }
+    
     emit('path-updated', {
         connectionId: props.connection.id,
         ...props.manualConfig
@@ -113,7 +141,6 @@ const calculatePath = async () => {
     return;
   }
 
-  // Jika tidak ada konfigurasi manual, hitung jalur otomatis
   console.log(`[ArrowConnector] ID ${props.connection.id}: Menggunakan algoritma untuk menghitung jalur.`);
   requestAnimationFrame(() => {
     const fromPos = getElementPosition(props.connection.from);
@@ -362,6 +389,7 @@ const calculatePath = async () => {
       let finalStart = { x: bestPath.start.x, y: bestPath.start.y };
       let finalEnd = { x: bestPath.end.x, y: bestPath.end.y };
 
+      // Di bagian akhir algorithm calculation, setelah finalStart dan finalEnd dihitung
       algorithmConfig.value = {
         connectionId: props.connection.id,
         sSide: bestPath.sSide,
@@ -371,14 +399,23 @@ const calculatePath = async () => {
         bendPoints: bestPath.bendPoints || []
       };
 
-      emit('path-updated', {
+      // PERBAIKAN: Tambahkan informasi label dalam emit
+      const emitConfig = {
         connectionId: props.connection.id,
         sSide: bestPath.sSide,
         eSide: bestPath.eSide,
         startPoint: finalStart,
         endPoint: finalEnd,
         bendPoints: bestPath.bendPoints || []
-      });
+      };
+
+      // BARU: Simpan posisi label jika ada
+      if (props.connection.label && labelPosition.value) {
+        emitConfig.label = props.connection.label;
+        emitConfig.labelPosition = labelPosition.value;
+      }
+
+      emit('path-updated', emitConfig);
       
       // Offset untuk titik awal (shape sumber)
       if (typesNeedOffset.includes(sourceType)) {
@@ -632,6 +669,33 @@ const updatePathFromLocalPoints = () => {
   pathData.value = d;
 };
 
+// PERBAIKAN: Fungsi helper untuk menghitung posisi label yang konsisten
+const getFixedDistancePoint = (startPoint, endPoint, distance, offset = 19) => {
+  if (!startPoint || !endPoint || 
+      isNaN(startPoint.x) || isNaN(startPoint.y) || 
+      isNaN(endPoint.x) || isNaN(endPoint.y)) {
+    return null;
+  }
+  
+  const dx = endPoint.x - startPoint.x;
+  const dy = endPoint.y - startPoint.y;
+  const length = Math.sqrt(dx * dx + dy * dy);
+  if (length === 0) return { x: startPoint.x, y: startPoint.y };
+
+  // Ambil titik sejauh 'distance' piksel dari start ke end
+  const px = startPoint.x + (dx / length) * distance;
+  const py = startPoint.y + (dy / length) * distance;
+
+  // Offset label agar tidak menumpuk garis
+  if (Math.abs(dx) > Math.abs(dy)) {
+    // Garis horizontal, offset vertikal
+    return { x: px, y: py - offset };
+  } else {
+    // Garis vertikal, offset horizontal
+    return { x: px + offset, y: py };
+  }
+};
+
 const emitManualEdit = () => {
   if (localPoints.value.length < 2) return;
   
@@ -639,17 +703,35 @@ const emitManualEdit = () => {
   const endPoint = localPoints.value[localPoints.value.length - 1];
   const bendPoints = localPoints.value.slice(1, -1);
   
-  emit('manual-edit', {
+  // PERBAIKAN: Simpan informasi label dalam konfigurasi manual
+  const config = {
     connectionId: props.connection.id,
     startPoint: { x: startPoint.x, y: startPoint.y },
     endPoint: { x: endPoint.x, y: endPoint.y },
     bendPoints: bendPoints.map(p => ({ x: p.x, y: p.y })),
     sSide: props.manualConfig?.sSide || algorithmConfig.value?.sSide || 'right',
     eSide: props.manualConfig?.eSide || algorithmConfig.value?.eSide || 'left'
-  });
+  };
+  
+  // BARU: Tambahkan informasi label jika ada
+  if (props.connection.label) {
+    config.label = props.connection.label;
+    
+    // Hitung dan simpan posisi label
+    const labelDistance = 30;
+    const start = startPoint;
+    const end = bendPoints.length > 0 ? bendPoints[0] : endPoint;
+    
+    const labelPos = getFixedDistancePoint(start, end, labelDistance, 19);
+    if (labelPos) {
+      config.labelPosition = labelPos;
+    }
+  }
+  
+  emit('manual-edit', config);
 };
 
-// BARU: Fungsi untuk menambah titik belok
+// Fungsi untuk menambah titik belok dengan posisi yang tepat
 const addBendPoint = (event) => {
   if (!props.editMode) return;
   
@@ -660,21 +742,61 @@ const addBendPoint = (event) => {
   if (!container) return;
   
   const containerRect = container.getBoundingClientRect();
-  const newX = event.clientX - containerRect.left;
-  const newY = event.clientY - containerRect.top;
+  const clickX = event.clientX - containerRect.left;
+  const clickY = event.clientY - containerRect.top;
   
-  // Tambah titik belok di tengah-tengah
-  const newPoint = { x: newX, y: newY, type: 'bend' };
-  localPoints.value.splice(-1, 0, newPoint);
+  if (localPoints.value.length < 2) return;
+  
+  // Cari segmen path terdekat dengan klik
+  let insertIndex = localPoints.value.length - 1; // Default: sebelum titik akhir
+  let minDistance = Infinity;
+  
+  for (let i = 0; i < localPoints.value.length - 1; i++) {
+    const p1 = localPoints.value[i];
+    const p2 = localPoints.value[i + 1];
+    
+    // Hitung jarak dari titik klik ke garis segment
+    const distance = getDistanceToLineSegment(clickX, clickY, p1.x, p1.y, p2.x, p2.y);
+    
+    if (distance < minDistance) {
+      minDistance = distance;
+      insertIndex = i + 1; // Insert setelah titik i
+    }
+  }
+  
+  // Tambah titik belok di posisi yang tepat dalam array
+  const newPoint = { x: clickX, y: clickY, type: 'bend' };
+  localPoints.value.splice(insertIndex, 0, newPoint);
   
   updatePathFromLocalPoints();
   emitManualEdit();
 };
 
-// PERBAIKAN: Force recalculation saat tidak ada manual config
-watch(() => props.manualConfig, (newConfig) => {
-  if (!newConfig && props.editMode) {
-    // Jika tidak ada konfigurasi manual, force recalculation
+// Fungsi helper untuk menghitung jarak titik ke garis
+const getDistanceToLineSegment = (px, py, x1, y1, x2, y2) => {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const length = Math.sqrt(dx * dx + dy * dy);
+  
+  if (length === 0) {
+    // Jika titik1 dan titik2 sama, hitung jarak ke titik
+    return Math.sqrt((px - x1) * (px - x1) + (py - y1) * (py - y1));
+  }
+  
+  // Proyeksi titik klik ke garis
+  const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / (length * length)));
+  const projectionX = x1 + t * dx;
+  const projectionY = y1 + t * dy;
+  
+  // Hitung jarak dari titik klik ke proyeksi
+  return Math.sqrt((px - projectionX) * (px - projectionX) + (py - projectionY) * (py - projectionY));
+};
+
+// Force recalculation saat tidak ada manual config
+watch(() => props.manualConfig, (newConfig, oldConfig) => {
+  // console.log(`[ArrowConnector] ID ${props.connection.id}: Manual config changed from:`, oldConfig, 'to:', newConfig);
+  if (!newConfig || Object.keys(newConfig).length === 0) {
+    console.log(`[ArrowConnector] ID ${props.connection.id}: No manual config, will use algorithm`);
     calculatePath();
   }
 }, { deep: true });
@@ -765,7 +887,7 @@ watch(() => [props.editMode, props.manualConfig], ([newEditMode, newManualConfig
       </g>
     </template>
 
-    <!-- BARU: Tooltip koordinat saat drag -->
+    <!-- Tooltip koordinat saat drag -->
     <g v-if="showCoordinates && isDragging" class="print:hidden">
       <rect
         :x="dragCoordinates.x + 15"
@@ -789,9 +911,13 @@ watch(() => [props.editMode, props.manualConfig], ([newEditMode, newManualConfig
       </text>
     </g>
 
-    <!-- Label -->
-    <text v-if="labelPosition && props.connection.label" :x="labelPosition.x" :y="labelPosition.y"
-      class="text-sm font-medium fill-black" text-anchor="middle" alignment-baseline="middle">
+    <!-- PERBAIKAN: Label dengan fallback ke konfigurasi manual -->
+    <text v-if="props.connection.label" 
+          :x="(props.manualConfig?.labelPosition?.x) || labelPosition?.x" 
+          :y="(props.manualConfig?.labelPosition?.y) || labelPosition?.y"
+          class="text-sm font-medium fill-black print:hidden" 
+          text-anchor="middle" 
+          alignment-baseline="middle">
       {{ props.connection.label }}
     </text>
   </g>
