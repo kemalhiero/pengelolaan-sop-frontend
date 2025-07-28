@@ -133,6 +133,8 @@ export default function useSopData(route) {
         widthKeterangan: null,
         flowchartArrowConfig: {},
         bpmnArrowConfig: {},
+        flowchartLabelConfig: {},
+        bpmnLabelConfig: {},
     });
 
     const fetchSopDisplayConfig = async () => {
@@ -148,6 +150,8 @@ export default function useSopData(route) {
                 sopConfig.value.widthKeterangan = response.data.ket_width;
                 sopConfig.value.flowchartArrowConfig = response.data.flowchart_arrow_config;
                 sopConfig.value.bpmnArrowConfig = response.data.bpmn_arrow_config;
+                sopConfig.value.flowchartLabelConfig = response.data.flowchart_label_config;
+                sopConfig.value.bpmnLabelConfig = response.data.bpmn_label_config;
             } else {
                 console.warn('Konfigurasi tampilan SOP belum ada:', response.message);
                 // Set default values if API fails
@@ -190,6 +194,32 @@ export default function useSopData(route) {
         return config || {};
     });
 
+    const flowchartLabelConfig = computed(() => {
+        const config = sopConfig.value?.flowchartLabelConfig;
+        if (typeof config === 'string' && config) {
+            try {
+                return JSON.parse(config);
+            } catch (e) {
+                console.error("Gagal parse flowchartLabelConfig:", e);
+                return {};
+            }
+        }
+        return config || {};
+    });
+
+    const bpmnLabelConfig = computed(() => {
+        const config = sopConfig.value?.bpmnLabelConfig;
+        if (typeof config === 'string' && config) {
+            try {
+                return JSON.parse(config);
+            } catch (e) {
+                console.error("Gagal parse bpmnLabelConfig:", e);
+                return {};
+            }
+        }
+        return config || {};
+    });
+
     return {
         signer,
         sopData,
@@ -200,7 +230,7 @@ export default function useSopData(route) {
         isDataError,
         fetchSopDisplayConfig,
         sopConfig,
-        flowchartArrowConfig,
-        bpmnArrowConfig,
+        flowchartArrowConfig, bpmnArrowConfig,
+        flowchartLabelConfig, bpmnLabelConfig
     };
 }

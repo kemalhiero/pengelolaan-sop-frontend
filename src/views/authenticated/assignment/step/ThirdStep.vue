@@ -2,7 +2,7 @@
 import { computed, inject, onBeforeUnmount, ref, watch } from 'vue';
 import { toast } from 'vue3-toastify';
 
-import { saveSopDisplayConfig, clearSopDisplayConfig } from '@/api/sopApi';
+import { saveFlowchartConfig, saveBpmnConfig, clearFlowchartConfig, clearBpmnConfig, saveSopLayout } from '@/api/sopApi';
 import roleAbbreviation from '@/data/roleAbbrv.json';
 import useToastPromise from '@/utils/toastPromiseHandler';
 import GearIcon from '@/assets/icons/GearIcon.vue';
@@ -23,17 +23,85 @@ const idsopdetail = inject('idsopdetail');
 const fetchSopDisplayConfig = inject('fetchSopDisplayConfig');
 const isDisabled = inject('isDisabled');
 const { flowchartArrowConfig, bpmnArrowConfig } = inject('arrowConfigs');
+const { flowchartLabelConfig, bpmnLabelConfig } = inject('labelConfigs');
 
 // BARU: State untuk mode edit panah
 const arrowEditMode = ref(false);
+const isEditing = ref(false);
 
 // State untuk menampung update konfigurasi panah dari komponen anak
 const flowchartArrowConfigUpdates = ref({});
 const bpmnArrowConfigUpdates = ref({});
 
+// BARU: State untuk label configurations
+const flowchartLabelConfigUpdates = ref({
+  custom_labels: {},
+  positions: {}
+});
+const bpmnLabelConfigUpdates = ref({
+  custom_labels: {},
+  positions: {}
+});
+
 // BARU: Refs untuk komponen template
 const sopStepTemplateRef = ref(null);
 const sopBpmnTemplateRef = ref(null);
+
+const handleLabelEdit = (config) => {
+    if (activeTab.value === 'document') {
+        // Track perubahan untuk save - tidak perlu update sopStepRaw langsung
+        const targetStep = sopStep.value?.find(step => {
+            if (step.type === 'decision') {
+                const yesConnId = `conn-${step.seq_number}-to-${step.id_next_step_if_yes ? sopStep.value.find(s => s.id_step === step.id_next_step_if_yes)?.seq_number : 'unknown'}-yes`;
+                const noConnId = `conn-${step.seq_number}-to-${step.id_next_step_if_no ? sopStep.value.find(s => s.id_step === step.id_next_step_if_no)?.seq_number : 'unknown'}-no`;
+                return yesConnId === config.connectionId || noConnId === config.connectionId;
+            }
+            return false;
+        });
+        
+        if (targetStep) {
+            const condition = config.connectionId.includes('-yes') ? 'yes' : 'no';
+            const stepKey = `step-${targetStep.seq_number}-${condition}`;
+            
+            if (config.newLabel) {
+                flowchartLabelConfigUpdates.value.custom_labels = {
+                    ...flowchartLabelConfigUpdates.value.custom_labels,
+                    [stepKey]: config.newLabel
+                };
+            } else {
+                if (flowchartLabelConfigUpdates.value.custom_labels) {
+                    delete flowchartLabelConfigUpdates.value.custom_labels[stepKey];
+                }
+            }
+        }
+    } else if (activeTab.value === 'bpmn') {
+        // Logic serupa untuk BPMN - terpisah dari flowchart
+        const targetStep = sopStep.value?.find(step => {
+            if (step.type === 'decision') {
+                const yesConnId = `conn-${step.seq_number}-to-${step.id_next_step_if_yes ? sopStep.value.find(s => s.id_step === step.id_next_step_if_yes)?.seq_number : 'unknown'}-yes`;
+                const noConnId = `conn-${step.seq_number}-to-${step.id_next_step_if_no ? sopStep.value.find(s => s.id_step === step.id_next_step_if_no)?.seq_number : 'unknown'}-no`;
+                return yesConnId === config.connectionId || noConnId === config.connectionId;
+            }
+            return false;
+        });
+        
+        if (targetStep) {
+            const condition = config.connectionId.includes('-yes') ? 'yes' : 'no';
+            const stepKey = `step-${targetStep.seq_number}-${condition}`;
+            
+            if (config.newLabel) {
+                bpmnLabelConfigUpdates.value.custom_labels = {
+                    ...bpmnLabelConfigUpdates.value.custom_labels,
+                    [stepKey]: config.newLabel
+                };
+            } else {
+                if (bpmnLabelConfigUpdates.value.custom_labels) {
+                    delete bpmnLabelConfigUpdates.value.custom_labels[stepKey];
+                }
+            }
+        }
+    }
+};
 
 // PERBAIKAN: Handler untuk menjaga konfigurasi sementara
 const handleFlowchartArrowUpdate = (config) => {
@@ -61,28 +129,165 @@ const handleFlowchartManualEdit = (config) => {
             ...flowchartArrowConfigUpdates.value,
             [config.connectionId]: config
         };
+        
+        // BARU: Track label position jika ada
+        if (config.labelPosition) {
+            flowchartLabelConfigUpdates.value.positions = {
+                ...flowchartLabelConfigUpdates.value.positions,
+                [config.connectionId]: config.labelPosition
+            };
+        }
     }
 };
 
 const handleBpmnManualEdit = (config) => {
     if (config.reset) {
         delete bpmnArrowConfigUpdates.value[config.connectionId];
+    } else if (config.type === 'decision-text') {
+        // PERBAIKAN: Handle decision text positioning dengan key yang tepat
+        if (config.textPosition) {
+            bpmnLabelConfigUpdates.value.positions = {
+                ...bpmnLabelConfigUpdates.value.positions,
+                [config.stepId]: config.textPosition
+            };
+        }
     } else {
         bpmnArrowConfigUpdates.value = {
             ...bpmnArrowConfigUpdates.value,
             [config.connectionId]: config
         };
+        
+        // BARU: Track label position jika ada
+        if (config.labelPosition) {
+            bpmnLabelConfigUpdates.value.positions = {
+                ...bpmnLabelConfigUpdates.value.positions,
+                [config.connectionId]: config.labelPosition
+            };
+        }
     }
 };
 
-// BARU: Toggle mode edit panah
-const toggleArrowEditMode = () => {
-    arrowEditMode.value = !arrowEditMode.value;
+const toggleArrowEditMode = async () => {
+    if (arrowEditMode.value) {
+        // Saat selesai edit, simpan otomatis
+        if (hasUnsavedArrowChanges.value) {
+            try {
+                await saveCurrentTabConfig();
+                toast.success('Perubahan berhasil disimpan!', { autoClose: 3000 });
+            } catch (err) {
+                toast.error('Gagal menyimpan perubahan!', { autoClose: 3000 });
+                return; // Jangan keluar dari mode edit jika gagal simpan
+            }
+        }
+        arrowEditMode.value = false;
+        isEditing.value = false;
+    } else {
+        arrowEditMode.value = true;
+        isEditing.value = true;
+    }
 };
+
+const saveCurrentTabConfig = async () => {
+    const payload = {};
+    
+    if (activeTab.value === 'document') {
+        // Simpan konfigurasi flowchart
+        if (Object.keys(flowchartArrowConfigUpdates.value).length > 0) {
+            payload.flowchart_arrow_config = JSON.stringify({
+                ...flowchartArrowConfig.value,
+                ...flowchartArrowConfigUpdates.value
+            });
+        }
+        
+        const flowchartLabelUpdates = flowchartLabelConfigUpdates.value || {};
+        if (Object.keys(flowchartLabelUpdates.custom_labels || {}).length > 0 || 
+            Object.keys(flowchartLabelUpdates.positions || {}).length > 0) {
+            const currentFlowchartLabelConfig = flowchartLabelConfig.value || {};
+            const mergedFlowchartLabelConfig = {
+                custom_labels: {
+                    ...(currentFlowchartLabelConfig.custom_labels || {}),
+                    ...flowchartLabelUpdates.custom_labels
+                },
+                positions: {
+                    ...(currentFlowchartLabelConfig.positions || {}),
+                    ...flowchartLabelUpdates.positions
+                }
+            };
+            payload.flowchart_label_config = JSON.stringify(mergedFlowchartLabelConfig);
+        }
+        
+        // PERBAIKAN: Gunakan API khusus flowchart
+        if (Object.keys(payload).length > 0) {
+            await saveFlowchartConfig(idsopdetail, payload);
+        }
+        
+    } else if (activeTab.value === 'bpmn') {
+        // Simpan konfigurasi BPMN
+        if (Object.keys(bpmnArrowConfigUpdates.value).length > 0) {
+            payload.bpmn_arrow_config = JSON.stringify({
+                ...bpmnArrowConfig.value,
+                ...bpmnArrowConfigUpdates.value
+            });
+        }
+        
+        const bpmnLabelUpdates = bpmnLabelConfigUpdates.value || {};
+        if (Object.keys(bpmnLabelUpdates.custom_labels || {}).length > 0 || 
+            Object.keys(bpmnLabelUpdates.positions || {}).length > 0) {
+            const currentBpmnLabelConfig = bpmnLabelConfig.value || {};
+            const mergedBpmnLabelConfig = {
+                custom_labels: {
+                    ...(currentBpmnLabelConfig.custom_labels || {}),
+                    ...bpmnLabelUpdates.custom_labels
+                },
+                positions: {
+                    ...(currentBpmnLabelConfig.positions || {}),
+                    ...bpmnLabelUpdates.positions
+                }
+            };
+            payload.bpmn_label_config = JSON.stringify(mergedBpmnLabelConfig);
+        }
+        
+        // PERBAIKAN: Gunakan API khusus BPMN
+        if (Object.keys(payload).length > 0) {
+            await saveBpmnConfig(idsopdetail, payload);
+        }
+    }
+    
+    // Reset updates setelah simpan
+    if (activeTab.value === 'document') {
+        flowchartArrowConfigUpdates.value = {};
+        flowchartLabelConfigUpdates.value = { custom_labels: {}, positions: {} };
+    } else {
+        bpmnArrowConfigUpdates.value = {};
+        bpmnLabelConfigUpdates.value = { custom_labels: {}, positions: {} };
+    }
+    
+    // Refresh data dari database
+    await fetchSopDisplayConfig();
+    
+    // Force refresh template components
+    if (sopStepTemplateRef.value) {
+        sopStepTemplateRef.value.forceRecalculation();
+    }
+    if (sopBpmnTemplateRef.value) {
+        sopBpmnTemplateRef.value.forceRecalculation();
+    }
+};
+
+const hasLabelChanges = computed(() => {
+    const flowchartLabelUpdates = flowchartLabelConfigUpdates.value || {};
+    const bpmnLabelUpdates = bpmnLabelConfigUpdates.value || {};
+    
+    const flowchartHasChanges = Object.keys(flowchartLabelUpdates.custom_labels || {}).length > 0 || 
+                               Object.keys(flowchartLabelUpdates.positions || {}).length > 0;
+    const bpmnHasChanges = Object.keys(bpmnLabelUpdates.custom_labels || {}).length > 0 || 
+                          Object.keys(bpmnLabelUpdates.positions || {}).length > 0;
+    
+    return flowchartHasChanges || bpmnHasChanges;
+});
 
 // BARU: Reset panah ke konfigurasi terakhir (database atau algoritma)
 const resetArrowsToLastSaved = () => {
-    // Jika tidak ada perubahan yang belum disimpan, tidak perlu reset
     if (!hasUnsavedArrowChanges.value) {
         toast.info('Tidak ada perubahan yang perlu direset', { autoClose: 3000 });
         return;
@@ -90,6 +295,7 @@ const resetArrowsToLastSaved = () => {
     
     if (activeTab.value === 'document') {
         flowchartArrowConfigUpdates.value = {};
+        flowchartLabelConfigUpdates.value = { custom_labels: {}, positions: {} };
         
         if (sopStepTemplateRef.value) {
             sopStepTemplateRef.value.resetArrowsToLastSaved();
@@ -97,9 +303,11 @@ const resetArrowsToLastSaved = () => {
         
     } else if (activeTab.value === 'bpmn') {
         bpmnArrowConfigUpdates.value = {};
+        bpmnLabelConfigUpdates.value = { custom_labels: {}, positions: {} };
         
         if (sopBpmnTemplateRef.value) {
             sopBpmnTemplateRef.value.resetArrowsToLastSaved();
+            sopBpmnTemplateRef.value.resetDecisionTextPositions();
         }
     }
 };
@@ -150,29 +358,28 @@ const finalBpmnConfig = computed(() => {
     return merged;
 });
 
-// BARU: Fungsi untuk eksekusi penyimpanan konfigurasi
 const executeConfigSave = async () => {
     const promise = new Promise(async (resolve, reject) => {
         try {
-            await saveSopDisplayConfig(idsopdetail, {
+            const payload = {
                 nominal_basic_page_steps: sopConfig.value.firstPageSteps,
                 nominal_steps_both_opc: sopConfig.value.nextPageSteps,
                 kegiatan_width: sopConfig.value.widthKegiatan,
                 kelengkapan_width: sopConfig.value.widthKelengkapan,
                 waktu_width: sopConfig.value.widthWaktu,
                 output_width: sopConfig.value.widthOutput,
-                ket_width: sopConfig.value.widthKeterangan,
-                flowchart_arrow_config: JSON.stringify(finalFlowchartConfig.value),
-                bpmn_arrow_config: JSON.stringify(finalBpmnConfig.value)
-            });
+                ket_width: sopConfig.value.widthKeterangan
+            };
+            
+            // PERBAIKAN: Gunakan API layout untuk konfigurasi layout saja
+            await saveSopLayout(idsopdetail, payload);
             
             showConfigPanel.value = false;
             arrowEditMode.value = false;
+            isEditing.value = false;
             
-            // BARU: Setelah simpan, refresh dari database dan force recalculation
             await fetchSopDisplayConfig();
             
-            // BARU: Force refresh template components untuk memastikan menggunakan data terbaru
             if (sopStepTemplateRef.value) {
                 sopStepTemplateRef.value.forceRecalculation();
             }
@@ -182,12 +389,13 @@ const executeConfigSave = async () => {
             
             resolve();
         } catch (err) {
+            console.error('Error saving SOP layout config:', err);
             reject(err);
         }
     });
 
     useToastPromise(promise, {
-        messages: { success: 'Konfigurasi berhasil disimpan!' },
+        messages: { success: 'Konfigurasi layout berhasil disimpan!' },
         toastOptions: { autoClose: 3000 }
     });
 };
@@ -195,24 +403,24 @@ const executeConfigSave = async () => {
 // BARU: Hapus konfigurasi manual panah
 const clearArrowConfigs = async () => {
     try {
-        const type = activeTab.value;
-        
         const promise = new Promise(async (resolve, reject) => {
             try {
-                await clearSopDisplayConfig(idsopdetail, type);
-                console.log(`Konfigurasi panah ${idsopdetail} untuk ${type} berhasil dihapus dari database.`);
-                
-                // PERBAIKAN: Reset semua state updates sementara
-                if (type === 'document') {
+                if (activeTab.value === 'document') {
+                    await clearFlowchartConfig(idsopdetail);
                     flowchartArrowConfigUpdates.value = {};
-                } else {
+                    flowchartLabelConfigUpdates.value = { custom_labels: {}, positions: {} };
+                } else if (activeTab.value === 'bpmn') {
+                    await clearBpmnConfig(idsopdetail);
                     bpmnArrowConfigUpdates.value = {};
+                    bpmnLabelConfigUpdates.value = { custom_labels: {}, positions: {} };
                 }
+                
+                console.log(`Konfigurasi ${activeTab.value} berhasil dihapus dari database.`);
                 
                 // Refresh konfigurasi dari database
                 await fetchSopDisplayConfig();
                 
-                // BARU: Force refresh template components untuk memastikan menggunakan algoritma
+                // Force refresh template components
                 if (sopStepTemplateRef.value) {
                     sopStepTemplateRef.value.forceRecalculation();
                 }
@@ -227,22 +435,25 @@ const clearArrowConfigs = async () => {
         });
 
         useToastPromise(promise, {
-            messages: { success: 'Konfigurasi panah berhasil dihapus!' },
+            messages: { success: `Konfigurasi ${activeTab.value === 'document' ? 'Flowchart' : 'BPMN'} berhasil dihapus!` },
             toastOptions: { autoClose: 3000 }
         });
     } catch (err) {
-        toast.error('Gagal menghapus konfigurasi panah!', { autoClose: 3000 });
+        toast.error('Gagal menghapus konfigurasi!', { autoClose: 3000 });
     }
+};
+
+const handleTabChange = async (newTab) => {
+    if (isEditing.value) {
+        toast.warning('Selesaikan edit terlebih dahulu!', { autoClose: 3000 });
+        return;
+    }
+    activeTab.value = newTab;
 };
 
 // BARU: Computed untuk mengecek apakah form layout harus disabled
 const isLayoutFormDisabled = computed(() => {
     return hasAnyArrowConfig.value || isDisabled.value;
-});
-
-// BARU: Ekspos fungsi saveSopConfig agar bisa dipanggil dari parent component
-defineExpose({
-    saveSopConfig
 });
 
 // BARU: State untuk modal konfirmasi hapus
@@ -276,18 +487,6 @@ const confirmDeleteArrowConfigs = async () => {
     await clearArrowConfigs();
 };
 
-// PERBAIKAN: Watch untuk debug perubahan arrowConfig dari injected values
-// watch([flowchartArrowConfig, bpmnArrowConfig], ([newFlowchart, newBpmn], [oldFlowchart, oldBpmn]) => {
-//     console.log('Injected flowchartArrowConfig changed from:', oldFlowchart, 'to:', newFlowchart);
-//     console.log('Injected bpmnArrowConfig changed from:', oldBpmn, 'to:', newBpmn);
-// }, { deep: true });
-
-// PERBAIKAN: Watch untuk debug perubahan updates
-// watch([flowchartArrowConfigUpdates, bpmnArrowConfigUpdates], ([newFlowchartUpdates, newBpmnUpdates], [oldFlowchartUpdates, oldBpmnUpdates]) => {
-//     console.log('FlowchartArrowConfigUpdates changed from:', oldFlowchartUpdates, 'to:', newFlowchartUpdates);
-//     console.log('BpmnArrowConfigUpdates changed from:', oldBpmnUpdates, 'to:', newBpmnUpdates);
-// }, { deep: true });
-
 // BARU: Computed untuk mengecek apakah ada perubahan yang belum disimpan
 const hasUnsavedArrowChanges = computed(() => {
     if (activeTab.value === 'document') {
@@ -297,7 +496,7 @@ const hasUnsavedArrowChanges = computed(() => {
         
         // Jika tidak ada updates sama sekali, tidak ada perubahan
         if (!updates || Object.keys(updates).length === 0) {
-            return false;
+            return hasLabelChanges.value;
         }
         
         // Cek setiap connection yang ada updates
@@ -316,7 +515,7 @@ const hasUnsavedArrowChanges = computed(() => {
             }
         }
         
-        return false;
+        return hasLabelChanges.value;
     } else if (activeTab.value === 'bpmn') {
         // Bandingkan bpmnArrowConfigUpdates dengan yang sudah disimpan
         const updates = bpmnArrowConfigUpdates.value;
@@ -324,7 +523,7 @@ const hasUnsavedArrowChanges = computed(() => {
         
         // Jika tidak ada updates sama sekali, tidak ada perubahan
         if (!updates || Object.keys(updates).length === 0) {
-            return false;
+            return hasLabelChanges.value;
         }
         
         // Cek setiap connection yang ada updates
@@ -343,7 +542,7 @@ const hasUnsavedArrowChanges = computed(() => {
             }
         }
         
-        return false;
+        return hasLabelChanges.value;
     }
     
     return false;
@@ -405,23 +604,6 @@ const hasConfigurationDifference = (config1, config2) => {
     
     return false;
 };
-
-// BARU: Watch untuk debug perubahan yang belum disimpan
-// watch(hasUnsavedArrowChanges, (newValue, oldValue) => {
-//     console.log(`[ThirdStep] hasUnsavedArrowChanges changed from ${oldValue} to ${newValue}`);
-//     if (newValue) {
-//         const activeUpdates = activeTab.value === 'document' ? flowchartArrowConfigUpdates.value : bpmnArrowConfigUpdates.value;
-//         console.log(`[ThirdStep] Unsaved changes detected:`, activeUpdates);
-//     }
-// });
-
-// // BARU: Watch untuk debug perubahan updates
-// watch([flowchartArrowConfigUpdates, bpmnArrowConfigUpdates], ([newFlowchartUpdates, newBpmnUpdates]) => {
-//     console.log('[ThirdStep] Arrow config updates changed:', {
-//         flowchart: newFlowchartUpdates,
-//         bpmn: newBpmnUpdates
-//     });
-// }, { deep: true });
 </script>
 
 <template>
@@ -448,15 +630,19 @@ const hasConfigurationDifference = (config1, config2) => {
 
         <div class="flex justify-center my-6 print:hidden">
             <div class="inline-flex rounded-md shadow-sm" role="group">
-                <button @click="activeTab = 'document'" type="button" 
-                    class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-l-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
+                <button @click="handleTabChange('document')" type="button" 
+                    :disabled="isEditing && activeTab !== 'document'"
+                    class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-l-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     :class="activeTab === 'document' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'">
                     Flowchart
+                    <span v-if="isEditing && activeTab === 'document'" class="ml-1 text-orange-600">●</span>
                 </button>
-                <button @click="activeTab = 'bpmn'" type="button" 
-                    class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-r-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700"
+                <button @click="handleTabChange('bpmn')" type="button" 
+                    :disabled="isEditing && activeTab !== 'bpmn'"
+                    class="px-4 py-2 text-sm font-medium bg-white border-2 rounded-r-lg hover:bg-gray-200 focus:z-10 focus:ring-2 focus:ring-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     :class="activeTab === 'bpmn' ? 'text-blue-700 border-blue-700' : 'text-gray-900 border-gray-200 hover:text-blue-700'">
                     BPMN
+                    <span v-if="isEditing && activeTab === 'bpmn'" class="ml-1 text-orange-600">●</span>
                 </button>
             </div>
         </div>
@@ -476,7 +662,8 @@ const hasConfigurationDifference = (config1, config2) => {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                               d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
-                    {{ arrowEditMode ? 'Selesai Edit Panah' : 'Edit Panah' }}
+                    {{ arrowEditMode ? 'Selesai & Simpan' : 'Edit Panah & Label' }}
+                    <span v-if="hasUnsavedArrowChanges && arrowEditMode" class="w-2 h-2 bg-red-500 rounded-full"></span>
                 </span>
             </button>
         </div>
@@ -524,35 +711,39 @@ const hasConfigurationDifference = (config1, config2) => {
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div class="text-sm text-orange-800">
-                    <p class="font-semibold mb-2">Mode Edit Panah Aktif</p>
+                    <p class="font-semibold mb-2">Mode Edit Panah & Label Aktif</p>
+                    <p class="text-xs mb-2 font-medium text-red-700">⚠️ Tab lain dinonaktifkan saat editing. Klik "Selesai & Simpan" untuk mengakhiri.</p>
                     <ul class="space-y-1 text-xs">
                         <li>• <span class="font-medium">Hijau:</span> Titik awal panah (dapat digeser)</li>
                         <li>• <span class="font-medium">Merah:</span> Titik akhir panah (dapat digeser)</li>
                         <li>• <span class="font-medium">Biru:</span> Titik belok (dapat digeser dan dihapus)</li>
                         <li>• <span class="font-medium">Double-click pada panah:</span> Tambah titik belok baru</li>
+                        <li>• <span class="font-medium">Double-click pada label:</span> Edit teks label (maks. 20 karakter)</li>
+                        <li>• <span class="font-medium">Drag label:</span> Pindah posisi label</li>
+                        <li v-if="activeTab === 'bpmn'">• <span class="font-medium">Drag teks decision:</span> Pindah posisi teks (BPMN)</li>
                         <li>
                             • <span class="font-medium">Reset ke Kondisi Terakhir:</span> 
                             <span v-if="hasUnsavedArrowChanges" class="text-green-700">
                                 Kembalikan ke konfigurasi terakhir sebelum perubahan
                             </span>
                             <span v-else class="text-orange-600">
-                                Belum ada perubahan panah terbaru pada {{ activeTab === 'document' ? 'Flowchart' : 'BPMN' }}
+                                Belum ada perubahan terbaru pada {{ activeTab === 'document' ? 'Flowchart' : 'BPMN' }}
                             </span>
                         </li>
                         <li>
                             • <span class="font-medium">Hapus Konfigurasi Manual:</span>
                             <span v-if="hasArrowConfig" class="text-green-700">
-                                Hapus semua konfigurasi panah manual dan gunakan panah otomatis
+                                Hapus semua konfigurasi manual dan gunakan panah otomatis
                             </span>
                             <span v-else class="text-orange-600">
-                                Belum ada konfigurasi panah manual tersimpan untuk {{ activeTab === 'document' ? 'Flowchart' : 'BPMN' }}
+                                Belum ada konfigurasi manual tersimpan untuk {{ activeTab === 'document' ? 'Flowchart' : 'BPMN' }}
                             </span>
                         </li>
                     </ul>
                 </div>
             </div>
         </div>
-
+        
         <SopStepTemplate
             v-if="activeTab === 'document'"
             ref="sopStepTemplateRef"
@@ -562,6 +753,7 @@ const hasConfigurationDifference = (config1, config2) => {
             :edit-mode="arrowEditMode"
             @arrow-config-updated="handleFlowchartArrowUpdate"
             @manual-edit="handleFlowchartManualEdit"
+            @label-edit="handleLabelEdit"
         />
 
         <SopBpmnTemplate
@@ -574,6 +766,7 @@ const hasConfigurationDifference = (config1, config2) => {
             :edit-mode="arrowEditMode"
             @arrow-config-updated="handleBpmnArrowUpdate"
             @manual-edit="handleBpmnManualEdit"
+            @label-edit="handleLabelEdit"
         />
 
         <div class="fixed bottom-6 right-6 z-50 print:hidden">
@@ -588,7 +781,7 @@ const hasConfigurationDifference = (config1, config2) => {
                     </button>
                 </div>
                 <form @submit.prevent="saveSopConfig">
-                    <div class="p-4 space-y-3">
+                    <div class="p-4 space-y-3 overflow-y-auto" :style="{ maxHeight: 'calc(100vh - 220px)' }">
                         <div v-if="hasAnyArrowConfig" class="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
                             <div class="flex items-center gap-2 text-red-800 mb-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -662,8 +855,7 @@ const hasConfigurationDifference = (config1, config2) => {
                         </div>
                     </div>
                     <div class="flex justify-end p-3 border-t">
-                        <button type="button" @click="fetchSopDisplayConfig"
-                            :disabled="isLayoutFormDisabled"
+                        <button type="button" @click="fetchSopDisplayConfig" :disabled="isLayoutFormDisabled"
                             class="bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg px-5 py-2 font-semibold shadow focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 transition-all duration-300 text-sm mr-2 disabled:opacity-50 disabled:cursor-not-allowed">
                             Reset
                         </button>
@@ -674,7 +866,7 @@ const hasConfigurationDifference = (config1, config2) => {
                     </div>
                 </form>
             </div>
-            <button @click="showConfigPanel = !showConfigPanel" :title="showConfigPanel ? 'Tutup Pengaturan Layout' : 'Pengaturan Layout'" v-if="activeTab === 'document'"
+            <button @click="showConfigPanel = !showConfigPanel" :title="showConfigPanel ? 'Tutup Pengaturan Layout' : 'Pengaturan Layout'" v-if="activeTab === 'document' && !isDisabled"
                 class="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 transition-all duration-300"
                 :class="{ 'rotate-45 bg-red-600 hover:bg-red-700': showConfigPanel }">
                     <GearIcon class="w-6 h-6 fill-current" :class="{ 'rotate-45': showConfigPanel }" />
@@ -685,7 +877,7 @@ const hasConfigurationDifference = (config1, config2) => {
         <DeleteDataModal
             v-model:showModal="showDeleteModal"
             :deleteData="confirmDeleteArrowConfigs"
-            :text="`Anda yakin ingin menghapus semua konfigurasi manual panah untuk ${activeTab === 'document' ? 'Flowchart' : 'BPMN'}? Panah akan kembali menggunakan algoritma otomatis.`"
+            :text="`Anda yakin ingin menghapus semua konfigurasi manual untuk ${activeTab === 'document' ? 'Flowchart' : 'BPMN'}? Panah/Label akan kembali menggunakan algoritma otomatis.`"
         />
     </div>
 </template>

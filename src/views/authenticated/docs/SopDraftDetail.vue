@@ -52,9 +52,13 @@ const showModal = ref({
 
 const { 
     sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchSigner, isDataError, 
-    fetchSopDisplayConfig, sopConfig, flowchartArrowConfig, bpmnArrowConfig 
+    fetchSopDisplayConfig, sopConfig, flowchartArrowConfig, bpmnArrowConfig, flowchartLabelConfig, bpmnLabelConfig
 } = useSopData(route.params.id);
 provide('sopConfig', sopConfig);
+provide('labelConfigs', {
+    flowchartLabelConfig,
+    bpmnLabelConfig
+});
 
 const fetchFeedback = async () => {
     try {
@@ -223,8 +227,8 @@ const isFeedbackFormDisabled = () => {
 // Fungsi untuk menentukan apakah hanya opsi "Catatan" yang boleh dipilih
 const isCatatanOnly = () => {
     if (
-        (authStore.userRole === 'kadep' && [3, 4].includes(sopData.value.status)) ||
-        (authStore.userRole === 'pj' && [5, 6].includes(sopData.value.status))
+        (authStore.userRole === 'kadep' && [3, 4, 6].includes(sopData.value.status)) ||
+        (authStore.userRole === 'pj' && [4, 5, 6].includes(sopData.value.status))
     ) {
         return true;
     }
@@ -342,9 +346,9 @@ onMounted(fetchAllData);
         <!-- Only render when both steps and implementer arrays exist and have data -->
         <div class="w-full lg:w-2/3 flex flex-col mx-auto mt-12 mb-5" v-if="![2].includes(sopData.status)">
             <h2 class="text-xl font-semibold mb-4">Umpan Balik Sebelumnya</h2>
-            <div v-if="draftFeedback && draftFeedback.length > 0" class="space-y-4">
+            <div v-if="draftFeedback && draftFeedback.length > 0" :class="[ 'py-1', draftFeedback.length > 4 ? 'max-h-96 overflow-y-scroll' : '' ]" >
                 <div v-for="(feedback, index) in draftFeedback" :key="index"
-                    class="bg-gray-200 p-4 rounded-lg shadow-md">
+                    class="bg-gray-200 p-4 rounded-lg shadow-md my-3 mx-1">
                     <div class="flex items-center">
                         <span class="text-base font-bold">{{ feedback?.user?.name || 'User' }}</span>
                         <span class="ml-1 mr-2">({{ roleAbbreviation[feedback.user.role] }})</span> |

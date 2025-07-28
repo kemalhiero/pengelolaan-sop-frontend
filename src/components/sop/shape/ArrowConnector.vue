@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch, inject } from 'vue';
+import { onMounted, ref, watch, nextTick, computed, inject } from 'vue';
 
 const props = defineProps({
   connection: {
@@ -37,7 +37,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['mounted', 'path-updated', 'manual-edit']);
+const emit = defineEmits(['mounted', 'path-updated', 'manual-edit', 'label-edit']);
 
 // BARU: State untuk mode edit
 const isDragging = ref(false);
@@ -55,6 +55,15 @@ const algorithmConfig = ref(null);
 // BARU: State untuk menampilkan koordinat saat drag
 const showCoordinates = ref(false);
 const dragCoordinates = ref({ x: 0, y: 0 });
+
+// BARU: State untuk edit label
+const isEditingLabel = ref(false);
+const labelText = ref('');
+const labelInputRef = ref(null);
+
+// BARU: State untuk drag label
+const isDraggingLabel = ref(false);
+const labelDragStart = ref({ x: 0, y: 0 });
 
 // Fungsi untuk mendapatkan posisi elemen dengan pengecekan null
 const getElementPosition = (elementId) => {
@@ -539,33 +548,6 @@ const calculatePath = async () => {
               ? finalEnd
               : bestPath.end);
 
-        // Fungsi untuk menghitung titik offset dari garis (start ke end) sejauh labelDistance piksel
-        function getFixedDistancePoint(startPoint, endPoint, distance, offset = 19) {
-          if (!startPoint || !endPoint || 
-              isNaN(startPoint.x) || isNaN(startPoint.y) || 
-              isNaN(endPoint.x) || isNaN(endPoint.y)) {
-            return null;
-          }
-          
-          const dx = endPoint.x - startPoint.x;
-          const dy = endPoint.y - startPoint.y;
-          const length = Math.sqrt(dx * dx + dy * dy);
-          if (length === 0) return { x: startPoint.x, y: startPoint.y };
-
-          // Ambil titik sejauh 'distance' piksel dari start ke end
-          const px = startPoint.x + (dx / length) * distance;
-          const py = startPoint.y + (dy / length) * distance;
-
-          // Offset label agar tidak menumpuk garis
-          if (Math.abs(dx) > Math.abs(dy)) {
-            // Garis horizontal, offset vertikal
-            return { x: px, y: py - offset };
-          } else {
-            // Garis vertikal, offset horizontal
-            return { x: px + offset, y: py };
-          }
-        }
-
         if (start && end) {
           const p = getFixedDistancePoint(start, end, labelDistance, 19);
           if (p) {
@@ -696,6 +678,127 @@ const getFixedDistancePoint = (startPoint, endPoint, distance, offset = 19) => {
   }
 };
 
+// BARU: Fungsi untuk memulai edit label
+const startLabelEdit = (event) => {
+  if (!props.editMode) return;
+  
+  event.preventDefault();
+  event.stopPropagation();
+  
+  isEditingLabel.value = true;
+  labelText.value = props.connection.label || '';
+  
+  nextTick(() => {
+    if (labelInputRef.value) {
+      labelInputRef.value.focus();
+      labelInputRef.value.select();
+    }
+  });
+};
+
+// BARU: Fungsi untuk menyimpan perubahan label
+const saveLabelEdit = () => {
+  const newLabel = labelText.value.trim().substring(0, 20); // Batasi 20 karakter
+  
+  emit('label-edit', {
+    connectionId: props.connection.id,
+    newLabel: newLabel || null
+  });
+  
+  isEditingLabel.value = false;
+};
+
+// BARU: Fungsi untuk membatalkan edit label
+const cancelLabelEdit = () => {
+  isEditingLabel.value = false;
+  labelText.value = '';
+};
+
+// PERBAIKAN: State untuk drag label yang lebih stabil
+const currentLabelPosition = ref(null);
+
+// PERBAIKAN: Computed untuk posisi label yang konsisten
+const effectiveLabelPosition = computed(() => {
+  if (isDraggingLabel.value && currentLabelPosition.value) {
+    return currentLabelPosition.value;
+  }
+  return (props.manualConfig?.labelPosition) || labelPosition.value;
+});
+
+// PERBAIKAN: Fungsi untuk drag label yang lebih smooth
+const startLabelDrag = (event) => {
+  if (!props.editMode || isEditingLabel.value) return;
+  
+  event.preventDefault();
+  event.stopPropagation();
+  
+  isDraggingLabel.value = true;
+  
+  // PERBAIKAN: Ambil posisi awal yang tepat
+  const startX = effectiveLabelPosition.value?.x || 0;
+  const startY = effectiveLabelPosition.value?.y || 0;
+  
+  const container = document.querySelector(`#${props.idcontainer}`);
+  if (!container) return;
+  
+  const containerRect = container.getBoundingClientRect();
+  labelDragStart.value = {
+    x: event.clientX - containerRect.left - startX,
+    y: event.clientY - containerRect.top - startY
+  };
+  
+  // PERBAIKAN: Set posisi awal untuk tracking
+  currentLabelPosition.value = { x: startX, y: startY };
+  
+  document.addEventListener('mousemove', handleLabelDrag);
+  document.addEventListener('mouseup', stopLabelDrag);
+};
+
+const handleLabelDrag = (event) => {
+  if (!isDraggingLabel.value) return;
+  
+  const container = document.querySelector(`#${props.idcontainer}`);
+  if (!container) return;
+  
+  const containerRect = container.getBoundingClientRect();
+  const newX = event.clientX - containerRect.left - labelDragStart.value.x;
+  const newY = event.clientY - containerRect.top - labelDragStart.value.y;
+  
+  // PERBAIKAN: Update current position untuk rendering realtime
+  currentLabelPosition.value = { x: newX, y: newY };
+};
+
+const stopLabelDrag = () => {
+  if (!isDraggingLabel.value) return;
+  
+  isDraggingLabel.value = false;
+  
+  document.removeEventListener('mousemove', handleLabelDrag);
+  document.removeEventListener('mouseup', stopLabelDrag);
+  
+  // PERBAIKAN: Emit dengan posisi final
+  if (currentLabelPosition.value) {
+    const config = {
+      connectionId: props.connection.id,
+      labelPosition: currentLabelPosition.value,
+      // PERBAIKAN: Pertahankan config arrow yang sudah ada
+      ...(props.manualConfig && {
+        startPoint: props.manualConfig.startPoint,
+        endPoint: props.manualConfig.endPoint,
+        bendPoints: props.manualConfig.bendPoints,
+        sSide: props.manualConfig.sSide,
+        eSide: props.manualConfig.eSide
+      })
+    };
+    
+    emit('manual-edit', config);
+  }
+  
+  // PERBAIKAN: Reset current position setelah emit
+  currentLabelPosition.value = null;
+};
+
+// Update emitManualEdit untuk menyertakan posisi label
 const emitManualEdit = () => {
   if (localPoints.value.length < 2) return;
   
@@ -703,7 +806,6 @@ const emitManualEdit = () => {
   const endPoint = localPoints.value[localPoints.value.length - 1];
   const bendPoints = localPoints.value.slice(1, -1);
   
-  // PERBAIKAN: Simpan informasi label dalam konfigurasi manual
   const config = {
     connectionId: props.connection.id,
     startPoint: { x: startPoint.x, y: startPoint.y },
@@ -713,18 +815,12 @@ const emitManualEdit = () => {
     eSide: props.manualConfig?.eSide || algorithmConfig.value?.eSide || 'left'
   };
   
-  // BARU: Tambahkan informasi label jika ada
+  // PERBAIKAN: Sertakan informasi label yang sudah ada
   if (props.connection.label) {
     config.label = props.connection.label;
     
-    // Hitung dan simpan posisi label
-    const labelDistance = 30;
-    const start = startPoint;
-    const end = bendPoints.length > 0 ? bendPoints[0] : endPoint;
-    
-    const labelPos = getFixedDistancePoint(start, end, labelDistance, 19);
-    if (labelPos) {
-      config.labelPosition = labelPos;
+    if (labelPosition.value) {
+      config.labelPosition = labelPosition.value;
     }
   }
   
@@ -823,6 +919,34 @@ watch(() => [props.editMode, props.manualConfig], ([newEditMode, newManualConfig
     }
   }
 }, { immediate: true });
+
+// PERBAIKAN: Inject label configs
+const { flowchartLabelConfig, bpmnLabelConfig } = inject('labelConfigs');
+
+// PERBAIKAN: Computed untuk label yang ditampilkan berdasarkan database
+const displayLabel = computed(() => {
+  if (!props.connection.label) return null;
+  
+  // Dapatkan config label yang sesuai dengan diagram type
+  const labelConfig = props.idcontainer.includes('bpmn') ? bpmnLabelConfig.value : flowchartLabelConfig.value;
+  const customLabels = labelConfig?.custom_labels || {};
+  
+  // Cari custom label berdasarkan connection ID
+  // Format: step-{seq_number}-{condition} untuk decision connections
+  if (props.connection.condition) {
+    const stepSeq = props.connection.id.match(/conn-(\d+)-/)?.[1];
+    if (stepSeq) {
+      const labelKey = `step-${stepSeq}-${props.connection.condition}`;
+      const customLabel = customLabels[labelKey];
+      if (customLabel) {
+        return customLabel;
+      }
+    }
+  }
+  
+  // Fallback ke label default
+  return props.connection.label;
+});
 </script>
 
 <template>
@@ -911,14 +1035,81 @@ watch(() => [props.editMode, props.manualConfig], ([newEditMode, newManualConfig
       </text>
     </g>
 
-    <!-- PERBAIKAN: Label dengan fallback ke konfigurasi manual -->
-    <text v-if="props.connection.label" 
-          :x="(props.manualConfig?.labelPosition?.x) || labelPosition?.x" 
-          :y="(props.manualConfig?.labelPosition?.y) || labelPosition?.y"
-          class="text-sm font-medium fill-black print:hidden" 
+    <!-- PERBAIKAN: Label dengan posisi yang konsisten -->
+    <g v-if="props.connection.label" class="print:hidden">
+      <!-- Area klik untuk label -->
+      <rect 
+        v-if="!isEditingLabel"
+        :x="(effectiveLabelPosition?.x || 0) - 20"
+        :y="(effectiveLabelPosition?.y || 0) - 10"
+        width="40"
+        height="20"
+        fill="transparent"
+        :class="editMode ? 'cursor-move hover:bg-blue-100 hover:bg-opacity-30' : ''"
+        style="pointer-events: all;"
+        @dblclick="startLabelEdit"
+        @mousedown="startLabelDrag"
+      />
+      
+      <!-- PERBAIKAN: Label text dengan posisi yang konsisten -->
+      <text 
+        v-if="!isEditingLabel"
+        :x="effectiveLabelPosition?.x || 0" 
+        :y="effectiveLabelPosition?.y || 0"
+        class="text-sm font-medium fill-black select-none" 
+        :class="editMode ? 'cursor-move' : ''"
+        text-anchor="middle" 
+        alignment-baseline="middle"
+        style="pointer-events: none;"
+      >
+        {{ displayLabel }}
+      </text>
+      
+      <!-- BARU: Border indicator saat edit mode -->
+      <rect 
+        v-if="!isEditingLabel && editMode"
+        :x="(effectiveLabelPosition?.x || 0) - 20"
+        :y="(effectiveLabelPosition?.y || 0) - 10"
+        width="40"
+        height="20"
+        fill="none"
+        stroke="#3b82f6"
+        stroke-width="1"
+        stroke-dasharray="2,2"
+        rx="4"
+        style="pointer-events: none;"
+        opacity="0.6"
+      />
+      
+      <!-- Input untuk edit label -->
+      <foreignObject 
+        v-if="isEditingLabel"
+        :x="(effectiveLabelPosition?.x || 0) - 40"
+        :y="(effectiveLabelPosition?.y || 0) - 10"
+        width="80"
+        height="20"
+      >
+        <input
+          ref="labelInputRef"
+          v-model="labelText"
+          type="text"
+          maxlength="20"
+          class="w-full h-full text-xs text-center border border-gray-400 rounded px-1"
+          @keyup.enter="saveLabelEdit"
+          @keyup.escape="cancelLabelEdit"
+          @blur="saveLabelEdit"
+        />
+      </foreignObject>
+    </g>
+
+    <!-- Label untuk print -->
+    <text v-if="displayLabel" 
+          :x="effectiveLabelPosition?.x || 0" 
+          :y="effectiveLabelPosition?.y || 0"
+          class="text-sm font-medium fill-black print:block hidden" 
           text-anchor="middle" 
           alignment-baseline="middle">
-      {{ props.connection.label }}
+      {{ displayLabel }}
     </text>
   </g>
 </template>

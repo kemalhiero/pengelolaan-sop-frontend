@@ -1,7 +1,8 @@
 <script setup>
-import { inject, onMounted, provide, ref } from 'vue';
+import { computed, inject, onMounted, provide, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
+import { useAuthStore } from '@/stores/auth';
 import { getUserProfile } from '@/api/userApi';
 import { confirmSopandBpmn } from '@/api/sopApi';
 import useSopData from '@/composables/useSopData';
@@ -23,12 +24,17 @@ const showConfirmationModal = ref(false);
 const activeTab = ref('document');
 const router = useRouter();
 const route = useRoute();
+const authStore = useAuthStore();
 
 const { 
     sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchSigner, isDataError, 
-    fetchSopDisplayConfig, sopConfig, flowchartArrowConfig, bpmnArrowConfig 
+    fetchSopDisplayConfig, sopConfig, flowchartArrowConfig, bpmnArrowConfig, flowchartLabelConfig, bpmnLabelConfig
 } = useSopData(route.params.id);
 provide('sopConfig', sopConfig);
+provide('labelConfigs', {
+    flowchartLabelConfig,
+    bpmnLabelConfig
+});
 
 const confirm = () => {
     try {
@@ -93,15 +99,26 @@ const fetchAllData = async () => {
     await fetchSopDisplayConfig();
 }
 
+const canAccessLegalization = computed(() => {
+    // status 7: untuk kadep, status 8: untuk pj
+    if (!sopData.value || !sopData.value.status) return false;
+    // role: kadep = 'kadep', pj = 'pj'
+    const userRole = authStore.userRole;
+    return (
+        (sopData.value.status === 7 && userRole === 'kadep') ||
+        (sopData.value.status === 8 && userRole === 'pj')
+    );
+});
+
 onMounted(fetchAllData);
 </script>
 
 <template>
     <h2 class="text-4xl text-center my-8 font-bold">
-        {{ isDataError || !sopData.steps.length ? 'Ngapain iseng iseng?🤨' : `Pengesahan SOP ${sopData.name}` }}
+        {{ isDataError || !sopData.steps.length || canAccessLegalization ? 'Ngapain iseng iseng?🤨' : `Pengesahan SOP ${sopData.name}` }}
     </h2>
 
-    <template v-if="!isDataError && sopData.steps.length > 0">
+    <template v-if="!isDataError && sopData.steps.length > 0 && canAccessLegalization">
         <div class="lg:col-span-2 p-6">
             <h2 class="text-2xl font-bold text-gray-800 mb-1">Tanda Tangan</h2>
             <p class="text-sm mb-6">Status tanda tangan Anda.</p>

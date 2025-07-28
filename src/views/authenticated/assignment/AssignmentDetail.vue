@@ -66,7 +66,7 @@ const isDataError = computed(() => {
     return !assignmentInfo.value || !assignmentInfo.value.name || !assignmentInfo.value.number;
 });
 
-const { fetchSopDisplayConfig, sopConfig, flowchartArrowConfig, bpmnArrowConfig, fetchSigner, signer } = useSopData(idsopdetail);
+const { fetchSopDisplayConfig, sopConfig, flowchartArrowConfig, bpmnArrowConfig, flowchartLabelConfig, bpmnLabelConfig } = useSopData(idsopdetail);
 
 provide('assignmentInfo', assignmentInfo);
 provide('sopStep', sopStep);
@@ -84,6 +84,10 @@ provide('idsopdetail', idsopdetail);
 provide('arrowConfigs', {
     flowchartArrowConfig,
     bpmnArrowConfig
+});
+provide('labelConfigs', {
+    flowchartLabelConfig,
+    bpmnLabelConfig
 });
 
 const fetchAssignmentInfo = async () => {
@@ -521,16 +525,6 @@ const nextStep = async () => {
         }
         syncSopInfo();
         syncSopStep();
-
-        // BARU: Simpan konfigurasi SOP sebelum mengirim draft
-        try {
-            if (thirdStepRef.value && thirdStepRef.value.saveSopConfig) {
-                await thirdStepRef.value.saveSopConfig();
-            }
-        } catch (error) {
-            console.error('Error saving SOP config:', error);
-            // Tetap lanjutkan proses meskipun gagal menyimpan config
-        }
 
         // Update status SOP kalau sekarang sudah dikirim untuk nantinya dicek oleh penanggung jawab atau kadep
         // dicek dulu apakah organisasinya dsi atau tidak, jika dsi maka akan langsung di cek oleh kadep

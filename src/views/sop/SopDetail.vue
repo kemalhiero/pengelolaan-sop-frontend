@@ -23,9 +23,13 @@ const authStore = useAuthStore();
 
 const { 
     sopData, signer, fetchSopVersion, fetchInfoSop, fetchSopStep, fetchSigner, isDataError, 
-    fetchSopDisplayConfig, sopConfig, flowchartArrowConfig, bpmnArrowConfig 
+    fetchSopDisplayConfig, sopConfig, flowchartArrowConfig, bpmnArrowConfig, flowchartLabelConfig, bpmnLabelConfig
 } = useSopData(route.params.id);
 provide('sopConfig', sopConfig);
+provide('labelConfigs', {
+    flowchartLabelConfig,
+    bpmnLabelConfig
+});
 
 const activeTab = ref('document');
 const cdnUrl = import.meta.env.VITE_CDN_URL; // URL untuk CDN

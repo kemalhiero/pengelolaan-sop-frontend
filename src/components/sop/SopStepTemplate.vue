@@ -25,13 +25,18 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['arrow-config-updated', 'manual-edit']);
+const emit = defineEmits(['arrow-config-updated', 'manual-edit', 'label-edit']);
 
 const sopConfig = inject('sopConfig');
+const sopStepRaw = inject('sopStep');
+const { flowchartLabelConfig } = inject('labelConfigs');
 
-// BARU: Handler untuk edit manual dari ArrowConnector
 const handleManualEdit = (config) => {
     emit('manual-edit', config);
+};
+
+const handleLabelEdit = (config) => {
+    emit('label-edit', config);
 };
 
 // Definisikan nilai default yang jelas
@@ -156,6 +161,9 @@ const connections = computed(() => {
     const firstImplementerId = implementerIds[0];
     const lastImplementerId = implementerIds[implementerIds.length - 1];
 
+    // PERBAIKAN: Dapatkan custom labels dari database
+    const customLabels = flowchartLabelConfig.value?.custom_labels || {};
+
     props.steps.forEach((step) => {
         const sourceId = `sop-step-${step.seq_number}`;
         const sourcePage = getPageNumber(step.seq_number);
@@ -163,64 +171,68 @@ const connections = computed(() => {
         const normalizeType = t => t === 'terminator' ? 'flowchart-terminator' : t === 'task' ? 'flowchart-task' : t;
         let sourceStepType = normalizeType(step.type);
 
-        const createConnectionEntries = (targetStepId, label = null, condition = null) => {
+        const createConnectionEntries = (targetStepId, defaultLabel = null, condition = null) => {
             if (!targetStepId) return;
             const targetStep = props.steps.find(s => s.id_step === targetStepId);
             if (!targetStep) return;
+
+            // PERBAIKAN: Gunakan custom label dari database, bukan dari step object
+            let finalLabel = defaultLabel;
+            if (condition) {
+                const stepKey = `step-${step.seq_number}-${condition}`;
+                const customLabel = customLabels[stepKey];
+                if (customLabel) {
+                    finalLabel = customLabel;
+                }
+            }
 
             let targetStepType = normalizeType(targetStep.type);
 
             const targetElementId = `sop-step-${targetStep.seq_number}`;
             const targetPage = getPageNumber(targetStep.seq_number);
             
-            // --- PENAMBAHAN ID UNIK ---
             const uniqueId = `conn-${step.seq_number}-to-${targetStep.seq_number}-${condition || 'next'}`;
             const baseConnectorId = `step-${step.seq_number}-to-step-${targetStep.seq_number}`;
 
             if (sourcePage !== targetPage) {
                 const flowDirection = sourcePage < targetPage ? 'down' : 'up';
 
-                // Koneksi dari shape sumber ke OPC outgoing-nya
                 allConnections.push({ 
-                    id: `${uniqueId}-out`, // ID Unik
+                    id: `${uniqueId}-out`,
                     from: sourceId, 
                     to: `opc-out-${baseConnectorId}`,
-                    label, condition,
+                    label: finalLabel, 
+                    condition,
                     sourceType: sourceStepType,
-                    targetType: 'connector', // <-- Targetnya adalah OPC
+                    targetType: 'connector',
                     isOpcConnectionSegment: true,
                     flowDirection,
                     sourcePage,
                     targetPage: sourcePage
                 });
                 
-                // Koneksi dari OPC incoming ke shape targetnya
                 allConnections.push({ 
-                    id: `${uniqueId}-in`, // ID Unik
+                    id: `${uniqueId}-in`,
                     from: `opc-in-${baseConnectorId}`,
                     to: targetElementId,
-                    sourceType: 'connector', // <-- Sumbernya adalah OPC
-                    targetType: targetStepType, // <-- Targetnya adalah shape tujuan
+                    sourceType: 'connector',
+                    targetType: targetStepType,
                     isOpcConnectionSegment: true,
                     flowDirection,
                     sourcePage: targetPage,
                     targetPage
                 });
             } else {
-                // Koneksi standar dalam satu halaman
                 allConnections.push({ 
-                    id: uniqueId, // ID Unik
+                    id: uniqueId,
                     from: sourceId, 
                     to: targetElementId, 
-                    label, 
+                    label: finalLabel, 
                     condition,
                     sourceType: sourceStepType,
                     targetType: targetStepType,
                     sourcePage,
                     targetPage,
-                    // BARU: Tambahkan info posisi kolom & status langkah pertama
-                    // isSourceFirstColumn: step.id_implementer === firstImplementerId,
-                    // isSourceLastColumn: step.id_implementer === lastImplementerId,
                     isTargetFirstStep: targetStep.seq_number === 1,
                     isTargetFirstColumn: targetStep.id_implementer === firstImplementerId,
                     isTargetLastColumn: targetStep.id_implementer === lastImplementerId,
@@ -232,7 +244,6 @@ const connections = computed(() => {
             createConnectionEntries(step.id_next_step_if_yes, 'Ya', 'yes');
             createConnectionEntries(step.id_next_step_if_no, 'Tidak', 'no');
         } else {
-            // Untuk step non-decision, asumsikan mengarah ke step berikutnya secara sekuensial jika ada.
             const nextStepInSequence = props.steps.find(s => s.seq_number === step.seq_number + 1);
             if (nextStepInSequence) {
                 createConnectionEntries(nextStepInSequence.id_step);
@@ -451,7 +462,7 @@ const getStyledOpcGroups = (pageIndex, area) => {
             if (a.type !== b.type) {
                 return a.type.localeCompare(b.type); // 'incoming' before 'outgoing'
             }
-            return a.letter.localeCompare(b.letter);
+            return a.letter.localeCompare(b.letter); // Then by letter
         });
 
         opcsInThisColumn.forEach((opc, idx) => {
@@ -607,11 +618,9 @@ const setArrowConnectorRef = (el, connectionId) => {
     }
 };
 
-// PERBAIKAN: Force recalculation yang lebih thorough
+// PERBAIKAN: Force recalculation yang menggunakan label dari database
 const forceRecalculation = () => {
     console.log('[SopStepTemplate] Force recalculation triggered');
-    console.log('[SopStepTemplate] Current props.arrowConfig:', props.arrowConfig);
-    console.log('[SopStepTemplate] Current internal arrowConfigs:', arrowConfigs.value);
     
     // Reset semua state yang berhubungan dengan panah
     arrowConfigs.value = {};
@@ -744,21 +753,22 @@ watch(() => props.arrowConfig, (newConfig, oldConfig) => {
                     <!-- SVG arrows layer -->
                     <svg v-if="arrowsReady" class="absolute inset-0 w-full h-full z-20"
                          :class="editMode ? 'pointer-events-auto' : 'pointer-events-none'">
-                        <arrow-connector 
-                            v-for="(connection, connIndex) in getConnectionsForPage(pageIndex)" 
-                            :key="`conn-${pageIndex}-${connIndex}-${redrawKey}`"
-                            :ref="el => setArrowConnectorRef(el, connection.id)"
-                            :idarrow="`arrow-${pageIndex}-${connIndex}`" 
-                            :idcontainer="`${mainSopAreaId}-${pageIndex}`"
-                            :connection="connection"
-                            :redraw-key="redrawKey"
-                            :obstacles="pageObstacles[pageIndex] || []"
-                            :used-sides="usedSides"
-                            :manual-config="arrowConfig[connection.id]"
-                            :edit-mode="editMode"
-                            @path-updated="handlePathUpdate"
-                            @manual-edit="handleManualEdit"
-                        />
+                            <arrow-connector 
+                                v-for="(connection, connIndex) in getConnectionsForPage(pageIndex)" 
+                                :key="`conn-${pageIndex}-${connIndex}-${redrawKey}`"
+                                :ref="el => setArrowConnectorRef(el, connection.id)"
+                                :idarrow="`arrow-${pageIndex}-${connIndex}`" 
+                                :idcontainer="`${mainSopAreaId}-${pageIndex}`"
+                                :connection="connection"
+                                :redraw-key="redrawKey"
+                                :obstacles="pageObstacles[pageIndex] || []"
+                                :used-sides="usedSides"
+                                :manual-config="arrowConfig[connection.id]"
+                                :edit-mode="editMode"
+                                @path-updated="handlePathUpdate"
+                                @manual-edit="handleManualEdit"
+                                @label-edit="handleLabelEdit"
+                            />
                     </svg>
                 </div>
             </div>

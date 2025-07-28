@@ -14,9 +14,13 @@ const createSopDetail = (id, data) => postRequest(`sop/detail/${id}`, data, getT
 const updateSopDetail = (id, data) => patchRequest(`sop/detail/${id}`, data, getToken());
 const deleteSopDetail = (id) => deleteRequest(`sop/detail/${id}`, getToken());
 
-const saveSopDisplayConfig = (id, data) => patchRequest(`sop/detail/display/${id}`, data, getToken());
-const getSopDisplayConfig = (id) => getRequest(`sop/detail/display/${id}`, getToken());
-const clearSopDisplayConfig = (id, type) => patchRequest(`sop/detail/display/${id}/arrow?type=${type}`, null, getToken());
+// tampilan
+const getSopDisplayConfig = (id) => getRequest(`sop/detail/display/${id}`, getToken()); // mengambil seluruh konfigurasi tampilan (pagination, layout, panah dan label)
+const saveSopLayout = (id, data) => patchRequest(`sop/detail/display/${id}/layout`, data, getToken());  // menyimpan konfigurasi layout dan pagination saja
+const saveFlowchartConfig = (id, data) => patchRequest(`sop/detail/display/${id}/flowchart`, data, getToken()); // menyimpan konfigurasi panah dan label flowchart saja
+const clearFlowchartConfig = (id) => deleteRequest(`sop/detail/display/${id}/flowchart`, getToken()); // menghapus konfigurasi panah dan label flowchart
+const saveBpmnConfig = (id, data) => patchRequest(`sop/detail/display/${id}/bpmn`, data, getToken()); // menyimpan konfigurasi panah dan label bpmn saja
+const clearBpmnConfig = (id) => deleteRequest(`sop/detail/display/${id}/bpmn`, getToken()); // menghapus konfigurasi panah dan label bpmn
 
 const getManagedSop = () => getRequest('sop/managed', getToken());
 
@@ -34,8 +38,9 @@ const confirmSopandBpmn = (id) => patchRequest(`sop/confirm/${id}`, null, getTok
 
 export {
     getAllSop, createSop, getOneSop, updateSop, deleteSop,             //tabel sop
-    createSopDetail, updateSopDetail, deleteSopDetail, getAssignment, getAssignmentDetail, 
+    createSopDetail, updateSopDetail, deleteSopDetail, getAssignment, getAssignmentDetail,
     getSectionandWarning, getLatestSopInYear, getManagedSop, getSopVersion,      //tabel detail sop
     createSopStep, getSopStep, updateSopStep, deleteSopStep,    //tabel sop step
-    confirmSopandBpmn, saveSopDisplayConfig, getSopDisplayConfig, clearSopDisplayConfig
+    getSopDisplayConfig, saveSopLayout, saveFlowchartConfig, saveBpmnConfig, clearFlowchartConfig, clearBpmnConfig,
+    confirmSopandBpmn,
 };

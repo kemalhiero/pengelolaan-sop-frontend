@@ -1,11 +1,12 @@
 <script setup>
-import { onMounted, ref, computed, watch, nextTick } from 'vue';
+import { onMounted, ref, computed, watch, nextTick, inject } from 'vue';
 import { capitalizeWords } from '@/utils/text';
 
 import ArrowConnector from '@/components/sop/shape/ArrowConnector.vue';
 import BpmnEvent from '@/components/sop/shape/bpmn/Event.vue';
 import BpmnActivity from '@/components/sop/shape/bpmn/Activity.vue';
 import BpmnGateway from '@/components/sop/shape/bpmn/Gateway.vue';
+import BpmnDecisionText from '@/components/sop/shape/bpmn/DecisionText.vue';
 
 const props = defineProps({
   name: {
@@ -29,7 +30,13 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['arrow-config-updated', 'manual-edit']);
+const emit = defineEmits(['arrow-config-updated', 'manual-edit',  'label-edit']);
+
+const handleLabelEdit = (config) => {
+    emit('label-edit', config);
+};
+const sopStepRaw = inject('sopStep');
+const bpmnLabelConfig = inject('labelConfigs').bpmnLabelConfig;
 
 // --- STATE BARU UNTUK MANAJEMAN PANAH ---
 const arrowConfigs = ref({});
@@ -167,6 +174,9 @@ const processedSteps = computed(() => {
 const bpmnConnections = computed(() => {
   const allConnections = [];
   
+  // PERBAIKAN: Dapatkan custom labels dari database BPMN
+  const customLabels = bpmnLabelConfig.value?.custom_labels || {};
+  
   processedSteps.value.forEach((step) => {
     const targetTypeForConn = (targetStep) => targetStep ? targetStep.type : 'task';
 
@@ -175,11 +185,15 @@ const bpmnConnections = computed(() => {
       if (step.id_next_step_if_yes) {
         const targetStep = processedSteps.value.find(s => s.id_step === step.id_next_step_if_yes);
         if (targetStep) {
+          // PERBAIKAN: Gunakan custom label dari database BPMN
+          const yesKey = `step-${step.seq_number}-yes`;
+          const customYesLabel = customLabels[yesKey];
+          
           allConnections.push({
             id: `conn-${step.seq_number}-to-${targetStep.seq_number}-yes`,
             from: `bpmn-step-${step.seq_number}`,
             to: `bpmn-step-${targetStep.seq_number}`,
-            label: 'Ya',
+            label: customYesLabel || 'Ya',
             condition: 'yes',
             sourceType: step.type,
             targetType: targetTypeForConn(targetStep)
@@ -191,11 +205,15 @@ const bpmnConnections = computed(() => {
       if (step.id_next_step_if_no) {
         const targetStep = processedSteps.value.find(s => s.id_step === step.id_next_step_if_no);
         if (targetStep) {
+          // PERBAIKAN: Gunakan custom label dari database BPMN
+          const noKey = `step-${step.seq_number}-no`;
+          const customNoLabel = customLabels[noKey];
+          
           allConnections.push({
             id: `conn-${step.seq_number}-to-${targetStep.seq_number}-no`,
             from: `bpmn-step-${step.seq_number}`,
             to: `bpmn-step-${targetStep.seq_number}`,
-            label: 'Tidak',
+            label: customNoLabel || 'Tidak',
             condition: 'no',
             sourceType: step.type,
             targetType: targetTypeForConn(targetStep)
@@ -207,10 +225,10 @@ const bpmnConnections = computed(() => {
       const nextStep = processedSteps.value.find(s => s.seq_number === step.seq_number + 1);
       if (nextStep) {
         allConnections.push({
-          id: `conn-${step.seq_number}-to-${nextStep.seq_number}`, // ID Unik
+          id: `conn-${step.seq_number}-to-${nextStep.seq_number}`,
           from: `bpmn-step-${step.seq_number}`,
           to: `bpmn-step-${nextStep.seq_number}`,
-          label: null, // Tidak ada label untuk koneksi biasa
+          label: null,
           sourceType: step.type,
           targetType: targetTypeForConn(nextStep)
         });
@@ -504,6 +522,14 @@ const handleManualEdit = (config) => {
 
 const resetArrowsToLastSaved = () => {
     console.log('BPMN Reset arrows to last saved');
+    
+    // PERBAIKAN: Reset decision text positions dari database
+    const bpmnLabelFromDB = bpmnLabelConfig.value || {};
+    const positions = bpmnLabelFromDB.positions || {};
+    
+    // Reset ke posisi dari database
+    decisionTextPositions.value = { ...positions };
+    
     // Hanya reset arrowConfigs internal
     arrowConfigs.value = {};
     arrowsReady.value = false;
@@ -513,8 +539,10 @@ const resetArrowsToLastSaved = () => {
     });
 };
 
+// PERBAIKAN: Force recalculation tanpa mengubah sopStepRaw
 const forceRecalculation = () => {
     console.log('BPMN Force recalculation triggered');
+    
     // Reset semua state yang berhubungan dengan panah
     arrowConfigs.value = {};
     arrowsReady.value = false;
@@ -523,6 +551,23 @@ const forceRecalculation = () => {
         arrowsReady.value = true;
         console.log('BPMN Arrows ready after force recalculation');
     });
+};
+
+// PERBAIKAN: resetDecisionTextPositions dengan database sync
+const resetDecisionTextPositions = () => {
+    // Reset ke posisi dari database
+    const bpmnLabelFromDB = bpmnLabelConfig.value || {};
+    const positions = bpmnLabelFromDB.positions || {};
+    
+    // Filter hanya posisi untuk decision text (step-X format)
+    const filteredPositions = {};
+    Object.keys(positions).forEach(key => {
+        if (key.startsWith('step-') && !key.includes('-yes') && !key.includes('-no')) {
+            filteredPositions[key] = positions[key];
+        }
+    });
+    
+    decisionTextPositions.value = { ...filteredPositions };
 };
 
 // BARU: Refs untuk ArrowConnector components
@@ -539,8 +584,24 @@ const setArrowConnectorRef = (el, connectionId) => {
 // BARU: Expose functions
 defineExpose({
     resetArrowsToLastSaved,
-    forceRecalculation
+    forceRecalculation,
+    resetDecisionTextPositions
 });
+
+// BARU: State untuk posisi teks decision yang dapat digeser
+const decisionTextPositions = ref({});
+
+// BARU: Handler untuk drag teks decision
+const handleDecisionTextDrag = (stepId, newPosition) => {
+    decisionTextPositions.value[stepId] = newPosition;
+    
+    // Emit manual edit untuk menyimpan posisi
+    emit('manual-edit', {
+        stepId: stepId,
+        textPosition: newPosition,
+        type: 'decision-text'
+    });
+};
 </script>
 
 <template>
@@ -648,7 +709,39 @@ defineExpose({
               </tbody>
             </table>
 
-            <!-- Arrows SVG -->
+            <svg class="absolute inset-0 h-full z-30 w-fit pointer-events-none" 
+                 :style="{ minWidth: `${diagramWidth}px` }">
+              <template v-if="laneLayouts[0] && laneLayouts[0].steps">
+                <BpmnDecisionText
+                  v-for="step in laneLayouts[0].steps.filter(s => s.type === 'decision')"
+                  :key="`decision-text-${step.seq}`"
+                  :step-id="`step-${step.seq}`"
+                  :step-name="step.name"
+                  :x="step.x"
+                  :y="step.y"
+                  :custom-position="decisionTextPositions[`step-${step.seq}`]"
+                  :edit-mode="editMode"
+                  @position-changed="handleDecisionTextDrag"
+                />
+              </template>
+              
+              <template v-for="(lane, index) in laneLayouts.slice(1)" :key="`lane-${index + 1}`">
+                <template v-if="lane && lane.steps">
+                  <BpmnDecisionText
+                    v-for="step in lane.steps.filter(s => s.type === 'decision')"
+                    :key="`decision-text-${step.seq}`"
+                    :step-id="`step-${step.seq}`"
+                    :step-name="step.name"
+                    :x="step.x"
+                    :y="step.y + ((index + 1) * rowHeight)"
+                    :custom-position="decisionTextPositions[`step-${step.seq}`]"
+                    :edit-mode="editMode"
+                    @position-changed="handleDecisionTextDrag"
+                  />
+                </template>
+              </template>
+            </svg>
+
             <svg v-if="arrowsReady" class="absolute inset-0 h-full z-20 w-fit" 
                  :style="{ minWidth: `${diagramWidth}px` }"
                  :class="editMode ? 'pointer-events-auto' : 'pointer-events-none'">
@@ -665,6 +758,7 @@ defineExpose({
                 :edit-mode="editMode"
                 @path-updated="handlePathUpdate"
                 @manual-edit="handleManualEdit"
+                @label-edit="handleLabelEdit"
               />
             </svg>
           </div>
