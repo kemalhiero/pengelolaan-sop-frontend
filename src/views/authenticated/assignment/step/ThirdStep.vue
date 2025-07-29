@@ -1,5 +1,5 @@
 <script setup>
-import { computed, inject, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, inject, onBeforeUnmount, ref, watch, nextTick } from 'vue';
 import { toast } from 'vue3-toastify';
 
 import { saveFlowchartConfig, saveBpmnConfig, clearFlowchartConfig, clearBpmnConfig, saveSopLayout } from '@/api/sopApi';
@@ -262,8 +262,11 @@ const saveCurrentTabConfig = async () => {
         bpmnLabelConfigUpdates.value = { custom_labels: {}, positions: {} };
     }
     
-    // Refresh data dari database
+    // Refresh data dari database dan trigger reactivity
     await fetchSopDisplayConfig();
+    
+    // Trigger nextTick untuk memastikan reaktivitas
+    await nextTick();
     
     // Force refresh template components
     if (sopStepTemplateRef.value) {

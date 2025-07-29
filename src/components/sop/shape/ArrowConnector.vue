@@ -700,6 +700,9 @@ const startLabelEdit = (event) => {
 const saveLabelEdit = () => {
   const newLabel = labelText.value.trim().substring(0, 20); // Batasi 20 karakter
   
+  // BARU: Set override lokal untuk preview langsung
+  localLabelOverride.value = newLabel || null;
+  
   emit('label-edit', {
     connectionId: props.connection.id,
     newLabel: newLabel || null
@@ -923,9 +926,17 @@ watch(() => [props.editMode, props.manualConfig], ([newEditMode, newManualConfig
 // PERBAIKAN: Inject label configs
 const { flowchartLabelConfig, bpmnLabelConfig } = inject('labelConfigs');
 
-// PERBAIKAN: Computed untuk label yang ditampilkan berdasarkan database
+// BARU: State untuk label yang sedang diedit
+const localLabelOverride = ref(null);
+
+// PERBAIKAN: Computed untuk label yang ditampilkan dengan override lokal
 const displayLabel = computed(() => {
   if (!props.connection.label) return null;
+  
+  // BARU: Prioritaskan override lokal jika ada (untuk preview real-time)
+  if (localLabelOverride.value !== null) {
+    return localLabelOverride.value || null;
+  }
   
   // Dapatkan config label yang sesuai dengan diagram type
   const labelConfig = props.idcontainer.includes('bpmn') ? bpmnLabelConfig.value : flowchartLabelConfig.value;
@@ -947,6 +958,14 @@ const displayLabel = computed(() => {
   // Fallback ke label default
   return props.connection.label;
 });
+
+// BARU: Watch untuk reset override saat data database berubah
+watch(() => [flowchartLabelConfig.value, bpmnLabelConfig.value], () => {
+  // Reset override setelah data database update
+  setTimeout(() => {
+    localLabelOverride.value = null;
+  }, 100);
+}, { deep: true });
 </script>
 
 <template>
