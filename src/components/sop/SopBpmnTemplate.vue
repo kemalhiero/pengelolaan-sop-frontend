@@ -23,7 +23,6 @@ const props = defineProps({
     required: true
   },
   arrowConfig: { type: Object, default: () => ({}) },
-  // BARU: Prop untuk mode edit
   editMode: {
     type: Boolean,
     default: false
@@ -35,7 +34,6 @@ const emit = defineEmits(['arrow-config-updated', 'manual-edit',  'label-edit'])
 const handleLabelEdit = (config) => {
     emit('label-edit', config);
 };
-const sopStepRaw = inject('sopStep');
 const bpmnLabelConfig = inject('labelConfigs').bpmnLabelConfig;
 
 // --- STATE BARU UNTUK MANAJEMAN PANAH ---
@@ -461,29 +459,25 @@ const orderedImplementer = computed(() => {
   return [...orderFromSteps, ...remainingImplementers];
 });
 
-// Update computed property untuk print scaling
-const printScaleStyle = computed(() => {
+// BARU: Properti komputasi untuk skala cetak (hanya nilai)
+const printScale = computed(() => {
   const contentWidth = diagramWidth.value;
-  const contentHeight = (orderedImplementer.value.length * rowHeight) + 20; // Total tinggi konten
+  if (contentWidth <= 0) return 1;
   
-  // Ukuran area cetak A4 landscape (dalam mm)
-  const pageWidth = 277; // 297mm - 20mm margin
-  const pageHeight = 190; // 210mm - 20mm margin
+  // Lebar A4 landscape (297mm) dikurangi margin 10mm kiri & kanan
+  const pageWidthInMm = 297 - 20;
   
-  // Hitung scale berdasarkan lebar dan tinggi
-  const scaleX = pageWidth / (contentWidth / 25.4); // Convert px to mm
-  const scaleY = pageHeight / (contentHeight / 25.4);
+  // Konversi lebar konten dari pixel ke mm (asumsi 96 DPI)
+  const contentWidthInMm = (contentWidth / 96) * 25.4;
   
-  // Gunakan scale terkecil agar diagram fit sepenuhnya
-  const scale = Math.min(scaleX, scaleY, 1);
+  // Hitung skala, jangan perbesar jika sudah muat
+  const scale = Math.min(1, pageWidthInMm / contentWidthInMm);
   
-  return {
-    transform: `scale(${scale})`,
-    transformOrigin: 'center center',
-    margin: '0 auto',
-    width: 'fit-content'
-  };
+  return scale;
 });
+
+// BARU: Properti komputasi untuk lebar diagram dalam format string 'px'
+const diagramWidthPx = computed(() => `${diagramWidth.value}px`);
 
 onMounted(() => {
   if (props.steps.length > 0) {
@@ -605,190 +599,206 @@ const handleDecisionTextDrag = (stepId, newPosition) => {
 </script>
 
 <template>
-  <div class="flex justify-center">
-    <div class="overflow-x-auto print:overflow-visible px-4 lg:px-0 print:px-0 w-full">
-      <!-- Wrapper untuk landscape A4 -->
-      <div class="print:w-[297mm] print:h-[210mm] print:mx-auto print:relative">
-        <div class="print-page print:absolute print:inset-0 print:flex print:items-center print:justify-center">
-          <!-- Container untuk konten dengan auto scaling -->
-          <div class="print:flex print:justify-center print:items-center w-full" :style="printScaleStyle">
-            <table class="border-2 border-black relative z-10 w-full md:my-5" :style="{ minWidth: `${diagramWidth}px` }" id="bpmn-container">
-              <tbody>
-                <tr>
-                  <td v-if="props.name" class="border-2 border-black w-0 relative" :rowspan="orderedImplementer.length">
-                    <div class="relative h-full" :style="`width: ${dynamicTitleWidth}px;`">
-                      <p class="font-bold text-lg -rotate-90 text-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-                        :class="(props.name.length * charWidth) > (orderedImplementer.length * rowHeight * safetyFactor) ? 'whitespace-normal' : 'whitespace-nowrap'">
-                        {{ capitalizeWords(props.name) }}
-                      </p>
-                    </div>
-                  </td>
-                  <td class="border-2 border-black w-8">
-                    <div class="flex items-center justify-center w-8">
-                      <p class="-rotate-90 origin-center whitespace-nowrap font-medium">
-                        {{ orderedImplementer[0].name }}
-                      </p>
-                    </div>
-                  </td>
-                  <td class="border-2 border-black p-0">
-                    <div class="relative overflow-x-auto min-h-[120px]">
-                      <svg :ref="el => setSvgRef(el, 0)" class="w-full h-full">
-                        <template v-if="laneLayouts[0] && laneLayouts[0].steps">
-                          <template v-for="step in laneLayouts[0].steps" :key="step.id">
-                            <BpmnEvent 
-                              v-if="step.type === 'terminator'"
-                              :x="step.x"
-                              :y="step.y"
-                              :id="`bpmn-step-${step.seq}`"
-                              :text="step.seq === 0 ? 'Mulai' : 'Selesai'"
-                            />
-                            <BpmnActivity
-                              v-else-if="step.type === 'task'"
-                              :x="step.x"
-                              :y="step.y"
-                              :width="step.width"
-                              :height="step.height"
-                              :name="step.name"
-                              :id="`bpmn-step-${step.seq}`"
-                            />
-                            <BpmnGateway
-                              v-else-if="step.type === 'decision'"
-                              :x="step.x"
-                              :y="step.y"
-                              :name="step.name"
-                              :id="`bpmn-step-${step.seq}`"
-                            />
-                          </template>
-                        </template>
-                      </svg>
-                    </div>
-                  </td>
-                </tr>
-                <tr v-for="(imp, index) in orderedImplementer.slice(1)" :key="imp.id">
-                  <td class="border-2 border-black w-8">
-                    <div class="flex items-center justify-center w-8">
-                      <p class="-rotate-90 origin-center whitespace-nowrap font-medium">
-                        {{ imp.name }}
-                      </p>
-                    </div>
-                  </td>
-                  <td class="border-2 border-black p-0">
-                    <div class="relative overflow-x-auto min-h-[120px]">
-                      <svg :ref="el => setSvgRef(el, index + 1)" class="w-full h-full">
-                        <template v-if="laneLayouts[index + 1] && laneLayouts[index + 1].steps">
-                          <template v-for="step in laneLayouts[index + 1].steps" :key="step.id">
-                            <BpmnEvent 
-                              v-if="step.type === 'terminator'"
-                              :x="step.x"
-                              :y="step.y"
-                              :id="`bpmn-step-${step.seq}`"
-                              :text="step.seq === 0 ? 'Mulai' : 'Selesai'"
-                            />
-                            <BpmnActivity
-                              v-else-if="step.type === 'task'"
-                              :x="step.x"
-                              :y="step.y"
-                              :width="step.width"
-                              :height="step.height"
-                              :name="step.name"
-                              :id="`bpmn-step-${step.seq}`"
-                            />
-                            <BpmnGateway
-                              v-else-if="step.type === 'decision'"
-                              :x="step.x"
-                              :y="step.y"
-                              :name="step.name"
-                              :id="`bpmn-step-${step.seq}`"
-                            />
-                          </template>
-                        </template>
-                      </svg>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+  <!-- Wrapper untuk browser (scroll) dan print (centering) -->
+  <div class="diagram-wrapper">
+    <!-- Kontainer utama untuk diagram yang akan di-scale saat print -->
+    <div class="diagram-container">
+      <table class="border-2 border-black relative z-10 w-full md:my-5" id="bpmn-container">
+        <tbody>
+          <tr>
+            <td v-if="props.name" class="border-2 border-black w-0 relative" :rowspan="orderedImplementer.length">
+              <div class="relative h-full" :style="`width: ${dynamicTitleWidth}px;`">
+                <p class="font-bold text-lg -rotate-90 text-center absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+                  :class="(props.name.length * charWidth) > (orderedImplementer.length * rowHeight * safetyFactor) ? 'whitespace-normal' : 'whitespace-nowrap'">
+                  {{ capitalizeWords(props.name) }}
+                </p>
+              </div>
+            </td>
+            <td class="border-2 border-black w-8">
+              <div class="flex items-center justify-center w-8">
+                <p class="-rotate-90 origin-center whitespace-nowrap font-medium">
+                  {{ orderedImplementer[0].name }}
+                </p>
+              </div>
+            </td>
+            <td class="border-2 border-black p-0">
+              <div class="relative overflow-x-auto min-h-[120px]">
+                <svg :ref="el => setSvgRef(el, 0)" class="w-full h-full">
+                  <template v-if="laneLayouts[0] && laneLayouts[0].steps">
+                    <template v-for="step in laneLayouts[0].steps" :key="step.id">
+                      <BpmnEvent 
+                        v-if="step.type === 'terminator'"
+                        :x="step.x"
+                        :y="step.y"
+                        :id="`bpmn-step-${step.seq}`"
+                        :text="step.seq === 0 ? 'Mulai' : 'Selesai'"
+                      />
+                      <BpmnActivity
+                        v-else-if="step.type === 'task'"
+                        :x="step.x"
+                        :y="step.y"
+                        :width="step.width"
+                        :height="step.height"
+                        :name="step.name"
+                        :id="`bpmn-step-${step.seq}`"
+                      />
+                      <BpmnGateway
+                        v-else-if="step.type === 'decision'"
+                        :x="step.x"
+                        :y="step.y"
+                        :name="step.name"
+                        :id="`bpmn-step-${step.seq}`"
+                      />
+                    </template>
+                  </template>
+                </svg>
+              </div>
+            </td>
+          </tr>
+          <tr v-for="(imp, index) in orderedImplementer.slice(1)" :key="imp.id">
+            <td class="border-2 border-black w-8">
+              <div class="flex items-center justify-center w-8">
+                <p class="-rotate-90 origin-center whitespace-nowrap font-medium">
+                  {{ imp.name }}
+                </p>
+              </div>
+            </td>
+            <td class="border-2 border-black p-0">
+              <div class="relative overflow-x-auto min-h-[120px]">
+                <svg :ref="el => setSvgRef(el, index + 1)" class="w-full h-full">
+                  <template v-if="laneLayouts[index + 1] && laneLayouts[index + 1].steps">
+                    <template v-for="step in laneLayouts[index + 1].steps" :key="step.id">
+                      <BpmnEvent 
+                        v-if="step.type === 'terminator'"
+                        :x="step.x"
+                        :y="step.y"
+                        :id="`bpmn-step-${step.seq}`"
+                        :text="step.seq === 0 ? 'Mulai' : 'Selesai'"
+                      />
+                      <BpmnActivity
+                        v-else-if="step.type === 'task'"
+                        :x="step.x"
+                        :y="step.y"
+                        :width="step.width"
+                        :height="step.height"
+                        :name="step.name"
+                        :id="`bpmn-step-${step.seq}`"
+                      />
+                      <BpmnGateway
+                        v-else-if="step.type === 'decision'"
+                        :x="step.x"
+                        :y="step.y"
+                        :name="step.name"
+                        :id="`bpmn-step-${step.seq}`"
+                      />
+                    </template>
+                  </template>
+                </svg>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-            <svg class="absolute inset-0 h-full z-30 w-fit pointer-events-none" 
-                 :style="{ minWidth: `${diagramWidth}px` }">
-              <template v-if="laneLayouts[0] && laneLayouts[0].steps">
-                <BpmnDecisionText
-                  v-for="step in laneLayouts[0].steps.filter(s => s.type === 'decision')"
-                  :key="`decision-text-${step.seq}`"
-                  :step-id="`step-${step.seq}`"
-                  :step-name="step.name"
-                  :x="step.x"
-                  :y="step.y"
-                  :custom-position="decisionTextPositions[`step-${step.seq}`]"
-                  :edit-mode="editMode"
-                  @position-changed="handleDecisionTextDrag"
-                />
-              </template>
-              
-              <template v-for="(lane, index) in laneLayouts.slice(1)" :key="`lane-${index + 1}`">
-                <template v-if="lane && lane.steps">
-                  <BpmnDecisionText
-                    v-for="step in lane.steps.filter(s => s.type === 'decision')"
-                    :key="`decision-text-${step.seq}`"
-                    :step-id="`step-${step.seq}`"
-                    :step-name="step.name"
-                    :x="step.x"
-                    :y="step.y + ((index + 1) * rowHeight)"
-                    :custom-position="decisionTextPositions[`step-${step.seq}`]"
-                    :edit-mode="editMode"
-                    @position-changed="handleDecisionTextDrag"
-                  />
-                </template>
-              </template>
-            </svg>
+      <svg class="absolute inset-0 h-full z-30 pointer-events-none">
+        <template v-if="laneLayouts[0] && laneLayouts[0].steps">
+          <BpmnDecisionText
+            v-for="step in laneLayouts[0].steps.filter(s => s.type === 'decision')"
+            :key="`decision-text-${step.seq}`"
+            :step-id="`step-${step.seq}`"
+            :step-name="step.name"
+            :x="step.x"
+            :y="step.y"
+            :custom-position="decisionTextPositions[`step-${step.seq}`]"
+            :edit-mode="editMode"
+            @position-changed="handleDecisionTextDrag"
+          />
+        </template>
+        
+        <template v-for="(lane, index) in laneLayouts.slice(1)" :key="`lane-${index + 1}`">
+          <template v-if="lane && lane.steps">
+            <BpmnDecisionText
+              v-for="step in lane.steps.filter(s => s.type === 'decision')"
+              :key="`decision-text-${step.seq}`"
+              :step-id="`step-${step.seq}`"
+              :step-name="step.name"
+              :x="step.x"
+              :y="step.y + ((index + 1) * rowHeight)"
+              :custom-position="decisionTextPositions[`step-${step.seq}`]"
+              :edit-mode="editMode"
+              @position-changed="handleDecisionTextDrag"
+            />
+          </template>
+        </template>
+      </svg>
 
-            <svg v-if="arrowsReady" class="absolute inset-0 h-full z-20 w-fit" 
-                 :style="{ minWidth: `${diagramWidth}px` }"
-                 :class="editMode ? 'pointer-events-auto' : 'pointer-events-none'">
-              <ArrowConnector
-                v-for="(connection, index) in bpmnConnections" 
-                :idarrow="index + 100"
-                idcontainer="bpmn-container"
-                :key="`${connection.from}-${connection.to}-${index}`"
-                :ref="el => setArrowConnectorRef(el, connection.id)"
-                :connection="connection"
-                :obstacles="processedSteps.map(step => ({ id: `bpmn-step-${step.seq_number}` }))"
-                :used-sides="usedSides"
-                :manual-config="arrowConfig[connection.id]"
-                :edit-mode="editMode"
-                @path-updated="handlePathUpdate"
-                @manual-edit="handleManualEdit"
-                @label-edit="handleLabelEdit"
-              />
-            </svg>
-          </div>
-        </div>
-      </div>
+      <svg v-if="arrowsReady" class="absolute inset-0 h-full z-20"
+           :class="editMode ? 'pointer-events-auto' : 'pointer-events-none'">
+        <ArrowConnector
+          v-for="(connection, index) in bpmnConnections" 
+          :idarrow="index + 100"
+          idcontainer="bpmn-container"
+          :key="`${connection.from}-${connection.to}-${index}`"
+          :ref="el => setArrowConnectorRef(el, connection.id)"
+          :connection="connection"
+          :obstacles="processedSteps.map(step => ({ id: `bpmn-step-${step.seq_number}` }))"
+          :used-sides="usedSides"
+          :manual-config="arrowConfig[connection.id]"
+          :edit-mode="editMode"
+          @path-updated="handlePathUpdate"
+          @manual-edit="handleManualEdit"
+          @label-edit="handleLabelEdit"
+        />
+      </svg>
     </div>
   </div>
 </template>
 
 <style scoped>
+.diagram-wrapper {
+  /* Untuk browser: menyediakan scroll horizontal jika diagram lebar */
+  width: 100%;
+  overflow-x: auto;
+}
+
+.diagram-container {
+  /* Untuk browser: mengatur lebar dan posisi diagram di tengah */
+  width: v-bind(diagramWidthPx);
+  margin: 0 auto;
+  position: relative; /* Konteks untuk SVG yang absolut */
+}
+
+/* Memastikan SVG overlay mengisi kontainer dengan benar */
+.diagram-container > svg {
+  width: v-bind(diagramWidthPx);
+  min-width: 100%;
+}
+
 @media print {
   @page {
     size: A4 landscape;
     margin: 10mm;
   }
 
-  .print-page {
-    page-break-after: always;
-    page-break-inside: avoid;
+  .diagram-wrapper {
+    /* Untuk print: menjadi flex container untuk memusatkan diagram */
+    overflow: visible !important;
     width: 100%;
     height: 100%;
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: flex-start;
   }
 
-  /* Tambahan CSS untuk memastikan scaling bekerja dengan benar */
+  .diagram-container {
+    /* Untuk print: menerapkan skala dan mereset margin */
+    transform: scale(v-bind(printScale));
+    transform-origin: top left;
+    margin: 0;
+  }
+
   #bpmn-container {
-    width: fit-content;
-    margin: 0 auto;
+    margin: 0 !important; /* Hapus margin pada tabel saat print */
   }
 }
 </style>

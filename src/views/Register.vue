@@ -35,10 +35,20 @@ const showPw = ref({
 const togglePassword = () => { showPw.value.password = !showPw.value.password };
 const toggleConfirmPassword = () => { showPw.value.confirm_password = !showPw.value.confirm_password };
 
-// TODO simpan token di local storage
-
 const regist = async () => {
     try {
+        // Email institusi validation
+        const email = form.value.email || '';
+        const isStudentEmail = /@student\.unand\.ac\.id$/i.test(email);
+        const isStaffEmail = /@it\.unand\.ac\.id$/i.test(email);
+        if (!isStudentEmail && !isStaffEmail) {
+            toast("Gunakan email institusi Universitas Andalas!", {
+                type: "warning",
+                autoClose: 4000,
+            });
+            return;
+        }
+
         if (!form.value.gender || (form.value.gender != 'pria' && form.value.gender != 'wanita')) {
             isGenderPresent.value = false;
         } else {
@@ -50,22 +60,19 @@ const regist = async () => {
         } else {
             isPasswordConfirmSimilar.value = true;
         };
-        // console.log(form.value);
 
         // TODO buat validasi kalau ada duplikat
         const dataRegist = await registUser(form.value);
-        // console.log(dataRegist)
 
         if (dataRegist.success) {
             toast("Selamat! Akun Anda berhasil dibuat", {
-                "type": "success",
+                type: "success",
             })
             setTimeout(() => {
                 router.push('/login')
             }, 3000);
         } else {
             if (dataRegist.status == 409) {
-
                 if (dataRegist.error.field == "identity_number") {
                     isEntryDuplicate.value.id_number = true
                     isEntryDuplicate.value.email = false
@@ -83,9 +90,9 @@ const regist = async () => {
     } catch (error) {
         console.error(error);
         toast(`Gagal membuat akun! <br> ${error} `, {
-            "type": "error",
-            "autoClose": 5000,
-            'dangerouslyHTMLString': true
+            type: "error",
+            autoClose: 5000,
+            dangerouslyHTMLString: true
         });
     }
 };

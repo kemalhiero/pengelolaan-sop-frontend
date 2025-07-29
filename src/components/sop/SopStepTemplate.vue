@@ -28,7 +28,6 @@ const props = defineProps({
 const emit = defineEmits(['arrow-config-updated', 'manual-edit', 'label-edit']);
 
 const sopConfig = inject('sopConfig');
-const sopStepRaw = inject('sopStep');
 const { flowchartLabelConfig } = inject('labelConfigs');
 
 const handleManualEdit = (config) => {

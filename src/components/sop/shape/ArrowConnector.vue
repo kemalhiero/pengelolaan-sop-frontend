@@ -150,7 +150,7 @@ const calculatePath = async () => {
     return;
   }
 
-  console.log(`[ArrowConnector] ID ${props.connection.id}: Menggunakan algoritma untuk menghitung jalur.`);
+  console.log(`[ArrowConnector] ID ${props.connection.id}: Menggunakan algoritma.`);
   requestAnimationFrame(() => {
     const fromPos = getElementPosition(props.connection.from);
     const toPos = getElementPosition(props.connection.to);
