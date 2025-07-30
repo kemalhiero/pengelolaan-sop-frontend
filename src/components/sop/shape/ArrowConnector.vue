@@ -30,7 +30,10 @@ const props = defineProps({
     type: Object,
     default: null
   },
-  // BARU: Props untuk mode edit
+  manualLabelPosition: {
+    type: Object,
+    default: null
+  },
   editMode: {
     type: Boolean,
     default: false
@@ -725,7 +728,11 @@ const effectiveLabelPosition = computed(() => {
   if (isDraggingLabel.value && currentLabelPosition.value) {
     return currentLabelPosition.value;
   }
-  return (props.manualConfig?.labelPosition) || labelPosition.value;
+  // Prioritaskan posisi manual dari props jika ada
+  if (props.manualLabelPosition) {
+    return props.manualLabelPosition;
+  }
+  return labelPosition.value;
 });
 
 // PERBAIKAN: Fungsi untuk drag label yang lebih smooth
@@ -779,25 +786,15 @@ const stopLabelDrag = () => {
   document.removeEventListener('mousemove', handleLabelDrag);
   document.removeEventListener('mouseup', stopLabelDrag);
   
-  // PERBAIKAN: Emit dengan posisi final
+  // Emit perubahan posisi label secara terpisah
   if (currentLabelPosition.value) {
-    const config = {
+    emit('manual-edit', {
       connectionId: props.connection.id,
       labelPosition: currentLabelPosition.value,
-      // PERBAIKAN: Pertahankan config arrow yang sudah ada
-      ...(props.manualConfig && {
-        startPoint: props.manualConfig.startPoint,
-        endPoint: props.manualConfig.endPoint,
-        bendPoints: props.manualConfig.bendPoints,
-        sSide: props.manualConfig.sSide,
-        eSide: props.manualConfig.eSide
-      })
-    };
-    
-    emit('manual-edit', config);
+      type: 'label-position' // Tandai sebagai update posisi label
+    });
   }
   
-  // PERBAIKAN: Reset current position setelah emit
   currentLabelPosition.value = null;
 };
 
@@ -815,17 +812,9 @@ const emitManualEdit = () => {
     endPoint: { x: endPoint.x, y: endPoint.y },
     bendPoints: bendPoints.map(p => ({ x: p.x, y: p.y })),
     sSide: props.manualConfig?.sSide || algorithmConfig.value?.sSide || 'right',
-    eSide: props.manualConfig?.eSide || algorithmConfig.value?.eSide || 'left'
+    eSide: props.manualConfig?.eSide || algorithmConfig.value?.eSide || 'left',
+    type: 'arrow' // Tandai sebagai update panah
   };
-  
-  // PERBAIKAN: Sertakan informasi label yang sudah ada
-  if (props.connection.label) {
-    config.label = props.connection.label;
-    
-    if (labelPosition.value) {
-      config.labelPosition = labelPosition.value;
-    }
-  }
   
   emit('manual-edit', config);
 };

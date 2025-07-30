@@ -18,6 +18,7 @@ const props = defineProps({
         required: true
     },
     arrowConfig: { type: Object, default: () => ({}) },
+    labelConfig: { type: Object, default: () => ({}) },
     // BARU: Prop untuk mode edit
     editMode: {
         type: Boolean,
@@ -126,25 +127,8 @@ const handlePathUpdate = (payload) => {
         // PERBAIKAN: Debug payload yang diterima
         // console.log(`[SopStepTemplate] Receiving path update for connection ${payload.connectionId}:`, payload);
         
-        // PERBAIKAN: Hanya update jika payload valid dan bukan dari props
-        const hasValidPayload = payload.startPoint && payload.endPoint &&
-          typeof payload.startPoint.x === 'number' &&
-          typeof payload.startPoint.y === 'number' &&
-          typeof payload.endPoint.x === 'number' &&
-          typeof payload.endPoint.y === 'number';
-        
-        if (hasValidPayload) {
-          // Hapus payload dari arrowConfigs jika tidak ada di props.arrowConfig
-          // Ini untuk memastikan konfigurasi yang dihapus dari DB tidak lagi digunakan
-          if (!props.arrowConfig[payload.connectionId]) {
-              delete arrowConfigs.value[payload.connectionId];
-            //   console.log(`[SopStepTemplate] Removed ${payload.connectionId} from internal config (not in props)`);
-          } else {
-              // Selalu update dengan payload terbaru dari ArrowConnector
-              arrowConfigs.value[payload.connectionId] = { ...payload };
-            //   console.log(`[SopStepTemplate] Updated internal config for ${payload.connectionId}`);
-          }
-        }
+        // PERBAIKAN: Selalu update dengan payload terbaru dari ArrowConnector
+        arrowConfigs.value[payload.connectionId] = { ...payload };
     }
 };
 
@@ -763,6 +747,7 @@ watch(() => props.arrowConfig, (newConfig, oldConfig) => {
                                 :obstacles="pageObstacles[pageIndex] || []"
                                 :used-sides="usedSides"
                                 :manual-config="arrowConfig[connection.id]"
+                                :manual-label-position="labelConfig.positions && labelConfig.positions[connection.id]"
                                 :edit-mode="editMode"
                                 @path-updated="handlePathUpdate"
                                 @manual-edit="handleManualEdit"

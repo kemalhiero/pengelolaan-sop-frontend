@@ -19,14 +19,15 @@ const props = defineProps({
     default: () => []
   },
   implementer: {
-    type: Array,
-    required: true
-  },
-  arrowConfig: { type: Object, default: () => ({}) },
-  editMode: {
-    type: Boolean,
-    default: false
-  }
+        type: Array,
+        required: true
+    },
+    arrowConfig: { type: Object, default: () => ({}) },
+    labelConfig: { type: Object, default: () => ({}) },
+    editMode: {
+        type: Boolean,
+        default: false
+    }
 });
 
 const emit = defineEmits(['arrow-config-updated', 'manual-edit',  'label-edit']);
@@ -744,6 +745,7 @@ const handleDecisionTextDrag = (stepId, newPosition) => {
           :obstacles="processedSteps.map(step => ({ id: `bpmn-step-${step.seq_number}` }))"
           :used-sides="usedSides"
           :manual-config="arrowConfig[connection.id]"
+          :manual-label-position="labelConfig.positions && labelConfig.positions[connection.id]"
           :edit-mode="editMode"
           @path-updated="handlePathUpdate"
           @manual-edit="handleManualEdit"

@@ -124,46 +124,62 @@ const handleBpmnArrowUpdate = (config) => {
 const handleFlowchartManualEdit = (config) => {
     if (config.reset) {
         delete flowchartArrowConfigUpdates.value[config.connectionId];
-    } else {
+        if (flowchartLabelConfigUpdates.value.positions) {
+            delete flowchartLabelConfigUpdates.value.positions[config.connectionId];
+        }
+    } else if (config.type === 'label-position') {
+        // Update posisi label saja
+        flowchartLabelConfigUpdates.value.positions = {
+            ...flowchartLabelConfigUpdates.value.positions,
+            [config.connectionId]: config.labelPosition
+        };
+    } else if (config.type === 'arrow') {
+        // Update konfigurasi panah
         flowchartArrowConfigUpdates.value = {
             ...flowchartArrowConfigUpdates.value,
-            [config.connectionId]: config
+            [config.connectionId]: {
+                startPoint: config.startPoint,
+                endPoint: config.endPoint,
+                bendPoints: config.bendPoints,
+                sSide: config.sSide,
+                eSide: config.eSide
+            }
         };
-        
-        // BARU: Track label position jika ada
-        if (config.labelPosition) {
-            flowchartLabelConfigUpdates.value.positions = {
-                ...flowchartLabelConfigUpdates.value.positions,
-                [config.connectionId]: config.labelPosition
-            };
-        }
     }
 };
 
 const handleBpmnManualEdit = (config) => {
     if (config.reset) {
         delete bpmnArrowConfigUpdates.value[config.connectionId];
+        if (bpmnLabelConfigUpdates.value.positions) {
+            delete bpmnLabelConfigUpdates.value.positions[config.connectionId];
+        }
     } else if (config.type === 'decision-text') {
-        // PERBAIKAN: Handle decision text positioning dengan key yang tepat
+        // Handle decision text positioning dengan key yang tepat
         if (config.textPosition) {
             bpmnLabelConfigUpdates.value.positions = {
                 ...bpmnLabelConfigUpdates.value.positions,
                 [config.stepId]: config.textPosition
             };
         }
-    } else {
+    } else if (config.type === 'label-position') {
+        // Update posisi label saja
+        bpmnLabelConfigUpdates.value.positions = {
+            ...bpmnLabelConfigUpdates.value.positions,
+            [config.connectionId]: config.labelPosition
+        };
+    } else if (config.type === 'arrow') {
+        // Update konfigurasi panah
         bpmnArrowConfigUpdates.value = {
             ...bpmnArrowConfigUpdates.value,
-            [config.connectionId]: config
+            [config.connectionId]: {
+                startPoint: config.startPoint,
+                endPoint: config.endPoint,
+                bendPoints: config.bendPoints,
+                sSide: config.sSide,
+                eSide: config.eSide
+            }
         };
-        
-        // BARU: Track label position jika ada
-        if (config.labelPosition) {
-            bpmnLabelConfigUpdates.value.positions = {
-                ...bpmnLabelConfigUpdates.value.positions,
-                [config.connectionId]: config.labelPosition
-            };
-        }
     }
 };
 
@@ -189,19 +205,23 @@ const toggleArrowEditMode = async () => {
 
 const saveCurrentTabConfig = async () => {
     const payload = {};
-    
+    const hasFlowchartArrowChanges = Object.keys(flowchartArrowConfigUpdates.value).length > 0;
+    const flowchartLabelUpdates = flowchartLabelConfigUpdates.value || {};
+    const hasFlowchartLabelChanges = Object.keys(flowchartLabelUpdates.custom_labels || {}).length > 0 || Object.keys(flowchartLabelUpdates.positions || {}).length > 0;
+
+    const hasBpmnArrowChanges = Object.keys(bpmnArrowConfigUpdates.value).length > 0;
+    const bpmnLabelUpdates = bpmnLabelConfigUpdates.value || {};
+    const hasBpmnLabelChanges = Object.keys(bpmnLabelUpdates.custom_labels || {}).length > 0 || Object.keys(bpmnLabelUpdates.positions || {}).length > 0;
+
     if (activeTab.value === 'document') {
-        // Simpan konfigurasi flowchart
-        if (Object.keys(flowchartArrowConfigUpdates.value).length > 0) {
+        if (hasFlowchartArrowChanges || hasFlowchartLabelChanges) {
+            // Selalu simpan konfigurasi panah yang sudah digabung
             payload.flowchart_arrow_config = JSON.stringify({
                 ...flowchartArrowConfig.value,
                 ...flowchartArrowConfigUpdates.value
             });
-        }
-        
-        const flowchartLabelUpdates = flowchartLabelConfigUpdates.value || {};
-        if (Object.keys(flowchartLabelUpdates.custom_labels || {}).length > 0 || 
-            Object.keys(flowchartLabelUpdates.positions || {}).length > 0) {
+
+            // Selalu simpan konfigurasi label yang sudah digabung
             const currentFlowchartLabelConfig = flowchartLabelConfig.value || {};
             const mergedFlowchartLabelConfig = {
                 custom_labels: {
@@ -214,25 +234,18 @@ const saveCurrentTabConfig = async () => {
                 }
             };
             payload.flowchart_label_config = JSON.stringify(mergedFlowchartLabelConfig);
-        }
-        
-        // PERBAIKAN: Gunakan API khusus flowchart
-        if (Object.keys(payload).length > 0) {
+
             await saveFlowchartConfig(idsopdetail, payload);
         }
-        
     } else if (activeTab.value === 'bpmn') {
-        // Simpan konfigurasi BPMN
-        if (Object.keys(bpmnArrowConfigUpdates.value).length > 0) {
+        if (hasBpmnArrowChanges || hasBpmnLabelChanges) {
+            // Selalu simpan konfigurasi panah yang sudah digabung
             payload.bpmn_arrow_config = JSON.stringify({
                 ...bpmnArrowConfig.value,
                 ...bpmnArrowConfigUpdates.value
             });
-        }
-        
-        const bpmnLabelUpdates = bpmnLabelConfigUpdates.value || {};
-        if (Object.keys(bpmnLabelUpdates.custom_labels || {}).length > 0 || 
-            Object.keys(bpmnLabelUpdates.positions || {}).length > 0) {
+
+            // Selalu simpan konfigurasi label yang sudah digabung
             const currentBpmnLabelConfig = bpmnLabelConfig.value || {};
             const mergedBpmnLabelConfig = {
                 custom_labels: {
@@ -245,14 +258,11 @@ const saveCurrentTabConfig = async () => {
                 }
             };
             payload.bpmn_label_config = JSON.stringify(mergedBpmnLabelConfig);
-        }
-        
-        // PERBAIKAN: Gunakan API khusus BPMN
-        if (Object.keys(payload).length > 0) {
+
             await saveBpmnConfig(idsopdetail, payload);
         }
     }
-    
+
     // Reset updates setelah simpan
     if (activeTab.value === 'document') {
         flowchartArrowConfigUpdates.value = {};
@@ -345,19 +355,13 @@ const saveSopConfig = async () => {
     }
 };
 
-const finalFlowchartConfig = computed(() => {
+const finalFlowchartArrowConfig = computed(() => {
     const merged = { ...flowchartArrowConfig.value, ...flowchartArrowConfigUpdates.value };
-    // console.log('finalFlowchartConfig - Database config:', flowchartArrowConfig.value);
-    // console.log('finalFlowchartConfig - Updates config:', flowchartArrowConfigUpdates.value);
-    // console.log('finalFlowchartConfig - Merged config:', merged);
     return merged;
 });
 
-const finalBpmnConfig = computed(() => {
+const finalBpmnArrowConfig = computed(() => {
     const merged = { ...bpmnArrowConfig.value, ...bpmnArrowConfigUpdates.value };
-    // console.log('finalBpmnConfig - Database config:', bpmnArrowConfig.value);
-    // console.log('finalBpmnConfig - Updates config:', bpmnArrowConfigUpdates.value);
-    // console.log('finalBpmnConfig - Merged config:', merged);
     return merged;
 });
 
@@ -402,6 +406,24 @@ const executeConfigSave = async () => {
         toastOptions: { autoClose: 3000 }
     });
 };
+
+const finalFlowchartLabelConfig = computed(() => {
+    const current = flowchartLabelConfig.value || { custom_labels: {}, positions: {} };
+    const updates = flowchartLabelConfigUpdates.value || { custom_labels: {}, positions: {} };
+    return {
+        custom_labels: { ...(current.custom_labels || {}), ...(updates.custom_labels || {}) },
+        positions: { ...(current.positions || {}), ...(updates.positions || {}) }
+    };
+});
+
+const finalBpmnLabelConfig = computed(() => {
+    const current = bpmnLabelConfig.value || { custom_labels: {}, positions: {} };
+    const updates = bpmnLabelConfigUpdates.value || { custom_labels: {}, positions: {} };
+    return {
+        custom_labels: { ...(current.custom_labels || {}), ...(updates.custom_labels || {}) },
+        positions: { ...(current.positions || {}), ...(updates.positions || {}) }
+    };
+});
 
 // BARU: Hapus konfigurasi manual panah
 const clearArrowConfigs = async () => {
@@ -493,59 +515,13 @@ const confirmDeleteArrowConfigs = async () => {
 // BARU: Computed untuk mengecek apakah ada perubahan yang belum disimpan
 const hasUnsavedArrowChanges = computed(() => {
     if (activeTab.value === 'document') {
-        // Bandingkan flowchartArrowConfigUpdates dengan yang sudah disimpan
-        const updates = flowchartArrowConfigUpdates.value;
-        const saved = flowchartArrowConfig.value || {};
-        
-        // Jika tidak ada updates sama sekali, tidak ada perubahan
-        if (!updates || Object.keys(updates).length === 0) {
-            return hasLabelChanges.value;
-        }
-        
-        // Cek setiap connection yang ada updates
-        for (const connectionId in updates) {
-            const updatedConfig = updates[connectionId];
-            const savedConfig = saved[connectionId];
-            
-            // Jika tidak ada config tersimpan untuk connection ini, berarti ada perubahan baru
-            if (!savedConfig) {
-                return true;
-            }
-            
-            // Bandingkan konfigurasi secara detail
-            if (hasConfigurationDifference(updatedConfig, savedConfig)) {
-                return true;
-            }
-        }
-        
-        return hasLabelChanges.value;
+        const updates = flowchartArrowConfigUpdates.value || {};
+        const hasUpdates = Object.keys(updates).length > 0;
+        return hasUpdates || hasLabelChanges.value;
     } else if (activeTab.value === 'bpmn') {
-        // Bandingkan bpmnArrowConfigUpdates dengan yang sudah disimpan
-        const updates = bpmnArrowConfigUpdates.value;
-        const saved = bpmnArrowConfig.value || {};
-        
-        // Jika tidak ada updates sama sekali, tidak ada perubahan
-        if (!updates || Object.keys(updates).length === 0) {
-            return hasLabelChanges.value;
-        }
-        
-        // Cek setiap connection yang ada updates
-        for (const connectionId in updates) {
-            const updatedConfig = updates[connectionId];
-            const savedConfig = saved[connectionId];
-            
-            // Jika tidak ada config tersimpan untuk connection ini, berarti ada perubahan baru
-            if (!savedConfig) {
-                return true;
-            }
-            
-            // Bandingkan konfigurasi secara detail
-            if (hasConfigurationDifference(updatedConfig, savedConfig)) {
-                return true;
-            }
-        }
-        
-        return hasLabelChanges.value;
+        const updates = bpmnArrowConfigUpdates.value || {};
+        const hasUpdates = Object.keys(updates).length > 0;
+        return hasUpdates || hasLabelChanges.value;
     }
     
     return false;
@@ -752,7 +728,8 @@ const hasConfigurationDifference = (config1, config2) => {
             ref="sopStepTemplateRef"
             :implementer="formData.implementer"
             :steps="sopStep"
-            :arrow-config="finalFlowchartConfig"
+            :arrow-config="finalFlowchartArrowConfig"
+            :label-config="finalFlowchartLabelConfig"
             :edit-mode="arrowEditMode"
             @arrow-config-updated="handleFlowchartArrowUpdate"
             @manual-edit="handleFlowchartManualEdit"
@@ -765,7 +742,8 @@ const hasConfigurationDifference = (config1, config2) => {
             :name="assignmentInfo.name"
             :steps="sopStep"
             :implementer="formData.implementer"
-            :arrow-config="finalBpmnConfig"
+            :arrow-config="finalBpmnArrowConfig"
+            :label-config="finalBpmnLabelConfig"
             :edit-mode="arrowEditMode"
             @arrow-config-updated="handleBpmnArrowUpdate"
             @manual-edit="handleBpmnManualEdit"
