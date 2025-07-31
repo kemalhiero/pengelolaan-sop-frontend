@@ -30,7 +30,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['arrow-config-updated', 'manual-edit',  'label-edit']);
+const emit = defineEmits(['manual-edit',  'label-edit']);
 
 const handleLabelEdit = (config) => {
     emit('label-edit', config);
@@ -49,11 +49,6 @@ const handlePathUpdate = (payload) => {
         arrowConfigs.value[payload.connectionId] = { ...payload };
     }
 };
-
-// Kirim pembaruan ke parent setiap kali konfigurasi panah berubah
-watch(arrowConfigs, (newConfig) => {
-    emit('arrow-config-updated', newConfig);
-}, { deep: true });
 // -------------------------------------------
 
 // Constants for sizing tasks within SopBpmnTemplate
@@ -537,9 +532,6 @@ const resetArrowsToLastSaved = () => {
 // PERBAIKAN: Force recalculation tanpa mengubah sopStepRaw
 const forceRecalculation = () => {
     console.log('BPMN Force recalculation triggered');
-    
-    // Reset semua state yang berhubungan dengan panah
-    arrowConfigs.value = {};
     arrowsReady.value = false;
     
     nextTick(() => {

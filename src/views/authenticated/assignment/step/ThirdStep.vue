@@ -1,5 +1,5 @@
 <script setup>
-import { computed, inject, onBeforeUnmount, ref, watch, nextTick } from 'vue';
+import { computed, inject, onBeforeUnmount, ref, watch, nextTick, defineEmits } from 'vue';
 import { toast } from 'vue3-toastify';
 
 import { saveFlowchartConfig, saveBpmnConfig, clearFlowchartConfig, clearBpmnConfig, saveSopLayout } from '@/api/sopApi';
@@ -11,6 +11,7 @@ import SopStepTemplate from '@/components/sop/SopStepTemplate.vue';
 import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
 import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
 
+const emit = defineEmits(['update:is-editing']);
 const activeTab = ref('document');
 const showConfigPanel = ref(false);
 const sopStep = computed(() => [...sopStepRaw.value].sort((a, b) => a.seq_number - b.seq_number));
@@ -28,6 +29,10 @@ const { flowchartLabelConfig, bpmnLabelConfig } = inject('labelConfigs');
 // BARU: State untuk mode edit panah
 const arrowEditMode = ref(false);
 const isEditing = ref(false);
+
+watch(isEditing, (newValue) => {
+    emit('update:is-editing', newValue);
+});
 
 // State untuk menampung update konfigurasi panah dari komponen anak
 const flowchartArrowConfigUpdates = ref({});
@@ -101,23 +106,6 @@ const handleLabelEdit = (config) => {
             }
         }
     }
-};
-
-// PERBAIKAN: Handler untuk menjaga konfigurasi sementara
-const handleFlowchartArrowUpdate = (config) => {
-    // Merge dengan konfigurasi update yang sudah ada, jangan replace
-    flowchartArrowConfigUpdates.value = {
-        ...flowchartArrowConfigUpdates.value,
-        ...config
-    };
-};
-
-const handleBpmnArrowUpdate = (config) => {
-    // Merge dengan konfigurasi update yang sudah ada, jangan replace
-    bpmnArrowConfigUpdates.value = {
-        ...bpmnArrowConfigUpdates.value,
-        ...config
-    };
 };
 
 // BARU: Handler untuk edit manual panah
@@ -357,11 +345,15 @@ const saveSopConfig = async () => {
 
 const finalFlowchartArrowConfig = computed(() => {
     const merged = { ...flowchartArrowConfig.value, ...flowchartArrowConfigUpdates.value };
+    console.log('finalFlowchartArrowConfig - Database config:', flowchartArrowConfig.value);
+    console.log('finalFlowchartArrowConfig - Updates config:', flowchartArrowConfigUpdates.value);
     return merged;
 });
 
 const finalBpmnArrowConfig = computed(() => {
     const merged = { ...bpmnArrowConfig.value, ...bpmnArrowConfigUpdates.value };
+    console.log('finalBpmnArrowConfig - Database config:', bpmnArrowConfig.value);
+    console.log('finalBpmnArrowConfig - Updates config:', bpmnArrowConfigUpdates.value);
     return merged;
 });
 
@@ -731,7 +723,6 @@ const hasConfigurationDifference = (config1, config2) => {
             :arrow-config="finalFlowchartArrowConfig"
             :label-config="finalFlowchartLabelConfig"
             :edit-mode="arrowEditMode"
-            @arrow-config-updated="handleFlowchartArrowUpdate"
             @manual-edit="handleFlowchartManualEdit"
             @label-edit="handleLabelEdit"
         />
@@ -745,7 +736,6 @@ const hasConfigurationDifference = (config1, config2) => {
             :arrow-config="finalBpmnArrowConfig"
             :label-config="finalBpmnLabelConfig"
             :edit-mode="arrowEditMode"
-            @arrow-config-updated="handleBpmnArrowUpdate"
             @manual-edit="handleBpmnManualEdit"
             @label-edit="handleLabelEdit"
         />

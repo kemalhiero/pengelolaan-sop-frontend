@@ -39,6 +39,7 @@ let idsopdetail = route.params.id;
 const currentStep = ref(1);  // Langkah sekarang
 const firstStepRef = ref(null);
 const thirdStepRef = ref(null); // BARU: Tambahkan ref untuk ThirdStep
+const isThirdStepEditing = ref(false); // State untuk melacak mode edit di ThirdStep
 
 const showFeedback = ref(false)
 const draftFeedback = ref([]);
@@ -559,6 +560,7 @@ const nextStep = async () => {
 const prevStep = () => {
     if (currentStep.value > 1) {
         currentStep.value--;
+        isThirdStepEditing.value = false;
     }
 };
 
@@ -629,7 +631,7 @@ onMounted(fetchAllData);
         <div class="my-8">
             <FirstStep v-if="currentStep == 1" ref="firstStepRef" />
             <SecondStep v-else-if="currentStep == 2" />
-            <ThirdStep v-else-if="currentStep == 3" ref="thirdStepRef" />
+            <ThirdStep v-else-if="currentStep == 3" ref="thirdStepRef" @update:is-editing="isThirdStepEditing = $event" />
         </div>
 
         <div class="flex justify-between mb-8 px-6 max-w-3xl mx-auto print:hidden">
@@ -645,10 +647,17 @@ onMounted(fetchAllData);
                 <FloppyDiskIcon class="fill-current w-5 mr-2" />
                 Simpan Tahap {{ currentStep }}
             </button>
-            <button type="button" @click="nextStep" :disabled="isDisabled && currentStep == 3"
-                :title="(currentStep === 3 && isDisabled) ? 'Tidak dapat mengirim draft!' : currentStep == 3 ? 'Kirim Draft' : 'Lanjut ke langkah berikutnya'"
-                class="w-1/4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
-                {{ currentStep == 3 ? 'Kirim' : 'Lanjut' }}
+            <button type="button" @click="nextStep" :disabled="currentStep === 3 && (isDisabled || isThirdStepEditing)"
+                :title="currentStep === 3
+                    ? isThirdStepEditing
+                        ? 'Selesaikan edit panah/label terlebih dahulu!'
+                        : isDisabled
+                            ? 'Tidak dapat mengirim draft!'
+                            : 'Kirim Draft'
+                    : 'Lanjut ke langkah berikutnya'"
+                class="w-1/4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-base px-5 py-2.5 text-center inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                {{ currentStep === 3 ? 'Kirim' : 'Lanjut' }}
                 <CircleArrowRight class="fill-current w-5 ml-2 mt-1" />
             </button>
         </div>

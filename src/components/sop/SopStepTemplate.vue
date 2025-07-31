@@ -26,7 +26,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['arrow-config-updated', 'manual-edit', 'label-edit']);
+const emit = defineEmits(['manual-edit', 'label-edit']);
 
 const sopConfig = inject('sopConfig');
 const { flowchartLabelConfig } = inject('labelConfigs');
@@ -131,11 +131,6 @@ const handlePathUpdate = (payload) => {
         arrowConfigs.value[payload.connectionId] = { ...payload };
     }
 };
-
-// Kirim pembaruan ke parent setiap kali konfigurasi panah berubah
-watch(arrowConfigs, (newConfig) => {
-    emit('arrow-config-updated', newConfig);
-}, { deep: true });
 // -------------------------------------------
 
 const connections = computed(() => {
