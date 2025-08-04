@@ -37,6 +37,44 @@ const isDragging = ref(false);
 const dragStart = ref({ x: 0, y: 0 });
 const currentPosition = ref(null);
 
+// Konstanta untuk text wrapping
+const MAX_CHARS_PER_LINE = 15; // Maksimal karakter per baris
+const LINE_HEIGHT = 14; // Tinggi antar baris dalam pixel
+
+// Fungsi untuk memecah teks menjadi beberapa baris
+const splitTextToLines = (text) => {
+  if (!text) return [''];
+  
+  const words = text.split(' ');
+  const lines = [];
+  let currentLine = '';
+  
+  for (const word of words) {
+    if (currentLine === '') {
+      currentLine = word;
+    } else if ((currentLine + ' ' + word).length <= MAX_CHARS_PER_LINE) {
+      currentLine += ' ' + word;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
+    }
+  }
+  
+  if (currentLine !== '') {
+    lines.push(currentLine);
+  }
+  
+  return lines.length > 0 ? lines : [''];
+};
+
+// Computed property untuk teks yang sudah dipecah menjadi baris
+const textLines = computed(() => splitTextToLines(props.stepName));
+
+// Computed property untuk tinggi total teks
+const totalTextHeight = computed(() => {
+  return textLines.value.length * LINE_HEIGHT;
+});
+
 // Posisi default di dalam shape decision (center)
 const defaultPosition = computed(() => ({
   x: props.x,
@@ -142,16 +180,31 @@ const stopDrag = () => {
     emit('position-changed', props.stepId, { ...currentPosition.value });    
   }
 };
+
+// Computed property untuk area klik yang menyesuaikan dengan tinggi teks
+const clickAreaHeight = computed(() => {
+  return Math.max(30, totalTextHeight.value + 10); // Minimal 30px, atau tinggi teks + padding
+});
+
+const clickAreaWidth = computed(() => {
+  if (textLines.value.length === 0) return 80;
+  
+  // Hitung lebar berdasarkan baris terpanjang
+  const longestLine = textLines.value.reduce((longest, line) => 
+    line.length > longest.length ? line : longest, '');
+  
+  return Math.max(80, longestLine.length * 8 + 20); // 8px per karakter + padding
+});
 </script>
 
 <template>
-  <!-- Area klik untuk drag -->
+  <!-- Area klik untuk drag dengan ukuran yang menyesuaikan -->
   <rect 
     v-if="editMode"
-    :x="effectivePosition.x - 40"
-    :y="effectivePosition.y - 15"
-    width="80"
-    height="30"
+    :x="effectivePosition.x - (clickAreaWidth / 2)"
+    :y="effectivePosition.y - (clickAreaHeight / 2)"
+    :width="clickAreaWidth"
+    :height="clickAreaHeight"
     fill="transparent"
     stroke="#3b82f6"
     stroke-width="1"
@@ -163,26 +216,39 @@ const stopDrag = () => {
     @mousedown="startDrag"
   />
   
+  <!-- Text dengan multiple lines untuk edit mode -->
   <text
     :x="effectivePosition.x"
-    :y="effectivePosition.y"
+    :y="effectivePosition.y - ((textLines.length - 1) * LINE_HEIGHT / 2)"
     text-anchor="middle"
-    alignment-baseline="middle"
     class="text-sm font-medium fill-black print:hidden"
     :class="editMode ? 'cursor-move' : ''"
     style="pointer-events: none;"
   >
-    {{ stepName }}
+    <tspan
+      v-for="(line, index) in textLines"
+      :key="index"
+      :x="effectivePosition.x"
+      :dy="index === 0 ? '0.35em' : `${LINE_HEIGHT}px`"
+    >
+      {{ line }}
+    </tspan>
   </text>
   
-  <!-- Text untuk print -->
+  <!-- Text untuk print dengan multiple lines -->
   <text
     :x="effectivePosition.x"
-    :y="effectivePosition.y"
+    :y="effectivePosition.y - ((textLines.length - 1) * LINE_HEIGHT / 2)"
     text-anchor="middle"
-    alignment-baseline="middle"
     class="text-sm font-medium fill-black print:block hidden"
   >
-    {{ stepName }}
+    <tspan
+      v-for="(line, index) in textLines"
+      :key="index"
+      :x="effectivePosition.x"
+      :dy="index === 0 ? '0.35em' : `${LINE_HEIGHT}px`"
+    >
+      {{ line }}
+    </tspan>
   </text>
 </template>

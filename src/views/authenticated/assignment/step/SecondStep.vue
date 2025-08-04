@@ -1,5 +1,5 @@
 <script setup>
-import { inject, ref, watch, nextTick, onBeforeUnmount } from 'vue';
+import { inject, ref, watch, nextTick, onBeforeUnmount, computed } from 'vue';
 import CirclePlusIcon from '@/assets/icons/CirclePlusIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import GearIcon from '@/assets/icons/GearIcon.vue';
@@ -118,6 +118,36 @@ const editingField = ref('');
 const editingIndex = ref(null);
 const editingValue = ref('');
 const textAreaRef = ref(null);
+
+// Definisikan batas karakter untuk setiap field
+const characterLimits = {
+    name: 200,
+    fittings: 200,
+    output: 100,
+    description: 300
+};
+
+// Computed property untuk mendapatkan batas karakter saat ini
+const currentCharacterLimit = computed(() => {
+    return characterLimits[editingField.value] || 0;
+});
+
+// Computed property untuk mendapatkan jumlah karakter saat ini
+const currentCharacterCount = computed(() => {
+    return editingValue.value ? editingValue.value.length : 0;
+});
+
+// Computed property untuk menentukan apakah mendekati batas
+const isNearLimit = computed(() => {
+    const limit = currentCharacterLimit.value;
+    const count = currentCharacterCount.value;
+    return count > limit * 0.8; // 80% dari batas
+});
+
+// Computed property untuk menentukan apakah melebihi batas
+const isOverLimit = computed(() => {
+    return currentCharacterCount.value > currentCharacterLimit.value;
+});
 
 function openTextEditModal(field, index, value) {
     if (isDisabled.value) return;
@@ -377,9 +407,36 @@ onBeforeUnmount(() => {
                             v-model="editingValue"
                             rows="8"
                             ref="textAreaRef"
+                            :maxlength="currentCharacterLimit"
                             class="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition resize-vertical text-sm placeholder-gray-400"
+                            :class="{ 
+                                'border-red-300 focus:ring-red-200 focus:border-red-400': isOverLimit,
+                                'border-yellow-300 focus:ring-yellow-200 focus:border-yellow-400': isNearLimit && !isOverLimit
+                            }"
                             placeholder="Tulis di sini..."
                         ></textarea>
+                        <!-- Character Counter -->
+                        <div class="flex justify-between items-center mt-2">
+                            <div class="text-xs text-gray-500">
+                                <span v-if="isOverLimit" class="text-red-600">
+                                    ⚠️ Melebihi batas karakter
+                                </span>
+                                <span v-else-if="isNearLimit" class="text-yellow-600">
+                                    ⚠️ Mendekati batas karakter
+                                </span>
+                                <span v-else class="text-gray-500">
+                                    Karakter yang digunakan
+                                </span>
+                            </div>
+                            <div class="text-xs font-mono" 
+                                 :class="{
+                                    'text-red-600': isOverLimit,
+                                    'text-yellow-600': isNearLimit && !isOverLimit,
+                                    'text-gray-600': !isNearLimit
+                                 }">
+                                {{ currentCharacterCount }} / {{ currentCharacterLimit }}
+                            </div>
+                        </div>
                     </div>
                     <!-- Footer -->
                     <div class="flex justify-between items-center gap-2 px-6 py-4 bg-gray-50 rounded-b-2xl">
@@ -402,8 +459,8 @@ onBeforeUnmount(() => {
                                 class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100 transition text-sm">
                                 Batal
                             </button>
-                            <button @click="saveTextEditModal"
-                                class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition text-sm shadow">
+                            <button @click="saveTextEditModal" :disabled="isOverLimit"
+                                class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition text-sm shadow disabled:bg-gray-400 disabled:cursor-not-allowed">
                                 Simpan
                             </button>
                         </div>

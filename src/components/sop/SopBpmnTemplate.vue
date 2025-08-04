@@ -259,8 +259,8 @@ const calculateGlobalLayout = () => {
 
   const baseX = 10; // Left margin
   const spacing = 50; // Jarak horizontal antar kolom bentuk (edge to edge)
-  const rowHeight = 120; // Tinggi visual satu lane (untuk kalkulasi Y dan layout per lane)
-  const rowSpacing = 100; // Jarak vertikal antar lane (dari pusat bentuk ke pusat bentuk di lane berikutnya)
+  const baseRowHeight = 120; // Tinggi minimal lane
+  const rowSpacing = 20; // Jarak vertikal antar lane (dari edge ke edge)
   
   globalLayout.value = { steps: [], connections: [], columnStartXs: [], maxColumnWidths: [] };
 
@@ -340,6 +340,31 @@ const calculateGlobalLayout = () => {
     currentX += tempMaxColumnWidths[i] + spacing;
   }
   globalLayout.value.columnStartXs = tempColumnStartXs;
+
+  // BARU: Hitung tinggi maksimum untuk setiap lane berdasarkan task yang ada di dalamnya
+  const laneMaxHeights = new Array(numLanes).fill(baseRowHeight);
+  
+  processedSteps.value.forEach((step) => {
+    let layoutLaneIndex = -1;
+    if (orderedImplementer.value.length > 0) {
+        layoutLaneIndex = orderedImplementer.value.findIndex(imp => imp.id === step.id_implementer);
+    }
+    if (layoutLaneIndex === -1) layoutLaneIndex = 0;
+
+    const dims = stepDimensionsCache.get(step.id_step) || getStepDimensions(null, 'task');
+    
+    // Update tinggi maksimum lane berdasarkan tinggi shape + padding
+    const requiredLaneHeight = dims.height + 40; // 20px padding atas + 20px padding bawah
+    laneMaxHeights[layoutLaneIndex] = Math.max(laneMaxHeights[layoutLaneIndex], requiredLaneHeight);
+  });
+
+  // Hitung posisi Y kumulatif untuk setiap lane
+  const laneYPositions = [];
+  let cumulativeY = 0;
+  for (let i = 0; i < numLanes; i++) {
+    laneYPositions[i] = cumulativeY + (laneMaxHeights[i] / 2);
+    cumulativeY += laneMaxHeights[i] + rowSpacing;
+  }
   
   processedSteps.value.forEach((step) => {
     let layoutLaneIndex = -1;
@@ -349,20 +374,19 @@ const calculateGlobalLayout = () => {
     if (layoutLaneIndex === -1) layoutLaneIndex = 0;
 
     const columnIndex = stepColumnMap.get(step.id_step) || 0;
-    const dims = stepDimensionsCache.get(step.id_step) || getStepDimensions(null, 'task'); // Fallback
+    const dims = stepDimensionsCache.get(step.id_step) || getStepDimensions(null, 'task');
     
-    // Modifikasi perhitungan x_center:
-    // Gunakan titik tengah dari lebar kolom maksimum untuk alignment tengah.
     const columnActualStart = globalLayout.value.columnStartXs[columnIndex] !== undefined 
                               ? globalLayout.value.columnStartXs[columnIndex] 
                               : baseX;
     const columnActualMaxWidth = globalLayout.value.maxColumnWidths[columnIndex] !== undefined 
                                  ? globalLayout.value.maxColumnWidths[columnIndex] 
-                                 : dims.width; // Fallback jika maxColumnWidths tidak ada untuk kolom ini
+                                 : dims.width;
 
     const x_center = columnActualStart + columnActualMaxWidth / 2;
     
-    const y_global_center = layoutLaneIndex * (rowHeight + rowSpacing) + (rowHeight / 2);
+    // BARU: Gunakan posisi Y yang sudah dihitung per lane
+    const y_global_center = laneYPositions[layoutLaneIndex];
 
     globalLayout.value.steps.push({
       id: step.id_step,
@@ -374,20 +398,23 @@ const calculateGlobalLayout = () => {
       name: step.name,
       seq: step.seq_number,
       lane: layoutLaneIndex,
-      columnIndex
+      columnIndex,
+      laneHeight: laneMaxHeights[layoutLaneIndex] // BARU: Simpan tinggi lane untuk keperluan rendering
     });
   });
 
   laneLayouts.value = orderedImplementer.value.map((imp, index) => {
+    const stepsInThisLane = globalLayout.value.steps.filter(gStep => gStep.lane === index);
+    const laneHeight = stepsInThisLane.length > 0 ? stepsInThisLane[0].laneHeight : baseRowHeight;
+    
     return {
       impId: imp.id,
-      steps: globalLayout.value.steps
-        .filter(gStep => gStep.lane === index)
-        .map(gStep => ({
-          ...gStep,
-          y: rowHeight / 2, 
-          id: `bpmn-step-${gStep.seq}`
-        }))
+      height: laneHeight, // BARU: Simpan tinggi lane
+      steps: stepsInThisLane.map(gStep => ({
+        ...gStep,
+        y: laneHeight / 2, // Posisi relatif dalam lane (di tengah)
+        id: `bpmn-step-${gStep.seq}`
+      }))
     };
   });
 };
@@ -657,14 +684,14 @@ watch(() => props.labelConfig, (newConfig) => {
               </div>
             </td>
             <td class="border-2 border-black w-8">
-              <div class="flex items-center justify-center w-8">
+              <div class="flex items-center justify-center w-8" :style="`height: ${laneLayouts[0]?.height || 120}px;`">
                 <p class="-rotate-90 origin-center whitespace-nowrap font-medium">
                   {{ orderedImplementer[0].name }}
                 </p>
               </div>
             </td>
             <td class="border-2 border-black p-0">
-              <div class="relative overflow-x-auto min-h-[120px]">
+              <div class="relative overflow-x-auto" :style="`height: ${laneLayouts[0]?.height || 120}px;`">
                 <svg :ref="el => setSvgRef(el, 0)" class="w-full h-full">
                   <template v-if="laneLayouts[0] && laneLayouts[0].steps">
                     <template v-for="step in laneLayouts[0].steps" :key="step.id">
@@ -699,14 +726,14 @@ watch(() => props.labelConfig, (newConfig) => {
           </tr>
           <tr v-for="(imp, index) in orderedImplementer.slice(1)" :key="imp.id">
             <td class="border-2 border-black w-8">
-              <div class="flex items-center justify-center w-8">
+              <div class="flex items-center justify-center w-8" :style="`height: ${laneLayouts[index + 1]?.height || 120}px;`">
                 <p class="-rotate-90 origin-center whitespace-nowrap font-medium">
                   {{ imp.name }}
                 </p>
               </div>
             </td>
             <td class="border-2 border-black p-0">
-              <div class="relative overflow-x-auto min-h-[120px]">
+              <div class="relative overflow-x-auto" :style="`height: ${laneLayouts[index + 1]?.height || 120}px;`">
                 <svg :ref="el => setSvgRef(el, index + 1)" class="w-full h-full">
                   <template v-if="laneLayouts[index + 1] && laneLayouts[index + 1].steps">
                     <template v-for="step in laneLayouts[index + 1].steps" :key="step.id">
