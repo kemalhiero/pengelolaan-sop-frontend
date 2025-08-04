@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, nextTick, watch, inject } from 'vue';
+import { computed, onMounted, ref, nextTick, watch } from 'vue';
 
 import FlowchartProcess from '@/components/sop/shape/flowchart/Process.vue';
 import FlowchartStartEnd from '@/components/sop/shape/flowchart/StartEnd.vue';
@@ -19,7 +19,7 @@ const props = defineProps({
     },
     arrowConfig: { type: Object, default: () => ({}) },
     labelConfig: { type: Object, default: () => ({}) },
-    // BARU: Prop untuk mode edit
+    layoutConfig: { type: Object, required: true },
     editMode: {
         type: Boolean,
         default: false
@@ -28,42 +28,35 @@ const props = defineProps({
 
 const emit = defineEmits(['manual-edit', 'label-edit']);
 
-const sopConfig = inject('sopConfig');
-const { flowchartLabelConfig } = inject('labelConfigs');
+const sopConfig = computed(() => props.layoutConfig);
 
 const handleManualEdit = (config) => {
     emit('manual-edit', config);
 };
 
+onMounted(async () => {
+    arrowsReady.value = false;
+    await recalculateOPCPositions();
+    redrawKey.value = Date.now();
+    
+    await nextTick();
+    arrowsReady.value = true;
+});
+
 const handleLabelEdit = (config) => {
     emit('label-edit', config);
 };
 
-// Definisikan nilai default yang jelas
-const DEFAULT_FIRST_PAGE_STEPS = 6;
-const DEFAULT_NEXT_PAGE_STEPS = 5;
-const DEFAULT_WIDTH_KEGIATAN = 23;
-const DEFAULT_WIDTH_KELENGKAPAN = 19;
-const DEFAULT_WIDTH_WAKTU = 11;
-const DEFAULT_WIDTH_OUTPUT = 18;
-const DEFAULT_WIDTH_KETERANGAN = 28;
-
-const BASE_STEPS_PER_PAGE = computed(() => {
-    return sopConfig.value?.firstPageSteps || DEFAULT_FIRST_PAGE_STEPS;
-});
-const STEPS_WITH_BOTH_OPC = computed(() => {
-    return sopConfig.value?.nextPageSteps || DEFAULT_NEXT_PAGE_STEPS;
-});
 const connectorChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const mainSopAreaId = 'main-sop-area'; // ID untuk container utama
 
 // lebar kolom dalam persentase
 const columnWidth = computed(() => ({
-    activity: sopConfig.value?.widthKegiatan || DEFAULT_WIDTH_KEGIATAN,
-    completeness: sopConfig.value?.widthKelengkapan || DEFAULT_WIDTH_KELENGKAPAN,
-    time: sopConfig.value?.widthWaktu || DEFAULT_WIDTH_WAKTU,
-    output: sopConfig.value?.widthOutput || DEFAULT_WIDTH_OUTPUT,
-    notes: sopConfig.value?.widthKeterangan || DEFAULT_WIDTH_KETERANGAN
+    activity: sopConfig.value.widthKegiatan,
+    completeness: sopConfig.value.widthKelengkapan,
+    time: sopConfig.value.widthWaktu,
+    output: sopConfig.value.widthOutput,
+    notes: sopConfig.value.widthKeterangan
 }));
 
 // --- Refs for column positioning ---
@@ -124,9 +117,6 @@ const arrowConfigs = ref({});
 
 const handlePathUpdate = (payload) => {
     if (payload && payload.connectionId) {
-        // PERBAIKAN: Debug payload yang diterima
-        // console.log(`[SopStepTemplate] Receiving path update for connection ${payload.connectionId}:`, payload);
-        
         // PERBAIKAN: Selalu update dengan payload terbaru dari ArrowConnector
         arrowConfigs.value[payload.connectionId] = { ...payload };
     }
@@ -140,7 +130,7 @@ const connections = computed(() => {
     const lastImplementerId = implementerIds[implementerIds.length - 1];
 
     // PERBAIKAN: Dapatkan custom labels dari database
-    const customLabels = flowchartLabelConfig.value?.custom_labels || {};
+    const customLabels = props.labelConfig?.custom_labels || {};
 
     props.steps.forEach((step) => {
         const sourceId = `sop-step-${step.seq_number}`;
@@ -357,14 +347,14 @@ const getOPCForPageArea = (pageIndex, opcType, area) => {
 const getStepsPerPage = (pageIndex) => {
     const totalSteps = props.steps.length;
     if (pageIndex === 0) {
-        return BASE_STEPS_PER_PAGE.value;
+        return sopConfig.value.firstPageSteps;
     }
-    // For subsequent pages, it's always STEPS_WITH_BOTH_OPC unless it's the last bit
-    const stepsOnPreviousPages = BASE_STEPS_PER_PAGE.value + (pageIndex - 1) * STEPS_WITH_BOTH_OPC.value;
+    // For subsequent pages, it's always sopConfig nextPageSteps unless it's the last bit
+    const stepsOnPreviousPages = sopConfig.value.firstPageSteps + (pageIndex - 1) * sopConfig.value.nextPageSteps;
     const stepsLeft = totalSteps - stepsOnPreviousPages;
 
     if (stepsLeft <= 0) return 0;
-    return Math.min(stepsLeft, STEPS_WITH_BOTH_OPC.value);
+    return Math.min(stepsLeft, sopConfig.value.nextPageSteps);
 };
 
 const allPages = computed(() => {
@@ -555,92 +545,93 @@ const orderedImplementer = computed(() => {
     return order.map(id => props.implementer.find(impl => impl.id === id));
 });
 
-watch(props.steps, async () => {
-    arrowsReady.value = false; // 1. Sembunyikan panah lama
-    arrowConfigs.value = {}; // 2. Reset state sisi yang digunakan
-    await recalculateOPCPositions();
-    redrawKey.value = Date.now(); // 3. Picu kalkulasi ulang
+// PERBAIKAN: Watch yang lebih selektif untuk menghindari recalculation yang tidak perlu
+watch(() => props.steps, async (newSteps, oldSteps) => {
+    // Jangan reset jika sudah ada banyak manual config
+    const hasManualConfigs = props.arrowConfig && Object.keys(props.arrowConfig).length > 0;
     
-    // 4. Tunggu sebentar agar semua kalkulasi selesai, lalu tampilkan panah baru
-    setTimeout(() => {
-        arrowsReady.value = true;
-    }, 100);
+    if (hasManualConfigs) {
+        console.log('[SopStepTemplate] Manual configs exist, minimal recalculation');
+        // Hanya update redrawKey tanpa reset arrowConfigs
+        redrawKey.value = Date.now();
+        return;
+    }
+    
+    arrowsReady.value = false;
+    arrowConfigs.value = {};
+    await recalculateOPCPositions();
+    redrawKey.value = Date.now();
+    
+    await nextTick();
+    arrowsReady.value = true;
 }, { deep: true });
 
-watch(sopConfig, async () => {
+watch(() => props.layoutConfig, async (newConfig, oldConfig) => {
+    // Jangan reset jika sudah ada banyak manual config
+    const hasManualConfigs = props.arrowConfig && Object.keys(props.arrowConfig).length > 0;
+    
+    if (hasManualConfigs) {
+        console.log('[SopStepTemplate] Manual configs exist, minimal recalculation for layout change');
+        redrawKey.value = Date.now();
+        return;
+    }
+    
     arrowsReady.value = false;
     arrowConfigs.value = {};
     await recalculateOPCPositions();
     redrawKey.value = Date.now();
 
-    await nextTick(); // Tunggu DOM update
+    await nextTick();
     arrowsReady.value = true;
 }, { deep: true });
 
-// Mounting lifecycle hook
-onMounted(async () => {
-    await nextTick();
-    opcMounted.value = true;
-
-    await nextTick(); // Tunggu DOM update
-    arrowsReady.value = true;
-});
-
-const arrowConnectorRefs = ref({});
-
-const setArrowConnectorRef = (el, connectionId) => {
-    if (el) {
-        arrowConnectorRefs.value[connectionId] = el;
-    } else {
-        delete arrowConnectorRefs.value[connectionId];
-    }
-};
-
-// PERBAIKAN: Force recalculation yang menggunakan label dari database
+// PERBAIKAN: Force recalculation yang lebih conservative
 const forceRecalculation = () => {
     console.log('[SopStepTemplate] Force recalculation triggered');
     
-    // Reset semua state yang berhubungan dengan panah
-    arrowConfigs.value = {};
+    // JANGAN reset arrowConfigs jika ada manual config
+    const hasManualConfigs = props.arrowConfig && Object.keys(props.arrowConfig).length > 0;
+    if (!hasManualConfigs) {
+        arrowConfigs.value = {};
+    }
+    
     arrowsReady.value = false;
     redrawKey.value = Date.now();
     
-    // Tunggu sebentar untuk memastikan DOM terupdate
-    setTimeout(() => {
+    nextTick(() => {
         arrowsReady.value = true;
         console.log('[SopStepTemplate] Arrows ready after force recalculation');
-    }, 200);
+    });
 };
 
-// PERBAIKAN: Reset arrows yang lebih clean
+// PERBAIKAN: Reset yang lebih clean
 const resetArrowsToLastSaved = () => {
     console.log('[SopStepTemplate] Reset arrows to last saved');
-    console.log('[SopStepTemplate] Current props.arrowConfig:', props.arrowConfig);
     
-    // Hanya reset arrowConfigs internal
-    arrowConfigs.value = {};
+    // PERBAIKAN: Reset internal state ke prop dari database
+    arrowConfigs.value = { ...props.arrowConfig };
     redrawKey.value = Date.now();
     
-    setTimeout(() => {
+    nextTick(() => {
         arrowsReady.value = true;
         console.log('[SopStepTemplate] Arrows ready after reset');
-    }, 100);
+    });
 };
 
 // BARU: Expose functions
 defineExpose({
     resetArrowsToLastSaved,
-    forceRecalculation
+    forceRecalculation,
+    // BARU: Fungsi untuk mendapatkan semua konfigurasi panah saat ini
+    getArrowConfigs: () => arrowConfigs.value
 });
 
 // PERBAIKAN: Watch untuk props.arrowConfig dengan debug
-watch(() => props.arrowConfig, (newConfig, oldConfig) => {
-    console.log('[SopStepTemplate] Props arrowConfig changed from:', oldConfig, 'to:', newConfig);
-    if (Object.keys(newConfig).length === 0 && Object.keys(arrowConfigs.value).length > 0) {
-        console.log('[SopStepTemplate] Props config is empty but internal config exists, forcing recalculation');
-        forceRecalculation();
-    }
-}, { deep: true });
+watch(() => props.arrowConfig, (newConfig) => {
+    // Saat data dari database berubah, update state internal
+    arrowConfigs.value = { ...newConfig };
+    forceRecalculation();
+}, { deep: true, immediate: true });
 </script>
 
 <template>
@@ -734,14 +725,13 @@ watch(() => props.arrowConfig, (newConfig, oldConfig) => {
                             <arrow-connector 
                                 v-for="(connection, connIndex) in getConnectionsForPage(pageIndex)" 
                                 :key="`conn-${pageIndex}-${connIndex}-${redrawKey}`"
-                                :ref="el => setArrowConnectorRef(el, connection.id)"
                                 :idarrow="`arrow-${pageIndex}-${connIndex}`" 
                                 :idcontainer="`${mainSopAreaId}-${pageIndex}`"
                                 :connection="connection"
                                 :redraw-key="redrawKey"
                                 :obstacles="pageObstacles[pageIndex] || []"
                                 :used-sides="usedSides"
-                                :manual-config="arrowConfig[connection.id]"
+                                :manual-config="arrowConfigs[connection.id]"
                                 :manual-label-position="labelConfig.positions && labelConfig.positions[connection.id]"
                                 :edit-mode="editMode"
                                 @path-updated="handlePathUpdate"

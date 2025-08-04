@@ -66,10 +66,22 @@ const effectivePosition = computed(() => {
   return defaultPosition.value;
 });
 
-// PERBAIKAN: Watch untuk perubahan customPosition dari parent
+// PERBAIKAN: Watch untuk perubahan customPosition dari parent yang lebih responsive
 watch(() => props.customPosition, (newPosition) => {
+  console.log(`[DecisionText] ${props.stepId}: customPosition changed to:`, newPosition);
   if (newPosition && !isDragging.value) {
     // Update jika ada posisi baru dari parent dan sedang tidak drag
+    currentPosition.value = null;
+  }
+}, { deep: true, immediate: true });
+
+// PERBAIKAN: Watch untuk perubahan database positions
+watch(() => {
+  return bpmnLabelConfig.value?.positions?.[props.stepId];
+}, (newPosition) => {
+  console.log(`[DecisionText] ${props.stepId}: Database position changed to:`, newPosition);
+  if (newPosition && !isDragging.value && !props.customPosition) {
+    // Update hanya jika tidak ada custom position dan tidak sedang drag
     currentPosition.value = null;
   }
 }, { deep: true });

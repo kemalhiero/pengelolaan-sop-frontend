@@ -193,62 +193,52 @@ const toggleArrowEditMode = async () => {
 
 const saveCurrentTabConfig = async () => {
     const payload = {};
-    const hasFlowchartArrowChanges = Object.keys(flowchartArrowConfigUpdates.value).length > 0;
     const flowchartLabelUpdates = flowchartLabelConfigUpdates.value || {};
-    const hasFlowchartLabelChanges = Object.keys(flowchartLabelUpdates.custom_labels || {}).length > 0 || Object.keys(flowchartLabelUpdates.positions || {}).length > 0;
-
-    const hasBpmnArrowChanges = Object.keys(bpmnArrowConfigUpdates.value).length > 0;
     const bpmnLabelUpdates = bpmnLabelConfigUpdates.value || {};
-    const hasBpmnLabelChanges = Object.keys(bpmnLabelUpdates.custom_labels || {}).length > 0 || Object.keys(bpmnLabelUpdates.positions || {}).length > 0;
 
     if (activeTab.value === 'document') {
-        if (hasFlowchartArrowChanges || hasFlowchartLabelChanges) {
-            // Selalu simpan konfigurasi panah yang sudah digabung
-            payload.flowchart_arrow_config = JSON.stringify({
-                ...flowchartArrowConfig.value,
-                ...flowchartArrowConfigUpdates.value
-            });
+        // PERBAIKAN: Ambil semua konfigurasi dari child, bukan hanya update
+        const allFlowchartArrowConfigs = sopStepTemplateRef.value?.getArrowConfigs() || {};
+        console.log('[ThirdStep] Saving flowchart arrows:', allFlowchartArrowConfigs);
+        payload.flowchart_arrow_config = JSON.stringify(allFlowchartArrowConfigs);
 
-            // Selalu simpan konfigurasi label yang sudah digabung
-            const currentFlowchartLabelConfig = flowchartLabelConfig.value || {};
-            const mergedFlowchartLabelConfig = {
-                custom_labels: {
-                    ...(currentFlowchartLabelConfig.custom_labels || {}),
-                    ...flowchartLabelUpdates.custom_labels
-                },
-                positions: {
-                    ...(currentFlowchartLabelConfig.positions || {}),
-                    ...flowchartLabelUpdates.positions
-                }
-            };
-            payload.flowchart_label_config = JSON.stringify(mergedFlowchartLabelConfig);
+        // Selalu simpan konfigurasi label yang sudah digabung
+        const currentFlowchartLabelConfig = flowchartLabelConfig.value || {};
+        const mergedFlowchartLabelConfig = {
+            custom_labels: {
+                ...(currentFlowchartLabelConfig.custom_labels || {}),
+                ...flowchartLabelUpdates.custom_labels
+            },
+            positions: {
+                ...(currentFlowchartLabelConfig.positions || {}),
+                ...flowchartLabelUpdates.positions
+            }
+        };
+        payload.flowchart_label_config = JSON.stringify(mergedFlowchartLabelConfig);
 
-            await saveFlowchartConfig(idsopdetail, payload);
-        }
+        await saveFlowchartConfig(idsopdetail, payload);
     } else if (activeTab.value === 'bpmn') {
-        if (hasBpmnArrowChanges || hasBpmnLabelChanges) {
-            // Selalu simpan konfigurasi panah yang sudah digabung
-            payload.bpmn_arrow_config = JSON.stringify({
-                ...bpmnArrowConfig.value,
-                ...bpmnArrowConfigUpdates.value
-            });
+        // PERBAIKAN: Ambil semua konfigurasi dari child, bukan hanya update
+        const allBpmnArrowConfigs = sopBpmnTemplateRef.value?.getArrowConfigs() || {};
+        console.log('[ThirdStep] Saving BPMN arrows:', allBpmnArrowConfigs);
+        payload.bpmn_arrow_config = JSON.stringify(allBpmnArrowConfigs);
 
-            // Selalu simpan konfigurasi label yang sudah digabung
-            const currentBpmnLabelConfig = bpmnLabelConfig.value || {};
-            const mergedBpmnLabelConfig = {
-                custom_labels: {
-                    ...(currentBpmnLabelConfig.custom_labels || {}),
-                    ...bpmnLabelUpdates.custom_labels
-                },
-                positions: {
-                    ...(currentBpmnLabelConfig.positions || {}),
-                    ...bpmnLabelUpdates.positions
-                }
-            };
-            payload.bpmn_label_config = JSON.stringify(mergedBpmnLabelConfig);
+        // Selalu simpan konfigurasi label yang sudah digabung
+        const currentBpmnLabelConfig = bpmnLabelConfig.value || {};
+        const mergedBpmnLabelConfig = {
+            custom_labels: {
+                ...(currentBpmnLabelConfig.custom_labels || {}),
+                ...bpmnLabelUpdates.custom_labels
+            },
+            positions: {
+                ...(currentBpmnLabelConfig.positions || {}),
+                ...bpmnLabelUpdates.positions
+            }
+        };
+        payload.bpmn_label_config = JSON.stringify(mergedBpmnLabelConfig);
 
-            await saveBpmnConfig(idsopdetail, payload);
-        }
+        console.log('[ThirdStep] BPMN payload being saved:', payload);
+        await saveBpmnConfig(idsopdetail, payload);
     }
 
     // Reset updates setelah simpan
@@ -260,18 +250,20 @@ const saveCurrentTabConfig = async () => {
         bpmnLabelConfigUpdates.value = { custom_labels: {}, positions: {} };
     }
     
-    // Refresh data dari database dan trigger reactivity
+    // PERBAIKAN: Refresh data dan tunggu sampai selesai
     await fetchSopDisplayConfig();
-    
-    // Trigger nextTick untuk memastikan reaktivitas
     await nextTick();
     
-    // Force refresh template components
+    // PERBAIKAN: Force refresh yang lebih gentle tanpa reset besar-besaran
     if (sopStepTemplateRef.value) {
-        sopStepTemplateRef.value.forceRecalculation();
+        setTimeout(() => {
+            sopStepTemplateRef.value.forceRecalculation();
+        }, 100);
     }
     if (sopBpmnTemplateRef.value) {
-        sopBpmnTemplateRef.value.forceRecalculation();
+        setTimeout(() => {
+            sopBpmnTemplateRef.value.forceRecalculation();
+        }, 100);
     }
 };
 
@@ -294,6 +286,8 @@ const resetArrowsToLastSaved = () => {
         return;
     }
     
+    console.log(`[ThirdStep] Resetting ${activeTab.value} to last saved state`);
+    
     if (activeTab.value === 'document') {
         flowchartArrowConfigUpdates.value = {};
         flowchartLabelConfigUpdates.value = { custom_labels: {}, positions: {} };
@@ -307,10 +301,13 @@ const resetArrowsToLastSaved = () => {
         bpmnLabelConfigUpdates.value = { custom_labels: {}, positions: {} };
         
         if (sopBpmnTemplateRef.value) {
-            sopBpmnTemplateRef.value.resetArrowsToLastSaved();
+            // PERBAIKAN: Panggil reset dengan urutan yang benar
             sopBpmnTemplateRef.value.resetDecisionTextPositions();
+            sopBpmnTemplateRef.value.resetArrowsToLastSaved();
         }
     }
+    
+    console.log(`[ThirdStep] Reset completed for ${activeTab.value}`);
 };
 
 // PERBAIKAN: Watch untuk panel konfigurasi saja
@@ -479,9 +476,13 @@ const showDeleteModal = ref(false);
 // BARU: Computed untuk mengecek apakah ada konfigurasi tersimpan
 const hasArrowConfig = computed(() => {
     if (activeTab.value === 'document') {
-        return flowchartArrowConfig.value && Object.keys(flowchartArrowConfig.value).length > 0;
+        const hasArrow = flowchartArrowConfig.value && Object.keys(flowchartArrowConfig.value).length > 0;
+        const hasLabel = flowchartLabelConfig.value && (Object.keys(flowchartLabelConfig.value.custom_labels || {}).length > 0 || Object.keys(flowchartLabelConfig.value.positions || {}).length > 0);
+        return hasArrow || hasLabel;
     } else if (activeTab.value === 'bpmn') {
-        return bpmnArrowConfig.value && Object.keys(bpmnArrowConfig.value).length > 0;
+        const hasArrow = bpmnArrowConfig.value && Object.keys(bpmnArrowConfig.value).length > 0;
+        const hasLabel = bpmnLabelConfig.value && (Object.keys(bpmnLabelConfig.value.custom_labels || {}).length > 0 || Object.keys(bpmnLabelConfig.value.positions || {}).length > 0);
+        return hasArrow || hasLabel;
     }
     return false;
 });
@@ -518,63 +519,6 @@ const hasUnsavedArrowChanges = computed(() => {
     
     return false;
 });
-
-// BARU: Fungsi helper untuk membandingkan konfigurasi panah
-const hasConfigurationDifference = (config1, config2) => {
-    if (!config1 || !config2) return true;
-    
-    // Bandingkan startPoint
-    if (config1.startPoint && config2.startPoint) {
-        if (Math.abs(config1.startPoint.x - config2.startPoint.x) > 1 || 
-            Math.abs(config1.startPoint.y - config2.startPoint.y) > 1) {
-            return true;
-        }
-    } else if (config1.startPoint !== config2.startPoint) {
-        return true;
-    }
-    
-    // Bandingkan endPoint
-    if (config1.endPoint && config2.endPoint) {
-        if (Math.abs(config1.endPoint.x - config2.endPoint.x) > 1 || 
-            Math.abs(config1.endPoint.y - config2.endPoint.y) > 1) {
-            return true;
-        }
-    } else if (config1.endPoint !== config2.endPoint) {
-        return true;
-    }
-    
-    // Bandingkan bendPoints
-    const bendPoints1 = config1.bendPoints || [];
-    const bendPoints2 = config2.bendPoints || [];
-    
-    if (bendPoints1.length !== bendPoints2.length) {
-        return true;
-    }
-    
-    for (let i = 0; i < bendPoints1.length; i++) {
-        if (Math.abs(bendPoints1[i].x - bendPoints2[i].x) > 1 || 
-            Math.abs(bendPoints1[i].y - bendPoints2[i].y) > 1) {
-            return true;
-        }
-    }
-    
-    // Bandingkan sSide dan eSide
-    if (config1.sSide !== config2.sSide || config1.eSide !== config2.eSide) {
-        return true;
-    }
-    
-    // Bandingkan label position jika ada
-    if (config1.labelPosition && config2.labelPosition) {
-        if (Math.abs(config1.labelPosition.x - config2.labelPosition.x) > 1 || 
-            Math.abs(config1.labelPosition.y - config2.labelPosition.y) > 1) {
-            return true;
-        }
-    } else if (config1.labelPosition !== config2.labelPosition) {
-        return true;
-    }
-    
-    return false;
-};
 </script>
 
 <template>
@@ -633,7 +577,7 @@ const hasConfigurationDifference = (config1, config2) => {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                               d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
-                    {{ arrowEditMode ? 'Selesai & Simpan' : 'Edit Panah & Label' }}
+                    {{ arrowEditMode ? (hasUnsavedArrowChanges ? 'Selesai & Simpan' : 'Selesai') : 'Edit Panah & Label' }}
                     <span v-if="hasUnsavedArrowChanges && arrowEditMode" class="w-2 h-2 bg-red-500 rounded-full"></span>
                 </span>
             </button>
@@ -714,7 +658,7 @@ const hasConfigurationDifference = (config1, config2) => {
                 </div>
             </div>
         </div>
-        
+
         <SopStepTemplate
             v-if="activeTab === 'document'"
             ref="sopStepTemplateRef"
@@ -722,6 +666,7 @@ const hasConfigurationDifference = (config1, config2) => {
             :steps="sopStep"
             :arrow-config="finalFlowchartArrowConfig"
             :label-config="finalFlowchartLabelConfig"
+            :layout-config="sopConfig"
             :edit-mode="arrowEditMode"
             @manual-edit="handleFlowchartManualEdit"
             @label-edit="handleLabelEdit"

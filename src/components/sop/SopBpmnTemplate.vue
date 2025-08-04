@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, computed, watch, nextTick, inject } from 'vue';
+import { onMounted, ref, computed, watch, nextTick } from 'vue';
 import { capitalizeWords } from '@/utils/text';
 
 import ArrowConnector from '@/components/sop/shape/ArrowConnector.vue';
@@ -22,12 +22,12 @@ const props = defineProps({
         type: Array,
         required: true
     },
-    arrowConfig: { type: Object, default: () => ({}) },
-    labelConfig: { type: Object, default: () => ({}) },
-    editMode: {
-        type: Boolean,
-        default: false
-    }
+  arrowConfig: { type: Object, default: () => ({}) },
+  labelConfig: { type: Object, default: () => ({}) },
+  editMode: {
+      type: Boolean,
+      default: false
+  }
 });
 
 const emit = defineEmits(['manual-edit',  'label-edit']);
@@ -35,7 +35,6 @@ const emit = defineEmits(['manual-edit',  'label-edit']);
 const handleLabelEdit = (config) => {
     emit('label-edit', config);
 };
-const bpmnLabelConfig = inject('labelConfigs').bpmnLabelConfig;
 
 // --- STATE BARU UNTUK MANAJEMAN PANAH ---
 const arrowConfigs = ref({});
@@ -43,9 +42,7 @@ const arrowsReady = ref(false);
 
 const handlePathUpdate = (payload) => {
     if (payload && payload.connectionId) {
-        if (!props.arrowConfig[payload.connectionId]) {
-            delete arrowConfigs.value[payload.connectionId];
-        }
+        // PERBAIKAN: Selalu update dengan payload terbaru dari ArrowConnector
         arrowConfigs.value[payload.connectionId] = { ...payload };
     }
 };
@@ -167,9 +164,7 @@ const processedSteps = computed(() => {
 // Computed property untuk koneksi
 const bpmnConnections = computed(() => {
   const allConnections = [];
-  
-  // PERBAIKAN: Dapatkan custom labels dari database BPMN
-  const customLabels = bpmnLabelConfig.value?.custom_labels || {};
+  const customLabels = props.labelConfig?.custom_labels || {};
   
   processedSteps.value.forEach((step) => {
     const targetTypeForConn = (targetStep) => targetStep ? targetStep.type : 'task';
@@ -179,7 +174,7 @@ const bpmnConnections = computed(() => {
       if (step.id_next_step_if_yes) {
         const targetStep = processedSteps.value.find(s => s.id_step === step.id_next_step_if_yes);
         if (targetStep) {
-          // PERBAIKAN: Gunakan custom label dari database BPMN
+          // PERBAIKAN: Gunakan custom label dari props
           const yesKey = `step-${step.seq_number}-yes`;
           const customYesLabel = customLabels[yesKey];
           
@@ -485,13 +480,23 @@ onMounted(() => {
   }
 });
 
-watch(() => props.steps, () => {
-  arrowsReady.value = false;
-  arrowConfigs.value = {};
-  calculateGlobalLayout();
-  nextTick(() => {
+watch(() => props.sopConfig, async (newConfig, oldConfig) => {
+    // Jangan reset jika sudah ada banyak manual config
+    const hasManualConfigs = props.arrowConfig && Object.keys(props.arrowConfig).length > 0;
+    
+    if (hasManualConfigs) {
+        console.log('[SopStepTemplate] Manual configs exist, minimal recalculation for layout change');
+        redrawKey.value = Date.now();
+        return;
+    }
+    
+    arrowsReady.value = false;
+    arrowConfigs.value = {};
+    await recalculateOPCPositions();
+    redrawKey.value = Date.now();
+
+    await nextTick();
     arrowsReady.value = true;
-  });
 }, { deep: true });
 
 const charWidth = 9; // Base width untuk single character (dalam pixels)
@@ -510,73 +515,98 @@ const handleManualEdit = (config) => {
     emit('manual-edit', config);
 };
 
-const resetArrowsToLastSaved = () => {
-    console.log('BPMN Reset arrows to last saved');
-    
-    // PERBAIKAN: Reset decision text positions dari database
-    const bpmnLabelFromDB = bpmnLabelConfig.value || {};
-    const positions = bpmnLabelFromDB.positions || {};
-    
-    // Reset ke posisi dari database
-    decisionTextPositions.value = { ...positions };
-    
-    // Hanya reset arrowConfigs internal
-    arrowConfigs.value = {};
-    arrowsReady.value = false;
-    
-    nextTick(() => {
-        arrowsReady.value = true;
-    });
-};
+// PERBAIKAN: Watch yang lebih spesifik untuk menghindari re-kalkulasi yang tidak perlu
+watch(() => props.steps.map(s => ({ id: s.id_step, seq: s.seq_number, next_yes: s.id_next_step_if_yes, next_no: s.id_next_step_if_no })), () => {
+  // Jangan reset jika sudah ada manual configs
+  const hasManualConfigs = props.arrowConfig && Object.keys(props.arrowConfig).length > 0;
+  
+  if (hasManualConfigs) {
+    console.log('[SopBpmnTemplate] Manual configs exist, minimal recalculation');
+    calculateGlobalLayout();
+    return;
+  }
+  
+  arrowsReady.value = false;
+  arrowConfigs.value = {};
+  calculateGlobalLayout();
+  nextTick(() => {
+    arrowsReady.value = true;
+  });
+}, { deep: true });
 
-// PERBAIKAN: Force recalculation tanpa mengubah sopStepRaw
+// PERBAIKAN: Force recalculation yang lebih conservative
 const forceRecalculation = () => {
-    console.log('BPMN Force recalculation triggered');
+    console.log('[SopBpmnTemplate] Force recalculation triggered');
+    
+    // JANGAN reset jika ada manual config
+    const hasManualConfigs = props.arrowConfig && Object.keys(props.arrowConfig).length > 0;
+    if (!hasManualConfigs) {
+        arrowConfigs.value = {};
+    }
+    
     arrowsReady.value = false;
+    calculateGlobalLayout();
     
     nextTick(() => {
         arrowsReady.value = true;
-        console.log('BPMN Arrows ready after force recalculation');
+        console.log('[SopBpmnTemplate] Arrows ready after force recalculation');
     });
 };
 
-// PERBAIKAN: resetDecisionTextPositions dengan database sync
+// BARU: State untuk posisi teks decision yang dapat digeser
+const decisionTextPositions = ref({});
+
+// PERBAIKAN: Reset yang menggunakan data database dengan benar
+const resetArrowsToLastSaved = () => {
+    console.log('[SopBpmnTemplate] Reset arrows and decision text positions to last saved');
+
+    // PERBAIKAN: Reset internal arrow configs ke prop dari database
+    arrowConfigs.value = { ...props.arrowConfig };
+
+    // PERBAIKAN: Reset decision text positions dari database
+    resetDecisionTextPositions();
+
+    arrowsReady.value = false;
+    calculateGlobalLayout();
+
+    nextTick(() => {
+        arrowsReady.value = true;
+        console.log('[SopBpmnTemplate] Reset completed');
+    });
+};
+
+// PERBAIKAN: resetDecisionTextPositions dengan database sync yang benar
 const resetDecisionTextPositions = () => {
+    console.log('[SopBpmnTemplate] Resetting decision text positions from database');
+    
     // Reset ke posisi dari database
-    const bpmnLabelFromDB = bpmnLabelConfig.value || {};
+    const bpmnLabelFromDB = props.labelConfig || {};
     const positions = bpmnLabelFromDB.positions || {};
     
-    // Filter hanya posisi untuk decision text (step-X format)
+    // Filter hanya posisi untuk decision text (step-X format, bukan conn-X format)
     const filteredPositions = {};
     Object.keys(positions).forEach(key => {
         if (key.startsWith('step-') && !key.includes('-yes') && !key.includes('-no')) {
             filteredPositions[key] = positions[key];
+            console.log(`[SopBpmnTemplate] Restored decision text position for ${key}:`, positions[key]);
         }
     });
     
     decisionTextPositions.value = { ...filteredPositions };
+    console.log('[SopBpmnTemplate] Decision text positions after reset:', decisionTextPositions.value);
 };
 
-// BARU: Refs untuk ArrowConnector components
-const arrowConnectorRefs = ref({});
-
-const setArrowConnectorRef = (el, connectionId) => {
-    if (el) {
-        arrowConnectorRefs.value[connectionId] = el;
-    } else {
-        delete arrowConnectorRefs.value[connectionId];
-    }
-};
-
-// BARU: Expose functions
+// PERBAIKAN: Expose functions dengan getArrowConfigs yang benar
 defineExpose({
     resetArrowsToLastSaved,
     forceRecalculation,
-    resetDecisionTextPositions
+    resetDecisionTextPositions,
+    // PERBAIKAN: Fungsi untuk mendapatkan semua konfigurasi panah saat ini
+    getArrowConfigs: () => {
+        console.log('[SopBpmnTemplate] getArrowConfigs called, returning:', arrowConfigs.value);
+        return arrowConfigs.value;
+    }
 });
-
-// BARU: State untuk posisi teks decision yang dapat digeser
-const decisionTextPositions = ref({});
 
 // BARU: Handler untuk drag teks decision
 const handleDecisionTextDrag = (stepId, newPosition) => {
@@ -589,6 +619,25 @@ const handleDecisionTextDrag = (stepId, newPosition) => {
         type: 'decision-text'
     });
 };
+
+// PERBAIKAN: Watch untuk props.arrowConfig yang sync dengan database
+watch(() => props.arrowConfig, (newConfig) => {
+    console.log('[SopBpmnTemplate] arrowConfig changed from database:', newConfig);
+    // Saat data dari database berubah, update state internal
+    arrowConfigs.value = { ...newConfig };
+    arrowsReady.value = false;
+    calculateGlobalLayout();
+    nextTick(() => {
+        arrowsReady.value = true;
+    });
+}, { deep: true, immediate: true });
+
+// PERBAIKAN: Watch untuk props.labelConfig yang sync dengan database  
+watch(() => props.labelConfig, (newConfig) => {
+    console.log('[SopBpmnTemplate] labelConfig changed from database:', newConfig);
+    // Update decision text positions dari database
+    resetDecisionTextPositions();
+}, { deep: true, immediate: true });
 </script>
 
 <template>
@@ -732,11 +781,10 @@ const handleDecisionTextDrag = (stepId, newPosition) => {
           :idarrow="index + 100"
           idcontainer="bpmn-container"
           :key="`${connection.from}-${connection.to}-${index}`"
-          :ref="el => setArrowConnectorRef(el, connection.id)"
           :connection="connection"
           :obstacles="processedSteps.map(step => ({ id: `bpmn-step-${step.seq_number}` }))"
           :used-sides="usedSides"
-          :manual-config="arrowConfig[connection.id]"
+          :manual-config="arrowConfigs[connection.id]"
           :manual-label-position="labelConfig.positions && labelConfig.positions[connection.id]"
           :edit-mode="editMode"
           @path-updated="handlePathUpdate"

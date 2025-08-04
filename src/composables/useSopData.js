@@ -123,48 +123,44 @@ export default function useSopData(route) {
         return !sopData.value || !sopData.value.name || !signer.value || !signer.value.name;
     });
 
-    const sopConfig = ref({
-        firstPageSteps: null,
-        nextPageSteps: null,
-        widthKegiatan: null,
-        widthKelengkapan: null,
-        widthWaktu: null,
-        widthOutput: null,
-        widthKeterangan: null,
+    const DEFAULT_SOP_CONFIG = {
+        firstPageSteps: 5,
+        nextPageSteps: 6,
+        widthKegiatan: 23,
+        widthKelengkapan: 19,
+        widthWaktu: 11,
+        widthOutput: 18,
+        widthKeterangan: 28,
         flowchartArrowConfig: {},
         bpmnArrowConfig: {},
         flowchartLabelConfig: {},
         bpmnLabelConfig: {},
-    });
-
+    };
+    
+    const sopConfig = ref({ ...DEFAULT_SOP_CONFIG });
+    
     const fetchSopDisplayConfig = async () => {
         try {
             const response = await getSopDisplayConfig(route);
             if (response.success) {
-                sopConfig.value.firstPageSteps = response.data.nominal_basic_page_steps;
-                sopConfig.value.nextPageSteps = response.data.nominal_steps_both_opc;
-                sopConfig.value.widthKegiatan = response.data.kegiatan_width;
-                sopConfig.value.widthKelengkapan = response.data.kelengkapan_width;
-                sopConfig.value.widthWaktu = response.data.waktu_width;
-                sopConfig.value.widthOutput = response.data.output_width;
-                sopConfig.value.widthKeterangan = response.data.ket_width;
-                sopConfig.value.flowchartArrowConfig = response.data.flowchart_arrow_config;
-                sopConfig.value.bpmnArrowConfig = response.data.bpmn_arrow_config;
-                sopConfig.value.flowchartLabelConfig = response.data.flowchart_label_config;
-                sopConfig.value.bpmnLabelConfig = response.data.bpmn_label_config;
+                sopConfig.value.firstPageSteps = response.data.nominal_basic_page_steps ?? DEFAULT_SOP_CONFIG.firstPageSteps;
+                sopConfig.value.nextPageSteps = response.data.nominal_steps_both_opc ?? DEFAULT_SOP_CONFIG.nextPageSteps;
+                sopConfig.value.widthKegiatan = response.data.kegiatan_width ?? DEFAULT_SOP_CONFIG.widthKegiatan;
+                sopConfig.value.widthKelengkapan = response.data.kelengkapan_width ?? DEFAULT_SOP_CONFIG.widthKelengkapan;
+                sopConfig.value.widthWaktu = response.data.waktu_width ?? DEFAULT_SOP_CONFIG.widthWaktu;
+                sopConfig.value.widthOutput = response.data.output_width ?? DEFAULT_SOP_CONFIG.widthOutput;
+                sopConfig.value.widthKeterangan = response.data.ket_width ?? DEFAULT_SOP_CONFIG.widthKeterangan;
+                sopConfig.value.flowchartArrowConfig = response.data.flowchart_arrow_config ?? DEFAULT_SOP_CONFIG.flowchartArrowConfig;
+                sopConfig.value.bpmnArrowConfig = response.data.bpmn_arrow_config ?? DEFAULT_SOP_CONFIG.bpmnArrowConfig;
+                sopConfig.value.flowchartLabelConfig = response.data.flowchart_label_config ?? DEFAULT_SOP_CONFIG.flowchartLabelConfig;
+                sopConfig.value.bpmnLabelConfig = response.data.bpmn_label_config ?? DEFAULT_SOP_CONFIG.bpmnLabelConfig;
             } else {
                 console.warn('Konfigurasi tampilan SOP belum ada:', response.message);
-                // Set default values if API fails
-                sopConfig.value.firstPageSteps = 5;
-                sopConfig.value.nextPageSteps = 6;
-                sopConfig.value.widthKegiatan = 23;
-                sopConfig.value.widthKelengkapan = 19;
-                sopConfig.value.widthWaktu = 11;
-                sopConfig.value.widthOutput = 18;
-                sopConfig.value.widthKeterangan = 28;
+                sopConfig.value = { ...DEFAULT_SOP_CONFIG };
             }
         } catch (error) {
             console.error('Fetch SOP display config error:', error);
+            sopConfig.value = { ...DEFAULT_SOP_CONFIG };
         }
     };
 

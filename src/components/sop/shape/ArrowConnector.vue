@@ -99,9 +99,7 @@ const getElementPosition = (elementId) => {
 };
 
 const calculatePath = async () => {
-  // console.log(`[ArrowConnector] ID ${props.connection.id}: Checking manual config:`, props.manualConfig);
-  
-  // PERBAIKAN: Validasi konfigurasi manual lebih ketat
+  // PERBAIKAN: Prioritaskan konfigurasi manual dengan validasi lebih ketat
   const hasValidManualConfig = props.manualConfig && 
     props.manualConfig.startPoint && 
     props.manualConfig.endPoint &&
@@ -115,7 +113,7 @@ const calculatePath = async () => {
     !isNaN(props.manualConfig.endPoint.y);
 
   if (hasValidManualConfig) {
-    console.log(`[ArrowConnector] ID ${props.connection.id}: Menggunakan konfigurasi manual.`);
+    console.log(`[ArrowConnector] ID ${props.connection.id}: Menggunakan konfigurasi manual - TIDAK AKAN RECALCULATE.`);
     const { startPoint, endPoint, bendPoints = [] } = props.manualConfig;
     
     // Set local points untuk editing
@@ -145,10 +143,8 @@ const calculatePath = async () => {
       }
     }
     
-    emit('path-updated', {
-        connectionId: props.connection.id,
-        ...props.manualConfig
-    });
+    // PERBAIKAN: JANGAN EMIT path-updated jika sudah ada manual config
+    // Ini mencegah parent component mengira ada perubahan baru
     emit('mounted');
     return;
   }
@@ -573,20 +569,6 @@ const calculatePath = async () => {
   });
 };
 
-onMounted(() => {
-  calculatePath();
-});
-
-// Tambahkan watch untuk connection
-watch(() => props.connection, () => {
-  calculatePath();
-}, { deep: true });
-
-// Tambahkan watch untuk redrawKey
-watch(() => props.redrawKey, () => {
-  calculatePath();
-});
-
 // BARU: Fungsi untuk handle drag
 const startDrag = (event, pointIndex, pointType) => {
   if (!props.editMode) return;
@@ -880,41 +862,6 @@ const getDistanceToLineSegment = (px, py, x1, y1, x2, y2) => {
   return Math.sqrt((px - projectionX) * (px - projectionX) + (py - projectionY) * (py - projectionY));
 };
 
-// Force recalculation saat tidak ada manual config
-watch(() => props.manualConfig, (newConfig, oldConfig) => {
-  // console.log(`[ArrowConnector] ID ${props.connection.id}: Manual config changed from:`, oldConfig, 'to:', newConfig);
-  if (!newConfig || Object.keys(newConfig).length === 0) {
-    console.log(`[ArrowConnector] ID ${props.connection.id}: No manual config, will use algorithm`);
-    calculatePath();
-  }
-}, { deep: true });
-
-// PERBAIKAN: Watch untuk editMode dan manualConfig
-watch(() => [props.editMode, props.manualConfig], ([newEditMode, newManualConfig]) => {
-  if (newEditMode) {
-    if (newManualConfig && newManualConfig.startPoint && newManualConfig.endPoint) {
-      // Gunakan konfigurasi manual jika ada
-      const { startPoint, endPoint, bendPoints = [] } = newManualConfig;
-      localPoints.value = [
-        { ...startPoint, type: 'start' },
-        ...bendPoints.map(p => ({ ...p, type: 'bend' })),
-        { ...endPoint, type: 'end' }
-      ];
-    } else if (algorithmConfig.value) {
-      // Fallback ke konfigurasi algoritma jika tidak ada konfigurasi manual
-      const { startPoint, endPoint, bendPoints = [] } = algorithmConfig.value;
-      localPoints.value = [
-        { ...startPoint, type: 'start' },
-        ...bendPoints.map(p => ({ ...p, type: 'bend' })),
-        { ...endPoint, type: 'end' }
-      ];
-    }
-  }
-}, { immediate: true });
-
-// PERBAIKAN: Inject label configs
-const { flowchartLabelConfig, bpmnLabelConfig } = inject('labelConfigs');
-
 // BARU: State untuk label yang sedang diedit
 const localLabelOverride = ref(null);
 
@@ -927,34 +874,75 @@ const displayLabel = computed(() => {
     return localLabelOverride.value || null;
   }
   
-  // Dapatkan config label yang sesuai dengan diagram type
-  const labelConfig = props.idcontainer.includes('bpmn') ? bpmnLabelConfig.value : flowchartLabelConfig.value;
-  const customLabels = labelConfig?.custom_labels || {};
-  
-  // Cari custom label berdasarkan connection ID
-  // Format: step-{seq_number}-{condition} untuk decision connections
-  if (props.connection.condition) {
-    const stepSeq = props.connection.id.match(/conn-(\d+)-/)?.[1];
-    if (stepSeq) {
-      const labelKey = `step-${stepSeq}-${props.connection.condition}`;
-      const customLabel = customLabels[labelKey];
-      if (customLabel) {
-        return customLabel;
-      }
-    }
-  }
-  
-  // Fallback ke label default
   return props.connection.label;
 });
 
-// BARU: Watch untuk reset override saat data database berubah
-watch(() => [flowchartLabelConfig.value, bpmnLabelConfig.value], () => {
+// PERBAIKAN: Watch untuk manual config yang lebih comprehensive untuk BPMN
+watch(() => props.manualConfig, (newConfig, oldConfig) => {
+  console.log(`[ArrowConnector] ${props.connection.id}: Manual config changed:`, { from: oldConfig, to: newConfig });
+  
+  if (newConfig && Object.keys(newConfig).length > 0) {
+    // Ada manual config, gunakan itu
+    console.log(`[ArrowConnector] ${props.connection.id}: Using manual config`);
+    calculatePath();
+  } else if ((!newConfig || Object.keys(newConfig).length === 0) && oldConfig && Object.keys(oldConfig).length > 0) {
+    // Manual config dihapus, fallback ke algoritma
+    console.log(`[ArrowConnector] ${props.connection.id}: Manual config removed, fallback to algorithm`);
+    calculatePath();
+  }
+}, { deep: true });
+
+// PERBAIKAN: Watch untuk editMode dan manualConfig yang lebih stabil untuk BPMN
+watch(() => [props.editMode, props.manualConfig], ([newEditMode, newManualConfig]) => {
+  if (newEditMode) {
+    console.log(`[ArrowConnector] ${props.connection.id}: Edit mode activated`);
+    if (newManualConfig && newManualConfig.startPoint && newManualConfig.endPoint) {
+      // Gunakan konfigurasi manual jika ada
+      console.log(`[ArrowConnector] ${props.connection.id}: Setting up edit mode with manual config`);
+      const { startPoint, endPoint, bendPoints = [] } = newManualConfig;
+      localPoints.value = [
+        { ...startPoint, type: 'start' },
+        ...bendPoints.map(p => ({ ...p, type: 'bend' })),
+        { ...endPoint, type: 'end' }
+      ];
+    } else if (algorithmConfig.value) {
+      // Fallback ke konfigurasi algoritma jika tidak ada konfigurasi manual
+      console.log(`[ArrowConnector] ${props.connection.id}: Setting up edit mode with algorithm config`);
+      const { startPoint, endPoint, bendPoints = [] } = algorithmConfig.value;
+      localPoints.value = [
+        { ...startPoint, type: 'start' },
+        ...bendPoints.map(p => ({ ...p, type: 'bend' })),
+        { ...endPoint, type: 'end' }
+      ];
+    }
+  }
+}, { immediate: true });
+
+// Tambahkan watch untuk connection
+watch(() => props.connection, (newConn, oldConn) => {
+  // Hanya recalculate jika tidak ada manual config
+  if (!props.manualConfig || Object.keys(props.manualConfig).length === 0) {
+    calculatePath();
+  }
+}, { deep: true });
+
+watch(() => props.redrawKey, () => {
+  // Hanya recalculate jika tidak ada manual config
+  if (!props.manualConfig || Object.keys(props.manualConfig).length === 0) {
+    calculatePath();
+  }
+});
+
+watch(() => props.connection.label, () => {
   // Reset override setelah data database update
   setTimeout(() => {
     localLabelOverride.value = null;
   }, 100);
 }, { deep: true });
+
+onMounted(() => {
+  calculatePath();
+});
 </script>
 
 <template>

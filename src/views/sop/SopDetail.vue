@@ -192,6 +192,8 @@ onMounted(fetchAllData);
                                 :implementer="sopData.implementer"
                                 :steps="sopData.steps"
                                 :arrow-config="flowchartArrowConfig"
+                                :label-config="flowchartLabelConfig"
+                                :layout-config="sopConfig"
                             />
                             <SopBpmnTemplate
                                 v-else
@@ -199,6 +201,7 @@ onMounted(fetchAllData);
                                 :steps="sopData.steps"
                                 :implementer="sopData.implementer"
                                 :arrow-config="bpmnArrowConfig"
+                                :label-config="bpmnLabelConfig"
                             />
                         </div>
                     </div>
