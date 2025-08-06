@@ -4,9 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue3-toastify';
 
 import { deleteSop, getOneSop, updateSop } from '@/api/sopApi';
-import { getOrg } from '@/api/orgApi';
 import { switchStatusIsActive } from '@/utils/getStatus';
-// import { useAuthStore } from '@/stores/auth';
 import statusTexts from '@/data/statusTexts.json';
 
 import Error from '@/components/Error.vue';
@@ -27,9 +25,7 @@ const route = useRoute();
 const router = useRouter();
 const sopData = ref({});
 const isLoading = ref(true);
-const dataOrganization = ref([]);
 const hasError = ref(false);
-// const authStore = useAuthStore();
 const showModal = ref({
   edit: false,
   delete: false,
@@ -56,15 +52,6 @@ const fetchData = async () => {
   } finally {
     isLoading.value = false;
   }
-};
-
-const fetchOrg = async () => {
-    try {
-        const result = await getOrg();
-        dataOrganization.value = result.data;
-    } catch (error) {
-        console.error('Fetch error:', error);
-    }
 };
 
 const isUpdateDisabled = computed(() => {
@@ -140,10 +127,8 @@ const deleteData = async (id) => {
 };
 
 onMounted(async () => {
-  await fetchOrg();
   await fetchData();
 });
-
 </script>
 
 <template>
@@ -249,23 +234,11 @@ onMounted(async () => {
                               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
                               placeholder="belum ada data" v-model="sopData.name"  />
                       </div>
-                      <!-- <div class="col-span-2 sm:col-span-1">
-                          <label for="org" class="block mb-2 text-sm font-medium text-gray-900">
-                              Organisasi
-                          </label>
-                          <select id="org" required :disabled="authStore.userRole !== 'kadep'" v-if="sopData.organization" v-model="sopData.organization.id"
-                              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
-                              <option selected disabled value="">Pilih organisasi</option>
-                              <option v-for="(item, index) in dataOrganization" :value="item.id" :key="`org-${index}`">
-                                  {{ item.name }}
-                              </option>
-                          </select>
-                      </div> -->
                       <div class="col-span-2">
                           <label for="org" class="block mb-2 text-sm font-medium text-gray-900">
                               Status
                           </label>
-                          <select id="org" required :disabled="sopData.is_active === 2" v-model="sopData.is_active"
+                          <select id="org" required :disabled="isUpdateDisabled" v-model="sopData.is_active"
                               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
                               <option selected disabled value="">Pilih Status</option>
                               <option value="0">Tidak Berlaku (kadaluarsa)</option>

@@ -259,7 +259,7 @@ const calculateGlobalLayout = () => {
 
   const baseX = 10; // Left margin
   const spacing = 50; // Jarak horizontal antar kolom bentuk (edge to edge)
-  const baseRowHeight = 120; // Tinggi minimal lane
+  const baseRowHeight = 160; // Tinggi minimal lane (dinaikkan dari 120 ke 160)
   const rowSpacing = 20; // Jarak vertikal antar lane (dari edge ke edge)
   
   globalLayout.value = { steps: [], connections: [], columnStartXs: [], maxColumnWidths: [] };
@@ -353,8 +353,8 @@ const calculateGlobalLayout = () => {
 
     const dims = stepDimensionsCache.get(step.id_step) || getStepDimensions(null, 'task');
     
-    // Update tinggi maksimum lane berdasarkan tinggi shape + padding
-    const requiredLaneHeight = dims.height + 40; // 20px padding atas + 20px padding bawah
+    // Update tinggi maksimum lane berdasarkan tinggi shape + padding yang lebih besar
+    const requiredLaneHeight = dims.height + 60; // 30px padding atas + 30px padding bawah
     laneMaxHeights[layoutLaneIndex] = Math.max(laneMaxHeights[layoutLaneIndex], requiredLaneHeight);
   });
 
@@ -409,7 +409,7 @@ const calculateGlobalLayout = () => {
     
     return {
       impId: imp.id,
-      height: laneHeight, // BARU: Simpan tinggi lane
+      height: laneHeight,
       steps: stepsInThisLane.map(gStep => ({
         ...gStep,
         y: laneHeight / 2, // Posisi relatif dalam lane (di tengah)

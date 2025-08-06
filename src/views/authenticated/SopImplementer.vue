@@ -1,5 +1,6 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
+import { toast } from 'vue3-toastify';
 
 import { addImplementer, deleteImplementer, getImplementer, updateImplementer } from '@/api/implementerApi';
 import useToastPromise from '@/utils/toastPromiseHandler'
@@ -63,8 +64,25 @@ const openAddModal = () => {
     showAddModal.value = true;
 };
 
+function isImplementerNameDuplicate(name, exceptId = null) {
+    const found = data.value.some(
+        item =>
+            item.name.trim().toLowerCase() === name.trim().toLowerCase() &&
+            (exceptId === null || item.id !== exceptId)
+    );
+    if (found) {
+        toast.warning('Nama pelaksana sudah ada, tidak boleh sama!', {
+            autoClose: 7000
+        });
+        return true;
+    }
+    return false;
+}
+
 // Fungsi untuk mengirim data ke API dengan metode POST
 const submitData = async () => {
+    if (isImplementerNameDuplicate(form.value.name)) return; // Cek duplikasi nama pelaksana
+
     try {
         await useToastPromise(
             () => new Promise(async (resolve, reject) => {
@@ -173,6 +191,8 @@ const closeUpdateModal = () => {
 };
 
 const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan ID
+    if (isImplementerNameDuplicate(form.value.name, id)) return; // Cek duplikasi nama pelaksana
+    
     try {
         await useToastPromise(
             () => new Promise(async (resolve, reject) => {

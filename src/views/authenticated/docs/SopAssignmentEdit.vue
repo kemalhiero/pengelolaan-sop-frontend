@@ -92,9 +92,7 @@ const submitSop = async () => {
                     for (let oldUser of oldDrafters) {
                         if (!newDrafterIds.includes(oldUser.id)) {
                             // Asumsikan ada fungsi deleteSopDrafter (tambahkan import sesuai kebutuhan)
-                            let apuihSopDrafter = await deleteSopDrafter(route.params.id, oldUser.id).then(() => {
-                                console.log(`Drafter ${oldUser.name} berhasil dihapus`);
-                            });
+                            let apuihSopDrafter = await deleteSopDrafter(route.params.id, oldUser.id);
                             if (!apuihSopDrafter.success) {
                                 console.error('Gagal menghapus drafter:', apuihSopDrafter.error);
                                 reject(apuihSopDrafter.error?.message || apuihSopDrafter.error || 'Terjadi kesalahan saat menghapus penyusun');

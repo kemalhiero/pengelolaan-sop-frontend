@@ -115,7 +115,7 @@ onMounted(fetchAllData);
 
 <template>
     <h2 class="text-4xl text-center my-8 font-bold">
-        {{ isDataError || !sopData.steps.length || canAccessLegalization ? 'Ngapain iseng iseng?🤨' : `Pengesahan SOP ${sopData.name}` }}
+        {{ isDataError || !sopData.steps.length || !canAccessLegalization ? 'Ngapain iseng iseng?🤨' : `Pengesahan SOP ${sopData.name}` }}
     </h2>
 
     <template v-if="!isDataError && sopData.steps.length > 0 && canAccessLegalization">

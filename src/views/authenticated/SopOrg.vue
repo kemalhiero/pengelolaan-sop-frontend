@@ -1,7 +1,8 @@
 <script setup>
 import { toast } from 'vue3-toastify';
 import { inject, onMounted, ref } from 'vue';
-import { getOrg, createOrg, updateOrg, deleteOrg } from '@/api/orgApi.js';
+import { getOrg, createOrg, updateOrg, deleteOrg } from '@/api/orgApi';
+import useToastPromise from '@/utils/toastPromiseHandler';
 
 import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
 import WarningText from '@/components/validation/WarningText.vue';
@@ -82,24 +83,46 @@ const closeModal = () => {
     showWarningText.value = { ...defaultWarningTextState };
 };
 
-const addData = async () => {
-    try {
-        const newItem = {
-            name: form.value.name,
-            about: form.value.about,
-        };
-
-        await createOrg(newItem);
-        resetForm();
-
-        showModal.value = false;
-        fetchDataOrg(); // refresh item list
-
-        toast("Data berhasil ditambahkan!", {
-            type: "success",
-            autoClose: 3000,
+function isOrgNameDuplicate(name, exceptId = null) {
+    const found = data.value.some(
+        item =>
+            item.name.trim().toLowerCase() === name.trim().toLowerCase() &&
+            (exceptId === null || item.id !== exceptId)
+    );
+    if (found) {
+        toast.warning('Nama organisasi sudah ada, tidak boleh sama!', {
+            autoClose: 5000
         });
+        return true;
+    }
+    return false;
+}
 
+const addData = async () => {
+    if (isOrgNameDuplicate(form.value.name)) return; // Cek duplikasi nama organisasi
+
+    try {
+        await useToastPromise(
+            () => new Promise(async (resolve, reject) => {
+                try {
+                    const newItem = {
+                        name: form.value.name,
+                        about: form.value.about,
+                    };
+                    await createOrg(newItem);
+                    resetForm();
+                    showModal.value = false;
+                    fetchDataOrg(); // refresh item list
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            }),
+            {
+                messages: { success: "Organisasi berhasil ditambahkan!" },
+                toastOptions: { autoClose: 3000 }
+            }
+        );
     } catch (error) {
         console.error('Error adding item:', error);
     }
@@ -156,23 +179,31 @@ const openUpdateModal = (id) => {
     }
 };
 
-const updateData = async () => {  // Fungsi untuk menghapus data berdasarkan ID
+const updateData = async () => {
+    if (isOrgNameDuplicate(form.value.name, selectedUpdateId.value)) return; // Cek duplikasi nama organisasi
+
     try {
-        const newItem = {
-            name: form.value.name,
-            about: form.value.about,
-        };
-
-        await updateOrg(selectedUpdateId.value, newItem);
-        showModal.value = false;
-        showModalEditDepartment.value = false;
-        fetchDataOrg();
-
-        toast("Data berhasil diperbarui!", {
-            type: "success",
-            autoClose: 3000,
-        });
-
+        await useToastPromise(
+            () => new Promise(async (resolve, reject) => {
+                try {
+                    const newItem = {
+                        name: form.value.name,
+                        about: form.value.about,
+                    };
+                    await updateOrg(selectedUpdateId.value, newItem);
+                    showModal.value = false;
+                    showModalEditDepartment.value = false;
+                    fetchDataOrg();
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            }),
+            {
+                messages: { success: "Data organisasi berhasil diperbarui!" },
+                toastOptions: { autoClose: 3000 }
+            }
+        );
     } catch (error) {
         console.error('Update error:', error);
     }

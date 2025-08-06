@@ -71,18 +71,17 @@ const submitHod = async () => {
                         authStore.logout();
                         setTimeout(() => {
                             router.push('/')
-                        }, 5000);
+                        }, 8000);
                     })
                     .catch(error => reject(error));
             }),
             {
                 messages: {
-                    success: 'Ketua departemen berhasil diperbarui! Silakan login kembali untuk melanjutkan. <br> Anda akan diarahkan ke halaman login dalam 5 detik.',
+                    success: 'Ketua departemen berhasil diperbarui! Silakan login kembali untuk melanjutkan. Anda akan diarahkan ke halaman login dalam 8 detik.',
                     error: 'Ketua departemen gagal diperbarui! Silakan coba lagi.'
                 },
                 toastOptions: {
-                    autoClose: 7000,
-                    dangerouslyHTMLString: true
+                    autoClose: 8000,
                 }
             }
         );

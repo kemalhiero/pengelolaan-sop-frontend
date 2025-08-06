@@ -1,5 +1,7 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
+import { toast } from 'vue3-toastify';
+
 import useToastPromise from "@/utils/toastPromiseHandler";
 import { getLawType, createLawType, updateLawType, deleteLawType } from '@/api/lawTypeApi';
 
@@ -61,8 +63,25 @@ const openAddModal = () => {
     showAddModal.value = true;
 };
 
+function isLawTypeDuplicate(lawType, exceptId = null) {
+    const found = data.value.some(
+        item =>
+            item.law_type.trim().toLowerCase() === lawType.trim().toLowerCase() &&
+            (exceptId === null || item.id !== exceptId)
+    );
+    if (found) {
+        toast.warning('Jenis hukum ini sudah ada, tidak boleh sama!', {
+            autoClose: 5000
+        });
+        return true;
+    }
+    return false;
+}
+
 // Fungsi untuk mengirim data ke API dengan metode POST
 const submitData = async () => {
+    if (isLawTypeDuplicate(form.value.law_type)) return; // Jika jenis hukum sudah ada, hentikan eksekusi
+
     try {
         await useToastPromise(
             new Promise((resolve, reject) => {
@@ -169,6 +188,8 @@ const closeUpdateModal = () => {
 };
 
 const updateData = async (id) => {  // Fungsi untuk menghapus data berdasarkan ID
+    if (isLawTypeDuplicate(form.value.law_type, id)) return; // Cek duplikasi dengan pengecualian ID yang sedang diupdate
+
     try {
         await useToastPromise(
             new Promise((resolve, reject) => {
