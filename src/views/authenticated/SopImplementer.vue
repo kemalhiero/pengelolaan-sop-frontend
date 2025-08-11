@@ -330,7 +330,7 @@ onMounted(() => {
     />
 
     <EditDataModal 
-        modalTitle="Perbarui jenis peraturan" 
+        modalTitle="Perbarui pelaksana SOP" 
         :showModal="showModalUpdate" 
         :formFields="[
             { id: 'name', label: 'Nama', type: 'text', colSpan: 'full', placeholder: 'Mis. Fakultas', required: true },
