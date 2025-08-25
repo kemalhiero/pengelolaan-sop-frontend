@@ -175,7 +175,7 @@ const deleteData = async (id) => {
     try {
         await useToastPromise(
             (async () => {
-                // Hapus data child SOP terlebih dahulu secara paralel
+                // Hapus data child POS terlebih dahulu secara paralel
                 await Promise.all([
                     // many to many
                     ...sopData.value.implementer.map(item => deleteSopImplementer(id, item.id)),
@@ -189,17 +189,17 @@ const deleteData = async (id) => {
                     ...sopData.value.steps.map(item => deleteSopStep(item.id_step)),
                     ...draftFeedback.value.map(item => deleteDraftFeedback(item.id))
                 ]);
-                console.log('Child data SOP berhasil dihapus');
+                console.log('Child data POS berhasil dihapus');
 
-                // Setelah itu, hapus data SOP detail
+                // Setelah itu, hapus data POS detail
                 await deleteSopDetail(id);
-                console.log('SOP detail berhasil dihapus');
+                console.log('POS detail berhasil dihapus');
             })(),
             {
                 messages: {
-                    pending: 'Sedang menghapus data SOP...',
-                    success: 'SOP berhasil dihapus!',
-                    error: 'Gagal menghapus SOP'
+                    pending: 'Sedang menghapus data POS...',
+                    success: 'POS berhasil dihapus!',
+                    error: 'Gagal menghapus POS'
                 },
                 toastOptions: {
                     autoClose: 2000,
@@ -215,7 +215,7 @@ const deleteData = async (id) => {
             }
         });
     } catch (error) {
-        console.error('Error saat menghapus data SOP:', error);
+        console.error('Error saat menghapus data POS:', error);
     }
 };
 
@@ -249,7 +249,7 @@ onMounted(fetchAllData);
 
 <template>
     <div class="my-10 flex justify-center items-center">
-        <PageTitle :judul="sopData.name ? `Pengecekan Draft SOP ${sopData?.name}` : 'Ngapain iseng iseng?🤨'" />
+        <PageTitle :judul="sopData.name ? `Pengecekan Draft POS ${sopData?.name}` : 'Ngapain iseng iseng?🤨'" />
         <div class="space-x-2 ml-3 flex justify-center items-center" v-if="[0, 2].includes(sopData.status)">
             <button title="Edit data penugasan" @click="redirectEditAssignment"
                 class="p-2 text-white w-8 h-8 bg-yellow-400 rounded-full hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50">
@@ -380,9 +380,9 @@ onMounted(fetchAllData);
                     <select type="text" id="status" v-model="statusSop" required
                         class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                         <option selected disabled value="">Pilih tipe</option>
-                        <option v-if="!isCatatanOnly()" value="1" title="Setujui SOP">Setujui</option>
-                        <option v-if="!isCatatanOnly()" value="2" title="SOP perlu direvisi lagi">Perlu Revisi</option>
-                        <option value="3" title="Hanya memberikan catatan/tanggapan tanpa menyetujui atau merevisi SOP">Catatan</option>
+                        <option v-if="!isCatatanOnly()" value="1" title="Setujui POS">Setujui</option>
+                        <option v-if="!isCatatanOnly()" value="2" title="POS perlu direvisi lagi">Perlu Revisi</option>
+                        <option value="3" title="Hanya memberikan catatan/tanggapan tanpa menyetujui atau merevisi POS">Catatan</option>
                     </select>
                 </div>
                 <div>
@@ -395,7 +395,7 @@ onMounted(fetchAllData);
                 </div>
                 <button type="submit" :disabled="statusSop === '' || newFeedback.length < 5"
                     class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 disabled:cursor-not-allowed disabled:bg-opacity-60">
-                    <p v-if="statusSop == 1">Lanjut ke Pengesahan SOP</p>
+                    <p v-if="statusSop == 1">Lanjut ke Pengesahan POS</p>
                     <p v-else>Kirim Umpan Balik</p>
                 </button>
             </form>
@@ -404,7 +404,7 @@ onMounted(fetchAllData);
         <div class="flex justify-center mt-8 mb-12" v-if="(sopData.status === 7 && authStore.userRole === 'kadep') || (sopData.status === 8 && authStore.userRole === 'pj')">
             <button type="button" @click="router.push({ name: 'SopLegalization', params: { id: route.params.id } })"
                 class="w-2/5 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5">
-                <p>Lanjut ke Pengesahan SOP ==></p>
+                <p>Lanjut ke Pengesahan POS ==></p>
             </button>
         </div>
     </template>
@@ -423,10 +423,10 @@ onMounted(fetchAllData);
                 <div class="p-4 md:p-5 text-center">
                     <ExclamationMarkIcon class="mx-auto mb-4 text-gray-400 w-12 h-12" />
                     <h3 class="mb-2 text-xl font-normal text-gray-800">
-                        Anda yakin ingin menyetujui draft SOP dan BPMN ini?
+                        Anda yakin ingin menyetujui draft POS dan BPMN ini?
                     </h3>
                     <p class="text-gray-500 mb-1">
-                        Draft SOP ini akan disetujui dan anda akan diarahkan ke halaman pengesahan.
+                        Draft POS ini akan disetujui dan anda akan diarahkan ke halaman pengesahan.
                     </p>
                     <p class="text-gray-600 mb-5">
                         <span class="text-red-600">*</span>
@@ -450,6 +450,6 @@ onMounted(fetchAllData);
         :showModal="showModal.deleteAssignment" 
         :deleteData="deleteData" :selectedId="sopData.id"
         @update:showModal="showModal.deleteAssignment = $event"
-        text="Anda yakin ingin menghapus penugasan SOP ini? Semua progres yang ada saat ini juga akan dihapus!" 
+        text="Anda yakin ingin menghapus penugasan POS ini? Semua progres yang ada saat ini juga akan dihapus!" 
     />
 </template>

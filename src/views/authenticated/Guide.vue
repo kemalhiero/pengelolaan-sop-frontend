@@ -14,42 +14,42 @@ let dataGuide = [];
 
 const commonGuide = [
     {
-        q: 'Apakah ada ketentuan khusus dalam menyusun tahapan SOP?',
-        a: 'Setiap tahapan hanya memiliki satu komponen pada kolom pelaksana, mengikuti aktor yang menjalankan tahapan tersebut. Untuk kolom kegiatan, gunakan kalimat aktif, misalnya "Membuat Surat", "Merevisi SOP", atau "Menyusun Barang". Khusus untuk tahap bertipe kuputusan/decision, kolom kegiatan harus diisi dengan pertanyaan yang memerlukan jawaban ya atau tidak, seperti "Apakah SOP sudah lengkap?" atau "Apakah dokumen sudah ditandatangani?".'
+        q: 'Apakah ada ketentuan khusus dalam menyusun tahapan POS?',
+        a: 'Setiap tahapan hanya memiliki satu komponen pada kolom pelaksana, mengikuti aktor yang menjalankan tahapan tersebut. Untuk kolom kegiatan, gunakan kalimat aktif, misalnya "Membuat Surat", "Merevisi POS", atau "Menyusun Barang". Khusus untuk tahap bertipe kuputusan/decision, kolom kegiatan harus diisi dengan pertanyaan yang memerlukan jawaban ya atau tidak, seperti "Apakah POS sudah lengkap?" atau "Apakah dokumen sudah ditandatangani?".'
     }, {
-        q: 'Bagaimana cara menyusun tahapan SOP?',
-        a: 'Anda dapat menyusun tahapan SOP dengan mengklik tombol "Tambah Tahapan" pada halaman dokumen, lalu mengisi formulir yang disediakan. Pastikan semua kolom wajib (ditandai karakter bintang (*) berwarna merah) sudah terisi.'
+        q: 'Bagaimana cara menyusun tahapan POS?',
+        a: 'Anda dapat menyusun tahapan POS dengan mengklik tombol "Tambah Tahapan" pada halaman dokumen, lalu mengisi formulir yang disediakan. Pastikan semua kolom wajib (ditandai karakter bintang (*) berwarna merah) sudah terisi.'
     }
 ];
 
 if (authStore.userRole === 'kadep') {
     dataGuide = [
         {
-            q: 'Bagaimana cara Kadep menyetujui SOP yang diajukan?',
-            a: 'Kadep dapat melihat daftar SOP yang menunggu persetujuan pada halaman dokumen. Klik SOP yang ingin ditinjau, baca detailnya, lalu berikan umpan balik beserta tipenya, apakah "Setujui", "Revisi" atau sekedar memberikan "Catatan" tanpa mengubah status SOP.'
+            q: 'Bagaimana cara Kadep menyetujui POS yang diajukan?',
+            a: 'Kadep dapat melihat daftar POS yang menunggu persetujuan pada halaman dokumen. Klik POS yang ingin ditinjau, baca detailnya, lalu berikan umpan balik beserta tipenya, apakah "Setujui", "Revisi" atau sekedar memberikan "Catatan" tanpa mengubah status POS.'
         }, {
-            q: 'Apakah Kadep bisa memberikan catatan revisi pada SOP?',
-            a: 'Ya, Kadep dapat menambahkan catatan revisi saat memberikan umpan balik pada SOP, agar pengusul dapat memperbaiki dokumen sesuai masukan.'
+            q: 'Apakah Kadep bisa memberikan catatan revisi pada POS?',
+            a: 'Ya, Kadep dapat menambahkan catatan revisi saat memberikan umpan balik pada POS, agar pengusul dapat memperbaiki dokumen sesuai masukan.'
         }, {
-            q: 'Bagaimana Kadep memantau status SOP di departemen?',
-            a: 'Kadep dapat melihat status seluruh SOP pada halaman dokumen, termasuk SOP yang sedang diproses, disetujui, atau sudah kadaluarsa.'
+            q: 'Bagaimana Kadep memantau status POS di departemen?',
+            a: 'Kadep dapat melihat status seluruh POS pada halaman dokumen, termasuk POS yang sedang diproses, disetujui, atau sudah kadaluarsa.'
         },
         ...commonGuide
     ];
 } else if (authStore.userRole === 'pj') {
     dataGuide = [
         {
-            q: 'Bagaimana cara PJ mengajukan SOP baru?',
-            a: 'PJ dapat mengajukan SOP baru dengan mengeklik tombol "Tambah SOP" pada halaman dokumen, lalu mengisi formulir pengajuan. Pastikan semua informasi yang diperlukan sudah lengkap.'
+            q: 'Bagaimana cara PJ mengajukan POS baru?',
+            a: 'PJ dapat mengajukan POS baru dengan mengeklik tombol "Tambah POS" pada halaman dokumen, lalu mengisi formulir pengajuan. Pastikan semua informasi yang diperlukan sudah lengkap.'
         }, {
-            q: 'Apakah PJ bisa mengedit info penugasan SOP yang sudah diajukan?',
-            a: 'Masih bisa selagi SOP masih dalam tahap penyusunan.'
+            q: 'Apakah PJ bisa mengedit info penugasan POS yang sudah diajukan?',
+            a: 'Masih bisa selagi POS masih dalam tahap penyusunan.'
         }, {
-            q: 'Bagaimana cara PJ melihat status SOP yang diajukan?',
-            a: 'PJ dapat memantau status SOP yang diajukan pada halaman dokumen, termasuk apakah SOP sedang diproses atau sudah disetujui. Perlu diketahui bahwa SOP yang ditampilkan hanya SOP yang ada di organisasi masing-masing.'
+            q: 'Bagaimana cara PJ melihat status POS yang diajukan?',
+            a: 'PJ dapat memantau status POS yang diajukan pada halaman dokumen, termasuk apakah POS sedang diproses atau sudah disetujui. Perlu diketahui bahwa POS yang ditampilkan hanya POS yang ada di organisasi masing-masing.'
         }, {
-            q: 'Bagaimana cara PJ menyetujui dan mengesahkan SOP untuk organisasinya (selain DSI)?',
-            a: 'PJ dapat melihat daftar SOP yang menunggu persetujuan pada halaman dokumen. Klik SOP yang ingin ditinjau, baca detailnya, lalu berikan umpan balik "Setujui". Jika disetujui, PJ akan diarahkan ke halaman pengesahan untuk menandatangani dan mengesahkan SOP tersebut.'
+            q: 'Bagaimana cara PJ menyetujui dan mengesahkan POS untuk organisasinya (selain DSI)?',
+            a: 'PJ dapat melihat daftar POS yang menunggu persetujuan pada halaman dokumen. Klik POS yang ingin ditinjau, baca detailnya, lalu berikan umpan balik "Setujui". Jika disetujui, PJ akan diarahkan ke halaman pengesahan untuk menandatangani dan mengesahkan POS tersebut.'
         },
         ...commonGuide
     ];

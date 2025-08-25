@@ -213,7 +213,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <PageTitle judul="Kelola Penyusun SOP" class="mt-3 mb-7" />
+    <PageTitle judul="Kelola Penyusun POS" class="mt-3 mb-7" />
 
     <div class="container mx-auto p-8 lg:px-16">
         <div class="flex justify-end mb-4">
@@ -345,7 +345,7 @@ onMounted(() => {
         <div class="relative w-full max-w-2xl max-h-full">
             <div class="relative bg-white rounded-lg shadow">
                 <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
-                    <h3 class="text-xl font-medium text-gray-900">Detail versi SOP</h3>
+                    <h3 class="text-xl font-medium text-gray-900">Detail versi POS</h3>
                     <button type="button" @click="closeDetailModal"
                         class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">
                         <XMarkCloseIcon class="w-3 h-3" />

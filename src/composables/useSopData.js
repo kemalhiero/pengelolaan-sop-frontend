@@ -52,7 +52,7 @@ export default function useSopData(route) {
                 console.error('API Error:', result.error);
                 return;
             }
-            console.log('Mengambil data SOP dari API...');
+            console.log('Mengambil data POS dari API...');
             if (result?.data) {
                 sopData.value = { ...sopData.value, ...result.data };
             }
@@ -88,7 +88,7 @@ export default function useSopData(route) {
             response = await getSopRecord(route);
             sopData.value.record = response.data;
 
-            console.log('Mengambil data SOP dari API...');
+            console.log('Mengambil data POS dari API...');
         } catch (error) {
             console.error('Fetch info sop error:', error);
         }
@@ -98,7 +98,7 @@ export default function useSopData(route) {
         try {
             const response = await getSopStep(route);
             sopData.value.steps = response.data.sort((a, b) => a.seq_number - b.seq_number);
-            console.log('Mengambil data SOP dari API...');
+            console.log('Mengambil data POS dari API...');
         } catch (error) {
             console.error('Fetch tahapan sop error:', error);
         }
@@ -155,11 +155,11 @@ export default function useSopData(route) {
                 sopConfig.value.flowchartLabelConfig = response.data.flowchart_label_config ?? DEFAULT_SOP_CONFIG.flowchartLabelConfig;
                 sopConfig.value.bpmnLabelConfig = response.data.bpmn_label_config ?? DEFAULT_SOP_CONFIG.bpmnLabelConfig;
             } else {
-                console.warn('Konfigurasi tampilan SOP belum ada:', response.message);
+                console.warn('Konfigurasi tampilan POS belum ada:', response.message);
                 sopConfig.value = { ...DEFAULT_SOP_CONFIG };
             }
         } catch (error) {
-            console.error('Fetch SOP display config error:', error);
+            console.error('Fetch POS display config error:', error);
             sopConfig.value = { ...DEFAULT_SOP_CONFIG };
         }
     };

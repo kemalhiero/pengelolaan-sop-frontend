@@ -24,7 +24,7 @@ const orgName = ref('');
 
 const fetchData = async () => {
     try {
-        // 1. Data untuk ColumnChart (Jumlah SOP Per Organisasi)
+        // 1. Data untuk ColumnChart (Jumlah POS Per Organisasi)
         const sopOrgRes = await getNominalSopEachOrgByStatus();
         if (
             sopOrgRes.data &&
@@ -56,19 +56,19 @@ const fetchData = async () => {
             }));
         }
 
-        // 3. Data untuk LineChart (Tren Pembuatan SOP)
+        // 3. Data untuk LineChart (Tren Pembuatan POS)
         const trendRes = await getAnnualSopMakingTrend();
         if (trendRes.data) {
             sopMakingTrend.value = [
                 {
-                    name: "Tren Pembuatan SOP",
+                    name: "Tren Pembuatan POS",
                     color: "#1A56DB",
                     data: Object.entries(trendRes.data).map(([x, y]) => ({ x, y }))
                 }
             ];
         }
 
-        // 4. Data untuk ColumnChart (Jumlah Feedback Top 8 SOP)
+        // 4. Data untuk ColumnChart (Jumlah Feedback Top 8 POS)
         const feedbackRes = await getNominalFeedbackTopSop();
         if (feedbackRes.data) {
             nominalFeedback.value = [
@@ -83,7 +83,7 @@ const fetchData = async () => {
             ];
         }
 
-        // 5. Data untuk ColumnChart (SOP dengan revisi terbanyak)
+        // 5. Data untuk ColumnChart (POS dengan revisi terbanyak)
         const mostRevisedRes = await getMostRevisedSop();
         if (mostRevisedRes.data) {
             mostRevisedSop.value = [
@@ -101,7 +101,7 @@ const fetchData = async () => {
             orgName.value = mostRevisedRes.data[0].org;
         }
 
-        // 6. Data untuk PieChart (Distribusi SOP Organisasi per Status)
+        // 6. Data untuk PieChart (Distribusi POS Organisasi per Status)
         const sopDist = await getSopOrgDistByStatus();
         if (
             sopDist.data && (
@@ -135,38 +135,38 @@ onMounted(() => {
 
     <div class="border-2 rounded-lg border-gray-300 mb-4">
         <template v-if="authStore.userRole === 'kadep'">
-            <ColumnChart name="Jumlah SOP Per Organisasi" :series="nominalSop" title-hover="Jumlah SOP di seluruh organisasi di DSI" v-if="nominalSop.length > 0" />
-            <EmptyGrid v-else message="Belum ada SOP yang dibuat!" />
+            <ColumnChart name="Jumlah POS Per Organisasi" :series="nominalSop" title-hover="Jumlah POS di seluruh organisasi di DSI" v-if="nominalSop.length > 0" />
+            <EmptyGrid v-else message="Belum ada POS yang dibuat!" />
         </template>
         <template v-else>
-            <ColumnChart name="SOP dengan revisi terbanyak" :series="mostRevisedSop"
-                v-if="mostRevisedSop[0]?.data.length > 0" title-hover="Top 8 SOP yang paling banyak direvisi di organisasi anda" />
-            <EmptyGrid v-else message="Belum ada SOP yang dibuat!" />
+            <ColumnChart name="POS dengan revisi terbanyak" :series="mostRevisedSop"
+                v-if="mostRevisedSop[0]?.data.length > 0" title-hover="Top 8 POS yang paling banyak direvisi di organisasi anda" />
+            <EmptyGrid v-else message="Belum ada POS yang dibuat!" />
         </template>
     </div>
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4 my-4">
         <div class="border-2 rounded-lg border-gray-300">
-            <LineChart name="Tren Pembuatan SOP" :series="sopMakingTrend" v-if="sopMakingTrend[0]?.data.length > 0" />
-            <EmptyGrid v-else message="Belum ada SOP yang dibuat!" />
+            <LineChart name="Tren Pembuatan POS" :series="sopMakingTrend" v-if="sopMakingTrend[0]?.data.length > 0" />
+            <EmptyGrid v-else message="Belum ada POS yang dibuat!" />
         </div>
         <div class="border-2 rounded-lg border-gray-300">
             <PieChart name="Jumlah User per Role" :series="nominalUser" />
         </div>
         <div class="border-2 rounded-lg border-gray-300">
-            <ColumnChart name="SOP dengan feedback terbanyak" :series="nominalFeedback"
-                v-if="nominalFeedback[0]?.data.length > 0" title-hover="Top 8 SOP yang paling banyak mendapatkan umpan balik" />
-            <EmptyGrid v-else message="Belum ada SOP yang mendapat feedback user!" />
+            <ColumnChart name="POS dengan feedback terbanyak" :series="nominalFeedback"
+                v-if="nominalFeedback[0]?.data.length > 0" title-hover="Top 8 POS yang paling banyak mendapatkan umpan balik" />
+            <EmptyGrid v-else message="Belum ada POS yang mendapat feedback user!" />
         </div>
         <div class="border-2 rounded-lg border-gray-300">
             <template v-if="authStore.userRole === 'kadep'">
-                <ColumnChart name="SOP dengan revisi terbanyak" :series="mostRevisedSop"
-                    v-if="mostRevisedSop[0]?.data.length > 0" title-hover="Top 8 SOP yang paling sering direvisi di DSI" />
-                <EmptyGrid v-else message="Belum ada SOP yang dibuat!" />
+                <ColumnChart name="POS dengan revisi terbanyak" :series="mostRevisedSop"
+                    v-if="mostRevisedSop[0]?.data.length > 0" title-hover="Top 8 POS yang paling sering direvisi di DSI" />
+                <EmptyGrid v-else message="Belum ada POS yang dibuat!" />
             </template>
             <template v-else>
-                <PieChart v-if="sopOrgDistByStatus.length > 0" name="Jumlah SOP per Status"
-                    :series="sopOrgDistByStatus" title-hover="Distribusi SOP pada organisasi anda berdasarkan statusnya" />
-                <EmptyGrid v-else message="Belum ada SOP yang dibuat!" />
+                <PieChart v-if="sopOrgDistByStatus.length > 0" name="Jumlah POS per Status"
+                    :series="sopOrgDistByStatus" title-hover="Distribusi POS pada organisasi anda berdasarkan statusnya" />
+                <EmptyGrid v-else message="Belum ada POS yang dibuat!" />
             </template>
         </div>
     </div>

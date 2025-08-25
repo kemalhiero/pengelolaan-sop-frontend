@@ -224,7 +224,7 @@ onBeforeUnmount(() => {
 
         <div class="my-4 inline-flex items-center">
             <CircleInfoIcon class="w-5 mr-2" />
-            Form berikut wajib diisi sebagai sebagai identitas dari SOP!
+            Form berikut wajib diisi sebagai sebagai identitas dari POS!
         </div>
 
         <div class="mb-4">
@@ -261,7 +261,7 @@ onBeforeUnmount(() => {
                 Tambah Pelaksana
             </button>
 
-            <WarningText v-if="showWarningText.implementer" text="Jangan lupa pilih pelaksana pada SOP!" />
+            <WarningText v-if="showWarningText.implementer" text="Jangan lupa pilih pelaksana pada POS!" />
         </div>
 
         <div class="mb-4">
@@ -413,7 +413,7 @@ onBeforeUnmount(() => {
                  <div class="relative bg-white rounded-lg shadow">
                      <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
                          <h3 class="text-xl font-medium text-gray-900 dark:text-white">
-                             Centang peraturan yang akan ditambahkan ke SOP
+                             Centang peraturan yang akan ditambahkan ke POS
                          </h3>
                          <!-- <Tooltip field="law-modal" text="Misal: Jika POS AP ini tidak dilaksanakan, mengakibatkan terhambatnya proses kerja praktik mahasiswa." /> -->
                          <button type="button" @click="showModal.legalBasis = false"
@@ -452,7 +452,7 @@ onBeforeUnmount(() => {
                 <div class="relative bg-white rounded-lg shadow">
                     <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
                         <h3 class="text-xl font-medium text-gray-900">
-                            Centang pelaksana yang akan ditambahkan ke SOP
+                            Centang pelaksana yang akan ditambahkan ke POS
                         </h3>
                         <button type="button"
                             class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"

@@ -46,7 +46,7 @@ const mermaidChart = ref(`
 
     <div class="step-cards">
         <div class="step-card">
-            <h4>Nomor SOP</h4>
+            <h4>Nomor POS</h4>
             <h6 class="text-sm font-bold">
                 T/00213/{{ general }}/2023
             </h6>

@@ -46,7 +46,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <PageTitle judul="Daftar Dokumen SOP yang Dikelola" class="mt-3 mb-7" />
+    <PageTitle judul="Daftar Dokumen POS yang Dikelola" class="mt-3 mb-7" />
 
     <div class="container mx-auto p-8 lg:px-16">
 
@@ -56,7 +56,7 @@ onMounted(() => {
                     class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center dark:focus:ring-[#2557D6]/50 me-2 mb-2 ml-auto"
                     title="">
                     <CirclePlusIcon class="w-5 mr-3 fill-current" />
-                    Tambah SOP Baru
+                    Tambah POS Baru
                 </button>
             </router-link>
         </div>

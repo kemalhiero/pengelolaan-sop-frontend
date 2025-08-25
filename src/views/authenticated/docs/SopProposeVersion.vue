@@ -78,7 +78,7 @@ const submitSop = async () => {
         await useToastPromise(
             () =>
                 new Promise(async (resolve, reject) => {
-                // 1. Buat detail SOP
+                // 1. Buat detail POS
                 const resultSopdetail = await createSopDetail(
                     route.params.id,
                     {
@@ -88,8 +88,8 @@ const submitSop = async () => {
                     }
                 );
                 if (!resultSopdetail.success) {
-                    console.error('Error creating SOP detail:', resultSopdetail.error);
-                    reject(resultSopdetail.error?.message || resultSopdetail.error || 'Terjadi kesalahan saat membuat detail SOP');
+                    console.error('Error creating POS detail:', resultSopdetail.error);
+                    reject(resultSopdetail.error?.message || resultSopdetail.error || 'Terjadi kesalahan saat membuat detail POS');
                     return;
                 }
 
@@ -106,7 +106,7 @@ const submitSop = async () => {
             }),
             {
                 messages: {
-                    success: 'SOP versi baru berhasil dibuat!',
+                    success: 'POS versi baru berhasil dibuat!',
                     error: (msg) => msg,
                 },
                 toastOptions: {
@@ -140,7 +140,7 @@ onMounted( async() => {
 </script>
 
 <template>
-    <PageTitle :judul="`Perbarui SOP ${form.name}`" class="mt-3 mb-7"/>
+    <PageTitle :judul="`Perbarui POS ${form.name}`" class="mt-3 mb-7"/>
 
     <section class="bg-white">
         <div class="py-8 px-4 mx-auto max-w-3xl">
@@ -196,12 +196,12 @@ onMounted( async() => {
                         </label>
                         <textarea id="description" rows="8" v-model="form.description" required minlength="10" maxlength="1000"
                             class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500"
-                            placeholder="ketikkan deskripsi SOP disini..."></textarea>
+                            placeholder="ketikkan deskripsi POS disini..."></textarea>
                     </div>
                 </div>
                 <button type="submit"
                     class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-3 sm:mt-6 text-center">
-                    Mulai buat SOP versi terbaru
+                    Mulai buat POS versi terbaru
                 </button>
             </form>
         </div>
@@ -214,7 +214,7 @@ onMounted( async() => {
             <div class="relative bg-white rounded-lg shadow">
                 <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
                     <h3 class="text-xl font-medium text-gray-900">
-                        Centang user yang akan ditugaskan untuk membuat SOP
+                        Centang user yang akan ditugaskan untuk membuat POS
                     </h3>
                     <button type="button"
                         class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"

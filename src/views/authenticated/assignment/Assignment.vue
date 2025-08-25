@@ -49,7 +49,7 @@ onMounted(() => {
     <div class="text-center mt-16 mb-8 mx-12 lg:mx-40">
         <h1
             class="mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-4xl lg:text-5xl">
-            Penugasan Pembuatan / Revisi SOP</h1>
+            Penugasan Pembuatan / Revisi POS</h1>
         <p class="text-lg font-normal lg:text-xl sm:px-16 xl:px-48">
             Berikut merupakan daftar tugas yang diberikan oleh penanggung jawab organisasi di lingkungan Departemen
             Sistem Informasi Universitas Andalas.

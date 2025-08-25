@@ -55,7 +55,7 @@ const fetchData = async () => {
 };
 
 const isUpdateDisabled = computed(() => {
-  // Periksa apakah ada status 2, 3, 4, 5, 6, atau 7 di dalam array versi SOP
+  // Periksa apakah ada status 2, 3, 4, 5, 6, atau 7 di dalam array versi POS
   return sopData.value.version?.some(version => [2, 3, 4, 5, 6, 7, 8].includes(version.status)) || false;
 });
 
@@ -133,7 +133,7 @@ onMounted(async () => {
 
 <template>
   <div class="flex justify-center items-center">
-    <PageTitle :judul="sopData.name ? `SOP ${sopData.name}` : 'Ngapain iseng iseng?🤨'" class="my-8" />
+    <PageTitle :judul="sopData.name ? `POS ${sopData.name}` : 'Ngapain iseng iseng?🤨'" class="my-8" />
     <div class="space-x-2 ml-3 flex justify-center items-center" v-if="sopData.version">
         <button title="Edit data penugasan" @click="showModal.edit = true"
             class="p-2 text-white w-8 h-8 bg-yellow-400 rounded-full hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50">
@@ -200,10 +200,10 @@ onMounted(async () => {
 
     <div class="flex justify-center mb-8">
         <button :disabled="isUpdateDisabled" @click="redirectToProposeVersion"
-          :title="isUpdateDisabled ? 'Tidak dapat memperbarui versi SOP karena ada versi yang sedang diproses' : 'Buat sop dengan versi terbaru'"
+          :title="isUpdateDisabled ? 'Tidak dapat memperbarui versi POS karena ada versi yang sedang diproses' : 'Buat sop dengan versi terbaru'"
           class="text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-sm py-2 px-3 text-center inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed">
             <CirclePlusIcon class="w-5 mr-3 fill-current" />
-            Perbarui versi SOP
+            Perbarui versi POS
         </button>
     </div>    
   </template>
@@ -216,7 +216,7 @@ onMounted(async () => {
         <div class="relative bg-white rounded-lg shadow">
             <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
                 <h3 class="text-xl font-medium text-gray-900">
-                    Perbarui Data SOP
+                    Perbarui Data POS
                 </h3>
                 <button type="button"
                     class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
@@ -265,7 +265,7 @@ onMounted(async () => {
     :deleteData="deleteData" 
     :selectedId="sopData.id"
     @update:showModal="showModal.delete = $event" 
-    text="Anda yakin ingin menghapus SOP ini?" 
+    text="Anda yakin ingin menghapus POS ini?" 
   />
 
 </template>

@@ -88,8 +88,8 @@ const submitSop = async () => {
                     }) || null;
                     createdSopId = dataSop?.data?.id_sop;
                     if (!dataSop.success) {
-                        console.error('Error creating SOP:', dataSop.error);
-                        reject(dataSop.error?.message || dataSop.error || 'Terjadi kesalahan saat membuat SOP');
+                        console.error('Error creating POS:', dataSop.error);
+                        reject(dataSop.error?.message || dataSop.error || 'Terjadi kesalahan saat membuat POS');
                         return;
                     }
 
@@ -104,8 +104,8 @@ const submitSop = async () => {
 
                     if (!resultSopdetail.success) {
                         await deleteSop(createdSopId);
-                        console.error('Error creating SOP detail:', resultSopdetail.error);
-                        reject(resultSopdetail.error?.message || resultSopdetail.error || 'Terjadi kesalahan saat membuat detail SOP');
+                        console.error('Error creating POS detail:', resultSopdetail.error);
+                        reject(resultSopdetail.error?.message || resultSopdetail.error || 'Terjadi kesalahan saat membuat detail POS');
                         return;
                     }
 
@@ -125,7 +125,7 @@ const submitSop = async () => {
                 }),
             {
                 messages: {
-                    success: 'Sukses mengusulkan SOP baru!',
+                    success: 'Sukses mengusulkan POS baru!',
                     error: (msg) => msg,
                 },
                 toastOptions: {
@@ -181,9 +181,9 @@ onMounted(() => {
                         <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
                             Nama<span class="text-red-600">*</span>
                         </label>
-                        <input type="text" v-model="form.name" id="name" placeholder="ketik nama sop disini..." required minlength="5" maxlength="100"
+                        <input type="text" v-model="form.name" id="name" placeholder="ketik nama POS disini..." required minlength="5" maxlength="100"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5"
-                            title="Contoh : Pengusulan Kerja Praktik (langsung judul, tanpa perlu 'SOP' atau 'POS' di awal)">
+                            title="Contoh : Pengusulan Kerja Praktik (langsung judul, tanpa perlu 'POS' di awal)">
                     </div>
 
                     <div class="col-span-2 sm:col-span-1">
@@ -253,12 +253,12 @@ onMounted(() => {
                         </label>
                         <textarea id="description" rows="8" v-model="form.description" required minlength="10" maxlength="1000"
                             class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500"
-                            placeholder="ketikkan deskripsi SOP disini..."></textarea>
+                            placeholder="ketikkan deskripsi POS disini..."></textarea>
                     </div>
                 </div>
                 <button type="submit"
                     class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-3 sm:mt-6 text-center">
-                    Mulai buat SOP baru
+                    Mulai buat POS baru
                 </button>
             </form>
         </div>

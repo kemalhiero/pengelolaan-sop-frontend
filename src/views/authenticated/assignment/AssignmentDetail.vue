@@ -226,7 +226,7 @@ function getDiffData(existingData, apiData, idKey, mode) {
     }
 }
 
-// Fungsi utama sinkronisasi data SOP
+// Fungsi utama sinkronisasi data POS
 const syncSopInfo = async () => {
     const syncPromise = (async () => {
         try {
@@ -309,7 +309,7 @@ const fetchExistingSopInfo = async (idsopdetail, dataType) => {
 };
 
 // ---------- fungsi sop step---------------
-// Membandingkan langkah SOP antara data server dan data user
+// Membandingkan langkah POS antara data server dan data user
 function compareSteps(serverSteps, userSteps) {
     // Buat Map berdasarkan id_step agar pencarian lebih akurat
     const serverStepsMap = new Map(serverSteps.map(step => [step.id_step, step]));
@@ -405,7 +405,7 @@ function getStepPayload(step) {
     return payload;
 };
 
-// Sinkronisasi langkah SOP ke server
+// Sinkronisasi langkah POS ke server
 const syncSopStep = async () => {
     const syncPromise = (async () => {
         // Bandingkan data server dan data user
@@ -432,7 +432,7 @@ const syncSopStep = async () => {
         await fetchSopStep();
 
         console.log(`Berhasil menambah ${stepsToAdd.length} data baru, memperbarui ${stepsToUpdate.length} data dan menghapus ${stepsToDelete.length} data`)
-        return 'Berhasil menyimpan tahapan SOP!';
+        return 'Berhasil menyimpan tahapan POS!';
     })();
 
     useToastPromise(syncPromise, {
@@ -497,7 +497,7 @@ const nextStep = async () => {
         }
     } else if (currentStep.value === 2) {
         if (sopStep.value.length < 3) {
-            toast.warning('Silakan tambahkan tahapan SOP terlebih dahulu, minimal 3', {
+            toast.warning('Silakan tambahkan tahapan POS terlebih dahulu, minimal 3', {
                 autoClose: 7000,
             });
             return;
@@ -527,7 +527,7 @@ const nextStep = async () => {
         syncSopInfo();
         syncSopStep();
 
-        // Update status SOP kalau sekarang sudah dikirim untuk nantinya dicek oleh penanggung jawab atau kadep
+        // Update status POS kalau sekarang sudah dikirim untuk nantinya dicek oleh penanggung jawab atau kadep
         // dicek dulu apakah organisasinya dsi atau tidak, jika dsi maka akan langsung di cek oleh kadep
         // jika bukan dsi maka akan di cek oleh penanggung jawab
         const promiseApdet = new Promise((resolve, reject) => {
@@ -546,7 +546,7 @@ const nextStep = async () => {
 
         useToastPromise(promiseApdet, {
             messages: {
-                success: 'Draft SOP berhasil dikirim!',
+                success: 'Draft POS berhasil dikirim!',
             }
         });
 
@@ -597,10 +597,10 @@ onMounted(fetchAllData);
 </script>
 
 <template>
-    <PageTitle :judul="isDataError ? 'Ngapain iseng iseng?🤨' : `Penyusunan Dokumen SOP`" class="my-12 print:hidden" />
+    <PageTitle :judul="isDataError ? 'Ngapain iseng iseng?🤨' : `Penyusunan Dokumen POS`" class="my-12 print:hidden" />
 
     <template v-if="!isDataError">
-        <!-- Main SOP creation stepper and content -->
+        <!-- Main POS creation stepper and content -->
         <ol class="flex items-center justify-center w-full text-sm font-medium text-center text-gray-500 sm:text-base max-w-2xl mx-auto print:hidden">
             <li class="flex md:w-full items-center text-blue-600 sm:after:content-[''] after:w-full after:h-1 after:border-b after:border-gray-400 after:border-1 after:hidden sm:after:inline-block after:mx-6 xl:after:mx-10"
                 title="Informasi mengenai sop yang ditentukan oleh penanggung jawab">
@@ -608,7 +608,7 @@ onMounted(fetchAllData);
                     <CheckIcon v-if="currentStep > 1" />
                     <NumberOneCircleIcon class="mr-2" v-else-if="currentStep == 1" />
                     Informasi
-                    <span class="hidden sm:inline-flex sm:ms-2">SOP</span>
+                    <span class="hidden sm:inline-flex sm:ms-2">POS</span>
                 </span>
             </li>
             <li class="flex md:w-full items-center after:content-[''] after:w-full after:h-1 after:border-b after:border-gray-400 after:border-1 after:hidden sm:after:inline-block after:mx-6 xl:after:mx-10"
@@ -617,7 +617,7 @@ onMounted(fetchAllData);
                     <span class="me-2" v-if="currentStep < 2">2</span>
                     <CheckIcon class="fill-blue-600" v-else-if="currentStep > 2" />
                     <NumberTwoCircleIcon class="mr-2 fill-blue-700" v-else="currentStep == 2" />
-                    Tahapan <span class="hidden sm:inline-flex sm:ms-2">SOP</span>
+                    Tahapan <span class="hidden sm:inline-flex sm:ms-2">POS</span>
                 </span>
             </li>
             <li class="flex items-center" :class="{ 'text-blue-600': currentStep === 3 }">

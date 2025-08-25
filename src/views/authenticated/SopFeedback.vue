@@ -69,7 +69,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <PageTitle judul="Umpan Balik terhadap SOP yang Dikelola" class="mt-3 mb-7" />
+    <PageTitle judul="Umpan Balik terhadap POS yang Dikelola" class="mt-3 mb-7" />
 
     <div class="container mx-auto p-8 lg:px-16">
         <DataTable

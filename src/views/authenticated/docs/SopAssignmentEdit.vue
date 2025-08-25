@@ -79,8 +79,8 @@ const submitSop = async () => {
                         }
                     );
                     if (!apdetSopDetail.success) {
-                        console.error('Gagal memperbarui SOP detail:', apdetSopDetail.error);
-                        reject(apdetSopDetail.error?.message || apdetSopDetail.error || 'Terjadi kesalahan saat membuat SOP');
+                        console.error('Gagal memperbarui POS detail:', apdetSopDetail.error);
+                        reject(apdetSopDetail.error?.message || apdetSopDetail.error || 'Terjadi kesalahan saat membuat POS');
                         return;
                     }
 
@@ -165,7 +165,7 @@ onMounted(fetchAllData);
 </script>
 
 <template>
-    <PageTitle :judul="isDataError ? 'Ngapain iseng iseng?🤨' : 'Perbarui Data Penugasan SOP'" />
+    <PageTitle :judul="isDataError ? 'Ngapain iseng iseng?🤨' : 'Perbarui Data Penugasan POS'" />
 
     <section class="bg-white" v-if="!isDataError">
         <div class="py-8 px-4 mx-auto max-w-3xl">
@@ -220,7 +220,7 @@ onMounted(fetchAllData);
                         </label>
                         <textarea id="description" rows="8" v-model="form.description" required minlength="10" maxlength="1000"
                             class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500"
-                            placeholder="ketikkan deskripsi SOP disini..."></textarea>
+                            placeholder="ketikkan deskripsi POS disini..."></textarea>
                     </div>
                 </div>
                 <button type="submit"
@@ -238,7 +238,7 @@ onMounted(fetchAllData);
             <div class="relative bg-white rounded-lg shadow">
                 <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
                     <h3 class="text-xl font-medium text-gray-900">
-                        Centang user yang akan ditugaskan untuk membuat SOP
+                        Centang user yang akan ditugaskan untuk membuat POS
                     </h3>
                     <button type="button" @click="showDrafterModal = false"
                         class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">

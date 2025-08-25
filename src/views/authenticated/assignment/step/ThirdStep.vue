@@ -385,7 +385,7 @@ const executeConfigSave = async () => {
             
             resolve();
         } catch (err) {
-            console.error('Error saving SOP layout config:', err);
+            console.error('Error saving POS layout config:', err);
             reject(err);
         }
     });
@@ -689,7 +689,7 @@ const hasUnsavedArrowChanges = computed(() => {
             <div v-if="showConfigPanel && activeTab === 'document'"
                 class="absolute bottom-full right-0 mb-3 w-80 bg-white rounded-lg shadow-xl border border-gray-200 transition-all duration-300 transform origin-bottom-right text-sm">
                 <div class="flex justify-between items-center bg-blue-50 p-3 rounded-t-lg border-b border-gray-200">
-                    <span class="font-medium">Pengaturan Layout SOP</span>
+                    <span class="font-medium">Pengaturan Layout POS</span>
                     <button @click="showConfigPanel = false" class="text-gray-500 hover:text-gray-700 focus:outline-none">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />

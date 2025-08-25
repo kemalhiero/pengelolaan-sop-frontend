@@ -272,7 +272,7 @@ onMounted(() => {
                     { field: 'number', label: 'Nomor', sortable: true, searchable: true },
                     { field: 'year', label: 'Tahun', sortable: true, searchable: true },
                     { field: 'about', label: 'Tentang', sortable: false, searchable: true },
-                    { field: 'sop_total', label: 'Jumlah SOP', sortable: false, searchable: true }
+                    { field: 'sop_total', label: 'Jumlah POS', sortable: false, searchable: true }
                 ]" 
                 @edit="openUpdateModal"
                 @delete="openDeleteModal" 

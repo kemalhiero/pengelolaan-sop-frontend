@@ -1,6 +1,6 @@
 # pengelolaan-sop-frontend
 
-Front-End Tugas Akhir "Sistem Informasi Pengelolaan SOP di Departemen Sistem Informasi Universitas Andalas berbasis web".
+Front-End Tugas Akhir "Sistem Informasi Pengelolaan POS di Departemen Sistem Informasi Universitas Andalas berbasis web".
 
 ## Recommended IDE Setup
 

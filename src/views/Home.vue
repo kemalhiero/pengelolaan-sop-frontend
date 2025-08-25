@@ -23,7 +23,7 @@ const fetchData = async () => {
         }
         nominalSopPerOrg.value = [
             {
-                name: "Jumlah SOP Berlaku",
+                name: "Jumlah POS Berlaku",
                 color: "#1A56DB",
                 data: nominalSop.data.map(item => ({
                     x: item.name,
@@ -57,14 +57,14 @@ onMounted(() => {
     <section class="bg-center bg-cover bg-no-repeat bg-[url('/fti.webp')]  bg-blend-overlay print:hidden">
         <div class="px-4 text-center py-24 lg:py-56 bg-gradient-to-br from-blue-900/80 via-blue-900/90 to-black/80">
             <h1 class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-white md:text-5xl lg:text-6xl">
-                Sistem Informasi Pengelolaan SOP</h1>
+                Sistem Informasi Pengelolaan POS</h1>
             <p class="mb-8 text-lg font-normal text-white lg:text-xl sm:px-16 lg:px-48">Selamat Datang di Situs
-                Sistem Pengelolaan SOP Departemen Sistem Informasi Unand!</p>
+                Sistem Pengelolaan POS Departemen Sistem Informasi Unand!</p>
 
             <div class="flex flex-col space-y-4 sm:flex-row sm:justify-center sm:space-y-0">
                 <a href="#tabel-sop"
                     class="inline-flex justify-center items-center py-3 px-5 text-base font-medium text-center text-white rounded-lg bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300">
-                    Cari SOP
+                    Cari POS
                     <svg class="w-3.5 h-3.5 ms-2 rotate-90" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
                         fill="none" viewBox="0 0 14 10">
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -79,18 +79,18 @@ onMounted(() => {
         <SopSearch />
     </div>
 
-    <!-- Grafik Statistik SOP -->
+    <!-- Grafik Statistik POS -->
     <section class="bg-white print-break-after-page">
         <div class="py-8 mx-auto max-w-screen-xl lg:py-16">
             <div class="grid md:grid-cols-2 gap-4">
-                <ColumnChart name="Jumlah SOP per Organisasi" :series="nominalSopPerOrg" v-if="nominalSopPerOrg[0]?.data.length" />
+                <ColumnChart name="Jumlah POS per Organisasi" :series="nominalSopPerOrg" v-if="nominalSopPerOrg[0]?.data.length" />
                 <div v-else class="border-2 border-dashed rounded-lg border-gray-300">
-                    <EmptyGrid message="Belum ada SOP yang dipublikasikan!" />
+                    <EmptyGrid message="Belum ada POS yang dipublikasikan!" />
                 </div>
 
-                <PieChart name="Distribusi SOP berdasarkan status" :series="sopDistbyStatus" v-if="sopDistbyStatus.some(item => item.y !== 0)" />
+                <PieChart name="Distribusi POS berdasarkan status" :series="sopDistbyStatus" v-if="sopDistbyStatus.some(item => item.y !== 0)" />
                 <div v-else class="border-2 border-dashed rounded-lg border-gray-300">
-                    <EmptyGrid message="Belum ada data distribusi SOP!" />
+                    <EmptyGrid message="Belum ada data distribusi POS!" />
                 </div>
             </div>
         </div>

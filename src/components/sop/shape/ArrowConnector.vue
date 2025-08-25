@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch, nextTick, computed, inject } from 'vue';
+import { onMounted, ref, watch, nextTick, computed } from 'vue';
 
 const props = defineProps({
   connection: {

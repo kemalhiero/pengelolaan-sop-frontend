@@ -150,7 +150,7 @@ onMounted(fetchAllData);
 
 <template>
     <h2 class="text-4xl text-center my-12 font-bold print:hidden">
-        {{ isDataError || sopData.status != 1 ? 'Ngapain iseng iseng?🤨' : `SOP ${sopData.name}` }}
+        {{ isDataError || sopData.status != 1 ? 'Ngapain iseng iseng?🤨' : `POS ${sopData.name}` }}
     </h2>
 
     <template v-if="!isDataError && sopData.status == 1">
@@ -214,7 +214,7 @@ onMounted(fetchAllData);
             <button @click="printSop"
                 class="mx-auto text-white bg-[#2557D6] hover:bg-[#2557D6]/90 focus:ring-4 focus:ring-[#2557D6]/50 focus:outline-none font-medium rounded-lg text-base py-3 px-6 flex items-center justify-center print:hidden mt-6">
                 <PrintIcon class="w-5 mr-3 fill-current" />
-                Cetak SOP (Ukuran A4)
+                Cetak POS (Ukuran A4)
             </button>
 
             <div class="mx-4 sm:mx-10 lg:w-2/3 lg:mx-auto mt-10 mb-6 print:hidden">
@@ -290,7 +290,7 @@ onMounted(fetchAllData);
                         :class="{ 'blur-sm pointer-events-none': !authStore.isAuthenticated }">
                         <textarea v-model="newFeedback" rows="4" minlength="5" maxlength="500" required
                             class="block p-3 w-full text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
-                            placeholder="Ketikkan kritik atau saran Anda untuk perbaikan SOP..."></textarea>
+                            placeholder="Ketikkan kritik atau saran Anda untuk perbaikan POS..."></textarea>
 
                         <button type="submit"
                             class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-3 transition duration-300 flex items-center justify-center">

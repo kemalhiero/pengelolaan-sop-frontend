@@ -71,10 +71,9 @@ const props = defineProps({
                     <tbody>
                         <tr>
                             <th rowspan="8" class="w-[47%] border-2 py-0.5 px-2 border-black">
-                                <img class="mx-auto h-36 my-4" src="/logo_unand_kecil.png"
-                                    alt="Logo Kementerian Pendidikan Kebudayaan, Riset dan Teknologi">
+                                <img class="mx-auto h-36 my-4" src="/logo_unand_kecil.png" alt="Logo Kementerian Pendidikan Kebudayaan, Riset dan Teknologi">
                                 <h4>KEMENTERIAN PENDIDIKAN TINGGI, SAINS, DAN TEKNOLOGI</h4>
-                                <h4>UNIVERSITAS ANDALAS </h4>
+                                <h4>UNIVERSITAS ANDALAS</h4>
                                 <h4>FAKULTAS TEKNOLOGI INFORMASI</h4>
                                 <h4 class="font-[450]">DEPARTEMEN SISTEM INFORMASI</h4>
                             </th>

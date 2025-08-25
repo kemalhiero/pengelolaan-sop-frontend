@@ -38,7 +38,7 @@ provide('labelConfigs', {
 
 const confirm = () => {
     try {
-        // Call the API to confirm the SOP and BPMN
+        // Call the API to confirm the POS and BPMN
         useToastPromise(
             new Promise((resolve, reject) => {
                 confirmSopandBpmn(sopData.value.id)
@@ -46,7 +46,7 @@ const confirm = () => {
                         if (!response.success) {
                             throw response;
                         }
-                        console.log('SOP and BPMN confirmed successfully!');
+                        console.log('POS and BPMN confirmed successfully!');
                         resolve();
                         router.push({ name: 'SopDocs' });
                     })
@@ -54,12 +54,12 @@ const confirm = () => {
             }),
             {
                 messages: {
-                    success: 'Berhasil mengesahkan SOP dan BPMN!'
+                    success: 'Berhasil mengesahkan POS dan BPMN!'
                 }
             }
         );
     } catch (error) {
-        console.error('Error confirming SOP and BPMN:', error);
+        console.error('Error confirming POS and BPMN:', error);
     } finally {
         showConfirmationModal.value = false; // Close the modal after confirmation
     }
@@ -77,16 +77,16 @@ const fetchProfile = async () => {
 };
 
 const fetchAllData = async () => {
-    // Periksa apakah data SOP sudah ada dan valid
+    // Periksa apakah data POS sudah ada dan valid
     if (!sopData.value.id || sopData.value.id !== route.params.id) {
-        console.log('Data SOP tidak ditemukan atau tidak sesuai, mengambil ulang dari API...');
+        console.log('Data POS tidak ditemukan atau tidak sesuai, mengambil ulang dari API...');
         await fetchSopVersion();
         await fetchInfoSop();
     }
 
-    // Periksa apakah langkah-langkah SOP sudah ada
+    // Periksa apakah langkah-langkah POS sudah ada
     if (!sopData.value.steps || sopData.value.steps.length === 0) {
-        console.log('Langkah-langkah SOP tidak ditemukan, mengambil ulang dari API...');
+        console.log('Langkah-langkah POS tidak ditemukan, mengambil ulang dari API...');
         await fetchSopStep();
     }
 
@@ -115,7 +115,7 @@ onMounted(fetchAllData);
 
 <template>
     <h2 class="text-4xl text-center my-8 font-bold">
-        {{ isDataError || !sopData.steps.length || !canAccessLegalization ? 'Ngapain iseng iseng?🤨' : `Pengesahan SOP ${sopData.name}` }}
+        {{ isDataError || !sopData.steps.length || !canAccessLegalization ? 'Ngapain iseng iseng?🤨' : `Pengesahan POS ${sopData.name}` }}
     </h2>
 
     <template v-if="!isDataError && sopData.steps.length > 0 && canAccessLegalization">
@@ -132,7 +132,7 @@ onMounted(fetchAllData);
             </div>
             <div v-else class="flex items-center text-green-600 font-medium">
                 <CheckIcon class="w-5 h-5 mr-2" />
-                Tanda tangan Anda telah diunggah. Silahkan tinjau dan sahkan SOP ini!
+                Tanda tangan Anda telah diunggah. Silahkan tinjau dan sahkan POS ini!
             </div>
         </div>
 
@@ -192,10 +192,10 @@ onMounted(fetchAllData);
         <div class="my-10 flex flex-col items-center">
             <button type="button" @click="showConfirmationModal = true" :disabled="!userSignature"
                 class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors w-1/4 disabled:cursor-not-allowed disabled:bg-opacity-60">
-                Sahkan SOP dan BPMN?
+                Sahkan POS dan BPMN?
             </button>
             <p v-if="!userSignature" class="text-sm text-red-600 mt-2">
-                Anda harus mengunggah tanda tangan terlebih dahulu untuk dapat mengesahkan SOP.
+                Anda harus mengunggah tanda tangan terlebih dahulu untuk dapat mengesahkan POS.
             </p>
         </div>
     </template>
@@ -213,15 +213,15 @@ onMounted(fetchAllData);
                 <div class="p-4 md:p-5 text-center">
                     <ExclamationMarkIcon class="mx-auto mb-4 text-gray-400 w-12 h-12" />
                     <h3 class="mb-2 text-xl font-normal text-gray-800">
-                        Anda yakin ingin mengesahkan SOP dan BPMN ini?
+                        Anda yakin ingin mengesahkan POS dan BPMN ini?
                     </h3>
                     <p class="text-gray-500 mb-1">
-                        SOP ini akan ditandatangani oleh anda dan akan menjadi SOP yang berlaku di
+                        POS ini akan ditandatangani oleh anda dan akan menjadi POS yang berlaku di
                         Departemen Sistem Informasi Universitas Andalas!
                     </p>
                     <p class="text-gray-600 mb-5">
                         <span class="text-red-600">*</span>
-                        SOP akan dipublikasikan dan dapat dilihat oleh semua orang
+                        POS akan dipublikasikan dan dapat dilihat oleh semua orang
                         <span class="text-red-600">*</span>
                     </p>
                     <button @click="confirm"

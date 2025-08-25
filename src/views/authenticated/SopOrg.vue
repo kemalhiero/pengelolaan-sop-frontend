@@ -246,7 +246,7 @@ onMounted(() => {
                                 Penanggung Jawab
                             </th>
                             <th scope="col" class="px-6 py-3">
-                                Jumlah SOP
+                                Jumlah POS
                             </th>
                             <th scope="col" class="px-6 py-3">
                                 Keterangan

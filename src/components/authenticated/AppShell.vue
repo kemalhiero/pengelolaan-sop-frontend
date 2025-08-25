@@ -117,7 +117,7 @@ onMounted(() => {
             <ul class="space-y-2">
                 <li>
                     <RouterLink :to="{ name: 'AuthenticatedDashboard' }"
-                        title="Ringkasan data SOP yang dikelola oleh penanggung jawab"
+                        title="Ringkasan data POS yang dikelola oleh penanggung jawab"
                         class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg hover:bg-gray-200 group"
                         active-class="bg-gray-200">
                         <DashboardIcon
@@ -126,21 +126,21 @@ onMounted(() => {
                     </RouterLink>
                 </li>
                 <li>
-                    <RouterLink :to="{ name: 'SopDocs' }" title="List Dokumen SOP yang dikelola oleh penanggung jawab"
+                    <RouterLink :to="{ name: 'SopDocs' }" title="List Dokumen POS yang dikelola oleh penanggung jawab"
                         class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg hover:bg-gray-200 group"
                         active-class="bg-gray-200">
                         <PageIcon
                             class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 fill-current" />
-                        <span class="flex-1 ml-3 whitespace-nowrap">Dokumen SOP</span>
+                        <span class="flex-1 ml-3 whitespace-nowrap">Dokumen POS</span>
                     </RouterLink>
                 </li>
                 <li>
-                    <RouterLink :to="{ name: 'SopImplementer' }" title="List Pelaksana SOP"
+                    <RouterLink :to="{ name: 'SopImplementer' }" title="List Pelaksana POS"
                         class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg hover:bg-gray-200 group"
                         active-class="bg-gray-200">
                         <PeopleGroupIcon
                             class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 fill-current" />
-                        <span class="flex-1 ml-3 whitespace-nowrap">Pelaksana SOP</span>
+                        <span class="flex-1 ml-3 whitespace-nowrap">Pelaksana POS</span>
                     </RouterLink>
                 </li>
                 <li v-if="authStore.userRole === 'kadep'">
@@ -158,7 +158,7 @@ onMounted(() => {
                         aria-controls="dropdown-law" data-collapse-toggle="dropdown-law">
                         <ScaleBalanced
                             class="flex-shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 fill-current" />
-                        <span class="flex-1 ml-3 text-left whitespace-nowrap">Peraturan SOP</span>
+                        <span class="flex-1 ml-3 text-left whitespace-nowrap">Peraturan POS</span>
                         <AngleDownIcon />
                     </button>
                     <ul id="dropdown-law" class="hidden py-2 space-y-2">
@@ -207,7 +207,7 @@ onMounted(() => {
                     </ul>
                 </li>
                 <li>
-                    <RouterLink :to="{ name: 'SopFeedback' }" title="Komentar dan saran dari pengunjung terkait SOP"
+                    <RouterLink :to="{ name: 'SopFeedback' }" title="Komentar dan saran dari pengunjung terkait POS"
                         class="flex items-center p-2 text-base font-medium text-gray-900 rounded-lg hover:bg-gray-200 group"
                         active-class="bg-gray-200">
                         <FeedbackIcon

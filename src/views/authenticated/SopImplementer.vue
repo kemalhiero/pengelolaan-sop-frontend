@@ -232,12 +232,12 @@ onMounted(() => {
 </script>
 
 <template>
-    <PageTitle judul="Daftar Pelaksana SOP" class="mt-3 mb-7" />
+    <PageTitle judul="Daftar Pelaksana POS" class="mt-3 mb-7" />
 
     <div class="container mx-auto p-8 lg:px-16">
 
         <div class="flex justify-end mb-4">
-            <AddDataButton btnLabel="Input Pelaksana SOP Baru" @click="openAddModal" />
+            <AddDataButton btnLabel="Input Pelaksana POS Baru" @click="openAddModal" />
         </div>
 
         <AddDataModal
@@ -264,8 +264,8 @@ onMounted(() => {
             <Error v-else-if="hasError" @click="fetchData" />
             <EmptyState 
                 v-else-if="!hasError && data.length === 0"
-                title="Tidak ada data pelaksana SOP!"
-                message="Belum ada data pelaksana SOP yang tersedia saat ini"
+                title="Tidak ada data pelaksana POS!"
+                message="Belum ada data pelaksana POS yang tersedia saat ini"
                 @click="fetchData"
             />
             <div v-else class="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -281,8 +281,8 @@ onMounted(() => {
                             <th scope="col" class="px-6 py-3">
                                 Deskripsi
                             </th>
-                            <th scope="col" class="px-6 py-3" title="Jumlah SOP yang memiliki pelaksana berikut">
-                                Jumlah SOP
+                            <th scope="col" class="px-6 py-3" title="Jumlah POS yang memiliki pelaksana berikut">
+                                Jumlah POS
                             </th>
                             <th scope="col" class="px-6 py-3">
                                 <span class="sr-only">Edit</span>
@@ -330,7 +330,7 @@ onMounted(() => {
     />
 
     <EditDataModal 
-        modalTitle="Perbarui pelaksana SOP" 
+        modalTitle="Perbarui pelaksana POS" 
         :showModal="showModalUpdate" 
         :formFields="[
             { id: 'name', label: 'Nama', type: 'text', colSpan: 'full', placeholder: 'Mis. Fakultas', required: true },

@@ -11,14 +11,14 @@ const dataFaq = [
     },
     {
         q: "Apa tujuan dari sistem ini?",
-        a: "Sistem ini dibangun agar proses pengelolaan SOP dapat berjalan dengan lebih baik lagi, dimulai dari proses pembuatan hingga publikasi. Dengan demikian diharapkan proses bisnis yang ada di Departemen Sistem Informasi dapat berjalan lebih baik lagi."
+        a: "Sistem ini dibangun agar proses pengelolaan POS dapat berjalan dengan lebih baik lagi, dimulai dari proses pembuatan hingga publikasi. Dengan demikian diharapkan proses bisnis yang ada di Departemen Sistem Informasi dapat berjalan lebih baik lagi."
     },
     {
-        q: "Bagaimana cara mengakses SOP?",
-        a: "Aplikasi SIPP DSI dapat diakses dengan mengunjungi link, lalu pengguna dapat mencari SOP yang diperlukan dengan mengetikkan kata kunci berupa judul di kolom pencarian."
+        q: "Bagaimana cara mengakses POS?",
+        a: "Aplikasi SIPP DSI dapat diakses dengan mengunjungi link, lalu pengguna dapat mencari POS yang diperlukan dengan mengetikkan kata kunci berupa judul di kolom pencarian."
     },
     {
-        q: "Apakah saya bisa memberikan saran terhadap SOP yang ada pada sistem ini?",
+        q: "Apakah saya bisa memberikan saran terhadap POS yang ada pada sistem ini?",
         a: "Jika anda dosen atau mahasiswa DSI Universitas Andalas, anda dapat memberikan umpan balik (kritik atau saran) dengan masuk terlebih dahulu menggunakan username dan password, lalu cari sop yang dimaksud dan ketikkan umpan balik pada kolom yang telah disediakan."
     },
 ];
@@ -33,7 +33,7 @@ onMounted(() => {
         <h1 class="mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-4xl lg:text-5xl">
             Frequently Asked Question</h1>
         <p class="text-lg font-normal lg:text-xl sm:px-16 xl:px-48">
-            Berikut merupakan daftar pertanyaan yang sering diajukan dalam proses pengelolaan SOP di Departemen Sistem
+            Berikut merupakan daftar pertanyaan yang sering diajukan dalam proses pengelolaan POS di Departemen Sistem
             Informasi Universitas Andalas.
         </p>
     </div>
