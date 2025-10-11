@@ -25,7 +25,7 @@ import ExclamationMarkIcon from '@/assets/icons/ExclamationMarkIcon.vue';
 import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
 import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
 import SopInfoTemplate from '@/components/sop/SopInfoTemplate.vue';
-import SopStepTemplate from '@/components/sop/SopStepTemplate.vue';
+import SopStepTemplate from '@/components/sop/SopFlowchartTemplate.vue';
 import PenToSquareIcon from '@/assets/icons/PenToSquareIcon.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
@@ -250,7 +250,7 @@ onMounted(fetchAllData);
 <template>
     <div class="my-10 flex justify-center items-center">
         <PageTitle :judul="sopData.name ? `Pengecekan Draft POS ${sopData?.name}` : 'Ngapain iseng iseng?🤨'" />
-        <div class="space-x-2 ml-3 flex justify-center items-center" v-if="[0, 2].includes(sopData.status)">
+        <div class="space-x-2 ml-3 flex justify-center items-center" v-if="[2].includes(sopData.status)">
             <button title="Edit data penugasan" @click="redirectEditAssignment"
                 class="p-2 text-white w-8 h-8 bg-yellow-400 rounded-full hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50">
                 <PenToSquareIcon class="fill-current" />

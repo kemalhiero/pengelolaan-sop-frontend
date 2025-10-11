@@ -1,5 +1,5 @@
 <script setup>
-import { computed, inject, onBeforeUnmount, ref, watch, nextTick, defineEmits } from 'vue';
+import { computed, inject, onBeforeUnmount, ref, watch, nextTick } from 'vue';
 import { toast } from 'vue3-toastify';
 
 import { saveFlowchartConfig, saveBpmnConfig, clearFlowchartConfig, clearBpmnConfig, saveSopLayout } from '@/api/sopApi';
@@ -7,7 +7,7 @@ import roleAbbreviation from '@/data/roleAbbrv.json';
 import useToastPromise from '@/utils/toastPromiseHandler';
 import GearIcon from '@/assets/icons/GearIcon.vue';
 import SopInfoTemplate from '@/components/sop/SopInfoTemplate.vue';
-import SopStepTemplate from '@/components/sop/SopStepTemplate.vue';
+import SopStepTemplate from '@/components/sop/SopFlowchartTemplate.vue';
 import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
 import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
 

@@ -11,7 +11,7 @@ import { addDraftFeedback, deleteDraftFeedback, getGeneralFeedback } from '@/api
 import DeleteDataModal from '@/components/modal/DeleteDataModal.vue';
 import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
 import SopInfoTemplate from '@/components/sop/SopInfoTemplate.vue';
-import SopStepTemplate from '@/components/sop/SopStepTemplate.vue';
+import SopStepTemplate from '@/components/sop/SopFlowchartTemplate.vue';
 import PrintIcon from '@/assets/icons/PrintIcon.vue';
 import Error from '@/components/Error.vue';
 

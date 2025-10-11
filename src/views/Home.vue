@@ -62,7 +62,7 @@ onMounted(() => {
                 Sistem Pengelolaan POS Departemen Sistem Informasi Unand!</p>
 
             <div class="flex flex-col space-y-4 sm:flex-row sm:justify-center sm:space-y-0">
-                <a href="#tabel-sop"
+                <a href="#tabel-pos"
                     class="inline-flex justify-center items-center py-3 px-5 text-base font-medium text-center text-white rounded-lg bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300">
                     Cari POS
                     <svg class="w-3.5 h-3.5 ms-2 rotate-90" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
@@ -75,7 +75,7 @@ onMounted(() => {
         </div>
     </section>
 
-    <div id="tabel-sop" class="print-break-after-page">
+    <div id="tabel-pos" class="print-break-after-page">
         <SopSearch />
     </div>
 

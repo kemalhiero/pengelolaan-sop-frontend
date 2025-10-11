@@ -24,7 +24,7 @@ const form = ref({
     name: '',
     number: '',
     drafter: [],
-    version: null,
+    latest_version: null,
     description: '',
     id_org: null,
 });
@@ -40,6 +40,7 @@ const fetchData = async () => {
     const response = await getOneSop(route.params.id);
     form.value.name = response.data.name;
     form.value.id_org = response.data.organization.id;
+    form.value.latest_version = Math.max(...response.data.version.map(v => v.version));
   } catch (error) {
     console.error('Fetch error:', error);
   }
@@ -50,7 +51,6 @@ const fetchLatestSopInYear = async () => {
     const response = await getLatestSopInYear(currentYear);
     latestSopNumber = parseInt(response.data.number.split("/")[1]);
     form.value.number = latestSopNumber + 1;
-    form.value.version = response.data.version;
   } catch (error) {
     console.error('Fetch error:', error);
   }
@@ -84,7 +84,7 @@ const submitSop = async () => {
                     {
                         number: `T/${String(form.value.number).padStart(3, '0')}/${letterCode.value}/${currentYear}`,
                         description: form.value.description,
-                        version: parseInt(form.value.version) + 1,
+                        version: parseInt(form.value.latest_version) + 1,
                     }
                 );
                 if (!resultSopdetail.success) {

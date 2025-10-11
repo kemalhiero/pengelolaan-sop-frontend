@@ -112,37 +112,56 @@ const fetchLegalBasis = async () => {
     }
 };
 
-const fetchInfoSop = async () => {
+const fetchInfoSop = async (sopDetailId) => {
     try {
-        let response = await getSectionandWarning(idsopdetail);
-        formData.value.section = response.data.section;
-        formData.value.warning = response.data.warning;
+        // Gunakan Promise.all untuk mengambil semua data info secara bersamaan
+        const [
+            sectionWarningRes,
+            implementerRes,
+            lawBasisRes,
+            iqRes,
+            relatedSopRes,
+            equipmentRes,
+            recordRes
+        ] = await Promise.all([
+            getSectionandWarning(sopDetailId),
+            getSopImplementer(sopDetailId),
+            getSopLawBasis(sopDetailId),
+            getIQ(sopDetailId),
+            getRelatedSop(sopDetailId),
+            getSopEquipment(sopDetailId),
+            getSopRecord(sopDetailId)
+        ]);
 
-        response = await getSopImplementer(idsopdetail);
-        formData.value.implementer = response.data;
-
-        response = await getSopLawBasis(idsopdetail);
-        formData.value.legalBasis = response.data.map(item => ({
+        // Isi formData dengan data yang diambil
+        formData.value.section = sectionWarningRes.data.section;
+        formData.value.warning = sectionWarningRes.data.warning;
+        formData.value.implementer = implementerRes.data;
+        formData.value.legalBasis = lawBasisRes.data.map(item => ({
             id: item.id,
             legal: `${item.law_type} Nomor ${item.number} Tahun ${item.year} tentang ${item.about}`
-        }));;
+        }));
+        formData.value.implementQualification = iqRes.data.map(item => item.qualification);
+        formData.value.relatedSop = relatedSopRes.data.map(item => item.related_sop);
+        formData.value.equipment = equipmentRes.data.map(item => item.equipment);
+        formData.value.record = recordRes.data.map(item => item.data_record);
 
-        response = await getIQ(idsopdetail);
-        formData.value.implementQualification = response.data.map(item => item.qualification);
+        // Cek apakah ada data yang benar-benar ditemukan
+        const hasData = (sectionWarningRes.data.section && sectionWarningRes.data.section.trim() !== '') ||
+            (sectionWarningRes.data.warning && sectionWarningRes.data.warning.trim() !== '') ||
+            implementerRes.data.length > 0 ||
+            lawBasisRes.data.length > 0 ||
+            iqRes.data.length > 0 ||
+            relatedSopRes.data.length > 0 ||
+            equipmentRes.data.length > 0 ||
+            recordRes.data.length > 0;
 
-        response = await getRelatedSop(idsopdetail);
-        formData.value.relatedSop = response.data.map(item => item.related_sop);
-
-        response = await getSopEquipment(idsopdetail);
-        formData.value.equipment = response.data.map(item => item.equipment);
-
-        response = await getSopRecord(idsopdetail);
-        formData.value.record = response.data.map(item => item.data_record);
-
-        response = null;
+        return hasData;
 
     } catch (error) {
         console.error('Fetch info sop error:', error);
+        // Jika terjadi error, anggap tidak ada data agar bisa fallback ke versi sebelumnya
+        return false;
     }
 };
 
@@ -169,12 +188,27 @@ watch(() => sopStep.value,
 );
 
 let apiResponseStep;
-const fetchSopStep = async () => {
+const fetchSopStep = async (sopDetailId, isCopy = false) => {
     try {
-        let response = await getSopStep(idsopdetail);
-        apiResponseStep = response.data
+        let response = await getSopStep(sopDetailId);
 
-        sopStep.value = response.data.map(item => ({ ...item }));
+        if (isCopy) {
+            toast.info('Memuat data dari versi sebelumnya. Harap simpan ulang data identitas dan tahapan POS, agar Flowchart dan BPMN dapat tampil dengan baik.', { autoClose: 10000 });
+            // Data from a previous version for a new SOP.
+            // Nullify IDs to treat them as new records.
+            // Nullify next_step IDs as they point to old records.
+            sopStep.value = response.data.map(item => ({
+                ...item,
+                id_step: null,
+                id_next_step_if_yes: null,
+                id_next_step_if_no: null,
+            }));
+            // The original state of the *new* SOP is empty.
+            apiResponseStep = [];
+        } else {
+            apiResponseStep = response.data
+            sopStep.value = response.data.map(item => ({ ...item }));
+        }
 
     } catch (error) {
         console.error('Fetch tahapan sop error:', error);
@@ -353,23 +387,6 @@ function compareSteps(serverSteps, userSteps) {
                 if (isDifferent) {
                     stepsToUpdate.push({ id: userStep.id_step, data: userStep });
                 }
-            } else {
-                // User step memiliki id_step, tapi tidak ditemukan di server.
-                // Ini bisa berarti langkah tersebut baru dibuat di client dan id_step nya unik (misal UUID client-side)
-                // atau langkah tersebut sudah dihapus di server.
-                // Jika id_step di-generate client dan unik, maka ini adalah langkah baru.
-                // Namun, jika id_step seharusnya dari server, ini anomali.
-                // Untuk kasus umum di mana id_step baru ada setelah dibuat di server,
-                // kondisi `!userStep.id_step` sudah menangani penambahan.
-                // Jika Anda mengizinkan id_step client-side sebelum create, logika ini mungkin perlu penyesuaian.
-                // Berdasarkan deskripsi masalah, kita asumsikan id_step adalah pengenal dari server.
-                // Jika userStep.id_step ada tapi tidak di server, ini bisa dianggap sebagai data baru jika id_step unik.
-                // Namun, karena sudah ada filter `!userStep.id_step` untuk data baru,
-                // kita bisa asumsikan ini adalah kasus yang tidak diharapkan atau id_step yang "yatim".
-                // Untuk skenario umum, jika id_step ada, seharusnya ada di server atau akan diupdate.
-                // Jika tidak ada di server, dan bukan baru (karena punya id_step), ini bisa jadi error data.
-                // Untuk saat ini, jika punya id_step tapi tidak di server, kita tidak menambahkannya ke `stepsToAdd` di sini
-                // karena sudah ditangani oleh `!userStep.id_step`.
             }
         }
     });
@@ -429,7 +446,7 @@ const syncSopStep = async () => {
         }
 
         // Ambil ulang data terbaru dari server
-        await fetchSopStep();
+        await fetchSopStep(idsopdetail, false);
 
         console.log(`Berhasil menambah ${stepsToAdd.length} data baru, memperbarui ${stepsToUpdate.length} data dan menghapus ${stepsToDelete.length} data`)
         return 'Berhasil menyimpan tahapan POS!';
@@ -584,10 +601,38 @@ onBeforeUnmount(() => {
 
 const fetchAllData = async () => {
     await fetchAssignmentInfo();
-    await fetchInfoSop();
-    await fetchSopStep();
-    await fetchLegalBasis();
+
+    const previousVersionId = assignmentInfo.value.previous_version_id;
+    const isRevision = assignmentInfo.value.version > 1;
+
+    // Pengecekan untuk data Info SOP (Tahap 1)
+    // Coba fetch data untuk versi saat ini. Fungsi akan mengembalikan true jika ada data.
+    const hasCurrentInfoData = await fetchInfoSop(idsopdetail);
+
+    if (isRevision && !hasCurrentInfoData && previousVersionId) {
+        // Jika ini revisi, tidak ada data info, dan ada ID versi sebelumnya,
+        // maka muat (timpa) data info dari versi sebelumnya.
+        await fetchInfoSop(previousVersionId);
+    }
+    // Jika bukan revisi, atau jika sudah ada data, tidak perlu melakukan apa-apa lagi karena fetchInfoSop(idsopdetail) sudah memuat datanya.
+
+    // Pengecekan terpisah untuk data Tahapan SOP (Tahap 2)
+    const currentStepsResponse = await getSopStep(idsopdetail);
+    const hasCurrentStepsData = currentStepsResponse.data && currentStepsResponse.data.length > 0;
+
+    if (isRevision && !hasCurrentStepsData && previousVersionId) {
+        // Jika ini revisi, belum ada data tahapan, dan ada versi sebelumnya,
+        // maka muat data tahapan dari versi sebelumnya sebagai salinan.
+        await fetchSopStep(previousVersionId, true);
+    } else {
+        // Jika ini SOP baru ATAU ini adalah revisi yang sudah punya data tahapan,
+        // maka muat data tahapan untuk versi saat ini.
+        await fetchSopStep(idsopdetail, false);
+    }
+
+    // Muat data pendukung lainnya
     await fetchSopDisplayConfig();
+    await fetchLegalBasis();
     if (assignmentInfo.value.status !== 2) {
         await fetchFeedback();
     }

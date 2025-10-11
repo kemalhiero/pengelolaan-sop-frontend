@@ -45,10 +45,8 @@ onMounted(() => {
 </script>
 
 <template>
-
     <div class="text-center mt-16 mb-8 mx-12 lg:mx-40">
-        <h1
-            class="mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-4xl lg:text-5xl">
+        <h1 class="mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-4xl lg:text-5xl">
             Penugasan Pembuatan / Revisi POS</h1>
         <p class="text-lg font-normal lg:text-xl sm:px-16 xl:px-48">
             Berikut merupakan daftar tugas yang diberikan oleh penanggung jawab organisasi di lingkungan Departemen
@@ -57,34 +55,32 @@ onMounted(() => {
     </div>
 
     <div class="container mx-auto p-8 lg:px-32">
-        <div>
-            <TableSkeleton 
-                v-if="isLoading"
-                :columns="5"
-                :rows="5"
-            />
-            <Error v-else-if="hasError" @click="fetchData"/>
-            <EmptyState 
-                v-else-if="!hasError && data.length === 0"
-                title="Tidak ada data tugas!"
-                message="Belum ada data tugas yang tersedia saat ini"
-                @click="fetchData"
-            />
-            <DataTable v-else
-                :data="data"
-                :columns="[
-                    { field: 'name', label: 'Nama Sop', sortable: true, searchable: true },
-                    { field: 'creation_date', label: 'Tanggal Penugasan', sortable: true, searchable: true },
-                    { field: 'org_name', label: 'Organisasi', sortable: true, searchable: true },
-                ]"
-                :status-columns="[
-                    { field: 'status', label: 'Status' }
-                ]"
-                :badge-text="statusTexts.sopDetail"
-                :link-column="true"
-                detail-link="AssignmentDetail"
-            />
-        </div>
+        <TableSkeleton 
+            v-if="isLoading"
+            :columns="5"
+            :rows="5"
+        />
+        <Error v-else-if="hasError" @click="fetchData"/>
+        <EmptyState 
+            v-else-if="!hasError && data.length === 0"
+            title="Tidak ada data tugas!"
+            message="Belum ada data tugas yang tersedia saat ini"
+            @click="fetchData"
+        />
+        <DataTable v-else
+            :data="data"
+            :columns="[
+                { field: 'name', label: 'Nama POS', sortable: true, searchable: true },
+                { field: 'version', label: 'Versi', sortable: true, searchable: true },
+                { field: 'creation_date', label: 'Tanggal Penugasan', sortable: true, searchable: true },
+                { field: 'org_name', label: 'Organisasi', sortable: true, searchable: true },
+            ]"
+            :status-columns="[
+                { field: 'status', label: 'Status' }
+            ]"
+            :badge-text="statusTexts.sopDetail"
+            :link-column="true"
+            detail-link="AssignmentDetail"
+        />
     </div>
-
 </template>

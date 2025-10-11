@@ -11,7 +11,7 @@ import roleAbbreviation from '@/data/roleAbbrv.json';
 
 import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import SopInfoTemplate from '@/components/sop/SopInfoTemplate.vue';
-import SopStepTemplate from '@/components/sop/SopStepTemplate.vue';
+import SopStepTemplate from '@/components/sop/SopFlowchartTemplate.vue';
 import SopBpmnTemplate from '@/components/sop/SopBpmnTemplate.vue';
 import ExclamationMarkIcon from '@/assets/icons/ExclamationMarkIcon.vue';
 import CheckIcon from '@/assets/icons/CheckIcon.vue';
