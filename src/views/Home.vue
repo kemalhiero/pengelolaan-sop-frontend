@@ -1,13 +1,18 @@
 <script setup>
 import { inject, onMounted, ref } from 'vue';
+import { initAccordions } from 'flowbite';
+import { getAllSop } from '@/api/sopApi';
 import { getNominalSopPerOrg, getSopDistByStatus } from '@/api/dashboardApi';
 
-import SopSearch from '@/components/home/SopSearch.vue';
 import Footer from '@/components/Footer.vue';
-import Faq from '@/components/home/Faq.vue';
+import IconAngle from '@/assets/icons/AngleIcon.vue';
 import ColumnChart from '@/components/chart/ColumnChart.vue';
 import PieChart from '@/components/chart/PieChart.vue';
 import EmptyGrid from '@/components/EmptyGrid.vue';
+import Error from '@/components/Error.vue';
+import DataTable from '@/components/DataTable.vue';
+import EmptyState from '@/components/EmptyState.vue';
+import TableSkeleton from '@/components/TableSkeleton.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'guest';
@@ -15,7 +20,11 @@ layoutType.value = 'guest';
 const nominalSopPerOrg = ref([]);
 const sopDistbyStatus = ref([]);
 
-const fetchData = async () => {
+const data = ref([]);
+const isLoading = ref(true);
+const hasError = ref(false);
+
+const fetchChartData = async () => {
     try {
         const nominalSop = await getNominalSopPerOrg();
         if (!nominalSop.success) {
@@ -47,8 +56,53 @@ const fetchData = async () => {
     }
 };
 
+const fetchAllSop = async () => {
+    try {
+        isLoading.value = true;
+        hasError.value = false;
+        data.value = [];
+
+        const result = await getAllSop();
+        if (!result.success) {
+            hasError.value = true;
+            console.error('API Error:', result.error);
+            return;
+        }
+
+        if (result?.data) {
+            data.value = result.data;
+        }
+    } catch (error) {
+        console.error('Fetch data error', error);
+        hasError.value = true;
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+const dataFaq = [
+    {
+        q: "Apa itu SIPP?",
+        a: "SIPP merupakan singkatan dari Sistem Informasi Pengelolaan Prosedur, yang merupakan aplikasi berbasis web untuk mengelola berbagai dokumen POS (Prosedur Operasional Standar) di Departemen Sistem Informasi, Universitas Andalas."
+    },
+    {
+        q: "Apa tujuan dari sistem ini?",
+        a: "Sistem ini dibangun agar proses pengelolaan POS dapat berjalan dengan lebih baik lagi, dimulai dari proses pembuatan hingga publikasi. Dengan demikian diharapkan proses bisnis yang ada di Departemen Sistem Informasi dapat berjalan lebih baik lagi."
+    },
+    {
+        q: "Bagaimana cara mengakses POS?",
+        a: "Aplikasi SIPP DSI dapat diakses dengan mengunjungi link, lalu pengguna dapat mencari POS yang diperlukan dengan mengetikkan kata kunci berupa judul di kolom pencarian."
+    },
+    {
+        q: "Apakah saya bisa memberikan saran terhadap POS yang ada pada sistem ini?",
+        a: "Jika anda dosen atau mahasiswa DSI Universitas Andalas, anda dapat memberikan umpan balik (kritik atau saran) dengan masuk terlebih dahulu menggunakan username dan password, lalu cari sop yang dimaksud dan ketikkan umpan balik pada kolom yang telah disediakan."
+    },
+];
+
 onMounted(() => {
-    fetchData();
+    fetchChartData();
+    fetchAllSop();
+    initAccordions();
 })
 </script>
 
@@ -75,8 +129,44 @@ onMounted(() => {
         </div>
     </section>
 
-    <div id="tabel-pos" class="print-break-after-page">
-        <SopSearch />
+    <div class="text-center mt-16 mb-8 mx-12 lg:mx-40">
+        <h1 class="mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-4xl lg:text-5xl">
+            Prosedur Operasional Standar (POS)</h1>
+        <p class="text-lg font-normal lg:text-xl sm:px-16 xl:px-48">
+            Berikut merupakan daftar dokumen POS yang berlaku di lingkungan<br>
+            Departemen Sistem Informasi Universitas Andalas
+        </p>
+    </div>
+
+    <div class="container mx-auto p-8 lg:px-32">
+        <div>
+            <TableSkeleton 
+                v-if="isLoading"
+                :columns="5"
+                :rows="5"
+            />
+            <Error v-else-if="hasError" @click="fetchAllSop" />
+            <EmptyState 
+                v-else-if="!hasError && data.length === 0"
+                title="Tidak ada data sop!"
+                message="Belum ada data sop yang tersedia saat ini"
+                @click="fetchAllSop"
+            />
+            <DataTable v-else
+                :data="data" 
+                :columns="[
+                    { field: 'name', label: 'Nama', sortable: true, searchable: true },
+                    { field: 'effective_date', label: 'Tanggal Efektif', sortable: true, searchable: true },
+                    { field: 'org_name', label: 'Organisasi', sortable: true, searchable: true },
+                ]" 
+                :status-columns="[
+                    { field: 'is_active', label: 'Status' }
+                ]" 
+                :badge-text="['Tidak Berlaku', 'Berlaku', 'Belum Berlaku']"
+                :link-column="true"
+                detail-link="DetailSop" 
+            />
+        </div>
     </div>
 
     <!-- Grafik Statistik POS -->
@@ -96,7 +186,35 @@ onMounted(() => {
         </div>
     </section>
 
-    <Faq />
+    <section>
+        <div class="text-center mx-12 lg:mx-40">
+            <h1 class="mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-4xl lg:text-5xl">
+                Frequently Asked Question</h1>
+            <p class="text-lg font-normal lg:text-xl sm:px-16 xl:px-48">
+                Berikut merupakan daftar pertanyaan yang sering diajukan dalam proses pengelolaan POS di Departemen Sistem
+                Informasi Universitas Andalas.
+            </p>
+        </div>
+        <div id="accordion-faq" class="container mx-auto px-8 lg:px-36 mb-16" data-accordion="collapse">
+            <template v-for="(item, index) in dataFaq">
+                <h2 :id="`accordion-faq-heading-${index}`">
+                    <button type="button"
+                        class="flex items-center justify-between w-full py-5 font-medium border-b border-gray-300 gap-3 px-4"
+                        :data-accordion-target="`#accordion-faq-body-${index}`" aria-expanded="true"
+                        aria-controls="accordion-faq-body-1">
+                        <span class="text-xl text-left text-black">{{ item.q }}</span>
+                        <IconAngle />
+                    </button>
+                </h2>
+                <div :id="`accordion-faq-body-${index}`" class="hidden px-4"
+                    :aria-labelledby="`accordion-faq-heading-${index}`">
+                    <div class="py-5 border-b border-gray-200">
+                        <p class="mb-2">{{ item.a }}</p>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </section>
 
     <Footer />
 

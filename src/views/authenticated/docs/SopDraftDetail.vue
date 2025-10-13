@@ -221,7 +221,7 @@ const deleteData = async (id) => {
 
 // Tambahkan fungsi pengecekan status
 const isFeedbackFormDisabled = () => {
-    return [1, 2, 7, 8].includes(sopData.value.status);
+    return [0, 1, 2, 7, 8].includes(sopData.value.status);
 };
 
 // Fungsi untuk menentukan apakah hanya opsi "Catatan" yang boleh dipilih

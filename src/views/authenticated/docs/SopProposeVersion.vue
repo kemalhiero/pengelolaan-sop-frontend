@@ -24,6 +24,7 @@ const form = ref({
     name: '',
     number: '',
     drafter: [],
+    latest_id: null,
     latest_version: null,
     description: '',
     id_org: null,
@@ -41,6 +42,7 @@ const fetchData = async () => {
     form.value.name = response.data.name;
     form.value.id_org = response.data.organization.id;
     form.value.latest_version = Math.max(...response.data.version.map(v => v.version));
+    form.value.latest_id = response.data.version.find(v => v.version === form.value.latest_version).id;
   } catch (error) {
     console.error('Fetch error:', error);
   }
@@ -85,6 +87,7 @@ const submitSop = async () => {
                         number: `T/${String(form.value.number).padStart(3, '0')}/${letterCode.value}/${currentYear}`,
                         description: form.value.description,
                         version: parseInt(form.value.latest_version) + 1,
+                        copy_from: form.value.latest_id,
                     }
                 );
                 if (!resultSopdetail.success) {
@@ -183,7 +186,7 @@ onMounted( async() => {
                         </div>
 
                         <button @click="showDrafterModal = true" type="button"
-                            class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center">
+                            class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-2.5 py-1.5 text-center">
                             Tambahkan Penyusun
                         </button>
 
@@ -200,7 +203,7 @@ onMounted( async() => {
                     </div>
                 </div>
                 <button type="submit"
-                    class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-3 sm:mt-6 text-center">
+                    class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 sm:mt-6 text-center">
                     Mulai buat POS versi terbaru
                 </button>
             </form>

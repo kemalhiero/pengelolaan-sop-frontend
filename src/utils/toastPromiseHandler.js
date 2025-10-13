@@ -1,7 +1,7 @@
 import { toast } from 'vue3-toastify';
 
 /**
- * Fungsi utilitas untuk menangani promise dengan notifikasi toast
+ * Utilitas untuk menangani promise dengan notifikasi toast
  * @param {Promise} promiseCallback - Promise yang akan dieksekusi dan dimonitor
  * @param {Object} options - Opsi tambahan
  * @param {Object} options.messages - Pesan yang akan ditampilkan dalam toast

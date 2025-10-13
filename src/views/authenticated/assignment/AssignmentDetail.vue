@@ -194,7 +194,7 @@ const fetchSopStep = async (sopDetailId, isCopy = false) => {
 
         if (isCopy) {
             toast.info('Memuat data dari versi sebelumnya. Harap simpan ulang data identitas dan tahapan POS, agar Flowchart dan BPMN dapat tampil dengan baik.', { autoClose: 10000 });
-            // Data from a previous version for a new SOP.
+            // Data from copied SOP.
             // Nullify IDs to treat them as new records.
             // Nullify next_step IDs as they point to old records.
             sopStep.value = response.data.map(item => ({
@@ -602,17 +602,16 @@ onBeforeUnmount(() => {
 const fetchAllData = async () => {
     await fetchAssignmentInfo();
 
-    const previousVersionId = assignmentInfo.value.previous_version_id;
-    const isRevision = assignmentInfo.value.version > 1;
+    const copiedFromId = assignmentInfo.value.copy_from;
 
     // Pengecekan untuk data Info SOP (Tahap 1)
     // Coba fetch data untuk versi saat ini. Fungsi akan mengembalikan true jika ada data.
     const hasCurrentInfoData = await fetchInfoSop(idsopdetail);
 
-    if (isRevision && !hasCurrentInfoData && previousVersionId) {
-        // Jika ini revisi, tidak ada data info, dan ada ID versi sebelumnya,
+    if (!hasCurrentInfoData && copiedFromId) {
+        // Jika tidak ada data info dan ada ID versi sebelumnya,
         // maka muat (timpa) data info dari versi sebelumnya.
-        await fetchInfoSop(previousVersionId);
+        await fetchInfoSop(copiedFromId);
     }
     // Jika bukan revisi, atau jika sudah ada data, tidak perlu melakukan apa-apa lagi karena fetchInfoSop(idsopdetail) sudah memuat datanya.
 
@@ -620,10 +619,10 @@ const fetchAllData = async () => {
     const currentStepsResponse = await getSopStep(idsopdetail);
     const hasCurrentStepsData = currentStepsResponse.data && currentStepsResponse.data.length > 0;
 
-    if (isRevision && !hasCurrentStepsData && previousVersionId) {
+    if (!hasCurrentStepsData && copiedFromId) {
         // Jika ini revisi, belum ada data tahapan, dan ada versi sebelumnya,
         // maka muat data tahapan dari versi sebelumnya sebagai salinan.
-        await fetchSopStep(previousVersionId, true);
+        await fetchSopStep(copiedFromId, true);
     } else {
         // Jika ini SOP baru ATAU ini adalah revisi yang sudah punya data tahapan,
         // maka muat data tahapan untuk versi saat ini.
