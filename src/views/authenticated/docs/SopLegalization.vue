@@ -137,7 +137,7 @@ onMounted(fetchAllData);
         </div>
 
         <SopInfoTemplate class="mt-8"
-            :name="sopData.name" :number="sopData.number"
+            :name="sopData.name" :number="sopData.number" :version="sopData.version"
             :pic-name="signer.name" :pic-number="signer.id_number" 
             :pic-role="roleAbbreviation[sopData.pic_position || signer.role]"
             :created-date="sopData.creation_date" :revision-date="sopData.revision_date" :effective-date="sopData.effective_date"

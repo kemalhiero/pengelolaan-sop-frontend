@@ -156,13 +156,10 @@ onMounted(() => {
                 :data="data" 
                 :columns="[
                     { field: 'name', label: 'Nama', sortable: true, searchable: true },
+                    { field: 'version', label: 'Versi', sortable: true, searchable: true },
                     { field: 'effective_date', label: 'Tanggal Efektif', sortable: true, searchable: true },
                     { field: 'org_name', label: 'Organisasi', sortable: true, searchable: true },
-                ]" 
-                :status-columns="[
-                    { field: 'is_active', label: 'Status' }
-                ]" 
-                :badge-text="['Tidak Berlaku', 'Berlaku', 'Belum Berlaku']"
+                ]"
                 :link-column="true"
                 detail-link="DetailSop" 
             />

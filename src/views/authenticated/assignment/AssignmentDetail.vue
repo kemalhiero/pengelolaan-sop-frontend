@@ -33,7 +33,7 @@ layoutType.value = 'guest';
 
 const route = useRoute();
 const router = useRouter();
-let idsopdetail = route.params.id;
+const idsopdetail = route.params.id;
 
 // State untuk mengatur langkah
 const currentStep = ref(1);  // Langkah sekarang

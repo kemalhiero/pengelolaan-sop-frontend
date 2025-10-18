@@ -174,6 +174,11 @@ const submitEdit = async () => {
                             id: editData.value.id,
                             role: editData.value.role
                         });
+                        // jika role diubah menjadi sivitas-akademika, maka org di-set null
+                        await changeOrganization({
+                            id: editData.value.id,
+                            org: null
+                        });
                     } else if (editData.value.role === 'penyusun' && isOrgChanged.value) {
                         await changeOrganization({
                             id: editData.value.id,

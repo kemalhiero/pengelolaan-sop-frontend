@@ -4,11 +4,11 @@ import { toAcronym } from '@/utils/text';
 import { useAuthStore } from '@/stores/auth';
 import { getAnnualSopMakingTrend, getNominalFeedbackTopSop, getNominalSopEachOrgByStatus, getNominalUserEachRole, getMostRevisedSop, getSopOrgDistByStatus } from '@/api/dashboardApi';
 
-import PieChart from '@/components/chart/PieChart.vue';
-import ColumnChart from '@/components/chart/ColumnChart.vue';
 import PageTitle from '@/components/authenticated/PageTitle.vue';
-import LineChart from '@/components/chart/LineChart.vue';
 import EmptyGrid from '@/components/EmptyGrid.vue';
+import ColumnChart from '@/components/chart/ColumnChart.vue';
+import LineChart from '@/components/chart/LineChart.vue';
+import PieChart from '@/components/chart/PieChart.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -135,7 +135,7 @@ onMounted(() => {
 
     <div class="border-2 rounded-lg border-gray-300 mb-4">
         <template v-if="authStore.userRole === 'kadep'">
-            <ColumnChart name="Jumlah POS Per Organisasi" :series="nominalSop" title-hover="Jumlah POS di seluruh organisasi di DSI" v-if="nominalSop.length > 0" />
+            <ColumnChart name="Jumlah POS per Organisasi" :series="nominalSop" title-hover="Jumlah POS di seluruh organisasi di DSI" v-if="nominalSop.length > 0" />
             <EmptyGrid v-else message="Belum ada POS yang dibuat!" />
         </template>
         <template v-else>

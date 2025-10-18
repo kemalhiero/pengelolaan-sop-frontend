@@ -156,8 +156,9 @@ onMounted(fetchAllData);
     <template v-if="!isDataError && sopData.status == 1">
         <div>
             <SopInfoTemplate class="mt-8" 
-                :name="sopData.name" :number="sopData.number" :pic-name="signer.name"
-                :pic-number="signer.id_number" :pic-role="roleAbbreviation[sopData.pic_position || signer.role]"
+                :name="sopData.name" :number="sopData.number" :version="sopData.version"
+                :pic-name="signer.name" :pic-number="signer.id_number" 
+                :pic-role="roleAbbreviation[sopData.pic_position || signer.role]"
                 :created-date="sopData.creation_date" :revision-date="sopData.revision_date"
                 :effective-date="sopData.status == 0 ? `${sopData.effective_date} (Kadaluarsa)` : sopData.effective_date"
                 :section="sopData.section" :warning="sopData.warning"

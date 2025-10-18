@@ -531,7 +531,7 @@ const hasUnsavedArrowChanges = computed(() => {
         </div>
 
         <SopInfoTemplate class="mt-8"
-            :name="assignmentInfo.name" :number="assignmentInfo.number"
+            :name="assignmentInfo.name" :number="assignmentInfo.number" :version="assignmentInfo.version"
             :created-date="assignmentInfo.creation_date" :revision-date="assignmentInfo.last_update_date"
             :section="formData.section" :warning="formData.warning"
             :pic-name="assignmentInfo.pic.name" :pic-number="assignmentInfo.pic.id_number"

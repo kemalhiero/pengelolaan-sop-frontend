@@ -8,6 +8,10 @@ const props = defineProps({
     number: {
         type: String
     },
+    version: {
+        type: Number,
+        default: 1
+    },
     createdDate: {
         type: String
     },
@@ -91,7 +95,9 @@ const props = defineProps({
                         <tr>
                             <td class="font-bold border-2 py-0.5 px-2 border-black whitespace-nowrap">TANGGAL REVISI</td>
                             <td class="border-2 py-0.5 px-2 border-black">:</td>
-                            <td class="border-2 py-0.5 px-2 border-black">{{ props.revisionDate || ' - ' }}</td>
+                            <td class="border-2 py-0.5 px-2 border-black">
+                                {{ (props.revisionDate && props.version > 1) ? props.revisionDate : ' - ' }}
+                            </td>
                         </tr>
                         <tr>
                             <td class="font-bold border-2 py-0.5 px-2 border-black whitespace-nowrap">TANGGAL EFEKTIF</td>

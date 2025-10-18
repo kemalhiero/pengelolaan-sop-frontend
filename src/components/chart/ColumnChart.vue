@@ -32,7 +32,7 @@ const options = {
     plotOptions: {
         bar: {
             horizontal: false,
-            columnWidth: "70%",
+            columnWidth: "40px",
             borderRadiusApplication: "end",
             borderRadius: 8,
         },
