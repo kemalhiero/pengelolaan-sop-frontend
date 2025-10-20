@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, watch } from 'vue';
 import ApexCharts from 'apexcharts';
-import { toKebabCase } from '@/utils/text';
+import { toKebabCase, toAcronym } from '@/utils/text';
 
 const props = defineProps({
     name: {
@@ -43,6 +43,11 @@ const options = {
         style: {
             fontFamily: "Inter, sans-serif",
         },
+        x: {
+            formatter: (val, { seriesIndex, dataPointIndex, w }) => {
+                return w.globals.initialSeries[seriesIndex].data[dataPointIndex].x;
+            }
+        }
     },
     states: {
         hover: {
@@ -76,6 +81,12 @@ const options = {
         floating: false,
         labels: {
             show: true,
+            formatter: (value) => {
+                if (typeof value === 'string') {
+                    return toAcronym(value);
+                }
+                return value;
+            },
             style: {
                 fontFamily: "Inter, sans-serif",
                 cssClass: 'text-xs font-normal fill-gray-500'

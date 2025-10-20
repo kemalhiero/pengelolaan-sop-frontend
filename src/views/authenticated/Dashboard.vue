@@ -26,23 +26,26 @@ const fetchData = async () => {
     try {
         // 1. Data untuk ColumnChart (Jumlah POS Per Organisasi)
         const sopOrgRes = await getNominalSopEachOrgByStatus();
-        if (
-            sopOrgRes.data &&
-            sopOrgRes.data.length > 0 &&
-            !sopOrgRes.data.every(item =>
-                Object.values(item.total_sop).every(val => val === 0)
-            )
-        ) {
+        if (sopOrgRes.data && sopOrgRes.data.length > 0) {
+            // ambil keys status (kecuali 'total')
             const statusKeys = Object.keys(sopOrgRes.data[0].total_sop).filter(key => key !== 'total');
-            const colors = ["#FDBA8C", "#1A56DB", "#16BDCA"];
-            nominalSop.value = statusKeys.map((status, idx) => ({
-                name: status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-                color: colors[idx % colors.length],
-                data: sopOrgRes.data.map(item => ({
-                    x: toAcronym(item.name),
-                    y: item.total_sop[status] ?? 0
-                }))
-            }));
+
+            // filter organisasi yang memiliki SOP > 0 pada salah satu status
+            const filteredOrgs = sopOrgRes.data.filter(item =>
+                statusKeys.some(status => (item.total_sop[status] || 0) > 0)
+            );
+
+            if (filteredOrgs.length > 0) {
+                const colors = ["#FDBA8C", "#1A56DB", "#16BDCA"];
+                nominalSop.value = statusKeys.map((status, idx) => ({
+                    name: status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                    color: colors[idx % colors.length],
+                    data: filteredOrgs.map(item => ({
+                        x: item.name,
+                        y: item.total_sop[status] ?? 0
+                    }))
+                }));
+            }
         }
 
         // 2. Data untuk PieChart (Jumlah User per Role)
@@ -76,7 +79,7 @@ const fetchData = async () => {
                     name: "Jumlah Umpan Balik Umum",
                     color: "#1A56DB",
                     data: feedbackRes.data.map(item => ({
-                        x: `${item.name} - ${toAcronym(item.org)}`,
+                        x: authStore.userRole === 'kadep' ? `${item.name} - ${item.org}` : item.name,
                         y: item.count
                     }))
                 }
@@ -92,7 +95,7 @@ const fetchData = async () => {
                     color: "#1A56DB",
                     data: mostRevisedRes.data.map(item => ({
                         x: authStore.userRole === 'kadep'
-                            ? `${item.name} - ${toAcronym(item.org)}`
+                            ? `${item.name} - ${item.org}`
                             : item.name,
                         y: item.count
                     }))
@@ -128,9 +131,8 @@ onMounted(() => {
 </script>
 
 <template>
-    <PageTitle
+    <PageTitle class="mt-3 mb-7"
         :judul="`Visualisasi Data di ${authStore.userRole === 'kadep' ? 'DSI' : toAcronym(orgName)}`"
-        class="mt-3 mb-7"
     />
 
     <div class="border-2 rounded-lg border-gray-300 mb-4">
