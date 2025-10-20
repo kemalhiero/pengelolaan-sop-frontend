@@ -310,13 +310,12 @@ onBeforeUnmount(() => {
                 Keterkaitan dengan POS AP Lain
                 <Tooltip field="related-sop" text="Misal: POS AP Pelaksanaan KP" />
             </label>
-
             <!-- Daftar POS AP yang terkait -->
             <div v-if="formData.relatedSop.length > 0" class="my-4">
                 <ul>
                     <li v-for="(rs, index) in formData.relatedSop" :key="index"
                         class="flex items-center justify-between p-2 bg-gray-200 rounded-lg mb-2">
-                        <span :title="`${rs.name} - ${rs.organization}`">{{ `${rs.name} - ${toAcronym(rs.organization)}` }}</span>
+                        <span :title="`${rs.name} - ${rs.org_name}`">{{ `${rs.name} - ${toAcronym(rs.org_name)}` }}</span>
                         <button :title="isDisabled ? 'Tidak dapat menghapus item!' :`Hapus item ${index + 1}`" @click="relatedSop.removeItem(index)" :disabled="isDisabled"
                             class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex disabled:cursor-not-allowed disabled:bg-opacity-60">
                             <TrashCanIcon class="fill-current w-4" />

@@ -64,6 +64,26 @@ const addStep = () => {
     });
 };
 
+// Function to insert a step at a specific index
+const insertStep = (index) => {
+    const newStep = {
+        id_step: null,
+        id_next_step_if_no: null,
+        id_next_step_if_yes: null,
+        seq_number: 0, // Will be updated by watcher
+        name: '',
+        type: 'task', // Default to 'task' for inserted steps
+        id_implementer: implementerId,
+        fittings: '',
+        time: 0,
+        time_unit: 'm',
+        output: '',
+        description: ''
+    };
+    sopStep.value.splice(index + 1, 0, newStep);
+    updateSequenceNumbers();
+};
+
 // Function to remove a step by index
 const removeStep = (index) => {
     sopStep.value.splice(index, 1);
@@ -241,19 +261,16 @@ onBeforeUnmount(() => {
                                     <option v-if="index === sopStep.length - 1" value="terminator">End</option>
                                 </template>
                             </select>
-                            <!-- Tambahkan div untuk ringkasan cabang -->
                             <div v-if="step.type === 'decision'" class="mt-2 text-xs text-gray-500">
                                 <template v-if="step.id_next_step_if_yes || step.id_next_step_if_no">
                                     <div class="space-y-1">
                                         <div v-if="step.id_next_step_if_no" class="flex items-center">
                                             <span class="text-red-600 mr-1">✗</span>
-                                            Salah → Tahap {{sopStep.findIndex(s => s.id_step ===
-                                            step.id_next_step_if_no) + 1 }}
+                                            Salah → Tahap {{sopStep.findIndex(s => s.id_step === step.id_next_step_if_no) + 1 }}
                                         </div>
                                         <div v-if="step.id_next_step_if_yes" class="flex items-center">
                                             <span class="text-green-600 mr-1">✓</span>
-                                            Benar → Tahap {{sopStep.findIndex(s => s.id_step ===
-                                            step.id_next_step_if_yes) + 1 }}
+                                            Benar → Tahap {{sopStep.findIndex(s => s.id_step === step.id_next_step_if_yes) + 1 }}
                                         </div>
                                     </div>
                                 </template>
@@ -314,8 +331,8 @@ onBeforeUnmount(() => {
                                 @keydown.enter="!isDisabled && openTextEditModal('description', index, step.description)"
                             />
                         </td>
-                        <td class="px-2 py-3">
-                            <div class="flex gap-2">
+                        <td class="px-2 py-3 relative">
+                            <div class="flex justify-center gap-2">
                                 <button @click="removeStep(index)" :title="isDisabled ? 'Tidak dapat menghapus tahapan!' : `Hapus tahapan ${index + 1}`"
                                     :disabled="sopStep.length == 1 || isDisabled"
                                     class="px-3 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex disabled:cursor-not-allowed disabled:bg-opacity-60">
@@ -327,6 +344,10 @@ onBeforeUnmount(() => {
                                     <GearIcon class="fill-current w-4" />
                                 </button>
                             </div>
+                            <button v-if="index < sopStep.length - 1 && !isDisabled" @click="insertStep(index)" :title="`Sisipkan tahapan baru antara tahapan ${index + 1} dan ${index + 2}`"
+                                class="group absolute -bottom-3 left-1/2 -translate-x-1/2 z-10 bg-white p-0.5 rounded-full">
+                                <CirclePlusIcon class="fill-current w-5 text-blue-600 opacity-20 group-hover:opacity-100 transition-opacity duration-200" />
+                            </button>
                         </td>
                     </tr>
                 </tbody>
@@ -344,7 +365,7 @@ onBeforeUnmount(() => {
 
         <!-- Branch Configuration Modal -->
         <transition name="fade-modal">
-            <div v-show="showBranchModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" @click="showBranchModal = false">
+            <div v-show="showBranchModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click="showBranchModal = false">
                 <div class="bg-white p-6 rounded-lg w-96" @click.stop>
                     <h3 class="text-lg font-semibold mb-4">Atur Cabang Keputusan - Tahap {{ selectedStepIndex + 1 }}</h3>
 
