@@ -1,6 +1,5 @@
 <script setup>
-import { onMounted, ref, inject, onBeforeUnmount, watch } from 'vue';
-import { getImplementer } from '@/api/implementerApi';
+import { ref, inject, onBeforeUnmount, watch } from 'vue';
 
 import CircleInfoIcon from '@/assets/icons/CircleInfoIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
@@ -10,14 +9,18 @@ import Tooltip from '@/components/Tooltip.vue';
 import WarningText from '@/components/validation/WarningText.vue';
 import PulseLoading from '@/components/PulseLoading.vue';
 import Divider from '@/components/Divider.vue';
+import { toAcronym } from '@/utils/text';
 
 const legalBasisData = inject('legalBasisData');
 const assignmentInfo = inject('assignmentInfo');
 const isDisabled = inject('isDisabled');
+const implementedSop = inject('implementedSop');
+const implementerData = inject('implementerData');
 
 const showModal = ref({
     legalBasis: false,
-    executor: false
+    executor: false,
+    relatedSop: false
 });
 
 // Definisikan emit untuk validasi
@@ -96,28 +99,12 @@ const createArrayHandler = (fieldName) => ({
     }
 });
 
-// pelaksana
-const dataImplementer = ref([]);
-const fetchImplementer = async () => {
-    try {
-        const result = await getImplementer();
-        dataImplementer.value = result.data;
-    } catch (error) {
-        console.error('Fetch error:', error);
-    }
-};
-
 const implementQualification = createArrayHandler('implementQualification');
 const implementer = createArrayHandler('implementer');
-const legalBasis = createArrayHandler('legalBasis');
 const relatedSop = createArrayHandler('relatedSop');
+const legalBasis = createArrayHandler('legalBasis');
 const equipment = createArrayHandler('equipment');
 const record = createArrayHandler('record');
-
-// -----------------------
-onMounted(() => {
-    fetchImplementer();
-});
 
 // Handler untuk tombol ESC pada modal legalBasis dan executor
 function handleModalEscKey(e) {
@@ -323,23 +310,26 @@ onBeforeUnmount(() => {
                 Keterkaitan dengan POS AP Lain
                 <Tooltip field="related-sop" text="Misal: POS AP Pelaksanaan KP" />
             </label>
-            <input type="text" id="related-sop" v-model="relatedSop.newItem.value" @keyup.enter.prevent="relatedSop.addItem"
-                class="bg-gray-50 border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 "
-                :placeholder="isDisabled ? 'Tidak dapat menambahkan item!' : 'Ketikkan, lalu tekan enter'" :disabled="isDisabled" />
 
             <!-- Daftar POS AP yang terkait -->
             <div v-if="formData.relatedSop.length > 0" class="my-4">
                 <ul>
                     <li v-for="(rs, index) in formData.relatedSop" :key="index"
                         class="flex items-center justify-between p-2 bg-gray-200 rounded-lg mb-2">
-                        <span>{{ rs }}</span>
-                        <button :title="`Hapus item ${index + 1}`" @click="relatedSop.removeItem(index)" :disabled="isDisabled"
-                            class="p-2 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex disabled:cursor-not-allowed disabled:bg-opacity-60">
+                        <span :title="`${rs.name} - ${rs.organization}`">{{ `${rs.name} - ${toAcronym(rs.organization)}` }}</span>
+                        <button :title="isDisabled ? 'Tidak dapat menghapus item!' :`Hapus item ${index + 1}`" @click="relatedSop.removeItem(index)" :disabled="isDisabled"
+                            class="px-3 py-2 h-9 mx-2 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 inline-flex disabled:cursor-not-allowed disabled:bg-opacity-60">
                             <TrashCanIcon class="fill-current w-4" />
                         </button>
                     </li>
                 </ul>
             </div>
+            <button @click="showModal.relatedSop = true" :disabled="isDisabled"
+                :title="isDisabled ? 'Tidak dapat menambah item!' : 'Tambah POS AP Terkait'"
+                class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center disabled:cursor-not-allowed disabled:bg-opacity-60"
+                type="button">
+                Tambah POS AP Terkait
+            </button>
         </div>
 
         <div class="my-4">
@@ -463,7 +453,7 @@ onBeforeUnmount(() => {
                     </div>
                     <div class="p-4 md:p-5 space-y-4">
                         <DataTable
-                            :data="dataImplementer" 
+                            :data="implementerData" 
                             :columns="[{ field: 'name', label: 'Nama', sortable: true, searchable: true }]" 
                             :check-column="true"
                             v-model="formData.implementer"
@@ -475,6 +465,45 @@ onBeforeUnmount(() => {
                         </span>
                         <button :disabled="formData.implementer.length == 0" @click="showModal.executor = false" type="button"
                             class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Pilih</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </transition>
+
+    <transition name="fade-modal">
+        <div v-show="showModal.relatedSop" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
+            <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showModal.relatedSop = false"></div>
+            <div class="relative w-full max-w-xl max-h-full">
+                <div class="relative bg-white rounded-lg shadow">
+                    <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
+                        <h3 class="text-xl font-medium text-gray-900">
+                            Tambah Keterkaitan dengan POS AP Lain
+                        </h3>
+                        <button type="button"
+                            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+                            @click="showModal.relatedSop = false">
+                            <XMarkCloseIcon class="w-3 h-3" />
+                            <span class="sr-only">Tutup modal</span>
+                        </button>
+                    </div>
+                    <div class="p-4 md:p-5 space-y-4">
+                        <DataTable
+                            :data="implementedSop" 
+                            :columns="[
+                                { field: 'name', label: 'Nama', sortable: true, searchable: true },
+                                { field: 'org_name', label: 'Organisasi', sortable: true, searchable: true }
+                            ]" 
+                            :check-column="true"
+                            v-model="formData.relatedSop"
+                        />
+                    </div>
+                    <div class="flex items center justify-between p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
+                        <span class="text-xs text-gray-500">
+                            Tekan <kbd class="px-1 py-0.5 bg-gray-100 border rounded text-xs font-mono">Esc</kbd> untuk menutup
+                        </span>
+                        <button @click="showModal.relatedSop = false" type="button"
+                            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">Tutup</button>
                     </div>
                 </div>
             </div>

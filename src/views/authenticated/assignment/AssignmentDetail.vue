@@ -3,9 +3,9 @@ import { ref, provide, onMounted, watch, inject, computed, onBeforeUnmount } fro
 import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
 
-import { createSopStep, getAssignmentDetail, getSectionandWarning, getSopStep, updateSopDetail, updateSopStep, deleteSopStep } from '@/api/sopApi';
+import { createSopStep, getAssignmentDetail, getSectionandWarning, getSopStep, updateSopDetail, updateSopStep, deleteSopStep, getAllSop } from '@/api/sopApi';
 import { createSopLawBasis, getLawBasis, getSopLawBasis, deleteSopLawBasis } from '@/api/lawBasisApi';
-import { createSopImplementer, getSopImplementer, deleteSopImplementer } from '@/api/implementerApi';
+import { createSopImplementer, getSopImplementer, deleteSopImplementer, getImplementer } from '@/api/implementerApi';
 import { createEquipment, getSopEquipment, deleteSopEquipment } from '@/api/equipmentApi';
 import { createRelatedSop, getRelatedSop, deleteRelatedSop } from '@/api/relatedSopApi';
 import { createRecord, getSopRecord, deleteSopRecord } from '@/api/recordApi';
@@ -44,8 +44,10 @@ const isThirdStepEditing = ref(false); // State untuk melacak mode edit di Third
 const showFeedback = ref(false)
 const draftFeedback = ref([]);
 
+const implementedSop = ref([]);
 const assignmentInfo = ref();
 const legalBasisData = ref();
+const implementerData = ref([]);
 const formData = ref({
     section: '',
     implementer: [],
@@ -72,6 +74,8 @@ const { fetchSopDisplayConfig, sopConfig, flowchartArrowConfig, bpmnArrowConfig,
 provide('assignmentInfo', assignmentInfo);
 provide('sopStep', sopStep);
 provide('legalBasisData', legalBasisData);
+provide('implementerData', implementerData);
+provide('implementedSop', implementedSop);
 provide('sopFormData', {
     formData,
     updateFormData(newData) {
@@ -112,6 +116,27 @@ const fetchLegalBasis = async () => {
     }
 };
 
+const fetchImplementer = async () => {
+    try {
+        const result = await getImplementer();
+        implementerData.value = result.data;
+    } catch (error) {
+        console.error('Fetch error:', error);
+    }
+};
+
+const fetchImplementedSop = async () => {
+    try {
+        const response = await getAllSop();
+        implementedSop.value = response.data.map(({ id_sop, ...rest }) => ({
+            ...rest,
+            id: id_sop
+        }));
+    } catch (error) {
+        console.error('Fetch related sop error:', error);
+    }
+};
+
 const fetchInfoSop = async (sopDetailId) => {
     try {
         // Gunakan Promise.all untuk mengambil semua data info secara bersamaan
@@ -137,12 +162,12 @@ const fetchInfoSop = async (sopDetailId) => {
         formData.value.section = sectionWarningRes.data.section;
         formData.value.warning = sectionWarningRes.data.warning;
         formData.value.implementer = implementerRes.data;
+        formData.value.relatedSop = relatedSopRes.data;
         formData.value.legalBasis = lawBasisRes.data.map(item => ({
             id: item.id,
             legal: `${item.law_type} Nomor ${item.number} Tahun ${item.year} tentang ${item.about}`
         }));
         formData.value.implementQualification = iqRes.data.map(item => item.qualification);
-        formData.value.relatedSop = relatedSopRes.data.map(item => item.related_sop);
         formData.value.equipment = equipmentRes.data.map(item => item.equipment);
         formData.value.record = recordRes.data.map(item => item.data_record);
 
@@ -271,10 +296,10 @@ const syncSopInfo = async () => {
             const configs = [
                 { data: formData.value.implementer, create: createSopImplementer, del: deleteSopImplementer, key: 'id_implementer', mode: 'two' },
                 { data: formData.value.legalBasis, create: createSopLawBasis, del: deleteSopLawBasis, key: 'id_legal', mode: 'two' },
-                { data: formData.value.record, create: createRecord, del: deleteSopRecord, key: 'data_record', mode: 'one' },
+                { data: formData.value.implementQualification, create: createIQ, del: deleteIQ, key: 'qualification', mode: 'one' },
+                { data: formData.value.relatedSop, create: createRelatedSop, del: deleteRelatedSop, key: 'related_sop', mode: 'two' },
                 { data: formData.value.equipment, create: createEquipment, del: deleteSopEquipment, key: 'equipment', mode: 'one' },
-                { data: formData.value.relatedSop, create: createRelatedSop, del: deleteRelatedSop, key: 'related_sop', mode: 'one' },
-                { data: formData.value.implementQualification, create: createIQ, del: deleteIQ, key: 'qualification', mode: 'one' }
+                { data: formData.value.record, create: createRecord, del: deleteSopRecord, key: 'data_record', mode: 'one' },
             ];
 
             let totalAdded = 0, totalRemoved = 0;
@@ -632,6 +657,8 @@ const fetchAllData = async () => {
     // Muat data pendukung lainnya
     await fetchSopDisplayConfig();
     await fetchLegalBasis();
+    await fetchImplementer();
+    await fetchImplementedSop();
     if (assignmentInfo.value.status !== 2) {
         await fetchFeedback();
     }

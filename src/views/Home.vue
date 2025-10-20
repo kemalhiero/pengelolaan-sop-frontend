@@ -112,7 +112,7 @@ onMounted(() => {
         <div class="px-4 text-center py-24 lg:py-56 bg-gradient-to-br from-blue-900/80 via-blue-900/90 to-black/80">
             <h1 class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-white md:text-5xl lg:text-6xl">
                 Sistem Informasi Pengelolaan POS</h1>
-            <p class="mb-8 text-lg font-normal text-white lg:text-xl sm:px-16 lg:px-48">Selamat Datang di Situs
+            <p class="mb-8 text-lg font-normal text-white lg:text-xl sm:px-16 lg:px-48">Selamat Datang di
                 Sistem Pengelolaan POS Departemen Sistem Informasi Unand!</p>
 
             <div class="flex flex-col space-y-4 sm:flex-row sm:justify-center sm:space-y-0">
