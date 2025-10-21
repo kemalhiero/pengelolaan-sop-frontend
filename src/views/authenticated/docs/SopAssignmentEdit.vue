@@ -13,6 +13,7 @@ import XMarkCloseIcon from '@/assets/icons/XMarkCloseIcon.vue';
 import TrashCanIcon from '@/assets/icons/TrashCanIcon.vue';
 import DataTable from '@/components/DataTable.vue';
 import Error from '@/components/Error.vue';
+import TableSkeleton from '@/components/TableSkeleton.vue';
 
 const layoutType = inject('layoutType');
 layoutType.value = 'admin';
@@ -36,6 +37,8 @@ const form = ref({
 });
 let oldDrafters;
 let oldSopNumber = 0;
+const isLoading = ref(true);
+const hasError = ref(false);
 
 const isDataError = computed(() => {
     return !form.value || !form.value.name || !dataDrafter.value || !dataDrafter.value[0].name;
@@ -157,111 +160,124 @@ const fetchDraft = async () => {
 };
 
 const fetchAllData = async () => {
-    await fetchDrafter();
-    await fetchDraft();
+    isLoading.value = true;
+    hasError.value = false;
+    try {
+        await fetchDrafter();
+        await fetchDraft();
+    } catch (error) {
+        console.error('Fetch data error:', error);
+        hasError.value = true;
+    } finally {
+        isLoading.value = false;
+    }
 };
 
 onMounted(fetchAllData);
 </script>
 
 <template>
-    <PageTitle :judul="isDataError ? 'Ngapain iseng iseng?🤨' : 'Perbarui Data Penugasan POS'" />
+    <TableSkeleton v-if="isLoading" :columns="1" :rows="10" class="mt-12 mx-56" />
+    <Error v-else-if="hasError" @click="fetchAllData" />
+    <template v-else>
+        <PageTitle :judul="isDataError ? 'Ngapain iseng iseng?🤨' : 'Perbarui Data Penugasan POS'" />
 
-    <section class="bg-white" v-if="!isDataError">
-        <div class="py-8 px-4 mx-auto max-w-3xl">
-            <form @submit.prevent="submitSop">
-                <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
-                    <div class="col-span-2 sm:col-span-1">
-                        <label for="num" class="block mb-2 text-sm font-medium text-gray-900">
-                            Nomor<span class="text-red-600">*</span>
-                        </label>
-                        <div class="flex items-center">
-                            <span class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg p-2.5"> T/ </span>
-                            <input id="num" type="number" :min="form.number" max="999" required v-model="form.number" @click="showWarning.number = false"
-                                class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 min-w-12 w-full"
-                                title="Masukkan no urut sop">
-                            <span class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5 w-fit whitespace-nowrap">
-                                /{{ letterCode + '/' + form.year }}
-                            </span>
+        <section class="bg-white" v-if="!isDataError">
+            <div class="py-8 px-4 mx-auto max-w-3xl">
+                <form @submit.prevent="submitSop">
+                    <div class="grid gap-4 sm:grid-cols-2 sm:gap-6">
+                        <div class="col-span-2 sm:col-span-1">
+                            <label for="num" class="block mb-2 text-sm font-medium text-gray-900">
+                                Nomor<span class="text-red-600">*</span>
+                            </label>
+                            <div class="flex items-center">
+                                <span class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg p-2.5"> T/ </span>
+                                <input id="num" type="number" :min="form.number" max="999" required v-model="form.number" @click="showWarning.number = false"
+                                    class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 min-w-12 w-full"
+                                    title="Masukkan no urut sop">
+                                <span class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5 w-fit whitespace-nowrap">
+                                    /{{ letterCode + '/' + form.year }}
+                                </span>
+                            </div>
+                            <WarningText v-show="showWarning.number" text="Nomor sudah dipakai, ganti dengan yang lain!" />
                         </div>
-                        <WarningText v-show="showWarning.number" text="Nomor sudah dipakai, ganti dengan yang lain!" />
+
+                        <div class="col-span-2">
+                            <label class="block mb-2 text-sm font-medium">
+                                User Penyusun<span class="text-red-600">*</span>
+                            </label>
+
+                            <div v-if="form.drafter.length > 0" class="my-4">
+                                <ul class="flex flex-wrap gap-2">
+                                    <li v-for="(item, index) in form.drafter" :key="index"
+                                        class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
+                                        <span class="mr-2">{{ item.name }}</span>
+                                        <button :title="`Hapus item ${index + 1}`" @click="removeDrafter(index)" type="button"
+                                            class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
+                                            <TrashCanIcon class="fill-current w-4" />
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <button @click="showDrafterModal = true" type="button"
+                                class="block w-full md:w-auto text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-3 py-2 text-center">
+                                Pilih User
+                            </button>
+
+                            <WarningText v-show="showWarning.drafter"
+                                text="Jangan lupa untuk memilih user yang akan ditugaskan!" />
+                        </div>
+
+                        <div class="col-span-2">
+                            <label for="description" class="block mb-2 text-sm font-medium text-gray-900">
+                                Deskripsi<span class="text-red-600">*</span>
+                            </label>
+                            <textarea id="description" rows="8" v-model="form.description" required minlength="10" maxlength="1000"
+                                class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500"
+                                placeholder="ketikkan deskripsi POS disini..."></textarea>
+                        </div>
                     </div>
+                    <button type="submit"
+                        class="block w-full md:w-auto text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-8 py-3 sm:mt-6 text-center">
+                        Perbarui
+                    </button>
+                </form>
+            </div>
+        </section>
+        <Error v-else @click="fetchAllData" />
 
-                    <div class="col-span-2">
-                        <label class="block mb-2 text-sm font-medium">
-                            User Penyusun<span class="text-red-600">*</span>
-                        </label>
-
-                        <div v-if="form.drafter.length > 0" class="my-4">
-                            <ul class="flex flex-wrap gap-2">
-                                <li v-for="(item, index) in form.drafter" :key="index"
-                                    class="bg-gray-200 rounded-lg p-1.5 flex items-center justify-between">
-                                    <span class="mr-2">{{ item.name }}</span>
-                                    <button :title="`Hapus item ${index + 1}`" @click="removeDrafter(index)" type="button"
-                                        class="p-1.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center">
-                                        <TrashCanIcon class="fill-current w-4" />
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-
-                        <button @click="showDrafterModal = true" type="button"
-                            class="block w-full md:w-auto text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-3 py-2 text-center">
-                            Pilih User
+        <div v-show="showDrafterModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
+            <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showDrafterModal = false"></div>
+            <div class="relative w-full max-w-2xl max-h-full">
+                <div class="relative bg-white rounded-lg shadow">
+                    <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
+                        <h3 class="text-xl font-medium text-gray-900">
+                            Centang user yang akan ditugaskan untuk membuat POS
+                        </h3>
+                        <button type="button" @click="showDrafterModal = false"
+                            class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">
+                            <XMarkCloseIcon class="w-3 h-3" />
+                            <span class="sr-only">Tutup modal</span>
                         </button>
-
-                        <WarningText v-show="showWarning.drafter"
-                            text="Jangan lupa untuk memilih user yang akan ditugaskan!" />
                     </div>
-
-                    <div class="col-span-2">
-                        <label for="description" class="block mb-2 text-sm font-medium text-gray-900">
-                            Deskripsi<span class="text-red-600">*</span>
-                        </label>
-                        <textarea id="description" rows="8" v-model="form.description" required minlength="10" maxlength="1000"
-                            class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500"
-                            placeholder="ketikkan deskripsi POS disini..."></textarea>
+                    <div class="p-4 md:p-5 space-y-4">
+                        <DataTable 
+                            :data="dataDrafter"
+                            :columns="[{ field: 'name', label: 'Nama', sortable: true, searchable: true },]"
+                            :check-column="true"
+                            v-model="form.drafter" 
+                        />
                     </div>
-                </div>
-                <button type="submit"
-                    class="block w-full md:w-auto text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:outline-none focus:ring-yellow-300 font-medium rounded-lg text-sm px-8 py-3 sm:mt-6 text-center">
-                    Perbarui
-                </button>
-            </form>
-        </div>
-    </section>
-    <Error v-else @click="fetchAllData" />
-
-    <div v-show="showDrafterModal" class="fixed inset-0 z-50 flex items-center justify-center w-full h-full">
-        <div class="fixed inset-0 bg-gray-800 bg-opacity-30" @click="showDrafterModal = false"></div>
-        <div class="relative w-full max-w-2xl max-h-full">
-            <div class="relative bg-white rounded-lg shadow">
-                <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t">
-                    <h3 class="text-xl font-medium text-gray-900">
-                        Centang user yang akan ditugaskan untuk membuat POS
-                    </h3>
-                    <button type="button" @click="showDrafterModal = false"
-                        class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center">
-                        <XMarkCloseIcon class="w-3 h-3" />
-                        <span class="sr-only">Tutup modal</span>
-                    </button>
-                </div>
-                <div class="p-4 md:p-5 space-y-4">
-                    <DataTable 
-                        :data="dataDrafter"
-                        :columns="[{ field: 'name', label: 'Nama', sortable: true, searchable: true },]"
-                        :check-column="true"
-                        v-model="form.drafter" 
-                    />
-                </div>
-                <div class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
-                    <button :disabled="form.drafter.length == 0"
-                        @click="showDrafterModal = false, showWarning.drafter = false" type="button"
-                        class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">
-                        Pilih
-                    </button>
+                    <div class="flex items-center p-4 md:p-5 space-x-3 rtl:space-x-reverse border-t border-gray-200 rounded-b">
+                        <button :disabled="form.drafter.length == 0"
+                            @click="showDrafterModal = false, showWarning.drafter = false" type="button"
+                            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">
+                            Pilih
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </template>
 </template>
