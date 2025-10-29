@@ -26,6 +26,7 @@ const showModal = ref({
 const currentYear = new Date().getFullYear();
 const dataOrg = ref([]);
 const dataDrafter = ref([]);
+const filteredDrafters = ref([]);
 const showWarning = ref({
     drafter: false,
     number: false
@@ -176,7 +177,19 @@ const letterCode = computed(() => {
     } else {
         return general;
     }
-})
+});
+
+const showDrafterList = () => {
+    if (form.value.id_org !== '' && form.value.id_org !== null && form.value.id_org !== 0) {
+        filteredDrafters.value = dataDrafter.value.filter(
+            (drafter) => drafter.id_org === form.value.id_org
+        );
+    } else {
+        // Jika tidak ada organisasi yang dipilih atau organisasinya adalah departemen (id_org=0), tampilkan semua penyusun
+        filteredDrafters.value = dataDrafter.value;
+    }
+    showModal.value.drafter = true;
+};
 
 onMounted(() => {
     fetchOrg();
@@ -256,7 +269,7 @@ onMounted(() => {
                         </ul>
                     </div>
 
-                    <button @click="showModal.drafter = true" type="button"
+                    <button @click="showDrafterList" type="button"
                         class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-2.5 py-1.5 text-center">
                         Tambahkan Penyusun
                     </button>
@@ -313,7 +326,7 @@ onMounted(() => {
                 </div>
                 <div class="p-4 md:p-5 space-y-4">
                     <DataTable 
-                        :data="dataDrafter" v-model="form.drafter"
+                        :data="filteredDrafters" v-model="form.drafter"
                         :columns="[{ field: 'name', label: 'Nama', sortable: true, searchable: true }]"
                         :check-column="true" 
                     />

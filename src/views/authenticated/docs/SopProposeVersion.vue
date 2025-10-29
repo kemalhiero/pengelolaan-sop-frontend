@@ -20,6 +20,7 @@ const route = useRoute();
 const router = useRouter();
 const showDrafterModal = ref(false);
 const currentYear = new Date().getFullYear();
+const filteredDrafters = ref([]);
 const form = ref({
     name: '',
     number: '',
@@ -133,7 +134,19 @@ const letterCode = computed(() => {
     } else {
         return general;
     }
-})
+});
+
+const showDrafterList = () => {
+    if (form.value.id_org !== '' && form.value.id_org !== null && form.value.id_org !== 0) {
+        filteredDrafters.value = dataDrafter.value.filter(
+            (drafter) => drafter.id_org === form.value.id_org
+        );
+    } else {
+        // Jika tidak ada organisasi yang dipilih atau organisasinya adalah departemen (id_org=0), tampilkan semua penyusun
+        filteredDrafters.value = dataDrafter.value;
+    }
+    showDrafterModal.value = true;
+};
 
 onMounted( async() => {
     await fetchData();
@@ -185,7 +198,7 @@ onMounted( async() => {
                             </ul>
                         </div>
 
-                        <button @click="showDrafterModal = true" type="button"
+                        <button @click="showDrafterList" type="button"
                             class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-2.5 py-1.5 text-center">
                             Tambahkan Penyusun
                         </button>
@@ -228,7 +241,7 @@ onMounted( async() => {
                 </div>
                 <div class="p-4 md:p-5 space-y-4">
                     <DataTable 
-                        :data="dataDrafter" 
+                        :data="filteredDrafters" 
                         :columns="[{ field: 'name', label: 'Nama', sortable: true, searchable: true },]"
                         :check-column="true"
                         v-model="form.drafter" 
