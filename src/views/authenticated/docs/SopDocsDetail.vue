@@ -235,7 +235,7 @@ onMounted(async () => {
                             <label for="org" class="block mb-2 text-sm font-medium text-gray-900">
                                 Status
                             </label>
-                            <select id="org" required v-model="sopData.is_active"
+                            <select id="org" required v-model="sopData.is_active" :disabled="isUpdateDisabled && sopData.version.length == 1"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full p-2.5">
                                 <option selected disabled value="">Pilih Status</option>
                                 <option value="0">Tidak Berlaku (kadaluarsa)</option>

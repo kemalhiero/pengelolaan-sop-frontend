@@ -538,9 +538,9 @@ const hasUnsavedArrowChanges = computed(() => {
             :pic-role="roleAbbreviation[assignmentInfo.pic_position || assignmentInfo.pic.role]"
             :law-basis="formData.legalBasis.map(item => item.legal)"
             :implement-qualification="formData.implementQualification"
-            :related-sop="formData.relatedSop"
-            :equipment="formData.equipment"
-            :record-data="formData.record"
+            :related-sop="formData.relatedSop.map(item => item.name)"
+            :equipment="formData.equipment.map(item => item.equipment)"
+            :record-data="formData.record.map(item => item.data_record)"
         />
 
         <div class="flex justify-center my-6 print:hidden">

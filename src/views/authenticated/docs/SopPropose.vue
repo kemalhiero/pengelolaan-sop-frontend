@@ -1,5 +1,5 @@
 <script setup>
-import { inject, onMounted, ref, computed } from 'vue';
+import { inject, onMounted, ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 import useToastPromise from '@/utils/toastPromiseHandler';
@@ -37,7 +37,8 @@ const form = ref({
     id_org: '',
     drafter: [],
     description: '',
-    sop_copy: null
+    sop_copy: null,
+    year: currentYear
 });
 const implementedSop = ref([]);
 const authStore = useAuthStore();
@@ -66,12 +67,19 @@ const fetchDrafter = async () => {
     }
 };
 
-const fetchLatestSopInYear = async () => {
+const fetchLatestSopInYear = async (year) => {
   try {
-    const response = await getLatestSopInYear(currentYear);
-    latestSopNumber = parseInt(response.data.number.split("/")[1]);
-    form.value.number = latestSopNumber + 1;
+    const response = await getLatestSopInYear(year);
+    if (response.data) {
+        latestSopNumber = parseInt(response.data.number.split("/")[1]);
+        form.value.number = latestSopNumber + 1;
+    } else {
+        latestSopNumber = 0;
+        form.value.number = 1;
+    }
   } catch (error) {
+    latestSopNumber = 0;
+    form.value.number = 1;
     console.error('Fetch error:', error);
   }
 };
@@ -114,7 +122,7 @@ const submitSop = async () => {
                 let resultSopdetail = await createSopDetail(
                     dataSop.data.id_sop,
                     {
-                        number: `T/${String(form.value.number).padStart(3, '0')}/${letterCode.value}/${currentYear}`,
+                        number: `T/${String(form.value.number).padStart(3, '0')}/${letterCode.value}/${form.value.year}`,
                         description: form.value.description,
                         version: 1,
                         copy_from: form.value.sop_copy || null,
@@ -180,7 +188,7 @@ const letterCode = computed(() => {
 });
 
 const showDrafterList = () => {
-    if (form.value.id_org !== '' && form.value.id_org !== null && form.value.id_org !== 0) {
+    if (form.value.id_org !== 0) {
         filteredDrafters.value = dataDrafter.value.filter(
             (drafter) => drafter.id_org === form.value.id_org
         );
@@ -191,10 +199,16 @@ const showDrafterList = () => {
     showModal.value.drafter = true;
 };
 
+watch(() => form.value.year, (newYear) => {
+    if (newYear) {
+        fetchLatestSopInYear(newYear);
+    }
+});
+
 onMounted(() => {
     fetchOrg();
     fetchDrafter();
-    fetchLatestSopInYear();
+    fetchLatestSopInYear(form.value.year);
     if (authStore.userRole == 'pj') {
         fetchProfile();
     }
@@ -226,9 +240,12 @@ onMounted(() => {
                         <input id="num" type="number" :min="form.number" max="999" required v-model="form.number" @click="showWarning.number = false"
                             class="bg-gray-50 border-t border-b border-gray-300 text-sm p-2.5 min-w-12 w-full"
                             title="Masukkan no urut sop">
-                        <span class="bg-gray-50 border border-gray-300 text-sm rounded-r-lg p-2.5 w-fit whitespace-nowrap">
-                            /{{ letterCode + '/' + currentYear }}
+                        <span class="bg-gray-50 border-t border-b border-gray-300 text-sm p-2.5 w-fit whitespace-nowrap">
+                            /{{ letterCode }}/
                         </span>
+                        <input id="year" type="number" :min="2010" :max="currentYear + 5" required v-model="form.year"
+                            class="bg-gray-50 border border-gray-300 text-sm rounded-r-lg p-2.5 min-w-20 w-full"
+                            title="Masukkan tahun">
                     </div>
                     <WarningText v-show="showWarning.number" text="Nomor sudah dipakai, ganti dengan yang lain!" />
                 </div>
@@ -269,8 +286,8 @@ onMounted(() => {
                         </ul>
                     </div>
 
-                    <button @click="showDrafterList" type="button"
-                        class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-2.5 py-1.5 text-center">
+                    <button @click="showDrafterList" type="button" :disabled="form.id_org === null || form.id_org === ''" :title="form.id_org ? 'Pilih penyusun' : 'Pilih organisasi terlebih dahulu!'"
+                        class="block w-full md:w-auto text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-2.5 py-1.5 text-center disabled:cursor-not-allowed disabled:bg-opacity-60">
                         Tambahkan Penyusun
                     </button>
 

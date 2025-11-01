@@ -381,8 +381,13 @@ const aksiPaddingClass = computed(() => {
     <div class="mt-4 flex justify-between items-center">
         <!-- Info jumlah item di kiri -->
         <div class="text-sm text-gray-700">
+            <template v-if="paginationInfo.total === 0">
+            Tidak ada data yang tersedia
+            </template>
+            <template v-else>
             Menampilkan {{ paginationInfo.start }} sampai {{ paginationInfo.end }}
             dari {{ paginationInfo.total }} item
+            </template>
         </div>
 
         <!-- Navigasi pagination di kanan -->

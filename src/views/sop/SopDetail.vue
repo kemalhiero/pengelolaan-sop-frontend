@@ -173,7 +173,7 @@ onMounted(fetchAllData);
                     :section="sopData.section" :warning="sopData.warning"
                     :law-basis="sopData.legalBasis.map(item => item.legal)"
                     :implement-qualification="sopData.implementQualification.map(item => item.qualification)"
-                    :related-sop="sopData.relatedSop.map(item => item.related_sop)"
+                    :related-sop="sopData.relatedSop.map(item => item.name)"
                     :equipment="sopData.equipment.map(item => item.equipment)"
                     :record-data="sopData.record.map(item => item.data_record)"
                     :signature="`${cdnUrl}/${sopData.signature_url}`" />

@@ -31,7 +31,9 @@ const handleLogout = async () => {
 const fetchData = async () => {
   try {
     const result = await getAssignment();
-    assignmentNumber.value = result.data.length;
+    // Filter hanya tugas dengan status 2/"sedang disusun"
+    const filteredAssignments = result.data.filter(item => item.status === 2);
+    assignmentNumber.value = filteredAssignments.length;
   } catch (error) {
     assignmentNumber.value = null;
     console.error(error);

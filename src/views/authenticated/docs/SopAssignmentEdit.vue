@@ -1,10 +1,10 @@
 <script setup>
-import { computed, inject, onMounted, ref } from 'vue';
+import { computed, inject, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import useToastPromise from '@/utils/toastPromiseHandler';
 
 import { createSopDrafter, getUserByRole, deleteSopDrafter } from '@/api/userApi';
-import { getSopVersion, updateSopDetail } from '@/api/sopApi';
+import { getSopVersion, updateSopDetail, getLatestSopInYear } from '@/api/sopApi';
 import { general, department, laboratory } from '@/data/letterCode.js';
 
 import WarningText from '@/components/validation/WarningText.vue';
@@ -20,6 +20,7 @@ layoutType.value = 'admin';
 
 const route = useRoute();
 const router = useRouter();
+const currentYear = new Date().getFullYear();
 
 const dataDrafter = ref([]);
 const showDrafterModal = ref(false);
@@ -36,7 +37,7 @@ const form = ref({
     description: ''
 });
 let oldDrafters;
-let oldSopNumber = 0;
+let oldSopNumber = 0, oldSopYear = 0, latestSopNumber = 0;
 const isLoading = ref(true);
 const hasError = ref(false);
 
@@ -51,6 +52,20 @@ const letterCode = computed(() => {
         return general;
     }
 })
+
+const fetchLatestSopInYear = async (year) => {
+  try {
+    const response = await getLatestSopInYear(year);
+    if (response.data) {
+        latestSopNumber = parseInt(response.data.number.split("/")[1]);
+    } else {
+        latestSopNumber = 0;
+    }
+  } catch (error) {
+    latestSopNumber = 0;
+    console.error('Fetch error:', error);
+  }
+};
 
 const fetchDrafter = async () => {
     try {
@@ -67,8 +82,9 @@ const removeDrafter = (index) => {
 
 const submitSop = async () => {
     try {
+        const isSameSop = form.value.year == oldSopYear && form.value.number == oldSopNumber;
         showWarning.value.drafter = !form.value.drafter.length;
-        showWarning.value.number = form.value.number < oldSopNumber || form.value.number > 999;
+        showWarning.value.number = !isSameSop && (form.value.number <= latestSopNumber || form.value.number > 999);
         if (showWarning.value.drafter || showWarning.value.number) return;
 
         await useToastPromise(
@@ -144,16 +160,19 @@ const submitSop = async () => {
 const fetchDraft = async () => {
     try {
         const result = await getSopVersion(route.params.id);
-        oldSopNumber = parseInt(result.data.number.split('/')[1]);
+        const numberParts = result.data.number.split('/');
+        oldSopNumber = parseInt(numberParts[1]);
+        oldSopYear = parseInt(numberParts[4]);
         form.value = {
             name: result.data.name,
             number: oldSopNumber,
-            year: result.data.number.split('/')[4],
+            year: oldSopYear,
             id_org: result.data.organization.id,
             drafter: result.data.users || [],
             description: result.data.description
         };
         oldDrafters = JSON.parse(JSON.stringify(form.value.drafter));
+        await fetchLatestSopInYear(form.value.year);
     } catch (error) {
         console.error('Fetch error:', error);
     }
@@ -173,6 +192,12 @@ const fetchAllData = async () => {
     }
 };
 
+watch(() => form.value.year, (newYear) => {
+    if (newYear) {
+        fetchLatestSopInYear(newYear);
+    }
+});
+
 onMounted(fetchAllData);
 </script>
 
@@ -180,7 +205,7 @@ onMounted(fetchAllData);
     <TableSkeleton v-if="isLoading" :columns="1" :rows="10" class="mt-12 mx-56" />
     <Error v-else-if="hasError" @click="fetchAllData" />
     <template v-else>
-        <PageTitle :judul="isDataError ? 'Ngapain iseng iseng?🤨' : 'Perbarui Data Penugasan POS'" />
+        <PageTitle :judul="isDataError ? 'Ngapain iseng iseng?🤨' : `Perbarui Data Penugasan POS ${form.name}`" />
 
         <section class="bg-white" v-if="!isDataError">
             <div class="py-8 px-4 mx-auto max-w-3xl">
@@ -192,12 +217,15 @@ onMounted(fetchAllData);
                             </label>
                             <div class="flex items-center">
                                 <span class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-l-lg p-2.5"> T/ </span>
-                                <input id="num" type="number" :min="form.number" max="999" required v-model="form.number" @click="showWarning.number = false"
+                                <input id="num" type="number" :min="1" max="999" required v-model="form.number" @click="showWarning.number = false"
                                     class="bg-gray-50 border-t border-b border-gray-300 text-gray-900 text-sm p-2.5 min-w-12 w-full"
                                     title="Masukkan no urut sop">
-                                <span class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-r-lg p-2.5 w-fit whitespace-nowrap">
-                                    /{{ letterCode + '/' + form.year }}
+                                <span class="bg-gray-50 border-t border-b border-gray-300 text-sm p-2.5 w-fit whitespace-nowrap">
+                                    /{{ letterCode }}/
                                 </span>
+                                <input id="year" type="number" :min="2010" :max="currentYear + 5" required v-model="form.year"
+                                    class="bg-gray-50 border border-gray-300 text-sm rounded-r-lg p-2.5 min-w-20 w-full"
+                                    title="Masukkan tahun">
                             </div>
                             <WarningText v-show="showWarning.number" text="Nomor sudah dipakai, ganti dengan yang lain!" />
                         </div>

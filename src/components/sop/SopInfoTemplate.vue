@@ -167,7 +167,7 @@ const props = defineProps({
                                 <ol class="list-decimal list-outside ml-5">
                                     <template v-if="props.relatedSop && props.relatedSop.length > 0">
                                         <li v-for="(item, index) in props.relatedSop" :key="index">
-                                            {{ item.name }}
+                                            {{ item }}
                                         </li>
                                     </template>
                                     <p v-else> - </p>
