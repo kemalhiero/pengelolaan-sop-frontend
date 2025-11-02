@@ -143,7 +143,7 @@ const textAreaRef = ref(null);
 const characterLimits = {
     name: 200,
     fittings: 200,
-    output: 100,
+    output: 200,
     description: 300
 };
 
@@ -250,7 +250,7 @@ onBeforeUnmount(() => {
                                 @keydown.enter="!isDisabled && openTextEditModal('name', index, step.name)"
                             />
                         </td>
-                        <td class="px-2 py-3">
+                        <td class="px-1 py-3">
                             <select v-model="step.type" class="w-full p-2 border border-gray-300 rounded-md disabled:opacity-100" :disabled="isDisabled">
                                 <template v-if="index == 0">
                                     <option value="terminator" selected>Start</option>

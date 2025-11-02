@@ -539,8 +539,8 @@ const hasUnsavedArrowChanges = computed(() => {
             :law-basis="formData.legalBasis.map(item => item.legal)"
             :implement-qualification="formData.implementQualification"
             :related-sop="formData.relatedSop.map(item => item.name)"
-            :equipment="formData.equipment.map(item => item.equipment)"
-            :record-data="formData.record.map(item => item.data_record)"
+            :equipment="formData.equipment"
+            :record-data="formData.record"
         />
 
         <div class="flex justify-center my-6 print:hidden">

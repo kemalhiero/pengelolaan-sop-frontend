@@ -666,7 +666,7 @@ watch(() => props.arrowConfig, (newConfig) => {
                             <tr class="!bg-[#D9D9D9]">
                                 <th v-for="(impl, idx) in orderedImplementer" :key="`impl-${idx}`" 
                                     :ref="el => setImplementerHeaderRef(el, impl?.id)"
-                                    class="border-2 py-0.5 px-1 border-black">
+                                    class="border-2 py-0.5 border-black">
                                     {{ impl?.name.toUpperCase() }}
                                 </th>
                                 <th class="border-2 py-0.5 border-black">KELENGKAPAN</th>
@@ -699,10 +699,10 @@ watch(() => props.arrowConfig, (newConfig) => {
                                         />
                                     </div>
                                 </td>
-                                <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.fittings }}</td>
-                                <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ `${step.time} ${getFullTimeUnit(step.time_unit)}` }}</td>
-                                <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.output }}</td>
-                                <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.description }}</td>
+                                <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto whitespace-pre-line" lang="id">{{ step.fittings }}</td>
+                                <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto" lang="id">{{ step.time === 0 ? '' : `${step.time} ${getFullTimeUnit(step.time_unit)}` }}</td>
+                                <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto whitespace-pre-line" lang="id">{{ step.output }}</td>
+                                <td class="border-2 border-black py-0.5 px-1 text-justify break-words hyphens-auto whitespace-pre-line" lang="id">{{ step.description }}</td>
                             </tr>
                         </tbody>
                     </table>
