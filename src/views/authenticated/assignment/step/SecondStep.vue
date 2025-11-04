@@ -265,11 +265,11 @@ onBeforeUnmount(() => {
                                 <template v-if="step.id_next_step_if_yes || step.id_next_step_if_no">
                                     <div class="space-y-1">
                                         <div v-if="step.id_next_step_if_no" class="flex items-center">
-                                            <span class="text-red-600 mr-1">✗</span>
+                                            <span class="text-red-600 mr-0.5">✗</span>
                                             Salah → Tahap {{sopStep.findIndex(s => s.id_step === step.id_next_step_if_no) + 1 }}
                                         </div>
                                         <div v-if="step.id_next_step_if_yes" class="flex items-center">
-                                            <span class="text-green-600 mr-1">✓</span>
+                                            <span class="text-green-600 mr-0.5">✓</span>
                                             Benar → Tahap {{sopStep.findIndex(s => s.id_step === step.id_next_step_if_yes) + 1 }}
                                         </div>
                                     </div>
